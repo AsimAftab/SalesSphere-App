@@ -197,14 +197,14 @@ flutter pub run build_runner build --delete-conflicting-outputs
 
 ```bash
 # .env
-API_BASE_URL=https://api.example.com
-API_KEY=your_api_key_here
+API_BASE_URL=https://api.yourdomain.com
+API_KEY=your_actual_api_key_here
 APP_NAME=Sales Sphere
 ```
 
 2. Update the values according to your environment:
-   - **API_BASE_URL**: Your backend API base URL
-   - **API_KEY**: API authentication key (if required)
+   - **API_BASE_URL**: Your backend API base URL (replace with your actual API URL)
+   - **API_KEY**: API authentication key (replace with your actual key if required)
    - **APP_NAME**: Application name
 
 ### API Configuration
@@ -212,10 +212,13 @@ APP_NAME=Sales Sphere
 API endpoints are configured in `lib/core/constants/api_constants.dart`. Update the base URLs for different environments:
 
 ```dart
-static const String baseUrlDev = 'https://dev-api.example.com';
-static const String baseUrlStaging = 'https://staging-api.example.com';
-static const String baseUrlProduction = 'https://api.example.com';
+// Update these values in lib/core/constants/api_constants.dart
+static const String baseUrlDev = 'https://dev-api.yourdomain.com';
+static const String baseUrlStaging = 'https://staging-api.yourdomain.com';
+static const String baseUrlProduction = 'https://api.yourdomain.com';
 ```
+
+**Note:** The actual implementation uses the `API_BASE_URL` from the `.env` file via `flutter_dotenv`, not hardcoded URLs.
 
 ## 🏃 Running the App
 
@@ -459,7 +462,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-For support, email asim@example.com or open an issue in the GitHub repository.
+For support, please open an issue in the [GitHub repository](https://github.com/AsimAftab/SalesSphere-App/issues).
 
 ## 🔗 Resources
 
