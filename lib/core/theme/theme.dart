@@ -14,6 +14,7 @@ class AppTheme {
         secondary: AppColors.secondary,
         error: AppColors.error,
       ),
+      scaffoldBackground: AppColors.background,
       surfaceMode: FlexSurfaceMode.levelSurfacesLowScaffold,
       blendLevel: 7,
       subThemesData: FlexSubThemesData(

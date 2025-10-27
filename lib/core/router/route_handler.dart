@@ -11,13 +11,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/',
         name: 'home',
-        builder: (context, state) => const HomePage(),
-      ),
-      GoRoute(
-        path: '/login',
-        name: 'login',
         builder: (context, state) => const LoginScreen(),
       ),
+      // GoRoute(
+      //   path: '/login',
+      //   name: 'login',
+      //   builder: (context, state) => const LoginScreen(),
+      // ),
     ],
     errorBuilder: (context, state) => ErrorPage(error: state.error),
   );
