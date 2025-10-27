@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:sales_sphere/core/constants/app_colors.dart';
+import 'package:sales_sphere/core/utils/field_validators.dart';
+import 'package:sales_sphere/widget/custom_text_field.dart';
+import 'package:sales_sphere/widget/custom_button.dart';
 import '../vm/login.vm.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -36,6 +40,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       final email = _emailController.text.trim();
       final password = _passwordController.text.trim();
       await vm.login(email, password);
+
+      // Re-validate form to show server errors
+      _formKey.currentState?.validate();
     }
   }
 
@@ -72,196 +79,272 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      body: SingleChildScrollView(
-        reverse: true,
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              // --- Header Stack ---
-              SizedBox(
-                width: 1.sw,
-                height: 280.h,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Positioned(
-                      top: 0,
-                      left: 0,
-                      height: 280.h,
-                      width: 240.w,
-                      child: SvgPicture.asset(
-                        'assets/images/login_left.svg',
-                        fit: BoxFit.fill,
+      body: Stack(
+        children: [
+          // --- Upper Portion with Logo, Branding & Bubbles ---
+          Container(
+            width: double.infinity,
+            height: 500.h,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppColors.primary,
+                  AppColors.secondary,
+                ],
+              ),
+            ),
+            child: Stack(
+              children: [
+                // Left Bubble
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  child: SvgPicture.asset(
+                    'assets/images/left_bubble.svg',
+                    height: 200.h,
+                    width: 150.w,
+                    fit: BoxFit.fill,
+                    colorFilter: ColorFilter.mode(
+                      Colors.white.withOpacity(0.1),
+                      BlendMode.srcIn,
+                    ),
+                  ),
+                ),
+                // Right Bubble
+                Positioned(
+                  bottom: 50.h,
+                  right: -30.w,
+                  child: SvgPicture.asset(
+                    'assets/images/right_bubble.svg',
+                    height: 200.h,
+                    width: 150.w,
+                    fit: BoxFit.fill,
+                    colorFilter: ColorFilter.mode(
+                      Colors.white.withOpacity(0.1),
+                      BlendMode.srcIn,
+                    ),
+                  ),
+                ),
+                // Center Content
+                Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(height: 40.h),
+                      // Logo
+                      SvgPicture.asset(
+                        'assets/images/logo.svg',
+                        height: 100.h,
+                        width: 100.w,
                       ),
-                    ),
-                    Positioned(
-                      top: 0,
-                      right: 0,
-                      height: 280.h,
-                      width: 160.w,
-                      child: SvgPicture.asset(
-                        'assets/images/login_right.svg',
-                        fit: BoxFit.fill,
-                      ),
-                    ),
-                    Positioned(
-                      top: 20.h,
-                      right: -120.w,
-                      height: 300.h,
-                      width: 500.w,
-                      child: SvgPicture.asset('assets/images/logo.svg'),
-                    ),
-                    Positioned(
-                      top: 150.h,
-                      left: 40.w,
-                      child: Text(
-                        "Login",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 40.sp,
-                          fontWeight: FontWeight.w700,
+                      SizedBox(height: 16.h),
+                      // Sales Sphere Text
+                      RichText(
+                        textAlign: TextAlign.center,
+                        text: TextSpan(
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 36.sp,
+                            fontWeight: FontWeight.w700,
+                            height: 1.2,
+                          ),
+                          children: const [
+                            TextSpan(
+                              text: 'Sales\n',
+                              style: TextStyle(
+                                color: Colors.white,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'Sphere',
+                              style: TextStyle(
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 40.h),
-              Text(
-                "Hi, Welcome Back!👋",
-                style: TextStyle(fontSize: 24.sp, fontWeight: FontWeight.w700),
-              ),
-              SizedBox(height: 10.h),
-
-              // --- General error message ---
-              if (generalError != null)
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 18.w),
-                  child: Text(
-                    generalError,
-                    style: TextStyle(color: colorScheme.error, fontSize: 14.sp),
-                  ),
-                ),
-              SizedBox(height: 20.h),
-
-              // --- Email Field ---
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 18.w),
-                child: TextFormField(
-                  controller: _emailController,
-                  enabled: !isLoading,
-                  decoration: const InputDecoration(
-                    prefixIcon: Icon(Icons.email),
-                    hintText: "Email Address",
-                  ),
-                  keyboardType: TextInputType.emailAddress,
-                  autofillHints: const [AutofillHints.email],
-                  validator: (value) {
-                    // Inline backend error first, then local validation
-                    if (fieldErrors?.containsKey('email') ?? false) {
-                      return fieldErrors!['email'];
-                    }
-                    return vm.validateEmailLocally(value);
-                  },
-                  textInputAction: TextInputAction.next,
-                ),
-              ),
-              SizedBox(height: 20.h),
-
-              // --- Password Field ---
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 18.w),
-                child: TextFormField(
-                  controller: _passwordController,
-                  enabled: !isLoading,
-                  obscureText: !_isPasswordVisible,
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.lock_outline_rounded),
-                    hintText: "Password",
-                    suffixIcon: IconButton(
-                      icon: Icon(_isPasswordVisible
-                          ? Icons.visibility
-                          : Icons.visibility_off_sharp),
-                      onPressed: isLoading ? null : _togglePasswordVisibility,
-                    ),
-                  ),
-                  autofillHints: const [AutofillHints.password],
-                  validator: (value) {
-                    if (fieldErrors?.containsKey('password') ?? false) {
-                      return fieldErrors!['password'];
-                    }
-                    return vm.validatePasswordLocally(value);
-                  },
-                  textInputAction: TextInputAction.done,
-                  onFieldSubmitted: (_) => isLoading ? null : _handleLogin(vm),
-                ),
-              ),
-              SizedBox(height: 8.h),
-
-              Align(
-                alignment: Alignment.centerRight,
-                child: Padding(
-                  padding: EdgeInsets.only(right: 16.w),
-                  child: TextButton(
-                    onPressed: isLoading ? null : _forgotPassword,
-                    child: Text(
-                      'Forget Password?',
-                      style: TextStyle(
-                        color: const Color(0xFF37AFFA),
-                        fontSize: 14.sp,
+                      SizedBox(height: 12.h),
+                      Text(
+                        "Welcome Back!",
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.9),
+                          fontSize: 18.sp,
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.w400,
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
-              ),
-              SizedBox(height: 30.h),
+              ],
+            ),
+          ),
 
-              // --- Login Button ---
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 18.w),
-                child: ElevatedButton(
-                  onPressed: isLoading ? null : () => _handleLogin(vm),
-                  style: ElevatedButton.styleFrom(
-                      minimumSize: Size(double.infinity, 50.h)),
-                  child: isLoading
-                      ? const SizedBox(
-                    height: 24,
-                    width: 24,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 3,
-                      color: Colors.white,
-                    ),
-                  )
-                      : const Text('Login'),
+          // --- Bottom White Card with Form ---
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 32.h),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(32.r),
+                  topRight: Radius.circular(32.r),
                 ),
-              ),
-              SizedBox(height: 40.h),
-
-              // --- Sign Up Row ---
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('Do not have an Account? ',
-                      style: TextStyle(fontSize: 14.sp)),
-                  TextButton(
-                    onPressed: isLoading ? null : _navigateToSignUp,
-                    child: Text(
-                      "Signup",
-                      style: TextStyle(
-                        color: const Color(0xFF37AFFA),
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    spreadRadius: 0,
+                    blurRadius: 20,
+                    offset: const Offset(0, -4),
                   ),
                 ],
               ),
-              SizedBox(height: 40.h),
-            ],
+              child: SingleChildScrollView(
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Decorative handle
+                      Container(
+                        width: 40.w,
+                        height: 4.h,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(2.r),
+                        ),
+                      ),
+                      SizedBox(height: 32.h),
+
+                      // --- General Error Message ---
+                      if (generalError != null) ...[
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+                          decoration: BoxDecoration(
+                            color: colorScheme.error.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12.r),
+                            border: Border.all(
+                              color: colorScheme.error.withOpacity(0.3),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                color: colorScheme.error,
+                                size: 20.sp,
+                              ),
+                              SizedBox(width: 12.w),
+                              Expanded(
+                                child: Text(
+                                  generalError,
+                                  style: TextStyle(
+                                    color: colorScheme.error,
+                                    fontSize: 13.sp,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 20.h),
+                      ],
+
+                      // --- Email Field ---
+                      PrimaryTextField(
+                        hintText: "Email Address",
+                        controller: _emailController,
+                        prefixIcon: Icons.email_outlined,
+                        hasFocusBorder: true,
+                        enabled: !isLoading,
+                        keyboardType: TextInputType.emailAddress,
+                        autofillHints: const [AutofillHints.email],
+                        textInputAction: TextInputAction.next,
+                        validator: (value) {
+                          // Server error takes priority
+                          if (fieldErrors?.containsKey('email') ?? false) {
+                            return fieldErrors!['email'];
+                          }
+                          // Local validation
+                          return FieldValidators.validateEmail(value);
+                        },
+                      ),
+
+                      SizedBox(height: 16.h),
+
+                      // --- Password Field ---
+                      PrimaryTextField(
+                        hintText: "Password",
+                        controller: _passwordController,
+                        prefixIcon: Icons.lock_outline_rounded,
+                        hasFocusBorder: true,
+                        enabled: !isLoading,
+                        autofillHints: const [AutofillHints.password],
+                        textInputAction: TextInputAction.done,
+                        onFieldSubmitted: (_) => isLoading ? null : _handleLogin(vm),
+                        obscureText: !_isPasswordVisible,
+                        suffixWidget: IconButton(
+                          onPressed: isLoading ? null : _togglePasswordVisibility,
+                          icon: Icon(
+                            _isPasswordVisible
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                          ),
+                        ),
+                        validator: (value) {
+                          // Server error takes priority
+                          if (fieldErrors?.containsKey('password') ?? false) {
+                            return fieldErrors!['password'];
+                          }
+                          // Local validation
+                          return vm.validatePasswordLocally(value);
+                        },
+                      ),
+
+                      SizedBox(height: 12.h),
+
+                      // --- Forgot Password ---
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: isLoading ? null : _forgotPassword,
+                          child: Text(
+                            'Forgot Password?',
+                            style: TextStyle(
+                              color: AppColors.secondary,
+                              fontSize: 14.sp,
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      SizedBox(height: 24.h),
+
+                      // --- Login Button ---
+                      PrimaryButton(
+                        label: 'Login',
+                        onPressed: () => _handleLogin(vm),
+                        isLoading: isLoading,
+                        size: ButtonSize.medium,
+                      ),
+
+                      SizedBox(height: 24.h),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
