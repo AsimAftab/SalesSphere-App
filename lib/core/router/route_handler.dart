@@ -9,11 +9,37 @@ import 'package:sales_sphere/features/invoice/views/invoice_screen.dart';
 import 'package:sales_sphere/features/parties/views/parties_screen.dart';
 import 'package:sales_sphere/features/settings/views/settings_screen.dart';
 import 'package:sales_sphere/features/Detail-Added/view/detail_added.dart';
+import 'package:sales_sphere/features/auth/models/login.models.dart';
+
+import '../providers/user_controller.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
+  // Watch the user controller to rebuild routes when auth state changes
+  final user = ref.watch(userControllerProvider);
+
   return GoRouter(
-    initialLocation: '/home',
+    initialLocation: '/',
     debugLogDiagnostics: true,
+    // Refresh router when user auth state changes
+    refreshListenable: _UserAuthNotifier(ref),
+    redirect: (context, state) {
+      final isLoggedIn = user != null;
+      final isGoingToLogin = state.matchedLocation == '/';
+      final isGoingToDetailAdded = state.matchedLocation == '/detail-added';
+
+      // If user is not logged in and trying to access protected routes, redirect to login
+      if (!isLoggedIn && !isGoingToLogin && !isGoingToDetailAdded) {
+        return '/';
+      }
+
+      // If user is already logged in and trying to go to login, redirect to home
+      if (isLoggedIn && isGoingToLogin) {
+        return '/home';
+      }
+
+      // Allow navigation
+      return null;
+    },
     routes: [
       // ========================================
       // AUTH ROUTES (No Bottom Navigation)
@@ -129,6 +155,24 @@ class ErrorPage extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+// ========================================
+// USER AUTH NOTIFIER
+// ========================================
+/// Notifier that listens to user auth state changes and refreshes GoRouter
+class _UserAuthNotifier extends ChangeNotifier {
+  final Ref _ref;
+  _UserAuthNotifier(this._ref) {
+    // Listen to user controller changes
+    _ref.listen<User?>(
+      userControllerProvider,
+      (previous, next) {
+        // Notify GoRouter to refresh when user state changes
+        notifyListeners();
+      },
     );
   }
 }
