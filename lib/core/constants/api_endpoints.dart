@@ -48,7 +48,7 @@ class ApiEndpoints {
   static const String markNotificationRead = '/notifications/read';
 
   // Analytics
-  static const String dashboard = '/analytics/dashboard';
+  static const String home = '/home';
   static const String salesReport = '/analytics/sales-report';
   static const String revenueReport = '/analytics/revenue-report';
 }
