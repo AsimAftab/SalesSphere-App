@@ -3,12 +3,14 @@ class StorageKeys {
   StorageKeys._();
 
   // Auth
+  static const String authToken = 'auth_token'; // JWT Token
   static const String accessToken = 'access_token';
   static const String refreshToken = 'refresh_token';
   static const String isLoggedIn = 'is_logged_in';
   static const String userId = 'user_id';
   static const String userEmail = 'user_email';
   static const String userName = 'user_name';
+  static const String userData = 'user_data';
 
   // Settings
   static const String themeMode = 'theme_mode';

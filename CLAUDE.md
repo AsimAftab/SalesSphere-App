@@ -120,6 +120,46 @@ When creating new Riverpod providers, Freezed models, or JSON-serializable class
 3. Run `dart run build_runner build --delete-conflicting-outputs`
 4. Generated files (`.g.dart`, `.freezed.dart`) are gitignored but required for compilation
 
+## Network Layer
+
+### Dio Client Setup
+- **Base URL**: Configured in `.env` file (`API_BASE_URL`)
+- **Provider**: Use `ref.read(dioClientProvider)` to get Dio instance
+- **Token Storage**: `TokenStorageService` handles JWT token storage in SharedPreferences
+- **Auto-init**: Token storage and .env loaded in main.dart
+
+### Interceptors (Auto-configured)
+1. **AuthInterceptor**: Automatically adds `Authorization: Bearer {token}` header
+2. **LoggingInterceptor**: Beautiful request/response logs (debug mode only)
+3. **ErrorInterceptor**: Transforms errors into custom `NetworkException`
+
+### Making API Calls
+```dart
+// In ViewModel
+final dio = ref.read(dioClientProvider);
+final response = await dio.post('/auth/login', data: {...});
+
+// Save token after login
+final tokenStorage = ref.read(tokenStorageServiceProvider);
+await tokenStorage.saveToken(response.data['token']);
+```
+
+### Error Handling
+```dart
+try {
+  await dio.get('/endpoint');
+} on DioException catch (e) {
+  if (e.error is NetworkException) {
+    final error = e.error as NetworkException;
+    // Handle: error.message, error.isAuthError, error.userFriendlyMessage
+  }
+}
+```
+
+### API Endpoints
+- Centralized in `lib/core/network_layer/api_endpoints.dart`
+- Example: `ApiEndpoints.login`, `ApiEndpoints.userById('123')`
+
 ## Conventions
 
 - **ViewModels**: Named with `.vm.dart` suffix, use AsyncNotifier pattern
@@ -128,3 +168,4 @@ When creating new Riverpod providers, Freezed models, or JSON-serializable class
 - **Constants**: Organized by type (colors, sizes, strings, API, storage) in `lib/core/constants/`
 - **Portrait-only**: App locked to portrait orientation (configured in main.dart)
 - **Error Handling**: Global Flutter error handler logs to AppLogger in main.dart
+- **Network Calls**: Always use `dioClientProvider`, handle `NetworkException`
