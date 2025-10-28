@@ -1,69 +1,116 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sales_sphere/widget/main_shell.dart';
+import 'package:sales_sphere/features/auth/views/login_screen.dart';
+import 'package:sales_sphere/features/home/views/home_screen.dart';
+import 'package:sales_sphere/features/catalog/views/catalog_screen.dart';
+import 'package:sales_sphere/features/invoice/views/invoice_screen.dart';
+import 'package:sales_sphere/features/parties/views/parties_screen.dart';
+import 'package:sales_sphere/features/settings/views/settings_screen.dart';
 import 'package:sales_sphere/features/Detail-Added/view/detail_added.dart';
-
-import '../../features/auth/views/login_screen.dart';
-
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    initialLocation: '/detail-added',
+    initialLocation: '/home',
     debugLogDiagnostics: true,
     routes: [
+      // ========================================
+      // AUTH ROUTES (No Bottom Navigation)
+      // ========================================
       GoRoute(
-        // Define the root path as the starting screen (Login)
         path: '/',
         name: 'login',
-        // Using the placeholder, replace with your actual LoginScreen
         builder: (context, state) => const LoginScreen(),
       ),
       GoRoute(
-        // 2. Define a separate, named path for the DetailAdded screen
         path: '/detail-added',
         name: 'detail-added',
         builder: (context, state) => const DetailAdded(),
       ),
 
+      // ========================================
+      // MAIN APP ROUTES (With Bottom Navigation)
+      // ========================================
+      ShellRoute(
+        builder: (context, state, child) {
+          // Determine current index based on location
+          final location = state.uri.path;
+          int currentIndex = 0;
+
+          if (location.startsWith('/home')) {
+            currentIndex = 0;
+          } else if (location.startsWith('/catalog')) {
+            currentIndex = 1;
+          } else if (location.startsWith('/invoice')) {
+            currentIndex = 2;
+          } else if (location.startsWith('/parties')) {
+            currentIndex = 3;
+          } else if (location.startsWith('/settings')) {
+            currentIndex = 4;
+          }
+
+          return MainShell(
+            currentIndex: currentIndex,
+            child: child,
+          );
+        },
+        routes: [
+          // Home Tab
+          GoRoute(
+            path: '/home',
+            name: 'home',
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: HomeScreen(),
+            ),
+          ),
+
+          // Catalog Tab
+          GoRoute(
+            path: '/catalog',
+            name: 'catalog',
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: CatalogScreen(),
+            ),
+          ),
+
+          // Invoice Tab
+          GoRoute(
+            path: '/invoice',
+            name: 'invoice',
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: InvoiceScreen(),
+            ),
+          ),
+
+          // Parties Tab
+          GoRoute(
+            path: '/parties',
+            name: 'parties',
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: PartiesScreen(),
+            ),
+          ),
+
+          // Settings Tab
+          GoRoute(
+            path: '/settings',
+            name: 'settings',
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: SettingsScreen(),
+            ),
+          ),
+        ],
+      ),
     ],
 
     errorBuilder: (context, state) => ErrorPage(error: state.error),
   );
 });
 
-// Placeholder Home Page
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Sales Sphere'),
-        backgroundColor: Colors.deepPurple,
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              'Welcome to Sales Sphere! 🚀',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () => context.push('/login'),
-              child: const Text('Go to Login'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-
-// Error Page
+// ========================================
+// ERROR PAGE
+// ========================================
 class ErrorPage extends StatelessWidget {
   final Object? error;
   const ErrorPage({super.key, this.error});

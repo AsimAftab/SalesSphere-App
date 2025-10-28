@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'login.vm.dart';
+part of 'home.vm.dart';
 
 // **************************************************************************
 // RiverpodGenerator
@@ -9,44 +9,44 @@ part of 'login.vm.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
-@ProviderFor(LoginViewModel)
-const loginViewModelProvider = LoginViewModelProvider._();
+@ProviderFor(HomeViewModel)
+const homeViewModelProvider = HomeViewModelProvider._();
 
-final class LoginViewModelProvider
-    extends $AsyncNotifierProvider<LoginViewModel, LoginResponse?> {
-  const LoginViewModelProvider._()
+final class HomeViewModelProvider
+    extends $AsyncNotifierProvider<HomeViewModel, HomeModel> {
+  const HomeViewModelProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'loginViewModelProvider',
+        name: r'homeViewModelProvider',
         isAutoDispose: true,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$loginViewModelHash();
+  String debugGetCreateSourceHash() => _$homeViewModelHash();
 
   @$internal
   @override
-  LoginViewModel create() => LoginViewModel();
+  HomeViewModel create() => HomeViewModel();
 }
 
-String _$loginViewModelHash() => r'62ac56e710aa9973b04d3f9484ffb7ae0849b351';
+String _$homeViewModelHash() => r'ea25486804510cd77470129628260e937b814d93';
 
-abstract class _$LoginViewModel extends $AsyncNotifier<LoginResponse?> {
-  FutureOr<LoginResponse?> build();
+abstract class _$HomeViewModel extends $AsyncNotifier<HomeModel> {
+  FutureOr<HomeModel> build();
   @$mustCallSuper
   @override
   void runBuild() {
     final created = build();
-    final ref = this.ref as $Ref<AsyncValue<LoginResponse?>, LoginResponse?>;
+    final ref = this.ref as $Ref<AsyncValue<HomeModel>, HomeModel>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<AsyncValue<LoginResponse?>, LoginResponse?>,
-              AsyncValue<LoginResponse?>,
+              AnyNotifier<AsyncValue<HomeModel>, HomeModel>,
+              AsyncValue<HomeModel>,
               Object?,
               Object?
             >;

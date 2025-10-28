@@ -44,9 +44,6 @@ class DioClient {
     return url;
   }
 
-  /// API Key from environment (optional)
-  static String? get _apiKey => dotenv.env['API_KEY'];
-
   /// Base Options for Dio
   BaseOptions get _baseOptions => BaseOptions(
         baseUrl: _baseUrl,
@@ -56,7 +53,6 @@ class DioClient {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          if (_apiKey != null) 'X-API-Key': _apiKey,
         },
         validateStatus: (status) {
           // Accept all status codes and handle them in interceptors
