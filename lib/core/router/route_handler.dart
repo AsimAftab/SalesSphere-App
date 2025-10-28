@@ -1,24 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:sales_sphere/features/auth/views/login_screen.dart';
+import 'package:sales_sphere/features/Detail-Added/view/detail_added.dart';
+
+import '../../features/auth/views/login_screen.dart';
+
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    initialLocation: '/',
+    initialLocation: '/detail-added',
     debugLogDiagnostics: true,
     routes: [
       GoRoute(
+        // Define the root path as the starting screen (Login)
         path: '/',
-        name: 'home',
+        name: 'login',
+        // Using the placeholder, replace with your actual LoginScreen
         builder: (context, state) => const LoginScreen(),
       ),
-      // GoRoute(
-      //   path: '/login',
-      //   name: 'login',
-      //   builder: (context, state) => const LoginScreen(),
-      // ),
+      GoRoute(
+        // 2. Define a separate, named path for the DetailAdded screen
+        path: '/detail-added',
+        name: 'detail-added',
+        builder: (context, state) => const DetailAdded(),
+      ),
+
     ],
+
     errorBuilder: (context, state) => ErrorPage(error: state.error),
   );
 });
