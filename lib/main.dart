@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'app.dart';
 import 'core/utils/logger.dart';
+import 'core/network_layer/token_storage_service.dart';
 
 /// Riverpod 3.0 ProviderObserver for logging provider lifecycle
 final class LoggerProviderObserver extends ProviderObserver {
@@ -38,6 +40,23 @@ final class LoggerProviderObserver extends ProviderObserver {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Load environment variables
+  try {
+    await dotenv.load(fileName: ".env");
+    AppLogger.i('✅ Environment variables loaded');
+  } catch (e) {
+    AppLogger.w('⚠️ Failed to load .env file: $e');
+  }
+
+  // Initialize token storage service
+  try {
+    final tokenStorage = TokenStorageService();
+    await tokenStorage.init();
+    AppLogger.i('✅ Token storage initialized');
+  } catch (e) {
+    AppLogger.e('❌ Failed to initialize token storage', e);
+  }
 
   // Global Flutter error handling
   FlutterError.onError = (FlutterErrorDetails details) {
