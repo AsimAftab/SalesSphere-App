@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../utils/logger.dart';
-import 'api_endpoints.dart';
+import '../constants/api_endpoints.dart';
 import 'dio_client.dart';
 import 'network_exceptions.dart';
 

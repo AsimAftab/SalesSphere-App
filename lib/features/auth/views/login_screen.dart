@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/utils/field_validators.dart';
 import 'package:sales_sphere/widget/custom_text_field.dart';
@@ -50,9 +51,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     Navigator.pushNamed(context, '/forgot-password'); // Update with your route
   }
 
-  void _navigateToSignUp() {
-    Navigator.pushNamed(context, '/signup'); // Update with your route
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,6 +61,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final loginState = ref.watch(loginViewModelProvider);
 
     final isLoading = loginState is AsyncLoading;
+
+    // Navigate to home on successful login
+    ref.listen(loginViewModelProvider, (previous, next) {
+      if (next is AsyncData && next.value != null) {
+        // Login successful, navigate to home
+        context.go('/home');
+      }
+    });
 
     // Extract field errors and general error
     Map<String, String>? fieldErrors;
