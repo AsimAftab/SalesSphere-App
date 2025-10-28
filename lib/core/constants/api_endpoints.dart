@@ -14,7 +14,7 @@ class ApiEndpoints {
   static const String changePassword = '/auth/change-password';
 
   // User Endpoints
-  static const String profile = '/user/profile';
+  static const String profile = '/users/me';
   static const String updateProfile = '/user/profile';
   static const String deleteAccount = '/user/delete';
 

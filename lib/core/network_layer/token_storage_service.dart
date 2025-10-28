@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/storage_keys.dart';
@@ -72,14 +73,31 @@ class TokenStorageService {
     return token != null && token.isNotEmpty;
   }
 
-  /// Save User Data (optional)
+  /// Save User Data as JSON
   Future<void> saveUserData(Map<String, dynamic> userData) async {
     try {
       final prefs = await _preferences;
-      await prefs.setString(StorageKeys.userData, userData.toString());
+      // Convert to JSON string properly
+      final jsonString = jsonEncode(userData);
+      await prefs.setString(StorageKeys.userData, jsonString);
       AppLogger.i('✅ User data saved');
     } catch (e, stack) {
       AppLogger.e('❌ Error saving user data', e, stack);
+    }
+  }
+
+  /// Get User Data from storage
+  Future<Map<String, dynamic>?> getUserData() async {
+    try {
+      final prefs = await _preferences;
+      final userDataString = prefs.getString(StorageKeys.userData);
+      if (userDataString != null && userDataString.isNotEmpty) {
+        return jsonDecode(userDataString) as Map<String, dynamic>;
+      }
+      return null;
+    } catch (e, stack) {
+      AppLogger.e('❌ Error getting user data', e, stack);
+      return null;
     }
   }
 
