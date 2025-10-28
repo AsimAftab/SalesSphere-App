@@ -17,9 +17,8 @@ class DetailAdded extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          // FIX: SvgPicture.asset is the icon widget itself
           icon: SvgPicture.asset(
-            'assets/icons/arrow_left.svg', // <-- Make sure this path is correct
+            'assets/icons/arrow_left.svg',
             height: 24.h,
             width: 24.w,
             colorFilter: ColorFilter.mode(

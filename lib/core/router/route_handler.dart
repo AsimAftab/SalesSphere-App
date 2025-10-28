@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sales_sphere/features/Detail-Added/view/detail_added.dart';
+import 'package:sales_sphere/features/parties/views/party_details_screen.dart';
 import 'package:sales_sphere/widget/main_shell.dart';
 import 'package:sales_sphere/features/auth/views/login_screen.dart';
 import 'package:sales_sphere/features/home/views/home_screen.dart';
@@ -8,11 +10,11 @@ import 'package:sales_sphere/features/catalog/views/catalog_screen.dart';
 import 'package:sales_sphere/features/invoice/views/invoice_screen.dart';
 import 'package:sales_sphere/features/parties/views/parties_screen.dart';
 import 'package:sales_sphere/features/settings/views/settings_screen.dart';
-import 'package:sales_sphere/features/Detail-Added/view/detail_added.dart';
+
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    initialLocation: '/home',
+    initialLocation: '/party_details_screen/1',
     debugLogDiagnostics: true,
     routes: [
       // ========================================
@@ -27,6 +29,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/detail-added',
         name: 'detail-added',
         builder: (context, state) => const DetailAdded(),
+      ),
+      GoRoute(
+        path: '/party_details_screen/:partyId',  // ✅ Must have :partyId
+        name: 'party_details_screen',
+        builder: (context, state) {
+          final partyId = state.pathParameters['partyId'] ?? '1';
+          return PartyDetailsScreen(partyId: partyId);
+        },
       ),
 
       // ========================================
