@@ -24,6 +24,8 @@ class PrimaryTextField extends StatefulWidget {
   final TextInputAction? textInputAction;
   final void Function(String)? onFieldSubmitted;
   final void Function(String)? onChanged;
+  final int? minLines;
+  final int? maxLines;
 
   const PrimaryTextField({
     super.key,
@@ -45,6 +47,8 @@ class PrimaryTextField extends StatefulWidget {
     this.textInputAction,
     this.onFieldSubmitted,
     this.onChanged,
+    this.minLines,
+    this.maxLines,
   });
 
   @override
@@ -78,6 +82,8 @@ class _PrimaryTextFieldState extends State<PrimaryTextField> {
           autofillHints: widget.autofillHints,
           enabled: widget.enabled ?? true,
           textInputAction: widget.textInputAction,
+          minLines: widget.minLines,
+          maxLines: widget.obscureText == true ? 1 : (widget.maxLines ?? 1),
           onFieldSubmitted: widget.onFieldSubmitted,
           onChanged: (value) {
             // Clear error on typing
