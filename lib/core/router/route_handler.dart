@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sales_sphere/features/Detail-Added/view/detail_added.dart';
 import 'package:sales_sphere/widget/main_shell.dart';
 import 'package:sales_sphere/features/auth/views/login_screen.dart';
 import 'package:sales_sphere/features/home/views/home_screen.dart';
 import 'package:sales_sphere/features/catalog/views/catalog_screen.dart';
 import 'package:sales_sphere/features/invoice/views/invoice_screen.dart';
 import 'package:sales_sphere/features/parties/views/parties_screen.dart';
+import 'package:sales_sphere/features/parties/views/edit_party_details_screen.dart';
 import 'package:sales_sphere/features/settings/views/settings_screen.dart';
-import 'package:sales_sphere/features/Detail-Added/view/detail_added.dart';
 import 'package:sales_sphere/features/auth/models/login.models.dart';
 
 import '../providers/user_controller.dart';
@@ -18,26 +19,34 @@ final goRouterProvider = Provider<GoRouter>((ref) {
   final user = ref.watch(userControllerProvider);
 
   return GoRouter(
-    initialLocation: '/',
+    initialLocation: '/catalog',
     debugLogDiagnostics: true,
     // Refresh router when user auth state changes
     refreshListenable: _UserAuthNotifier(ref),
     redirect: (context, state) {
       final isLoggedIn = user != null;
-      final isGoingToLogin = state.matchedLocation == '/';
-      final isGoingToDetailAdded = state.matchedLocation == '/detail-added';
 
-      // If user is not logged in and trying to access protected routes, redirect to login
-      if (!isLoggedIn && !isGoingToLogin && !isGoingToDetailAdded) {
+      // Get the path the user is trying to access
+      final requestedPath = state.uri.path;
+
+      // Check against your allowed routes
+      final isGoingToLogin = requestedPath == '/';
+      final isGoingToCatalog = requestedPath.startsWith('/catalog');
+      final isGoingToParties = requestedPath.startsWith('/parties');
+      final isGoingToEditParty = requestedPath.startsWith('/edit_party_details_screen');
+      final isGoingToDetailAdded = requestedPath == '/detail-added';
+
+
+      // If user is not logged in AND not going to one of the allowed pages...
+      if (!isLoggedIn && !isGoingToLogin && !isGoingToCatalog && !isGoingToParties && !isGoingToEditParty && !isGoingToDetailAdded) {
         return '/';
       }
 
-      // If user is already logged in and trying to go to login, redirect to home
+      // If user is logged in and trying to go to login, redirect to home
       if (isLoggedIn && isGoingToLogin) {
         return '/home';
       }
-
-      // Allow navigation
+      // Otherwise, allow navigation
       return null;
     },
     routes: [
@@ -53,6 +62,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/detail-added',
         name: 'detail-added',
         builder: (context, state) => const DetailAdded(),
+      ),
+      GoRoute(
+        path: '/edit_party_details_screen/:partyId',
+        name: 'edit_party_details_screen',
+        builder: (context, state) {
+          final partyId = state.pathParameters['partyId'] ?? '1';
+          return EditPartyDetailsScreen(partyId: partyId);
+        },
       ),
 
       // ========================================

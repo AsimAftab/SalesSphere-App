@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
+import 'package:sales_sphere/core/constants/app_colors.dart';
+import 'package:sales_sphere/features/parties/vm/parties.vm.dart';
+import 'package:sales_sphere/features/parties/vm/edit_party.vm.dart';
+import 'package:sales_sphere/widget/universal_list_card.dart';
 
 class PartiesScreen extends ConsumerStatefulWidget {
   const PartiesScreen({super.key});
@@ -9,15 +15,287 @@ class PartiesScreen extends ConsumerStatefulWidget {
 }
 
 class _PartiesScreenState extends ConsumerState<PartiesScreen> {
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged(String query) {
+    ref.read(searchQueryProvider.notifier).updateQuery(query);
+  }
+
+  void _navigateToPartyDetails(String partyId) {
+    context.push('/edit_party_details_screen/$partyId');
+  }
+
+  void _navigateToAddParty() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Add Party screen coming soon!'),
+        backgroundColor: AppColors.primary,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  String _extractLocation(String fullAddress) {
+    final parts = fullAddress.split(',');
+    if (parts.length >= 2) {
+      return '${parts[0].trim()}, ${parts[1].trim()}';
+    }
+    return fullAddress.length > 30
+        ? '${fullAddress.substring(0, 30)}...'
+        : fullAddress;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final searchQuery = ref.watch(searchQueryProvider);
+    final searchedPartiesAsync = ref.watch(searchedPartiesProvider);
+
     return Scaffold(
+
       appBar: AppBar(
-        title: const Text('Parties'),
-        automaticallyImplyLeading: false,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        title: Text(
+          'Parties',
+          style: TextStyle(
+            color: Colors.black87,
+            fontSize: 20.sp,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
-      body: const Center(
-        child: Text('Parties Screen - Coming Soon'),
+      body: Column(
+        children: [
+          // Search Bar Section
+          Container(
+            color: Colors.white,
+            padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 16.h),
+            child: TextField(
+              controller: _searchController,
+              onChanged: _onSearchChanged,
+              decoration: InputDecoration(
+                hintText: 'Search',
+                hintStyle: TextStyle(
+                  color: Colors.grey.shade400,
+                  fontSize: 14.sp,
+                  fontFamily: 'Poppins',
+                ),
+                prefixIcon: Icon(
+                  Icons.search,
+                  color: Colors.grey.shade400,
+                  size: 20.sp,
+                ),
+                suffixIcon: searchQuery.isNotEmpty
+                    ? IconButton(
+                  icon: Icon(
+                    Icons.clear,
+                    color: Colors.grey.shade400,
+                    size: 20.sp,
+                  ),
+                  onPressed: () {
+                    _searchController.clear();
+                    _onSearchChanged('');
+                  },
+                )
+                    : null,
+                filled: true,
+                fillColor: Colors.grey.shade100,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 16.w,
+                  vertical: 12.h,
+                ),
+              ),
+            ),
+          ),
+
+          // Parties Header
+          Container(
+            color: Colors.white,
+            padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 12.h),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Parties',
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                    fontFamily: 'Poppins',
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    _searchController.clear();
+                    _onSearchChanged('');
+                  },
+                  child: Text(
+                    'See All',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.primary,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Party List
+          Expanded(
+            child: searchedPartiesAsync.when(
+              data: (parties) {
+                if (parties.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.people_outline,
+                          size: 64.sp,
+                          color: Colors.grey.shade400,
+                        ),
+                        SizedBox(height: 16.h),
+                        Text(
+                          searchQuery.isEmpty
+                              ? 'Loading Parties..'
+                              : 'No results for "$searchQuery"',
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            color: Colors.grey.shade600,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return RefreshIndicator(
+                  onRefresh: () async {
+                    await ref.read(partyViewModelProvider.notifier).refresh();
+                  },
+                  color: AppColors.primary,
+                  child: ListView.separated(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                    itemCount: parties.length,
+                    separatorBuilder: (context, index) => SizedBox(height: 12.h),
+                    itemBuilder: (context, index) {
+                      final party = parties[index];
+
+                      return UniversalListCard(
+                        leadingIcon: Icon(
+                          Icons.person_outline,
+                          color: Colors.white,
+                          size: 24.sp,
+                        ),
+                        isLeadingCircle: true,
+                        leadingBackgroundColor: AppColors.primary,
+                        leadingSize: 48.w,
+                        title: party.name,
+                        subtitle: _extractLocation(party.fullAddress),
+                        onTap: () => _navigateToPartyDetails(party.id),
+                      );
+                    },
+                  ),
+                );
+              },
+              loading: () => Center(
+                child: CircularProgressIndicator(
+                  color: AppColors.primary,
+                ),
+              ),
+              error: (error, stack) => Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      size: 64.sp,
+                      color: AppColors.error,
+                    ),
+                    SizedBox(height: 16.h),
+                    Text(
+                      'Failed to load parties',
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        color: Colors.black87,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    SizedBox(height: 8.h),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 32.w),
+                      child: Text(
+                        error.toString(),
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: Colors.grey.shade600,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    SizedBox(height: 16.h),
+                    ElevatedButton(
+                      onPressed: () {
+                        ref.read(partyViewModelProvider.notifier).refresh();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 24.w,
+                          vertical: 12.h,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                      ),
+                      child: Text(
+                        'Retry',
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _navigateToAddParty,
+        backgroundColor: AppColors.primary,
+        elevation: 4,
+        icon: Icon(
+          Icons.add,
+          color: Colors.white,
+          size: 20.sp,
+        ),
+        label: Text(
+          'Add Party',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            fontFamily: 'Poppins',
+            fontSize: 14.sp,
+          ),
+        ),
       ),
     );
   }
