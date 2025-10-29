@@ -2,18 +2,45 @@ import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/network_layer/token_storage_service.dart';
-import 'package:sales_sphere/core/network_layer/network_exceptions.dart';
+
 import 'package:sales_sphere/core/constants/api_endpoints.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
+import 'package:sales_sphere/core/providers/user_controller.dart';
 import '../models/login.models.dart';
 
 part 'login.vm.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true) // 👈 ensures it’s never disposed
 class LoginViewModel extends _$LoginViewModel {
   @override
   Future<LoginResponse?> build() async {
-    // No initialization needed for now
+    final tokenStorage = ref.read(tokenStorageServiceProvider);
+    final token = await tokenStorage.getToken();
+
+    if (token != null) {
+      try {
+        final dio = ref.read(dioClientProvider);
+        final response = await dio.get(ApiEndpoints.profile);
+
+        final loginResponse = LoginResponse.fromJson(response.data);
+
+        // Save user data to SharedPreferences
+        await tokenStorage.saveUserData(loginResponse.data.user.toJson());
+
+        // Update global user controller
+        ref
+            .read(userControllerProvider.notifier)
+            .setUser(loginResponse.data.user);
+
+        AppLogger.i('✅ User restored from saved token');
+        return loginResponse;
+      } catch (e, stack) {
+        AppLogger.e('⚠️ Failed to restore user from token', e, stack);
+        // Clear invalid token
+        await tokenStorage.clearAuthData();
+      }
+    }
+
     return null;
   }
 
@@ -42,14 +69,10 @@ class LoginViewModel extends _$LoginViewModel {
     final passwordError = validatePasswordLocally(password);
 
     if (emailError != null || passwordError != null) {
-      // Return field-specific errors
-      state = AsyncError(
-        {
-          'email': emailError,
-          'password': passwordError,
-        },
-        StackTrace.empty,
-      );
+      state = AsyncError({
+        'email': emailError,
+        'password': passwordError,
+      }, StackTrace.empty);
       return;
     }
 
@@ -62,83 +85,57 @@ class LoginViewModel extends _$LoginViewModel {
 
       AppLogger.i('🔐 Attempting login for: $email');
 
-      // Make API call
       final response = await dio.post(
         ApiEndpoints.login,
-        data: {
-          'email': email,
-          'password': password,
-        },
+        data: {'email': email, 'password': password},
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        // Parse response
         final loginResponse = LoginResponse.fromJson(response.data);
 
         AppLogger.i('✅ Login successful for: ${loginResponse.data.user.name}');
 
-        // Store token in SharedPreferences
+        // Save token
         await tokenStorage.saveToken(loginResponse.token);
 
-        AppLogger.i('✅ Token stored successfully');
+        // Save user data to SharedPreferences
+        await tokenStorage.saveUserData(loginResponse.data.user.toJson());
 
-        // Success - store the user data in state
+        AppLogger.i('✅ Token and user data stored successfully');
+
+        // Update global user state 👇
+        ref
+            .read(userControllerProvider.notifier)
+            .setUser(loginResponse.data.user);
+
+        // Save successful login in state
         state = AsyncData(loginResponse);
       } else {
         AppLogger.w('⚠️ Login failed with status: ${response.statusCode}');
-        state = AsyncError(
-          {'general': 'Login failed. Please try again.'},
-          StackTrace.empty,
-        );
+        state = AsyncError({
+          'general': 'Login failed. Please try again.',
+        }, StackTrace.empty);
       }
     } on DioException catch (e) {
       AppLogger.e('❌ Login failed', e);
 
-      // Handle network exceptions
-      if (e.error is NetworkException) {
-        final networkError = e.error as NetworkException;
-        state = AsyncError(
-          {'general': networkError.userFriendlyMessage},
-          StackTrace.empty,
-        );
-      } else if (e.response?.statusCode == 401) {
-        // Unauthorized - invalid credentials
-        state = AsyncError(
-          {'general': 'Invalid email or password'},
-          StackTrace.empty,
-        );
+      if (e.response?.statusCode == 401) {
+        state = AsyncError({
+          'general': 'Invalid email or password',
+        }, StackTrace.empty);
       } else if (e.response?.statusCode == 400) {
-        // Bad request - might have field-specific errors
-        final errorData = e.response?.data;
-        if (errorData is Map<String, dynamic> && errorData['message'] != null) {
-          state = AsyncError(
-            {'general': errorData['message']},
-            StackTrace.empty,
-          );
-        } else {
-          state = AsyncError(
-            {'general': 'Invalid request. Please check your input.'},
-            StackTrace.empty,
-          );
-        }
+        final message = e.response?.data['message'] ?? 'Invalid request.';
+        state = AsyncError({'general': message}, StackTrace.empty);
       } else {
-        state = AsyncError(
-          {'general': 'Network error. Please check your connection.'},
-          StackTrace.empty,
-        );
+        state = AsyncError({
+          'general': 'Network error. Please check your connection.',
+        }, StackTrace.empty);
       }
     } catch (e, stack) {
-      // Unexpected errors
       AppLogger.e('❌ Unexpected error during login', e, stack);
-      state = AsyncError(
-        {'general': 'Something went wrong. Please try again.'},
-        StackTrace.current,
-      );
+      state = AsyncError({
+        'general': 'Something went wrong. Please try again.',
+      }, StackTrace.current);
     }
-  }
-
-  /// Get stored user data
-  User? get currentUser {
-    return state.value?.data.user;
   }
 }

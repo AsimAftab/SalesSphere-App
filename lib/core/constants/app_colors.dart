@@ -14,6 +14,7 @@ class AppColors {
   static const Color secondaryDark = Color(0xFF018786);
   static const Color secondaryLight = Color(0xFF66FFF9);
 
+
   // Background Colors
   static const Color background = Color(0xFFF1F4FC);
   static const Color backgroundDark = Color(0xFF121212);
@@ -26,6 +27,11 @@ class AppColors {
   static const Color textHint = Color(0xFF9E9E9E);
   static const Color textDisabled = Color(0xFFBDBDBD);
   static const Color textWhite = Color(0xFFFFFFFF);
+  static const Color textOrange = Color(0xFFFF7029);
+
+
+  // Icons Colors
+  static const Color iconsColorSecondary =Color(0xFF999999);
 
   // Status Colors
   static const Color success = Color(0xFF4CAF50);

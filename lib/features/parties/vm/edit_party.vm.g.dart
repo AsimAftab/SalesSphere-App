@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'party.vm.dart';
+part of 'edit_party.vm.dart';
 
 // **************************************************************************
 // RiverpodGenerator
@@ -33,7 +33,7 @@ final class PartyViewModelProvider
   PartyViewModel create() => PartyViewModel();
 }
 
-String _$partyViewModelHash() => r'cb805b8852e8d244293a12fb7f308f495f01f676';
+String _$partyViewModelHash() => r'1721acfe27cca1e426d20a2346bcc2bba395da8b';
 
 abstract class _$PartyViewModel extends $AsyncNotifier<List<PartyDetails>> {
   FutureOr<List<PartyDetails>> build();
@@ -110,7 +110,7 @@ final class PartyByIdProvider
   }
 }
 
-String _$partyByIdHash() => r'd33db2377863a7dc2199187990bcaf95c61913e6';
+String _$partyByIdHash() => r'a0f76a19dc0331fd408a110555cef6d2789ed633';
 
 final class PartyByIdFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<PartyDetails?>, String> {

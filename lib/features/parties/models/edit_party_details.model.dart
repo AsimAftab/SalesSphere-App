@@ -1,7 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-part 'party_details.model.freezed.dart';
-part 'party_details.model.g.dart';
+part 'edit_party_details.model.freezed.dart';
+part 'edit_party_details.model.g.dart';
 
 @freezed
 abstract class PartyDetails with _$PartyDetails {

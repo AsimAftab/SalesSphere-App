@@ -91,7 +91,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           Container(
             width: double.infinity,
             height: 500.h,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -113,7 +113,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     width: 150.w,
                     fit: BoxFit.fill,
                     colorFilter: ColorFilter.mode(
-                      Colors.white.withOpacity(0.1),
+                      Colors.white.withValues(alpha: 0.1),
                       BlendMode.srcIn,
                     ),
                   ),
@@ -128,7 +128,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     width: 150.w,
                     fit: BoxFit.fill,
                     colorFilter: ColorFilter.mode(
-                      Colors.white.withOpacity(0.1),
+                      Colors.white.withValues(alpha: 0.1),
                       BlendMode.srcIn,
                     ),
                   ),
@@ -176,7 +176,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       Text(
                         "Welcome Back!",
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                           fontSize: 18.sp,
                           fontFamily: 'Poppins',
                           fontWeight: FontWeight.w400,
@@ -203,7 +203,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
+                    color: Colors.black.withValues(alpha: 0.08),
                     spreadRadius: 0,
                     blurRadius: 20,
                     offset: const Offset(0, -4),
@@ -233,10 +233,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         Container(
                           padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
                           decoration: BoxDecoration(
-                            color: colorScheme.error.withOpacity(0.1),
+                            color: colorScheme.error.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12.r),
                             border: Border.all(
-                              color: colorScheme.error.withOpacity(0.3),
+                              color: colorScheme.error.withValues(alpha: 0.3),
                             ),
                           ),
                           child: Row(
