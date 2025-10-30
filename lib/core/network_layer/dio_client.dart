@@ -7,7 +7,7 @@ import 'interceptors/auth_interceptor.dart';
 import 'interceptors/logging_interceptor.dart';
 import 'interceptors/error_interceptor.dart';
 import 'token_storage_service.dart';
-
+import 'package:pretty_dio_logger/src/pretty_dio_logger.dart';
 /// Dio Client Provider
 /// Provides a configured Dio instance with all interceptors
 final dioClientProvider = Provider<Dio>((ref) {
@@ -68,6 +68,30 @@ class DioClient {
     dio.interceptors.add(AuthInterceptor(tokenStorage));
 
     // 2. Logging Interceptor (Only in debug mode)
+    if (kDebugMode) {
+      dio.interceptors.add(
+        PrettyDioLogger(
+          requestHeader: true,
+          requestBody: true,
+          responseBody: true,
+          responseHeader: false,
+          error: true,
+          compact: true,
+          maxWidth: 90,
+          enabled: kDebugMode,
+          filter: (options, args) {
+            // don't log requests to '/posts'
+            if (options.path.contains('/posts')) {
+              return false;
+            }
+            // don't log responses with Uint8List data
+            return !args.isResponse || !args.hasUint8ListData;
+          },
+        ),
+      );
+    }
+
+    // 3. Custom Logging Interceptor (optional — keep if you want)
     if (kDebugMode) {
       dio.interceptors.add(LoggingInterceptor());
     }
