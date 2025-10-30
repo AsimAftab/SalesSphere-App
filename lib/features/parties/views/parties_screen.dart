@@ -57,14 +57,13 @@ class _PartiesScreenState extends ConsumerState<PartiesScreen> {
     final searchedPartiesAsync = ref.watch(searchedPartiesProvider);
 
     return Scaffold(
-
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         title: Text(
           'Parties',
           style: TextStyle(
-            color: Colors.black87,
+            color: AppColors.textdark,
             fontSize: 20.sp,
             fontWeight: FontWeight.w600,
           ),
@@ -130,7 +129,7 @@ class _PartiesScreenState extends ConsumerState<PartiesScreen> {
                   style: TextStyle(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w600,
-                    color: Colors.black87,
+                    color: AppColors.textdark,
                     fontFamily: 'Poppins',
                   ),
                 ),
@@ -231,7 +230,7 @@ class _PartiesScreenState extends ConsumerState<PartiesScreen> {
                       'Failed to load parties',
                       style: TextStyle(
                         fontSize: 16.sp,
-                        color: Colors.black87,
+                        color: AppColors.textdark,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
