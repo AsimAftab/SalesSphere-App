@@ -38,7 +38,7 @@ Future<List<PartyListItem>> searchedParties(Ref ref) async {
       return listItems.where((party) {
         return party.name.toLowerCase().contains(lowerQuery) ||
             party.ownerName.toLowerCase().contains(lowerQuery) ||
-            party.phoneNumber.contains(searchQuery) ||
+            (party.phoneNumber?.contains(searchQuery) ?? false) ||
             party.fullAddress.toLowerCase().contains(lowerQuery);
       }).toList();
     },
