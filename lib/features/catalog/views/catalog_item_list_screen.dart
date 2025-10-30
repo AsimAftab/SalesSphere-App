@@ -4,18 +4,26 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
-import 'package:sales_sphere/features/catalog/models/catalog.model.dart';
-import 'package:sales_sphere/features/catalog/vm/catalog.vm.dart';
+import 'package:sales_sphere/features/catalog/vm/catalog_list.vm.dart';
 import 'package:sales_sphere/widget/universal_list_card.dart';
 
-class CatalogScreen extends ConsumerStatefulWidget {
-  const CatalogScreen({super.key});
+class CategoryItemListScreen extends ConsumerStatefulWidget {
+  final String categoryId;
+  final String categoryName;
+
+  const CategoryItemListScreen({
+    super.key,
+    required this.categoryId,
+    required this.categoryName,
+  });
 
   @override
-  ConsumerState<CatalogScreen> createState() => _CatalogScreenState();
+  ConsumerState<CategoryItemListScreen> createState() =>
+      _CategoryItemListScreenState();
 }
 
-class _CatalogScreenState extends ConsumerState<CatalogScreen> {
+class _CategoryItemListScreenState
+    extends ConsumerState<CategoryItemListScreen> {
   final TextEditingController _searchController = TextEditingController();
 
   @override
@@ -25,41 +33,39 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
   }
 
   void _onSearchChanged(String query) {
-    ref.read(catalogSearchQueryProvider.notifier).updateQuery(query);
+    ref.read(itemListSearchQueryProvider.notifier).updateQuery(query);
   }
 
-  // --- 2. UPDATE NAVIGATION FUNCTION ---
-  // Change parameter type and add navigation logic
-  void _navigateToCategoryDetails(CatalogCategory category) {
-    // Add a print for debugging if needed
-    // print('Navigating to category: ${category.name} (ID: ${category.id})');
-
-    // Use pushNamed with parameters and extra data
-    context.pushNamed(
-      'catalog-items', // ✅ Use the correct nested route name
-      pathParameters: {'categoryId': category.id},
-      extra: category.name,
+  void _navigateToItemDetails(String itemId) {
+    // Example: context.push('/catalog/${widget.categoryId}/$itemId');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Navigate to details for item $itemId'),
+        backgroundColor: AppColors.primary,
+      ),
     );
-
-    // Alternative using path:
-    // context.push('/catalog/${category.id}', extra: category.name);
   }
 
   @override
   Widget build(BuildContext context) {
-    final searchQuery = ref.watch(catalogSearchQueryProvider);
-    final searchedCategoriesAsync = ref.watch(searchedCategoriesProvider);
+    final searchQuery = ref.watch(itemListSearchQueryProvider);
+    final searchedItemsAsync =
+    ref.watch(searchedCategoryItemsProvider(widget.categoryId));
 
     return Scaffold(
-      // Use transparent appbar and stack for the wave background
+      backgroundColor: Colors.grey.shade50,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          onPressed: () => context.pop(),
+        ),
         title: Text(
-          'Catalogs',
+          widget.categoryName,
           style: TextStyle(
-            color: AppColors.textdark,
+            color: Colors.black87,
             fontSize: 20.sp,
             fontWeight: FontWeight.w600,
             fontFamily: 'Poppins',
@@ -68,28 +74,22 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
       ),
       body: Stack(
         children: [
-          // Background Wave
           Positioned(
             top: 0,
             left: 0,
             right: 0,
             child: SvgPicture.asset(
-              'assets/images/corner_bubble.svg',
+              'assets/images/corner_bubble.svg', // Ensure path is correct
               fit: BoxFit.cover,
-              height: 180.h,
+              height: 160.h,
             ),
           ),
-
-          // Main Content
           Column(
             children: [
-              // This container pushes the content below the appbar/wave
               Container(
-                height: 120.h, // Adjust this height to match wave
+                height: 100.h, // Spacer height
                 color: Colors.transparent,
               ),
-
-              // Search Bar Section
               Container(
                 color: Colors.transparent,
                 padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 16.h),
@@ -97,7 +97,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                   controller: _searchController,
                   onChanged: _onSearchChanged,
                   decoration: InputDecoration(
-                    hintText: 'Search',
+                    hintText: 'Search within ${widget.categoryName}',
                     hintStyle: TextStyle(
                       color: Colors.grey.shade400,
                       fontSize: 14.sp,
@@ -133,7 +133,8 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.r),
-                      borderSide: BorderSide(color: AppColors.primary, width: 2),
+                      borderSide:
+                      BorderSide(color: AppColors.primary, width: 2),
                     ),
                     contentPadding: EdgeInsets.symmetric(
                       horizontal: 16.w,
@@ -142,44 +143,53 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                   ),
                 ),
               ),
-
-              // Categories Header
               Padding(
                 padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 12.h),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Categories',
+                      'Items',
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textdark,
+                        color: Colors.black87,
                         fontFamily: 'Poppins',
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: ()
+                      { /* TODO: Add filter/sort */ },
+                      child: Text(
+                        'See All', // Or 'Filters'
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.primary,
+                          fontFamily: 'Poppins',
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-
-              // Category List
               Expanded(
-                child: searchedCategoriesAsync.when(
-                  data: (categories) {
-                    if (categories.isEmpty) {
+                child: searchedItemsAsync.when(
+                  data: (items) {
+                    if (items.isEmpty) {
                       return Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
-                              Icons.category_outlined,
+                              Icons.inventory_2_outlined,
                               size: 64.sp,
                               color: Colors.grey.shade400,
                             ),
                             SizedBox(height: 16.h),
                             Text(
                               searchQuery.isEmpty
-                                  ? 'Loading Categories..'
+                                  ? 'No items found in this category'
                                   : 'No results for "$searchQuery"',
                               style: TextStyle(
                                 fontSize: 16.sp,
@@ -191,35 +201,33 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                         ),
                       );
                     }
-
                     return RefreshIndicator(
                       onRefresh: () async {
-                        await ref.read(catalogViewModelProvider.notifier).refresh();
+                        await ref
+                            .read(categoryItemListViewModelProvider(
+                            widget.categoryId)
+                            .notifier)
+                            .refresh();
                       },
                       color: AppColors.primary,
                       child: ListView.separated(
-                        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                        itemCount: categories.length,
-                        separatorBuilder: (context, index) => SizedBox(height: 12.h),
+                        padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 80.h),
+                        itemCount: items.length,
+                        separatorBuilder: (context, index) =>
+                            SizedBox(height: 12.h),
                         itemBuilder: (context, index) {
-                          final category = categories[index];
-
+                          final item = items[index];
                           return UniversalListCard(
-                            // Configured as per your UI image
-                            leadingImageAsset: category.imageAssetPath,
+                            leadingImageAsset: item.imageAssetPath,
                             isLeadingCircle: false,
                             leadingSize: 56.w,
-                            leadingBackgroundColor: Colors.transparent,
-
-                            title: category.name,
-                            subtitle: category.itemCount == null
-                                ? 'View items'
-                                : '${category.itemCount} items',
-
+                            leadingBackgroundColor: Colors.transparent, // Or light grey
+                            title: item.name,
+                            subtitle: item.subCategory ?? 'View Details',
+                            secondarySubtitle: item.sku,
                             showArrow: true,
                             arrowColor: AppColors.primary,
-
-                            onTap: () => _navigateToCategoryDetails(category),
+                            onTap: () => _navigateToItemDetails(item.id),
                           );
                         },
                       ),
@@ -231,9 +239,32 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                     ),
                   ),
                   error: (error, stack) => Center(
-                    child: Text(
-                      'Failed to load categories',
-                      style: TextStyle(fontSize: 16.sp, color: AppColors.error),
+                    child: Padding( // Add padding around error
+                      padding: EdgeInsets.all(32.w),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                          SizedBox(height: 16.h),
+                          Text(
+                            'Failed to load items',
+                            style: TextStyle(fontSize: 16.sp, color: Colors.black87),
+                            textAlign: TextAlign.center,
+                          ),
+                          SizedBox(height: 8.h),
+                          Text(
+                            error.toString(), // Show specific error in debug?
+                            style: TextStyle(fontSize: 12.sp, color: Colors.grey.shade600),
+                            textAlign: TextAlign.center,
+                          ),
+                          // Optionally add a retry button
+                          SizedBox(height: 16.h),
+                          ElevatedButton(
+                            onPressed: () => ref.invalidate(searchedCategoryItemsProvider(widget.categoryId)),
+                            child: const Text('Retry'),
+                          )
+                        ],
+                      ),
                     ),
                   ),
                 ),
