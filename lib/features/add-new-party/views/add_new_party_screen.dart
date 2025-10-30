@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/utils/field_validators.dart';
+import 'package:sales_sphere/core/utils/date_formatter.dart';
 import 'package:sales_sphere/features/add-new-party/models/add_new_party.model.dart';
 import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
@@ -28,6 +29,14 @@ class _AddNewPartyScreenState extends ConsumerState<AddNewPartyScreen> {
   final _googleMapLinkController = TextEditingController();
   final _latitudeController = TextEditingController();
   final _longitudeController = TextEditingController();
+  final _dateJoinedController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Set today's date
+    _dateJoinedController.text = DateFormatter.formatDateOnly(DateTime.now().toIso8601String());
+  }
 
   @override
   void dispose() {
@@ -40,6 +49,7 @@ class _AddNewPartyScreenState extends ConsumerState<AddNewPartyScreen> {
     _googleMapLinkController.dispose();
     _latitudeController.dispose();
     _longitudeController.dispose();
+    _dateJoinedController.dispose();
     super.dispose();
   }
 
@@ -62,6 +72,7 @@ class _AddNewPartyScreenState extends ConsumerState<AddNewPartyScreen> {
         longitude: _longitudeController.text.trim().isEmpty
             ? null
             : double.tryParse(_longitudeController.text.trim()),
+        dateJoined: DateTime.now().toIso8601String(),
       );
 
       await vm.addParty(request);
@@ -279,6 +290,17 @@ class _AddNewPartyScreenState extends ConsumerState<AddNewPartyScreen> {
                           }
                           return FieldValidators.validateEmail(value);
                         },
+                      ),
+                      SizedBox(height: 16.h),
+
+                      // --- Date Joined Field ---
+                      PrimaryTextField(
+                        hintText: "Date Joined",
+                        controller: _dateJoinedController,
+                        prefixIcon: Icons.date_range_outlined,
+                        hasFocusBorder: true,
+                        enabled: true,
+                        textInputAction: TextInputAction.next,
                       ),
                       SizedBox(height: 16.h),
 

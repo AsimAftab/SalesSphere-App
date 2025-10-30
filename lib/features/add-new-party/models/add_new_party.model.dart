@@ -18,6 +18,7 @@ abstract class AddPartyRequest with _$AddPartyRequest {
     String? googleMapLink,
     double? latitude,
     double? longitude,
+    String? dateJoined,
   }) = _AddPartyRequest;
 
   factory AddPartyRequest.fromJson(Map<String, dynamic> json) =>
@@ -55,6 +56,7 @@ abstract class Party with _$Party {
     String? googleMapLink,
     double? latitude,
     double? longitude,
+    String? dateJoined,
     required String organizationId, // Assumed, based on User model
     required bool isActive,
     required String createdAt,

@@ -119,6 +119,7 @@ class AddPartyViewModel extends _$AddPartyViewModel {
           googleMapLink: request.googleMapLink,
           latitude: request.latitude,
           longitude: request.longitude,
+          dateJoined: request.dateJoined,
           organizationId: 'mock_org_123456',
           isActive: true,
           createdAt: DateTime.now().toIso8601String(),

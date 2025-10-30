@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$AddPartyRequest {
 
- String get companyName; String get ownerName; String get phone; String get address; String get email; String get panVatNumber; String? get googleMapLink; double? get latitude; double? get longitude;
+ String get companyName; String get ownerName; String get phone; String get address; String get email; String get panVatNumber; String? get googleMapLink; double? get latitude; double? get longitude; String? get dateJoined;
 /// Create a copy of AddPartyRequest
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $AddPartyRequestCopyWith<AddPartyRequest> get copyWith => _$AddPartyRequestCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AddPartyRequest&&(identical(other.companyName, companyName) || other.companyName == companyName)&&(identical(other.ownerName, ownerName) || other.ownerName == ownerName)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.address, address) || other.address == address)&&(identical(other.email, email) || other.email == email)&&(identical(other.panVatNumber, panVatNumber) || other.panVatNumber == panVatNumber)&&(identical(other.googleMapLink, googleMapLink) || other.googleMapLink == googleMapLink)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AddPartyRequest&&(identical(other.companyName, companyName) || other.companyName == companyName)&&(identical(other.ownerName, ownerName) || other.ownerName == ownerName)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.address, address) || other.address == address)&&(identical(other.email, email) || other.email == email)&&(identical(other.panVatNumber, panVatNumber) || other.panVatNumber == panVatNumber)&&(identical(other.googleMapLink, googleMapLink) || other.googleMapLink == googleMapLink)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&(identical(other.dateJoined, dateJoined) || other.dateJoined == dateJoined));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,companyName,ownerName,phone,address,email,panVatNumber,googleMapLink,latitude,longitude);
+int get hashCode => Object.hash(runtimeType,companyName,ownerName,phone,address,email,panVatNumber,googleMapLink,latitude,longitude,dateJoined);
 
 @override
 String toString() {
-  return 'AddPartyRequest(companyName: $companyName, ownerName: $ownerName, phone: $phone, address: $address, email: $email, panVatNumber: $panVatNumber, googleMapLink: $googleMapLink, latitude: $latitude, longitude: $longitude)';
+  return 'AddPartyRequest(companyName: $companyName, ownerName: $ownerName, phone: $phone, address: $address, email: $email, panVatNumber: $panVatNumber, googleMapLink: $googleMapLink, latitude: $latitude, longitude: $longitude, dateJoined: $dateJoined)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $AddPartyRequestCopyWith<$Res>  {
   factory $AddPartyRequestCopyWith(AddPartyRequest value, $Res Function(AddPartyRequest) _then) = _$AddPartyRequestCopyWithImpl;
 @useResult
 $Res call({
- String companyName, String ownerName, String phone, String address, String email, String panVatNumber, String? googleMapLink, double? latitude, double? longitude
+ String companyName, String ownerName, String phone, String address, String email, String panVatNumber, String? googleMapLink, double? latitude, double? longitude, String? dateJoined
 });
 
 
@@ -65,7 +65,7 @@ class _$AddPartyRequestCopyWithImpl<$Res>
 
 /// Create a copy of AddPartyRequest
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? companyName = null,Object? ownerName = null,Object? phone = null,Object? address = null,Object? email = null,Object? panVatNumber = null,Object? googleMapLink = freezed,Object? latitude = freezed,Object? longitude = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? companyName = null,Object? ownerName = null,Object? phone = null,Object? address = null,Object? email = null,Object? panVatNumber = null,Object? googleMapLink = freezed,Object? latitude = freezed,Object? longitude = freezed,Object? dateJoined = freezed,}) {
   return _then(_self.copyWith(
 companyName: null == companyName ? _self.companyName : companyName // ignore: cast_nullable_to_non_nullable
 as String,ownerName: null == ownerName ? _self.ownerName : ownerName // ignore: cast_nullable_to_non_nullable
@@ -76,7 +76,8 @@ as String,panVatNumber: null == panVatNumber ? _self.panVatNumber : panVatNumber
 as String,googleMapLink: freezed == googleMapLink ? _self.googleMapLink : googleMapLink // ignore: cast_nullable_to_non_nullable
 as String?,latitude: freezed == latitude ? _self.latitude : latitude // ignore: cast_nullable_to_non_nullable
 as double?,longitude: freezed == longitude ? _self.longitude : longitude // ignore: cast_nullable_to_non_nullable
-as double?,
+as double?,dateJoined: freezed == dateJoined ? _self.dateJoined : dateJoined // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -161,10 +162,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String companyName,  String ownerName,  String phone,  String address,  String email,  String panVatNumber,  String? googleMapLink,  double? latitude,  double? longitude)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String companyName,  String ownerName,  String phone,  String address,  String email,  String panVatNumber,  String? googleMapLink,  double? latitude,  double? longitude,  String? dateJoined)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AddPartyRequest() when $default != null:
-return $default(_that.companyName,_that.ownerName,_that.phone,_that.address,_that.email,_that.panVatNumber,_that.googleMapLink,_that.latitude,_that.longitude);case _:
+return $default(_that.companyName,_that.ownerName,_that.phone,_that.address,_that.email,_that.panVatNumber,_that.googleMapLink,_that.latitude,_that.longitude,_that.dateJoined);case _:
   return orElse();
 
 }
@@ -182,10 +183,10 @@ return $default(_that.companyName,_that.ownerName,_that.phone,_that.address,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String companyName,  String ownerName,  String phone,  String address,  String email,  String panVatNumber,  String? googleMapLink,  double? latitude,  double? longitude)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String companyName,  String ownerName,  String phone,  String address,  String email,  String panVatNumber,  String? googleMapLink,  double? latitude,  double? longitude,  String? dateJoined)  $default,) {final _that = this;
 switch (_that) {
 case _AddPartyRequest():
-return $default(_that.companyName,_that.ownerName,_that.phone,_that.address,_that.email,_that.panVatNumber,_that.googleMapLink,_that.latitude,_that.longitude);case _:
+return $default(_that.companyName,_that.ownerName,_that.phone,_that.address,_that.email,_that.panVatNumber,_that.googleMapLink,_that.latitude,_that.longitude,_that.dateJoined);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -202,10 +203,10 @@ return $default(_that.companyName,_that.ownerName,_that.phone,_that.address,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String companyName,  String ownerName,  String phone,  String address,  String email,  String panVatNumber,  String? googleMapLink,  double? latitude,  double? longitude)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String companyName,  String ownerName,  String phone,  String address,  String email,  String panVatNumber,  String? googleMapLink,  double? latitude,  double? longitude,  String? dateJoined)?  $default,) {final _that = this;
 switch (_that) {
 case _AddPartyRequest() when $default != null:
-return $default(_that.companyName,_that.ownerName,_that.phone,_that.address,_that.email,_that.panVatNumber,_that.googleMapLink,_that.latitude,_that.longitude);case _:
+return $default(_that.companyName,_that.ownerName,_that.phone,_that.address,_that.email,_that.panVatNumber,_that.googleMapLink,_that.latitude,_that.longitude,_that.dateJoined);case _:
   return null;
 
 }
@@ -217,7 +218,7 @@ return $default(_that.companyName,_that.ownerName,_that.phone,_that.address,_tha
 @JsonSerializable()
 
 class _AddPartyRequest implements AddPartyRequest {
-  const _AddPartyRequest({required this.companyName, required this.ownerName, required this.phone, required this.address, required this.email, required this.panVatNumber, this.googleMapLink, this.latitude, this.longitude});
+  const _AddPartyRequest({required this.companyName, required this.ownerName, required this.phone, required this.address, required this.email, required this.panVatNumber, this.googleMapLink, this.latitude, this.longitude, this.dateJoined});
   factory _AddPartyRequest.fromJson(Map<String, dynamic> json) => _$AddPartyRequestFromJson(json);
 
 @override final  String companyName;
@@ -229,6 +230,7 @@ class _AddPartyRequest implements AddPartyRequest {
 @override final  String? googleMapLink;
 @override final  double? latitude;
 @override final  double? longitude;
+@override final  String? dateJoined;
 
 /// Create a copy of AddPartyRequest
 /// with the given fields replaced by the non-null parameter values.
@@ -243,16 +245,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AddPartyRequest&&(identical(other.companyName, companyName) || other.companyName == companyName)&&(identical(other.ownerName, ownerName) || other.ownerName == ownerName)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.address, address) || other.address == address)&&(identical(other.email, email) || other.email == email)&&(identical(other.panVatNumber, panVatNumber) || other.panVatNumber == panVatNumber)&&(identical(other.googleMapLink, googleMapLink) || other.googleMapLink == googleMapLink)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AddPartyRequest&&(identical(other.companyName, companyName) || other.companyName == companyName)&&(identical(other.ownerName, ownerName) || other.ownerName == ownerName)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.address, address) || other.address == address)&&(identical(other.email, email) || other.email == email)&&(identical(other.panVatNumber, panVatNumber) || other.panVatNumber == panVatNumber)&&(identical(other.googleMapLink, googleMapLink) || other.googleMapLink == googleMapLink)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&(identical(other.dateJoined, dateJoined) || other.dateJoined == dateJoined));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,companyName,ownerName,phone,address,email,panVatNumber,googleMapLink,latitude,longitude);
+int get hashCode => Object.hash(runtimeType,companyName,ownerName,phone,address,email,panVatNumber,googleMapLink,latitude,longitude,dateJoined);
 
 @override
 String toString() {
-  return 'AddPartyRequest(companyName: $companyName, ownerName: $ownerName, phone: $phone, address: $address, email: $email, panVatNumber: $panVatNumber, googleMapLink: $googleMapLink, latitude: $latitude, longitude: $longitude)';
+  return 'AddPartyRequest(companyName: $companyName, ownerName: $ownerName, phone: $phone, address: $address, email: $email, panVatNumber: $panVatNumber, googleMapLink: $googleMapLink, latitude: $latitude, longitude: $longitude, dateJoined: $dateJoined)';
 }
 
 
@@ -263,7 +265,7 @@ abstract mixin class _$AddPartyRequestCopyWith<$Res> implements $AddPartyRequest
   factory _$AddPartyRequestCopyWith(_AddPartyRequest value, $Res Function(_AddPartyRequest) _then) = __$AddPartyRequestCopyWithImpl;
 @override @useResult
 $Res call({
- String companyName, String ownerName, String phone, String address, String email, String panVatNumber, String? googleMapLink, double? latitude, double? longitude
+ String companyName, String ownerName, String phone, String address, String email, String panVatNumber, String? googleMapLink, double? latitude, double? longitude, String? dateJoined
 });
 
 
@@ -280,7 +282,7 @@ class __$AddPartyRequestCopyWithImpl<$Res>
 
 /// Create a copy of AddPartyRequest
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? companyName = null,Object? ownerName = null,Object? phone = null,Object? address = null,Object? email = null,Object? panVatNumber = null,Object? googleMapLink = freezed,Object? latitude = freezed,Object? longitude = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? companyName = null,Object? ownerName = null,Object? phone = null,Object? address = null,Object? email = null,Object? panVatNumber = null,Object? googleMapLink = freezed,Object? latitude = freezed,Object? longitude = freezed,Object? dateJoined = freezed,}) {
   return _then(_AddPartyRequest(
 companyName: null == companyName ? _self.companyName : companyName // ignore: cast_nullable_to_non_nullable
 as String,ownerName: null == ownerName ? _self.ownerName : ownerName // ignore: cast_nullable_to_non_nullable
@@ -291,7 +293,8 @@ as String,panVatNumber: null == panVatNumber ? _self.panVatNumber : panVatNumber
 as String,googleMapLink: freezed == googleMapLink ? _self.googleMapLink : googleMapLink // ignore: cast_nullable_to_non_nullable
 as String?,latitude: freezed == latitude ? _self.latitude : latitude // ignore: cast_nullable_to_non_nullable
 as double?,longitude: freezed == longitude ? _self.longitude : longitude // ignore: cast_nullable_to_non_nullable
-as double?,
+as double?,dateJoined: freezed == dateJoined ? _self.dateJoined : dateJoined // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -589,7 +592,7 @@ $PartyCopyWith<$Res> get data {
 /// @nodoc
 mixin _$Party {
 
-@JsonKey(name: '_id') String get id; String get companyName; String get ownerName; String get phone; String get address; String get email; String get panVatNumber; String? get googleMapLink; double? get latitude; double? get longitude; String get organizationId;// Assumed, based on User model
+@JsonKey(name: '_id') String get id; String get companyName; String get ownerName; String get phone; String get address; String get email; String get panVatNumber; String? get googleMapLink; double? get latitude; double? get longitude; String? get dateJoined; String get organizationId;// Assumed, based on User model
  bool get isActive; String get createdAt; String get updatedAt;@JsonKey(name: '__v') int get version;
 /// Create a copy of Party
 /// with the given fields replaced by the non-null parameter values.
@@ -603,16 +606,16 @@ $PartyCopyWith<Party> get copyWith => _$PartyCopyWithImpl<Party>(this as Party, 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Party&&(identical(other.id, id) || other.id == id)&&(identical(other.companyName, companyName) || other.companyName == companyName)&&(identical(other.ownerName, ownerName) || other.ownerName == ownerName)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.address, address) || other.address == address)&&(identical(other.email, email) || other.email == email)&&(identical(other.panVatNumber, panVatNumber) || other.panVatNumber == panVatNumber)&&(identical(other.googleMapLink, googleMapLink) || other.googleMapLink == googleMapLink)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&(identical(other.organizationId, organizationId) || other.organizationId == organizationId)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.version, version) || other.version == version));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Party&&(identical(other.id, id) || other.id == id)&&(identical(other.companyName, companyName) || other.companyName == companyName)&&(identical(other.ownerName, ownerName) || other.ownerName == ownerName)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.address, address) || other.address == address)&&(identical(other.email, email) || other.email == email)&&(identical(other.panVatNumber, panVatNumber) || other.panVatNumber == panVatNumber)&&(identical(other.googleMapLink, googleMapLink) || other.googleMapLink == googleMapLink)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&(identical(other.dateJoined, dateJoined) || other.dateJoined == dateJoined)&&(identical(other.organizationId, organizationId) || other.organizationId == organizationId)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.version, version) || other.version == version));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,companyName,ownerName,phone,address,email,panVatNumber,googleMapLink,latitude,longitude,organizationId,isActive,createdAt,updatedAt,version);
+int get hashCode => Object.hash(runtimeType,id,companyName,ownerName,phone,address,email,panVatNumber,googleMapLink,latitude,longitude,dateJoined,organizationId,isActive,createdAt,updatedAt,version);
 
 @override
 String toString() {
-  return 'Party(id: $id, companyName: $companyName, ownerName: $ownerName, phone: $phone, address: $address, email: $email, panVatNumber: $panVatNumber, googleMapLink: $googleMapLink, latitude: $latitude, longitude: $longitude, organizationId: $organizationId, isActive: $isActive, createdAt: $createdAt, updatedAt: $updatedAt, version: $version)';
+  return 'Party(id: $id, companyName: $companyName, ownerName: $ownerName, phone: $phone, address: $address, email: $email, panVatNumber: $panVatNumber, googleMapLink: $googleMapLink, latitude: $latitude, longitude: $longitude, dateJoined: $dateJoined, organizationId: $organizationId, isActive: $isActive, createdAt: $createdAt, updatedAt: $updatedAt, version: $version)';
 }
 
 
@@ -623,7 +626,7 @@ abstract mixin class $PartyCopyWith<$Res>  {
   factory $PartyCopyWith(Party value, $Res Function(Party) _then) = _$PartyCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(name: '_id') String id, String companyName, String ownerName, String phone, String address, String email, String panVatNumber, String? googleMapLink, double? latitude, double? longitude, String organizationId, bool isActive, String createdAt, String updatedAt,@JsonKey(name: '__v') int version
+@JsonKey(name: '_id') String id, String companyName, String ownerName, String phone, String address, String email, String panVatNumber, String? googleMapLink, double? latitude, double? longitude, String? dateJoined, String organizationId, bool isActive, String createdAt, String updatedAt,@JsonKey(name: '__v') int version
 });
 
 
@@ -640,7 +643,7 @@ class _$PartyCopyWithImpl<$Res>
 
 /// Create a copy of Party
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? companyName = null,Object? ownerName = null,Object? phone = null,Object? address = null,Object? email = null,Object? panVatNumber = null,Object? googleMapLink = freezed,Object? latitude = freezed,Object? longitude = freezed,Object? organizationId = null,Object? isActive = null,Object? createdAt = null,Object? updatedAt = null,Object? version = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? companyName = null,Object? ownerName = null,Object? phone = null,Object? address = null,Object? email = null,Object? panVatNumber = null,Object? googleMapLink = freezed,Object? latitude = freezed,Object? longitude = freezed,Object? dateJoined = freezed,Object? organizationId = null,Object? isActive = null,Object? createdAt = null,Object? updatedAt = null,Object? version = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,companyName: null == companyName ? _self.companyName : companyName // ignore: cast_nullable_to_non_nullable
@@ -652,7 +655,8 @@ as String,panVatNumber: null == panVatNumber ? _self.panVatNumber : panVatNumber
 as String,googleMapLink: freezed == googleMapLink ? _self.googleMapLink : googleMapLink // ignore: cast_nullable_to_non_nullable
 as String?,latitude: freezed == latitude ? _self.latitude : latitude // ignore: cast_nullable_to_non_nullable
 as double?,longitude: freezed == longitude ? _self.longitude : longitude // ignore: cast_nullable_to_non_nullable
-as double?,organizationId: null == organizationId ? _self.organizationId : organizationId // ignore: cast_nullable_to_non_nullable
+as double?,dateJoined: freezed == dateJoined ? _self.dateJoined : dateJoined // ignore: cast_nullable_to_non_nullable
+as String?,organizationId: null == organizationId ? _self.organizationId : organizationId // ignore: cast_nullable_to_non_nullable
 as String,isActive: null == isActive ? _self.isActive : isActive // ignore: cast_nullable_to_non_nullable
 as bool,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as String,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
@@ -742,10 +746,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: '_id')  String id,  String companyName,  String ownerName,  String phone,  String address,  String email,  String panVatNumber,  String? googleMapLink,  double? latitude,  double? longitude,  String organizationId,  bool isActive,  String createdAt,  String updatedAt, @JsonKey(name: '__v')  int version)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: '_id')  String id,  String companyName,  String ownerName,  String phone,  String address,  String email,  String panVatNumber,  String? googleMapLink,  double? latitude,  double? longitude,  String? dateJoined,  String organizationId,  bool isActive,  String createdAt,  String updatedAt, @JsonKey(name: '__v')  int version)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Party() when $default != null:
-return $default(_that.id,_that.companyName,_that.ownerName,_that.phone,_that.address,_that.email,_that.panVatNumber,_that.googleMapLink,_that.latitude,_that.longitude,_that.organizationId,_that.isActive,_that.createdAt,_that.updatedAt,_that.version);case _:
+return $default(_that.id,_that.companyName,_that.ownerName,_that.phone,_that.address,_that.email,_that.panVatNumber,_that.googleMapLink,_that.latitude,_that.longitude,_that.dateJoined,_that.organizationId,_that.isActive,_that.createdAt,_that.updatedAt,_that.version);case _:
   return orElse();
 
 }
@@ -763,10 +767,10 @@ return $default(_that.id,_that.companyName,_that.ownerName,_that.phone,_that.add
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: '_id')  String id,  String companyName,  String ownerName,  String phone,  String address,  String email,  String panVatNumber,  String? googleMapLink,  double? latitude,  double? longitude,  String organizationId,  bool isActive,  String createdAt,  String updatedAt, @JsonKey(name: '__v')  int version)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: '_id')  String id,  String companyName,  String ownerName,  String phone,  String address,  String email,  String panVatNumber,  String? googleMapLink,  double? latitude,  double? longitude,  String? dateJoined,  String organizationId,  bool isActive,  String createdAt,  String updatedAt, @JsonKey(name: '__v')  int version)  $default,) {final _that = this;
 switch (_that) {
 case _Party():
-return $default(_that.id,_that.companyName,_that.ownerName,_that.phone,_that.address,_that.email,_that.panVatNumber,_that.googleMapLink,_that.latitude,_that.longitude,_that.organizationId,_that.isActive,_that.createdAt,_that.updatedAt,_that.version);case _:
+return $default(_that.id,_that.companyName,_that.ownerName,_that.phone,_that.address,_that.email,_that.panVatNumber,_that.googleMapLink,_that.latitude,_that.longitude,_that.dateJoined,_that.organizationId,_that.isActive,_that.createdAt,_that.updatedAt,_that.version);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -783,10 +787,10 @@ return $default(_that.id,_that.companyName,_that.ownerName,_that.phone,_that.add
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: '_id')  String id,  String companyName,  String ownerName,  String phone,  String address,  String email,  String panVatNumber,  String? googleMapLink,  double? latitude,  double? longitude,  String organizationId,  bool isActive,  String createdAt,  String updatedAt, @JsonKey(name: '__v')  int version)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: '_id')  String id,  String companyName,  String ownerName,  String phone,  String address,  String email,  String panVatNumber,  String? googleMapLink,  double? latitude,  double? longitude,  String? dateJoined,  String organizationId,  bool isActive,  String createdAt,  String updatedAt, @JsonKey(name: '__v')  int version)?  $default,) {final _that = this;
 switch (_that) {
 case _Party() when $default != null:
-return $default(_that.id,_that.companyName,_that.ownerName,_that.phone,_that.address,_that.email,_that.panVatNumber,_that.googleMapLink,_that.latitude,_that.longitude,_that.organizationId,_that.isActive,_that.createdAt,_that.updatedAt,_that.version);case _:
+return $default(_that.id,_that.companyName,_that.ownerName,_that.phone,_that.address,_that.email,_that.panVatNumber,_that.googleMapLink,_that.latitude,_that.longitude,_that.dateJoined,_that.organizationId,_that.isActive,_that.createdAt,_that.updatedAt,_that.version);case _:
   return null;
 
 }
@@ -798,7 +802,7 @@ return $default(_that.id,_that.companyName,_that.ownerName,_that.phone,_that.add
 @JsonSerializable()
 
 class _Party implements Party {
-  const _Party({@JsonKey(name: '_id') required this.id, required this.companyName, required this.ownerName, required this.phone, required this.address, required this.email, required this.panVatNumber, this.googleMapLink, this.latitude, this.longitude, required this.organizationId, required this.isActive, required this.createdAt, required this.updatedAt, @JsonKey(name: '__v') required this.version});
+  const _Party({@JsonKey(name: '_id') required this.id, required this.companyName, required this.ownerName, required this.phone, required this.address, required this.email, required this.panVatNumber, this.googleMapLink, this.latitude, this.longitude, this.dateJoined, required this.organizationId, required this.isActive, required this.createdAt, required this.updatedAt, @JsonKey(name: '__v') required this.version});
   factory _Party.fromJson(Map<String, dynamic> json) => _$PartyFromJson(json);
 
 @override@JsonKey(name: '_id') final  String id;
@@ -811,6 +815,7 @@ class _Party implements Party {
 @override final  String? googleMapLink;
 @override final  double? latitude;
 @override final  double? longitude;
+@override final  String? dateJoined;
 @override final  String organizationId;
 // Assumed, based on User model
 @override final  bool isActive;
@@ -831,16 +836,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Party&&(identical(other.id, id) || other.id == id)&&(identical(other.companyName, companyName) || other.companyName == companyName)&&(identical(other.ownerName, ownerName) || other.ownerName == ownerName)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.address, address) || other.address == address)&&(identical(other.email, email) || other.email == email)&&(identical(other.panVatNumber, panVatNumber) || other.panVatNumber == panVatNumber)&&(identical(other.googleMapLink, googleMapLink) || other.googleMapLink == googleMapLink)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&(identical(other.organizationId, organizationId) || other.organizationId == organizationId)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.version, version) || other.version == version));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Party&&(identical(other.id, id) || other.id == id)&&(identical(other.companyName, companyName) || other.companyName == companyName)&&(identical(other.ownerName, ownerName) || other.ownerName == ownerName)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.address, address) || other.address == address)&&(identical(other.email, email) || other.email == email)&&(identical(other.panVatNumber, panVatNumber) || other.panVatNumber == panVatNumber)&&(identical(other.googleMapLink, googleMapLink) || other.googleMapLink == googleMapLink)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&(identical(other.dateJoined, dateJoined) || other.dateJoined == dateJoined)&&(identical(other.organizationId, organizationId) || other.organizationId == organizationId)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.version, version) || other.version == version));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,companyName,ownerName,phone,address,email,panVatNumber,googleMapLink,latitude,longitude,organizationId,isActive,createdAt,updatedAt,version);
+int get hashCode => Object.hash(runtimeType,id,companyName,ownerName,phone,address,email,panVatNumber,googleMapLink,latitude,longitude,dateJoined,organizationId,isActive,createdAt,updatedAt,version);
 
 @override
 String toString() {
-  return 'Party(id: $id, companyName: $companyName, ownerName: $ownerName, phone: $phone, address: $address, email: $email, panVatNumber: $panVatNumber, googleMapLink: $googleMapLink, latitude: $latitude, longitude: $longitude, organizationId: $organizationId, isActive: $isActive, createdAt: $createdAt, updatedAt: $updatedAt, version: $version)';
+  return 'Party(id: $id, companyName: $companyName, ownerName: $ownerName, phone: $phone, address: $address, email: $email, panVatNumber: $panVatNumber, googleMapLink: $googleMapLink, latitude: $latitude, longitude: $longitude, dateJoined: $dateJoined, organizationId: $organizationId, isActive: $isActive, createdAt: $createdAt, updatedAt: $updatedAt, version: $version)';
 }
 
 
@@ -851,7 +856,7 @@ abstract mixin class _$PartyCopyWith<$Res> implements $PartyCopyWith<$Res> {
   factory _$PartyCopyWith(_Party value, $Res Function(_Party) _then) = __$PartyCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(name: '_id') String id, String companyName, String ownerName, String phone, String address, String email, String panVatNumber, String? googleMapLink, double? latitude, double? longitude, String organizationId, bool isActive, String createdAt, String updatedAt,@JsonKey(name: '__v') int version
+@JsonKey(name: '_id') String id, String companyName, String ownerName, String phone, String address, String email, String panVatNumber, String? googleMapLink, double? latitude, double? longitude, String? dateJoined, String organizationId, bool isActive, String createdAt, String updatedAt,@JsonKey(name: '__v') int version
 });
 
 
@@ -868,7 +873,7 @@ class __$PartyCopyWithImpl<$Res>
 
 /// Create a copy of Party
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? companyName = null,Object? ownerName = null,Object? phone = null,Object? address = null,Object? email = null,Object? panVatNumber = null,Object? googleMapLink = freezed,Object? latitude = freezed,Object? longitude = freezed,Object? organizationId = null,Object? isActive = null,Object? createdAt = null,Object? updatedAt = null,Object? version = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? companyName = null,Object? ownerName = null,Object? phone = null,Object? address = null,Object? email = null,Object? panVatNumber = null,Object? googleMapLink = freezed,Object? latitude = freezed,Object? longitude = freezed,Object? dateJoined = freezed,Object? organizationId = null,Object? isActive = null,Object? createdAt = null,Object? updatedAt = null,Object? version = null,}) {
   return _then(_Party(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,companyName: null == companyName ? _self.companyName : companyName // ignore: cast_nullable_to_non_nullable
@@ -880,7 +885,8 @@ as String,panVatNumber: null == panVatNumber ? _self.panVatNumber : panVatNumber
 as String,googleMapLink: freezed == googleMapLink ? _self.googleMapLink : googleMapLink // ignore: cast_nullable_to_non_nullable
 as String?,latitude: freezed == latitude ? _self.latitude : latitude // ignore: cast_nullable_to_non_nullable
 as double?,longitude: freezed == longitude ? _self.longitude : longitude // ignore: cast_nullable_to_non_nullable
-as double?,organizationId: null == organizationId ? _self.organizationId : organizationId // ignore: cast_nullable_to_non_nullable
+as double?,dateJoined: freezed == dateJoined ? _self.dateJoined : dateJoined // ignore: cast_nullable_to_non_nullable
+as String?,organizationId: null == organizationId ? _self.organizationId : organizationId // ignore: cast_nullable_to_non_nullable
 as String,isActive: null == isActive ? _self.isActive : isActive // ignore: cast_nullable_to_non_nullable
 as bool,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as String,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable

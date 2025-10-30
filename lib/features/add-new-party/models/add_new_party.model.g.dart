@@ -17,6 +17,7 @@ _AddPartyRequest _$AddPartyRequestFromJson(Map<String, dynamic> json) =>
       googleMapLink: json['googleMapLink'] as String?,
       latitude: (json['latitude'] as num?)?.toDouble(),
       longitude: (json['longitude'] as num?)?.toDouble(),
+      dateJoined: json['dateJoined'] as String?,
     );
 
 Map<String, dynamic> _$AddPartyRequestToJson(_AddPartyRequest instance) =>
@@ -30,6 +31,7 @@ Map<String, dynamic> _$AddPartyRequestToJson(_AddPartyRequest instance) =>
       'googleMapLink': instance.googleMapLink,
       'latitude': instance.latitude,
       'longitude': instance.longitude,
+      'dateJoined': instance.dateJoined,
     };
 
 _AddPartyResponse _$AddPartyResponseFromJson(Map<String, dynamic> json) =>
@@ -57,6 +59,7 @@ _Party _$PartyFromJson(Map<String, dynamic> json) => _Party(
   googleMapLink: json['googleMapLink'] as String?,
   latitude: (json['latitude'] as num?)?.toDouble(),
   longitude: (json['longitude'] as num?)?.toDouble(),
+  dateJoined: json['dateJoined'] as String?,
   organizationId: json['organizationId'] as String,
   isActive: json['isActive'] as bool,
   createdAt: json['createdAt'] as String,
@@ -75,6 +78,7 @@ Map<String, dynamic> _$PartyToJson(_Party instance) => <String, dynamic>{
   'googleMapLink': instance.googleMapLink,
   'latitude': instance.latitude,
   'longitude': instance.longitude,
+  'dateJoined': instance.dateJoined,
   'organizationId': instance.organizationId,
   'isActive': instance.isActive,
   'createdAt': instance.createdAt,
