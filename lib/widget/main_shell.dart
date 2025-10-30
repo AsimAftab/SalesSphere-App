@@ -24,7 +24,7 @@ class MainShell extends StatelessWidget {
         context.go('/invoice');
         break;
       case 3:
-        context.go('/parties');
+
         break;
       case 4:
         context.go('/settings');
@@ -39,6 +39,7 @@ class MainShell extends StatelessWidget {
       bottomNavigationBar: AppBottomNav(
         currentIndex: currentIndex,
         onTap: (index) => _onNavTap(context, index),
+        parentContext: context,
       ),
     );
   }
