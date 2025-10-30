@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sales_sphere/features/Detail-Added/view/detail_added.dart';
+import 'package:sales_sphere/features/catalog/views/catalog_item_list_screen.dart';
 import 'package:sales_sphere/widget/main_shell.dart';
 import 'package:sales_sphere/features/auth/views/login_screen.dart';
 import 'package:sales_sphere/features/home/views/home_screen.dart';
@@ -19,7 +20,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
   final user = ref.watch(userControllerProvider);
 
   return GoRouter(
-    initialLocation: '/catalog',
+    initialLocation: '/',
     debugLogDiagnostics: true,
     // Refresh router when user auth state changes
     refreshListenable: _UserAuthNotifier(ref),
@@ -72,6 +73,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
+
       // ========================================
       // MAIN APP ROUTES (With Bottom Navigation)
       // ========================================
@@ -113,8 +115,29 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: '/catalog',
             name: 'catalog',
             pageBuilder: (context, state) => const NoTransitionPage(
+              // Use corrected screen name if you renamed it
               child: CatalogScreen(),
             ),
+            // ⬇️ ADD NESTED ROUTE HERE ⬇️
+            routes: [
+              GoRoute(
+                // Path is relative: /catalog/:categoryId
+                path: ':categoryId',
+                // ✅ USE THIS NAME IN pushNamed
+                name: 'catalog-items',
+                builder: (context, state) {
+                  final categoryId = state.pathParameters['categoryId'] ?? 'error';
+                  final categoryName = state.extra as String? ?? 'Category Items';
+
+                  // ✅ BUILD THE CORRECT SCREEN
+                  return CategoryItemListScreen(
+                    categoryId: categoryId,
+                    categoryName: categoryName,
+                  );
+                },
+              ),
+            ],
+            // --- END OF NESTED ROUTE ---
           ),
 
           // Invoice Tab
