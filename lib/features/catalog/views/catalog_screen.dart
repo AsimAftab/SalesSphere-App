@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/features/catalog/models/catalog.model.dart';
 import 'package:sales_sphere/features/catalog/vm/catalog.vm.dart';
@@ -28,21 +29,12 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     ref.read(catalogSearchQueryProvider.notifier).updateQuery(query);
   }
 
-  // --- 2. UPDATE NAVIGATION FUNCTION ---
-  // Change parameter type and add navigation logic
   void _navigateToCategoryDetails(CatalogCategory category) {
-    // Add a print for debugging if needed
-    // print('Navigating to category: ${category.name} (ID: ${category.id})');
-
-    // Use pushNamed with parameters and extra data
     context.pushNamed(
-      'catalog-items', // ✅ Use the correct nested route name
+      'catalog_items',
       pathParameters: {'categoryId': category.id},
       extra: category.name,
     );
-
-    // Alternative using path:
-    // context.push('/catalog/${category.id}', extra: category.name);
   }
 
   @override
@@ -51,7 +43,6 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     final searchedCategoriesAsync = ref.watch(searchedCategoriesProvider);
 
     return Scaffold(
-      // Use transparent appbar and stack for the wave background
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -83,9 +74,8 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
           // Main Content
           Column(
             children: [
-              // This container pushes the content below the appbar/wave
               Container(
-                height: 120.h, // Adjust this height to match wave
+                height: 120.h,
                 color: Colors.transparent,
               ),
 
@@ -179,7 +169,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                             SizedBox(height: 16.h),
                             Text(
                               searchQuery.isEmpty
-                                  ? 'Loading Categories..'
+                                  ? 'No categories found'
                                   : 'No results for "$searchQuery"',
                               style: TextStyle(
                                 fontSize: 16.sp,
@@ -205,29 +195,43 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                           final category = categories[index];
 
                           return UniversalListCard(
-                            // Configured as per your UI image
                             leadingImageAsset: category.imageAssetPath,
                             isLeadingCircle: false,
                             leadingSize: 56.w,
                             leadingBackgroundColor: Colors.transparent,
-
                             title: category.name,
                             subtitle: category.itemCount == null
                                 ? 'View items'
                                 : '${category.itemCount} items',
-
                             showArrow: true,
                             arrowColor: AppColors.primary,
-
                             onTap: () => _navigateToCategoryDetails(category),
                           );
                         },
                       ),
                     );
                   },
-                  loading: () => Center(
-                    child: CircularProgressIndicator(
-                      color: AppColors.primary,
+                  // --- UPDATED LOADING BLOCK ---
+                  loading: () => Skeletonizer(
+                    enabled: true,
+                    child: ListView.separated(
+                      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                      itemCount: 8, // Number of skeleton items
+                      separatorBuilder: (context, index) => SizedBox(height: 12.h),
+                      itemBuilder: (context, index) {
+                        // Use your REAL card with placeholder data
+                        return UniversalListCard(
+                          leadingImageAsset: null,
+                          isLeadingCircle: false,
+                          leadingSize: 56.w,
+                          leadingBackgroundColor: Colors.transparent,
+                          title: "Category Name",
+                          subtitle: "123 items",
+                          showArrow: true,
+                          arrowColor: Colors.transparent,
+                          onTap: () {},
+                        );
+                      },
                     ),
                   ),
                   error: (error, stack) => Center(
