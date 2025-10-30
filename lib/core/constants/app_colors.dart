@@ -28,6 +28,7 @@ class AppColors {
   static const Color textDisabled = Color(0xFFBDBDBD);
   static const Color textWhite = Color(0xFFFFFFFF);
   static const Color textOrange = Color(0xFFFF7029);
+  static const Color textdark = Color(0xDD000000);
 
 
   // Icons Colors
@@ -66,12 +67,12 @@ class AppColors {
   );
 
   // Shadow Colors
-  static Color shadow = Colors.black.withOpacity(0.1);
-  static Color shadowDark = Colors.black.withOpacity(0.3);
+  static Color shadow = Colors.black.withValues(alpha: 0.1);
+  static Color shadowDark = Colors.black.withValues(alpha: 0.3);
 
   // Overlay Colors
-  static Color overlay = Colors.black.withOpacity(0.5);
-  static Color overlayLight = Colors.black.withOpacity(0.3);
+  static Color overlay = Colors.black.withValues(alpha: 0.5);
+  static Color overlayLight = Colors.black.withValues(alpha: 0.3);
 
   // Chart Colors
   static const List<Color> chartColors = [

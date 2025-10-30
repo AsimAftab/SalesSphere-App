@@ -194,19 +194,18 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
     final partyAsync = ref.watch(partyByIdProvider(widget.partyId));
 
     return Scaffold(
-
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: const Icon(Icons.arrow_back, color: AppColors.textdark),
           onPressed: () => context.pop(),
         ),
         title: Text(
           'Details',
           style: TextStyle(
-            color: Colors.black87,
+            color: AppColors.textdark,
             fontSize: 18.sp,
             fontWeight: FontWeight.w600,
             fontFamily: 'Poppins',
@@ -252,7 +251,7 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                 return Center(
                   child: Text(
                     'Party not found',
-                    style: TextStyle(fontSize: 16.sp, color: Colors.black87),
+                    style: TextStyle(fontSize: 16.sp, color: AppColors.textdark),
                   ),
                 );
               }
@@ -297,7 +296,7 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                                       style: TextStyle(
                                         fontSize: 20.sp,
                                         fontWeight: FontWeight.w700,
-                                        color: Colors.black87,
+                                        color: AppColors.textdark,
                                         fontFamily: 'Poppins',
                                       ),
                                     ),
@@ -349,7 +348,7 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                                 style: TextStyle(
                                   fontSize: 16.sp,
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.black87,
+                                  color: AppColors.textdark,
                                   fontFamily: 'Poppins',
                                 ),
                               ),
@@ -531,7 +530,7 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                   SizedBox(height: 16.h),
                   Text(
                     'Failed to load party details',
-                    style: TextStyle(fontSize: 16.sp, color: Colors.black87, fontWeight: FontWeight.w500),
+                    style: TextStyle(fontSize: 16.sp, color: AppColors.textdark, fontWeight: FontWeight.w500),
                   ),
                   SizedBox(height: 8.h),
                   Padding(
