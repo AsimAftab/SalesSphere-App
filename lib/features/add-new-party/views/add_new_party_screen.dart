@@ -6,9 +6,8 @@ import 'package:sales_sphere/core/utils/field_validators.dart';
 import 'package:sales_sphere/features/add-new-party/models/add_new_party.model.dart';
 import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
-// import 'package:sales_sphere/widget/error_display_widget.dart'; // Assuming you have/want a reusable error widget
 import 'package:sales_sphere/features/add-new-party/vm/add_new_party.vm.dart';
-import 'package:go_router/go_router.dart'; // Uncomment if you want to navigate on success
+import 'package:go_router/go_router.dart';
 
 class AddNewPartyScreen extends ConsumerStatefulWidget {
   const AddNewPartyScreen({super.key});
@@ -79,8 +78,8 @@ class _AddNewPartyScreenState extends ConsumerState<AddNewPartyScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        // Optional: Navigate back
-        // context.pop();
+        // Navigate to success screen
+        context.go('/detail-added');
       }
     });
 
@@ -134,7 +133,7 @@ class _AddNewPartyScreenState extends ConsumerState<AddNewPartyScreen> {
 
           // --- Bottom White Card with Form ---
           Expanded(
-            child: Container(
+                child: Container(
               width: double.infinity,
               padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 32.h),
               decoration: BoxDecoration(

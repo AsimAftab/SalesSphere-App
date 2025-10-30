@@ -7,7 +7,7 @@ import 'package:sales_sphere/widget/main_shell.dart';
 import 'package:sales_sphere/features/auth/views/login_screen.dart';
 import 'package:sales_sphere/features/home/views/home_screen.dart';
 import 'package:sales_sphere/features/catalog/views/catalog_screen.dart';
-import 'package:sales_sphere/features/invoice/views/invoice_screen.dart';
+import 'package:sales_phere/features/invoice/views/invoice_screen.dart';
 import 'package:sales_sphere/features/parties/views/parties_screen.dart';
 import 'package:sales_sphere/features/parties/views/edit_party_details_screen.dart';
 import 'package:sales_sphere/features/settings/views/settings_screen.dart';
