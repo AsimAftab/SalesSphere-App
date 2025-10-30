@@ -60,6 +60,12 @@ class _PrimaryTextFieldState extends State<PrimaryTextField> {
 
   @override
   Widget build(BuildContext context) {
+    // ⭐ Check if field is enabled
+    final isEnabled = widget.enabled ?? true;
+
+    // ⭐ Show grey styling when disabled
+    final shouldShowGreyStyle = !isEnabled;
+
     // Priority: errorText prop > validator error
     final displayError = widget.errorText ?? _validatorError;
     final hasError = displayError != null && displayError.isNotEmpty;
@@ -70,7 +76,10 @@ class _PrimaryTextFieldState extends State<PrimaryTextField> {
         TextFormField(
           controller: widget.controller,
           style: TextStyle(
-            color: AppColors.textPrimary,
+            // ⭐ Grey text when disabled
+            color: shouldShowGreyStyle
+                ? AppColors.textSecondary.withOpacity(0.6)
+                : AppColors.textPrimary,
             fontSize: 15.sp,
             fontFamily: 'Poppins',
             fontWeight: FontWeight.w400,
@@ -80,7 +89,7 @@ class _PrimaryTextFieldState extends State<PrimaryTextField> {
           inputFormatters: widget.inputFormatters,
           maxLength: widget.maxLength,
           autofillHints: widget.autofillHints,
-          enabled: widget.enabled ?? true,
+          enabled: isEnabled,
           textInputAction: widget.textInputAction,
           minLines: widget.minLines,
           maxLines: widget.obscureText == true ? 1 : (widget.maxLines ?? 1),
@@ -100,28 +109,41 @@ class _PrimaryTextFieldState extends State<PrimaryTextField> {
             label: widget.label,
             labelStyle: widget.labelStyle ??
                 TextStyle(
-                  color: AppColors.textSecondary,
+                  color: shouldShowGreyStyle
+                      ? AppColors.textSecondary.withOpacity(0.5)
+                      : AppColors.textSecondary,
                   fontSize: 14.sp,
                   fontFamily: 'Poppins',
                 ),
             hintStyle: TextStyle(
-              color: AppColors.textHint,
+              // ⭐ Lighter hint when disabled
+              color: shouldShowGreyStyle
+                  ? AppColors.textHint.withOpacity(0.5)
+                  : AppColors.textHint,
               fontSize: 14.sp,
               fontFamily: 'Poppins',
               fontWeight: FontWeight.w400,
             ),
             prefixIcon: widget.prefixIcon != null
                 ? Icon(
-                    widget.prefixIcon,
-                    color: hasError ? AppColors.error : AppColors.textSecondary,
-                    size: 20.sp,
-                  )
+              widget.prefixIcon,
+              // ⭐ Grey icon when disabled or error
+              color: hasError
+                  ? AppColors.error
+                  : (shouldShowGreyStyle
+                  ? AppColors.textSecondary.withOpacity(0.4)
+                  : AppColors.textSecondary),
+              size: 20.sp,
+            )
                 : null,
             suffixIcon: widget.suffixWidget,
             filled: true,
+            // ⭐ Grey background when disabled
             fillColor: hasError
                 ? AppColors.error.withOpacity(0.05)
-                : AppColors.surface,
+                : (shouldShowGreyStyle
+                ? Colors.grey.shade100
+                : AppColors.surface),
 
             // Border Styles
             border: OutlineInputBorder(
@@ -134,7 +156,11 @@ class _PrimaryTextFieldState extends State<PrimaryTextField> {
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12.r),
               borderSide: BorderSide(
-                color: hasError ? AppColors.error : AppColors.border,
+                color: hasError
+                    ? AppColors.error
+                    : (shouldShowGreyStyle
+                    ? AppColors.border.withOpacity(0.2)
+                    : AppColors.border),
                 width: 1.5,
               ),
             ),
@@ -159,10 +185,11 @@ class _PrimaryTextFieldState extends State<PrimaryTextField> {
                 width: 2,
               ),
             ),
+            // ⭐ Very light border when disabled
             disabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12.r),
               borderSide: BorderSide(
-                color: AppColors.border.withOpacity(0.5),
+                color: AppColors.border.withOpacity(0.2),
                 width: 1.5,
               ),
             ),

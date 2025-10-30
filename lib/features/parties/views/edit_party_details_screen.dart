@@ -4,10 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:sales_sphere/core/utils/date_formatter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/utils/field_validators.dart';
-import 'package:sales_sphere/features/parties/models/edit_party_details.model.dart';
+import 'package:sales_sphere/features/parties/models/parties.model.dart';
 import 'package:sales_sphere/features/parties/vm/edit_party.vm.dart';
 import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
@@ -37,6 +39,7 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
   late TextEditingController _latitudeController;
   late TextEditingController _longitudeController;
   late TextEditingController _notesController;
+  late TextEditingController _dateJoinedController;
 
   PartyDetails? _currentParty;
   @override
@@ -55,20 +58,25 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
     _latitudeController = TextEditingController();
     _longitudeController = TextEditingController();
     _notesController = TextEditingController();
+    _dateJoinedController = TextEditingController();
   }
 
   void _populateFields(PartyDetails party) {
     if (!mounted) return;
-    _currentParty = party;
-    _nameController.text = party.name;
-    _phoneController.text = party.phoneNumber;
-    _emailController.text = party.email ?? '';
-    _ownerNameController.text = party.ownerName;
-    _panVatNumberController.text = party.panVatNumber;
-    _fullAddressController.text = party.fullAddress;
-    _latitudeController.text = party.latitude?.toString() ?? '';
-    _longitudeController.text = party.longitude?.toString() ?? '';
-    _notesController.text = party.notes ?? '';
+    setState(() {
+      _currentParty = party;
+      _nameController.text = party.name;
+      _phoneController.text = party.phoneNumber;
+      _emailController.text = party.email ?? '';
+      _ownerNameController.text = party.ownerName;
+      _panVatNumberController.text = party.panVatNumber;
+      _fullAddressController.text = party.fullAddress;
+      _latitudeController.text = party.latitude?.toString() ?? '';
+      _longitudeController.text = party.longitude?.toString() ?? '';
+      _notesController.text = party.notes ?? '';
+      _dateJoinedController.text = DateFormatter.formatDateOnly(party.dateJoined);
+    });
+
   }
 
   @override
@@ -82,9 +90,10 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
     _latitudeController.dispose();
     _longitudeController.dispose();
     _notesController.dispose();
+    _dateJoinedController.dispose();
     super.dispose();
   }
-
+  //TODO : Required Fixing Handle Save Method
   Future<void> _handleSave() async {
     if (_formKey.currentState?.validate() ?? false) {
       if (_currentParty == null) return;
@@ -109,28 +118,175 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
       );
 
       try {
+        // Show loading indicator
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  ),
+                  SizedBox(width: 16),
+                  Text('Updating party details...'),
+                ],
+              ),
+              duration: Duration(seconds: 30),
+              backgroundColor: AppColors.primary,
+            ),
+          );
+        }
+
+        // Call API to update party
         await vm.updateParty(updatedParty);
 
         if (mounted) {
+          // Close loading snackbar
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
           setState(() {
             _isEditMode = false;
+            _currentParty = updatedParty;
           });
+
+          // Show beautiful success snackbar
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('Party details updated successfully'),
+              content: Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(8.w),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    child: Icon(
+                      Icons.check_circle,
+                      color: Colors.white,
+                      size: 24.sp,
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Success!',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                        SizedBox(height: 2.h),
+                        Text(
+                          'Party details updated successfully',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 12.sp,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
               backgroundColor: AppColors.success,
               behavior: SnackBarBehavior.floating,
+              duration: Duration(seconds: 3),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              margin: EdgeInsets.all(16.w),
+              elevation: 6,
             ),
           );
+
+          // Refresh the party details from API to ensure data is synced
           ref.invalidate(partyByIdProvider(widget.partyId));
+
+          // Wait a moment for the provider to refresh, then repopulate fields
+          Future.delayed(Duration(milliseconds: 500), () {
+            if (mounted) {
+              final refreshedPartyAsync = ref.read(partyByIdProvider(widget.partyId));
+              refreshedPartyAsync.whenData((refreshedParty) {
+                if (refreshedParty != null && mounted) {
+                  _populateFields(refreshedParty);
+                }
+              });
+            }
+          });
         }
       } catch (e) {
         if (mounted) {
+          // Close loading snackbar
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+          // Show beautiful error snackbar
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Failed to update details: $e'),
+              content: Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(8.w),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    child: Icon(
+                      Icons.error_outline,
+                      color: Colors.white,
+                      size: 24.sp,
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Update Failed',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                        SizedBox(height: 2.h),
+                        Text(
+                          e.toString().replaceAll('Exception: ', ''),
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 12.sp,
+                            fontFamily: 'Poppins',
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
               backgroundColor: AppColors.error,
               behavior: SnackBarBehavior.floating,
+              duration: Duration(seconds: 4),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              margin: EdgeInsets.all(16.w),
+              elevation: 6,
             ),
           );
         }
@@ -256,11 +412,15 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                 );
               }
 
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (_currentParty == null || _currentParty!.id != party.id) {
-                  _populateFields(party);
-                }
-              });
+              // Populate fields immediately when party data is first loaded or changes
+              if (_currentParty == null || _currentParty!.id != party.id) {
+                // Use postFrameCallback to avoid calling setState during build
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) {
+                    _populateFields(party);
+                  }
+                });
+              }
 
               return Column(
                 children: [
@@ -450,11 +610,22 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                                     ),
                                     SizedBox(height: 16.h),
                                     PrimaryTextField(
+                                      hintText: "Notes",
+                                      controller: _notesController,
+                                      prefixIcon: Icons.note_outlined,
+                                      hasFocusBorder: true,
+                                      enabled: _isEditMode,
+                                      minLines: 1,
+                                      maxLines: 5,
+                                      textInputAction: TextInputAction.newline,
+                                    ),
+                                    SizedBox(height: 16.h,),
+                                    PrimaryTextField(
                                       hintText: "Latitude",
                                       controller: _latitudeController,
                                       prefixIcon: Icons.explore_outlined,
                                       hasFocusBorder: true,
-                                      enabled: _isEditMode,
+                                      enabled: false,
                                       keyboardType: TextInputType.numberWithOptions(decimal: true),
                                       textInputAction: TextInputAction.next,
                                     ),
@@ -464,20 +635,17 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                                       controller: _longitudeController,
                                       prefixIcon: Icons.explore_outlined,
                                       hasFocusBorder: true,
-                                      enabled: _isEditMode,
-                                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                                      enabled: false,
+
                                       textInputAction: TextInputAction.next,
                                     ),
                                     SizedBox(height: 16.h),
                                     PrimaryTextField(
-                                      hintText: "Notes",
-                                      controller: _notesController,
-                                      prefixIcon: Icons.note_outlined,
+                                      hintText: "Date Joined",
+                                      controller: _dateJoinedController,
+                                      prefixIcon: Icons.date_range_outlined,
                                       hasFocusBorder: true,
-                                      enabled: _isEditMode,
-                                      keyboardType: TextInputType.multiline,
-                                      minLines: 1,
-                                      maxLines: 5,
+                                      enabled: false,
                                       textInputAction: TextInputAction.newline,
                                     ),
                                   ],

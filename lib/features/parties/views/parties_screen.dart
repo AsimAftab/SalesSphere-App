@@ -36,22 +36,12 @@ class _PartiesScreenState extends ConsumerState<PartiesScreen> {
 
   void _navigateToAddParty() {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Add Party screen coming soon!'),
+      const SnackBar(
+        content: Text('Add Party screen coming soon!'),
         backgroundColor: AppColors.primary,
         behavior: SnackBarBehavior.floating,
       ),
     );
-  }
-
-  String _extractLocation(String fullAddress) {
-    final parts = fullAddress.split(',');
-    if (parts.length >= 2) {
-      return '${parts[0].trim()}, ${parts[1].trim()}';
-    }
-    return fullAddress.length > 30
-        ? '${fullAddress.substring(0, 30)}...'
-        : fullAddress;
   }
 
   @override
@@ -207,7 +197,7 @@ class _PartiesScreenState extends ConsumerState<PartiesScreen> {
                         leadingBackgroundColor: AppColors.primary,
                         leadingSize: 48.w,
                         title: party.name,
-                        subtitle: _extractLocation(party.fullAddress),
+                        subtitle: party.ownerName,
                         onTap: () => _navigateToPartyDetails(party.id),
                       );
                     },

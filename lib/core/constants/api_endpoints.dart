@@ -3,7 +3,7 @@
 class ApiEndpoints {
   ApiEndpoints._();
 
-  // Auth Endpoints
+  // Auth Endpoints (Final)
   static const String login = '/auth/login';
   static const String register = '/auth/register';
   static const String logout = '/auth/logout';
@@ -38,6 +38,13 @@ class ApiEndpoints {
   static const String createCustomer = '/customers';
   static const String updateCustomer = '/customers';
   static const String deleteCustomer = '/customers';
+
+  // Parties Endpoints (Final)
+  static const String parties = '/parties';
+  static String partyById(String id) => '/parties/$id';
+  static const String createParty = '/parties';
+  static String updateParty(String id) => '/parties/$id';
+  static String deleteParty(String id) => '/parties/$id';
 
   // File Upload
   static const String uploadImage = '/upload/image';

@@ -1,6 +1,10 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'dart:async';
-import 'package:sales_sphere/features/parties/models/edit_party_details.model.dart';
+import 'package:sales_sphere/features/parties/models/parties.model.dart';
+import 'package:sales_sphere/core/network_layer/dio_client.dart';
+import 'package:sales_sphere/core/constants/api_endpoints.dart';
+import 'package:dio/dio.dart';
+import 'package:sales_sphere/core/utils/logger.dart';
 
 part 'edit_party.vm.g.dart';
 
@@ -8,34 +12,78 @@ part 'edit_party.vm.g.dart';
 class PartyViewModel extends _$PartyViewModel {
   @override
   FutureOr<List<PartyDetails>> build() async {
-    // Initial state - fetch all parties
+    // Initial state - fetch all parties from API
     return _fetchParties();
   }
 
-  // FETCH ALL PARTIES (Mocked for now)
+  // FETCH ALL PARTIES FROM API
   Future<List<PartyDetails>> _fetchParties() async {
     try {
-      await Future.delayed(const Duration(seconds: 1));
-      return getMockParties();
+      final dio = ref.read(dioClientProvider);
+      AppLogger.i('Fetching parties from API: ${ApiEndpoints.parties}');
+
+      final response = await dio.get(ApiEndpoints.parties);
+
+      AppLogger.d('Parties API response: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final apiResponse = PartiesApiResponse.fromJson(response.data);
+        AppLogger.i('✅ Fetched ${apiResponse.count} parties successfully');
+
+
+        final parties = apiResponse.data.map((apiData) {
+          return PartyDetails(
+            id: apiData.id,
+            name: apiData.partyName,
+            ownerName: apiData.ownerName,
+            panVatNumber: '', // Not available in list API
+            phoneNumber: '', // Not available in list API
+            fullAddress: apiData.location.address,
+            isActive: true,
+          );
+        }).toList();
+
+        return parties;
+      } else {
+        throw Exception('Failed to fetch parties: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      AppLogger.e('❌ Dio error fetching parties: ${e.message}');
+      throw Exception('Network error: ${e.message}');
     } catch (e) {
+      AppLogger.e('❌ Error fetching parties: $e');
       throw Exception('Failed to fetch parties: $e');
     }
   }
 
-  // GET SINGLE PARTY BY ID
+  // GET SINGLE PARTY BY ID FROM API
   Future<PartyDetails?> getPartyById(String id) async {
     try {
-      await Future.delayed(const Duration(milliseconds: 400));
+      final dio = ref.read(dioClientProvider);
+      AppLogger.i('Fetching party details for ID: $id');
 
-      final allParties = getMockParties();
+      final response = await dio.get(ApiEndpoints.partyById(id));
 
-      final party = allParties.firstWhere(
-            (p) => p.id == id,
-        orElse: () => throw Exception('Party not found with ID: $id'),
-      );
+      if (response.statusCode == 200) {
+        // Parse the full API response
+        final apiResponse = PartyDetailApiResponse.fromJson(response.data);
 
-      return party;
-    } catch (e) {
+        // Convert API data to PartyDetails using helper method
+        final party = PartyDetails.fromApiDetail(apiResponse.data);
+
+        AppLogger.i('✅ Fetched party details for: ${party.name}');
+        AppLogger.d('Party details: Phone: ${party.phoneNumber}, Email: ${party.email}, Address: ${party.fullAddress}');
+
+        return party;
+      } else {
+        throw Exception('Party not found with ID: $id');
+      }
+    } on DioException catch (e) {
+      AppLogger.e('❌ Dio error fetching party $id: ${e.message}');
+      throw Exception('Network error: ${e.message}');
+    } catch (e, stackTrace) {
+      AppLogger.e('❌ Error fetching party $id: $e');
+      AppLogger.e('Stack trace: $stackTrace');
       throw Exception('Failed to get party: $e');
     }
   }
@@ -50,12 +98,49 @@ class PartyViewModel extends _$PartyViewModel {
     });
   }
 
+  // UPDATE PARTY VIA API
   Future<void> updateParty(PartyDetails updatedParty) async {
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      final currentParties = state.value ?? [];
-      return currentParties.map((p) => p.id == updatedParty.id ? updatedParty : p).toList();
-    });
+    try {
+      final dio = ref.read(dioClientProvider);
+      AppLogger.i('Updating party: ${updatedParty.name} (ID: ${updatedParty.id})');
+
+      // Create update request with all editable fields
+      final updateRequest = UpdatePartyRequest.fromPartyDetails(updatedParty);
+
+      // Convert to JSON
+      final requestData = updateRequest.toJson();
+
+      AppLogger.d('Update request data: $requestData');
+
+      // Send PUT request
+      final response = await dio.put(
+        ApiEndpoints.updateParty(updatedParty.id),
+        data: requestData,
+      );
+
+      if (response.statusCode == 200) {
+        AppLogger.i('✅ Party updated successfully');
+
+        // Update local state
+        state = const AsyncValue.loading();
+        state = await AsyncValue.guard(() async {
+          final currentParties = state.value ?? [];
+          return currentParties.map((p) => p.id == updatedParty.id ? updatedParty : p).toList();
+        });
+      } else {
+        throw Exception('Failed to update party: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      AppLogger.e('❌ Dio error updating party: ${e.message}');
+      if (e.response != null) {
+        AppLogger.e('Response data: ${e.response?.data}');
+      }
+      throw Exception('Network error: ${e.message}');
+    } catch (e, stackTrace) {
+      AppLogger.e('❌ Error updating party: $e');
+      AppLogger.e('Stack trace: $stackTrace');
+      throw Exception('Failed to update party: $e');
+    }
   }
 
   Future<void> deleteParty(String id) async {
@@ -115,63 +200,16 @@ class PartyViewModel extends _$PartyViewModel {
     return null;
   }
 
-  // MOCK DATA (Replace with API later)
-  List<PartyDetails> getMockParties() {
-    return [
-      PartyDetails(
-        id: '1',
-        name: 'Agarwal Traders',
-        ownerName: 'Rajesh Agarwal',
-        panVatNumber: 'GST12345678',
-        phoneNumber: '9800000000',
-        email: 'rajesh@agarwaltraders.com',
-        fullAddress: '123 MG Road, Mumbai, Maharashtra, 400001, India',
-        latitude: 19.0760,
-        longitude: 72.8777,
-        notes: 'Regular customer, good payment history',
-        isActive: true,
-        createdAt: DateTime.now().subtract(const Duration(days: 30)),
-        updatedAt: DateTime.now(),
-      ),
-      PartyDetails(
-        id: '2',
-        name: 'Kumar Enterprises',
-        ownerName: 'Suresh Kumar',
-        panVatNumber: 'GST87654321',
-        phoneNumber: '9875632415',
-        email: 'suresh@kumarenterprises.com',
-        fullAddress: '456 Park Street, Delhi, 110001, India',
-        latitude: 28.6139,
-        longitude: 77.2090,
-        notes: 'Reliable vendor',
-        isActive: true,
-        createdAt: DateTime.now().subtract(const Duration(days: 60)),
-        updatedAt: DateTime.now(),
-      ),
-      PartyDetails(
-        id: '3',
-        name: 'Shah & Sons',
-        ownerName: 'Ashok Shah',
-        panVatNumber: 'GST11223344',
-        phoneNumber: '9856314789',
-        email: 'ashok@shahandsons.com',
-        fullAddress: '789 Link Road, Ahmedabad, Gujarat, 380001, India',
-        latitude: 23.0225,
-        longitude: 72.5714,
-        notes: 'New supplier, on trial period',
-        isActive: true,
-        createdAt: DateTime.now().subtract(const Duration(days: 15)),
-        updatedAt: DateTime.now(),
-      ),
-    ];
-  }
 }
 
 
-// Standalone provider for fetching single party
-
+// Standalone provider for getting single party details
+// Always fetches full details from API to ensure all fields are populated
 @riverpod
 Future<PartyDetails?> partyById(Ref ref, String partyId) async {
+  // Always fetch full details from API since list endpoint doesn't return all fields
+  // (phone, email, panVatNumber, latitude, longitude, notes are missing from list)
+  AppLogger.i('🔄 Fetching full party details for ID: $partyId');
   final vm = ref.read(partyViewModelProvider.notifier);
   return vm.getPartyById(partyId);
 }

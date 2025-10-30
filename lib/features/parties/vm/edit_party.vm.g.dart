@@ -33,7 +33,7 @@ final class PartyViewModelProvider
   PartyViewModel create() => PartyViewModel();
 }
 
-String _$partyViewModelHash() => r'1721acfe27cca1e426d20a2346bcc2bba395da8b';
+String _$partyViewModelHash() => r'e2d7870110b87f327a0f457e542b2faed9ed6cba';
 
 abstract class _$PartyViewModel extends $AsyncNotifier<List<PartyDetails>> {
   FutureOr<List<PartyDetails>> build();
@@ -110,7 +110,7 @@ final class PartyByIdProvider
   }
 }
 
-String _$partyByIdHash() => r'a0f76a19dc0331fd408a110555cef6d2789ed633';
+String _$partyByIdHash() => r'ac45455d3fcb999b2ffd920205f5320414ee3d7c';
 
 final class PartyByIdFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<PartyDetails?>, String> {
