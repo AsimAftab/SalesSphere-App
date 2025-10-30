@@ -10,6 +10,7 @@ import 'package:sales_sphere/features/catalog/views/catalog_screen.dart';
 import 'package:sales_sphere/features/invoice/views/invoice_screen.dart';
 import 'package:sales_sphere/features/parties/views/parties_screen.dart';
 import 'package:sales_sphere/features/parties/views/edit_party_details_screen.dart';
+
 import 'package:sales_sphere/features/settings/views/settings_screen.dart';
 import 'package:sales_sphere/features/auth/models/login.models.dart';
 
@@ -34,12 +35,18 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final isGoingToLogin = requestedPath == '/';
       final isGoingToCatalog = requestedPath.startsWith('/catalog');
       final isGoingToParties = requestedPath.startsWith('/parties');
+      final isGoingToDirectory = requestedPath.startsWith('/directory');
       final isGoingToEditParty = requestedPath.startsWith('/edit_party_details_screen');
       final isGoingToDetailAdded = requestedPath == '/detail-added';
 
-
       // If user is not logged in AND not going to one of the allowed pages...
-      if (!isLoggedIn && !isGoingToLogin && !isGoingToCatalog && !isGoingToParties && !isGoingToEditParty && !isGoingToDetailAdded) {
+      if (!isLoggedIn &&
+          !isGoingToLogin &&
+          !isGoingToCatalog &&
+          !isGoingToParties &&
+          !isGoingToDirectory &&
+          !isGoingToEditParty &&
+          !isGoingToDetailAdded) {
         return '/';
       }
 
@@ -47,6 +54,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       if (isLoggedIn && isGoingToLogin) {
         return '/home';
       }
+
       // Otherwise, allow navigation
       return null;
     },
@@ -73,6 +81,24 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
+      // ========================================
+      // DIRECTORY ROUTES (No Bottom Navigation)
+      // ========================================
+      GoRoute(
+        path: '/directory/party-list',
+        name: 'party-list',
+        builder: (context, state) => const PartiesScreen(),
+      ),
+      GoRoute(
+        path: '/directory/prospect-list',
+        name: 'prospect-list',
+        builder: (context, state) => const PartiesScreen(),
+      ),
+      GoRoute(
+        path: '/directory/sites-list',
+        name: 'sites-list',
+        builder: (context, state) => const PartiesScreen(),
+      ),
 
       // ========================================
       // MAIN APP ROUTES (With Bottom Navigation)
@@ -89,7 +115,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             currentIndex = 1;
           } else if (location.startsWith('/invoice')) {
             currentIndex = 2;
-          } else if (location.startsWith('/parties')) {
+          } else if (location.startsWith('/parties') || location.startsWith('/directory')) {
             currentIndex = 3;
           } else if (location.startsWith('/settings')) {
             currentIndex = 4;
@@ -115,21 +141,15 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: '/catalog',
             name: 'catalog',
             pageBuilder: (context, state) => const NoTransitionPage(
-              // Use corrected screen name if you renamed it
               child: CatalogScreen(),
             ),
-            // ⬇️ ADD NESTED ROUTE HERE ⬇️
             routes: [
               GoRoute(
-                // Path is relative: /catalog/:categoryId
                 path: ':categoryId',
-                // ✅ USE THIS NAME IN pushNamed
                 name: 'catalog-items',
                 builder: (context, state) {
                   final categoryId = state.pathParameters['categoryId'] ?? 'error';
                   final categoryName = state.extra as String? ?? 'Category Items';
-
-                  // ✅ BUILD THE CORRECT SCREEN
                   return CategoryItemListScreen(
                     categoryId: categoryId,
                     categoryName: categoryName,
@@ -137,7 +157,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                 },
               ),
             ],
-            // --- END OF NESTED ROUTE ---
           ),
 
           // Invoice Tab
@@ -149,7 +168,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             ),
           ),
 
-          // Parties Tab
+          // Parties Tab (Keep for backwards compatibility)
           GoRoute(
             path: '/parties',
             name: 'parties',
@@ -209,7 +228,7 @@ class _UserAuthNotifier extends ChangeNotifier {
     // Listen to user controller changes
     _ref.listen<User?>(
       userControllerProvider,
-      (previous, next) {
+          (previous, next) {
         // Notify GoRouter to refresh when user state changes
         notifyListeners();
       },

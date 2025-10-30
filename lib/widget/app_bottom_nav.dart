@@ -2,14 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 
+import 'directory_options_sheet.dart';
+
 class AppBottomNav extends StatefulWidget {
   final int currentIndex;
   final Function(int) onTap;
+  final BuildContext parentContext;
 
   const AppBottomNav({
     super.key,
     required this.currentIndex,
     required this.onTap,
+    required this.parentContext,
   });
 
   @override
@@ -76,10 +80,25 @@ class _AppBottomNavState extends State<AppBottomNav>
               child: Row(
                 children: [
                   _buildNavItem(0, Icons.home_outlined, Icons.home, 'Home'),
-                  _buildNavItem(1, Icons.shopping_bag_outlined, Icons.shopping_bag, 'Catalog'),
+                  _buildNavItem(
+                    1,
+                    Icons.shopping_bag_outlined,
+                    Icons.shopping_bag,
+                    'Catalog',
+                  ),
                   Expanded(child: SizedBox(height: 75.h)),
-                  _buildNavItem(3, Icons.people_outline, Icons.people, 'Parties'),
-                  _buildNavItem(4, Icons.settings_outlined, Icons.settings, 'Setting'),
+                  _buildNavItem(
+                    3,
+                    Icons.folder_shared_outlined,
+                    Icons.people,
+                    'Directory',
+                  ),
+                  _buildNavItem(
+                    4,
+                    Icons.settings_outlined,
+                    Icons.settings,
+                    'Setting',
+                  ),
                 ],
               ),
             ),
@@ -96,14 +115,25 @@ class _AppBottomNavState extends State<AppBottomNav>
     );
   }
 
-  Widget _buildNavItem(int index, IconData icon, IconData activeIcon, String label) {
+  Widget _buildNavItem(
+    int index,
+    IconData icon,
+    IconData activeIcon,
+    String label,
+  ) {
     final isActive = widget.currentIndex == index;
 
     return Expanded(
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () => widget.onTap(index),
+          onTap: () {
+            if (index == 3) {
+              showDirectoryOptions(widget.parentContext);
+            } else {
+              widget.onTap(index);
+            }
+          },
           borderRadius: BorderRadius.circular(16.r),
           splashColor: AppColors.secondary.withValues(alpha: 0.1),
           highlightColor: AppColors.secondary.withValues(alpha: 0.05),
@@ -126,7 +156,9 @@ class _AppBottomNavState extends State<AppBottomNav>
                   ),
                   child: Icon(
                     isActive ? activeIcon : icon,
-                    color: isActive ? AppColors.secondary : AppColors.textSecondary,
+                    color: isActive
+                        ? AppColors.secondary
+                        : AppColors.textSecondary,
                     size: 24.sp,
                   ),
                 ),
@@ -136,7 +168,9 @@ class _AppBottomNavState extends State<AppBottomNav>
                   style: TextStyle(
                     fontSize: 10.sp,
                     fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                    color: isActive ? AppColors.secondary : AppColors.textSecondary,
+                    color: isActive
+                        ? AppColors.secondary
+                        : AppColors.textSecondary,
                     fontFamily: 'Poppins',
                     letterSpacing: 0.2,
                   ),
@@ -165,10 +199,7 @@ class _AppBottomNavState extends State<AppBottomNav>
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: LinearGradient(
-                  colors: [
-                    AppColors.secondary,
-                    AppColors.primary,
-                  ],
+                  colors: [AppColors.secondary, AppColors.primary],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -190,11 +221,7 @@ class _AppBottomNavState extends State<AppBottomNav>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.description,
-                    color: Colors.white,
-                    size: 30.sp,
-                  ),
+                  Icon(Icons.description, color: Colors.white, size: 30.sp),
                   SizedBox(height: 2.h),
                   Text(
                     'Invoice',
