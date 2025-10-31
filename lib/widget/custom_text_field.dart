@@ -78,7 +78,7 @@ class _PrimaryTextFieldState extends State<PrimaryTextField> {
           style: TextStyle(
             // ⭐ Grey text when disabled
             color: shouldShowGreyStyle
-                ? AppColors.textSecondary.withOpacity(0.6)
+                ? AppColors.textSecondary.withValues(alpha: 0.6)
                 : AppColors.textPrimary,
             fontSize: 15.sp,
             fontFamily: 'Poppins',
@@ -110,7 +110,7 @@ class _PrimaryTextFieldState extends State<PrimaryTextField> {
             labelStyle: widget.labelStyle ??
                 TextStyle(
                   color: shouldShowGreyStyle
-                      ? AppColors.textSecondary.withOpacity(0.5)
+                      ? AppColors.textSecondary.withValues(alpha: 0.5)
                       : AppColors.textSecondary,
                   fontSize: 14.sp,
                   fontFamily: 'Poppins',
@@ -118,7 +118,7 @@ class _PrimaryTextFieldState extends State<PrimaryTextField> {
             hintStyle: TextStyle(
               // ⭐ Lighter hint when disabled
               color: shouldShowGreyStyle
-                  ? AppColors.textHint.withOpacity(0.5)
+                  ? AppColors.textHint.withValues(alpha: 0.5)
                   : AppColors.textHint,
               fontSize: 14.sp,
               fontFamily: 'Poppins',
@@ -131,7 +131,7 @@ class _PrimaryTextFieldState extends State<PrimaryTextField> {
               color: hasError
                   ? AppColors.error
                   : (shouldShowGreyStyle
-                  ? AppColors.textSecondary.withOpacity(0.4)
+                  ? AppColors.textSecondary.withValues(alpha: 0.4)
                   : AppColors.textSecondary),
               size: 20.sp,
             )
@@ -140,7 +140,7 @@ class _PrimaryTextFieldState extends State<PrimaryTextField> {
             filled: true,
             // ⭐ Grey background when disabled
             fillColor: hasError
-                ? AppColors.error.withOpacity(0.05)
+                ? AppColors.error.withValues(alpha: 0.05)
                 : (shouldShowGreyStyle
                 ? Colors.grey.shade100
                 : AppColors.surface),
@@ -159,7 +159,7 @@ class _PrimaryTextFieldState extends State<PrimaryTextField> {
                 color: hasError
                     ? AppColors.error
                     : (shouldShowGreyStyle
-                    ? AppColors.border.withOpacity(0.2)
+                    ? AppColors.border.withValues(alpha: 0.2)
                     : AppColors.border),
                 width: 1.5,
               ),
@@ -189,7 +189,7 @@ class _PrimaryTextFieldState extends State<PrimaryTextField> {
             disabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12.r),
               borderSide: BorderSide(
-                color: AppColors.border.withOpacity(0.2),
+                color: AppColors.border.withValues(alpha: 0.2),
                 width: 1.5,
               ),
             ),

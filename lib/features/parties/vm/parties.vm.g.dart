@@ -100,7 +100,7 @@ final class SearchedPartiesProvider
   }
 }
 
-String _$searchedPartiesHash() => r'905a22c59d7ad8035362f1c27c4ad9a8aabcac1a';
+String _$searchedPartiesHash() => r'34cb1f404931a08e2d7d4b07a3620e991ca28c28';
 
 @ProviderFor(partyCount)
 const partyCountProvider = PartyCountProvider._();

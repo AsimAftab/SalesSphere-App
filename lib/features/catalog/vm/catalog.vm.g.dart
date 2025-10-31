@@ -154,4 +154,4 @@ final class SearchedCategoriesProvider
 }
 
 String _$searchedCategoriesHash() =>
-    r'a7be3c01addcd82cf9c0b7f326d306b1d514ced9';
+    r'bcc6da5159489086fb3327493fb0ccfa590b5432';

@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+// 1. ADD SKELETONIZER IMPORT
+import 'package:skeletonizer/skeletonizer.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
-import 'package:sales_sphere/features/catalog/vm/catalog_list.vm.dart';
+import 'package:sales_sphere/features/catalog/vm/catalog_item.vm.dart';
 import 'package:sales_sphere/widget/universal_list_card.dart';
 
 class CategoryItemListScreen extends ConsumerStatefulWidget {
@@ -37,7 +39,6 @@ class _CategoryItemListScreenState
   }
 
   void _navigateToItemDetails(String itemId) {
-    // Example: context.push('/catalog/${widget.categoryId}/$itemId');
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Navigate to details for item $itemId'),
@@ -53,7 +54,6 @@ class _CategoryItemListScreenState
     ref.watch(searchedCategoryItemsProvider(widget.categoryId));
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -79,7 +79,7 @@ class _CategoryItemListScreenState
             left: 0,
             right: 0,
             child: SvgPicture.asset(
-              'assets/images/corner_bubble.svg', // Ensure path is correct
+              'assets/images/corner_bubble.svg',
               fit: BoxFit.cover,
               height: 160.h,
             ),
@@ -157,19 +157,6 @@ class _CategoryItemListScreenState
                         fontFamily: 'Poppins',
                       ),
                     ),
-                    TextButton(
-                      onPressed: ()
-                      { /* TODO: Add filter/sort */ },
-                      child: Text(
-                        'See All', // Or 'Filters'
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.primary,
-                          fontFamily: 'Poppins',
-                        ),
-                      ),
-                    ),
                   ],
                 ),
               ),
@@ -233,9 +220,30 @@ class _CategoryItemListScreenState
                       ),
                     );
                   },
-                  loading: () => Center(
-                    child: CircularProgressIndicator(
-                      color: AppColors.primary,
+                  // --- UPDATED LOADING BLOCK ---
+                  loading: () => Skeletonizer(
+                    enabled: true,
+                    child: ListView.separated(
+                      padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 80.h),
+                      itemCount: 8, // Number of skeleton items
+                      separatorBuilder: (context, index) =>
+                          SizedBox(height: 12.h),
+                      itemBuilder: (context, index) {
+                        // Use your REAL card with placeholder data
+                        // This card matches your item list (with 2 subtitles)
+                        return UniversalListCard(
+                          leadingImageAsset: null,
+                          isLeadingCircle: false,
+                          leadingSize: 56.w,
+                          leadingBackgroundColor: Colors.transparent,
+                          title: "Item Name Placeholder",
+                          subtitle: "Category Placeholder",
+                          secondarySubtitle: "SKU-XXXXXX",
+                          showArrow: true,
+                          arrowColor: AppColors.transparent,
+                          onTap: () {},
+                        );
+                      },
                     ),
                   ),
                   error: (error, stack) => Center(
@@ -253,7 +261,7 @@ class _CategoryItemListScreenState
                           ),
                           SizedBox(height: 8.h),
                           Text(
-                            error.toString(), // Show specific error in debug?
+                            error.toString(),
                             style: TextStyle(fontSize: 12.sp, color: Colors.grey.shade600),
                             textAlign: TextAlign.center,
                           ),

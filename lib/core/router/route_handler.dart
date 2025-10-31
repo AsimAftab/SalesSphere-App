@@ -155,7 +155,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: ':categoryId',
-                name: 'catalog-items',
+                name: 'catalog_items',
                 builder: (context, state) {
                   final categoryId = state.pathParameters['categoryId'] ?? 'error';
                   final categoryName = state.extra as String? ?? 'Category Items';

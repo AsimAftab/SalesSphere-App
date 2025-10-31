@@ -48,6 +48,7 @@
     flutter_svg: ^2.2.1
     url_launcher: ^6.3.2
     intl: ^0.20.2
+    skeletonizer: ^2.1.0+1
     pretty_dio_logger: ^1.4.0
 
 

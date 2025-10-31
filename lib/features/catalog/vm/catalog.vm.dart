@@ -34,7 +34,6 @@ class CatalogViewModel extends _$CatalogViewModel {
       CatalogCategory(
         id: '1',
         name: 'Marble',
-        // IMPORTANT: Replace with your actual asset paths
         imageAssetPath: 'assets/images/placeholder_marble.png',
         itemCount: 125,
       ),
@@ -73,8 +72,6 @@ class CatalogViewModel extends _$CatalogViewModel {
 }
 
 // --- Search Query Provider ---
-// This is identical to your party feature's search provider
-
 @riverpod
 class CatalogSearchQuery extends _$CatalogSearchQuery {
   @override
@@ -90,23 +87,17 @@ class CatalogSearchQuery extends _$CatalogSearchQuery {
 }
 
 // --- Provider for Searched/Filtered Categories ---
-// This combines the main list and the search query
-
 @riverpod
 Future<List<CatalogCategory>> searchedCategories(Ref ref) async {
   final searchQuery = ref.watch(catalogSearchQueryProvider);
-  final allCategoriesAsync = ref.watch(catalogViewModelProvider);
 
-  return allCategoriesAsync.when(
-    data: (categories) {
-      if (searchQuery.isEmpty) return categories;
+  // This propagates the loading state.
+  final allCategories = await ref.watch(catalogViewModelProvider.future);
 
-      final lowerQuery = searchQuery.toLowerCase();
-      return categories.where((category) {
-        return category.name.toLowerCase().contains(lowerQuery);
-      }).toList();
-    },
-    loading: () => [], // Return empty list while loading
-    error: (_, __) => [], // Return empty list on error
-  );
+  if (searchQuery.isEmpty) return allCategories;
+
+  final lowerQuery = searchQuery.toLowerCase();
+  return allCategories.where((category) {
+    return category.name.toLowerCase().contains(lowerQuery);
+  }).toList();
 }
