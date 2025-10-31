@@ -10,6 +10,7 @@ import 'package:sales_sphere/features/catalog/views/catalog_screen.dart';
 import 'package:sales_sphere/features/invoice/views/invoice_screen.dart';
 import 'package:sales_sphere/features/parties/views/parties_screen.dart';
 import 'package:sales_sphere/features/parties/views/edit_party_details_screen.dart';
+import 'package:sales_sphere/features/add-new-party/views/add_new_party_screen.dart';
 
 import 'package:sales_sphere/features/settings/views/settings_screen.dart';
 import 'package:sales_sphere/features/auth/models/login.models.dart';
@@ -79,6 +80,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           final partyId = state.pathParameters['partyId'] ?? '1';
           return EditPartyDetailsScreen(partyId: partyId);
         },
+      ),
+      // ========================================
+      // STANDALONE ROUTES (No Bottom Navigation)
+      // ========================================
+      GoRoute(
+        path: '/add-party',
+        name: 'add-party',
+        builder: (context, state) => const AddNewPartyScreen(),
       ),
 
       // ========================================

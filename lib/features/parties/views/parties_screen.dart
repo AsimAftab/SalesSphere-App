@@ -37,13 +37,7 @@ class _PartiesScreenState extends ConsumerState<PartiesScreen> {
   }
 
   void _navigateToAddParty() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Add Party screen coming soon!'),
-        backgroundColor: AppColors.primary,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    context.push('/add-party');
   }
 
   String _extractLocation(String fullAddress) {
