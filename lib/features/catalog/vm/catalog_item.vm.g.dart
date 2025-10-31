@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'catalog_list.vm.dart';
+part of 'catalog_item.vm.dart';
 
 // **************************************************************************
 // RiverpodGenerator
@@ -53,7 +53,7 @@ final class CategoryItemListViewModelProvider
 }
 
 String _$categoryItemListViewModelHash() =>
-    r'cbbda722dc5b8c2113ba3dd1893b7e5de1cace39';
+    r'47c4e1c63032f23747fad242b17da0ce0c76adac';
 
 final class CategoryItemListViewModelFamily extends $Family
     with
@@ -227,7 +227,7 @@ final class SearchedCategoryItemsProvider
 }
 
 String _$searchedCategoryItemsHash() =>
-    r'd7004624b1b1ff146f9ad164cb1b06fbf7d5f715';
+    r'e396ce25f9548b74230ee84941d507ae60343e35';
 
 /// --- Filtered / Searched Items Provider ---
 

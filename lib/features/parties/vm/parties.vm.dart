@@ -23,28 +23,20 @@ class SearchQuery extends _$SearchQuery {
 @riverpod
 Future<List<PartyListItem>> searchedParties(Ref ref) async {
   final searchQuery = ref.watch(searchQueryProvider);
-  final allPartiesAsync = ref.watch(partyViewModelProvider);
+  final allParties = await ref.watch(partyViewModelProvider.future);
+  final listItems = allParties
+      .map((party) => PartyListItem.fromPartyDetails(party))
+      .toList();
 
-  return allPartiesAsync.when(
-    data: (parties) {
-      // Convert to lighter PartyListItem model
-      final listItems = parties
-          .map((party) => PartyListItem.fromPartyDetails(party))
-          .toList();
+  if (searchQuery.isEmpty) return listItems;
 
-      if (searchQuery.isEmpty) return listItems;
-
-      final lowerQuery = searchQuery.toLowerCase();
-      return listItems.where((party) {
-        return party.name.toLowerCase().contains(lowerQuery) ||
-            party.ownerName.toLowerCase().contains(lowerQuery) ||
-            (party.phoneNumber?.contains(searchQuery) ?? false) ||
-            party.fullAddress.toLowerCase().contains(lowerQuery);
-      }).toList();
-    },
-    loading: () => [],
-    error: (_, __) => [],
-  );
+  final lowerQuery = searchQuery.toLowerCase();
+  return listItems.where((party) {
+    return party.name.toLowerCase().contains(lowerQuery) ||
+        party.ownerName.toLowerCase().contains(lowerQuery) ||
+        (party.phoneNumber ?? '').contains(searchQuery) ||
+        party.fullAddress.toLowerCase().contains(lowerQuery);
+  }).toList();
 }
 
 // Provider to get total party count

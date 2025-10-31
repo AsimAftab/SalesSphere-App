@@ -59,6 +59,8 @@ class PartyViewModel extends _$PartyViewModel {
   // GET SINGLE PARTY BY ID FROM API
   Future<PartyDetails?> getPartyById(String id) async {
     try {
+      await Future.delayed(const Duration(seconds: 2));
+
       final dio = ref.read(dioClientProvider);
       AppLogger.i('Fetching party details for ID: $id');
 
