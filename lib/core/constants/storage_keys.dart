@@ -29,6 +29,9 @@ class StorageKeys {
   static const String cachedUserData = 'cached_user_data';
   static const String cachedProducts = 'cached_products';
 
+  // Profile
+  static const String profileImagePath = 'profile_image_path';
+
   // App State
   static const String lastOpenedPage = 'last_opened_page';
   static const String appOpenCount = 'app_open_count';

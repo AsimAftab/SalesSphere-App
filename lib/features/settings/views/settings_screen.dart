@@ -87,7 +87,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 icon: Icons.person_outline,
                 title: 'Profile',
                 onTap: () {
-                  // TODO: Navigate to Profile screen
+                  context.push('/profile');
                 },
               ),
               SettingsTile(

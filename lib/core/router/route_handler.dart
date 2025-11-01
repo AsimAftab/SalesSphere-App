@@ -10,7 +10,8 @@ import 'package:sales_sphere/features/catalog/views/catalog_screen.dart';
 import 'package:sales_sphere/features/invoice/views/invoice_screen.dart';
 import 'package:sales_sphere/features/parties/views/parties_screen.dart';
 import 'package:sales_sphere/features/parties/views/edit_party_details_screen.dart';
-import 'package:sales_sphere/features/profile/views/profile_screen.dart';
+import 'package:sales_sphere/features/parties/views/add_party_screen.dart';
+import 'package:sales_sphere/features/profile/view/profile_screen.dart';
 import 'package:sales_sphere/features/settings/views/settings_screen.dart';
 import 'package:sales_sphere/features/auth/models/login.models.dart';
 
@@ -38,6 +39,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final isGoingToDirectory = requestedPath.startsWith('/directory');
       final isGoingToEditParty = requestedPath.startsWith('/edit_party_details_screen');
       final isGoingToDetailAdded = requestedPath == '/detail-added';
+      final isGoingToProfile = requestedPath == '/profile';
 
       // If user is not logged in AND not going to one of the allowed pages...
       if (!isLoggedIn &&
@@ -46,7 +48,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           !isGoingToParties &&
           !isGoingToDirectory &&
           !isGoingToEditParty &&
-          !isGoingToDetailAdded) {
+          !isGoingToDetailAdded &&
+          !isGoingToProfile) {
         return '/';
       }
 
@@ -83,6 +86,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       // ========================================
       // STANDALONE ROUTES (No Bottom Navigation)
       // ========================================
+      GoRoute(
+        path: '/add-party',
+        name: 'add-party',
+        builder: (context, state) => const AddPartyScreen(),
+      ),
       GoRoute(
         path: '/profile',
         name: 'profile',
