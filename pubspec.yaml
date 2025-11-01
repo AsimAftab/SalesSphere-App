@@ -49,6 +49,11 @@
     url_launcher: ^6.3.2
     intl: ^0.20.2
     skeletonizer: ^2.1.0+1
+    pretty_dio_logger: ^1.4.0
+    google_maps_flutter: ^2.13.1
+    geocoding: ^4.0.0
+    geolocator: ^14.0.2
+    uuid: ^4.5.1
 
 
   dev_dependencies:

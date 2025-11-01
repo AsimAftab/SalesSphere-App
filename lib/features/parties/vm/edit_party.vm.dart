@@ -92,12 +92,56 @@ class PartyViewModel extends _$PartyViewModel {
 
   // CRUD OPERATIONS
 
-  Future<void> addParty(PartyDetails party) async {
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      final currentParties = state.value ?? [];
-      return [...currentParties, party];
-    });
+  // CREATE NEW PARTY VIA API
+  Future<PartyDetails> addParty(UpdatePartyRequest newPartyRequest) async {
+    try {
+      final dio = ref.read(dioClientProvider);
+      AppLogger.i('Creating new party: ${newPartyRequest.partyName}');
+
+      // Convert to JSON
+      final requestData = newPartyRequest.toJson();
+      AppLogger.d('Create party request data: $requestData');
+
+      // Send POST request
+      final response = await dio.post(
+        ApiEndpoints.createParty,
+        data: requestData,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        AppLogger.i('✅ Party created successfully');
+
+        // Parse the response to get the created party
+        final responseData = response.data['data'] ?? response.data;
+
+        // If response contains party details, parse it
+        if (responseData is Map<String, dynamic>) {
+          final apiResponse = PartyDetailApiResponse.fromJson(response.data);
+          final createdParty = PartyDetails.fromApiDetail(apiResponse.data);
+
+          // Refresh the parties list
+          await refresh();
+
+          return createdParty;
+        } else {
+          // If no data returned, refresh list
+          await refresh();
+          throw Exception('Party created but no data returned');
+        }
+      } else {
+        throw Exception('Failed to create party: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      AppLogger.e('❌ Dio error creating party: ${e.message}');
+      if (e.response != null) {
+        AppLogger.e('Response data: ${e.response?.data}');
+      }
+      throw Exception('Network error: ${e.message}');
+    } catch (e, stackTrace) {
+      AppLogger.e('❌ Error creating party: $e');
+      AppLogger.e('Stack trace: $stackTrace');
+      throw Exception('Failed to create party: $e');
+    }
   }
 
   // UPDATE PARTY VIA API
