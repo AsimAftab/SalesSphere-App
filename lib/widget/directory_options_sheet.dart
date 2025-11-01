@@ -83,7 +83,7 @@ class DirectoryOptionsSheet extends StatelessWidget {
             ),
             onTap: () {
               Navigator.pop(context);
-              context.push('/directory/prospect-list');
+              context.push('/directory/prospects-list');
             },
           ),
 

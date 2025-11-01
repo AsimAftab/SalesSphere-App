@@ -5,26 +5,17 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
-import 'package:sales_sphere/features/catalog/vm/catalog_item.vm.dart';
+import 'package:sales_sphere/features/prospects/vm/prospects.vm.dart';
 import 'package:sales_sphere/widget/universal_list_card.dart';
 
-class CategoryItemListScreen extends ConsumerStatefulWidget {
-  final String categoryId;
-  final String categoryName;
-
-  const CategoryItemListScreen({
-    super.key,
-    required this.categoryId,
-    required this.categoryName,
-  });
+class ProspectsScreen extends ConsumerStatefulWidget {
+  const ProspectsScreen({super.key});
 
   @override
-  ConsumerState<CategoryItemListScreen> createState() =>
-      _CategoryItemListScreenState();
+  ConsumerState<ProspectsScreen> createState() => _ProspectsScreenState();
 }
 
-class _CategoryItemListScreenState
-    extends ConsumerState<CategoryItemListScreen> {
+class _ProspectsScreenState extends ConsumerState<ProspectsScreen> {
   final TextEditingController _searchController = TextEditingController();
 
   @override
@@ -34,41 +25,48 @@ class _CategoryItemListScreenState
   }
 
   void _onSearchChanged(String query) {
-    ref.read(itemListSearchQueryProvider.notifier).updateQuery(query);
+    ref.read(prospectSearchQueryProvider.notifier).updateQuery(query);
   }
 
-  void _navigateToItemDetails(String itemId) {
-    context.pushNamed(
-      'catalog_item_details',
-      pathParameters: {
-        'categoryId': widget.categoryId, // Pass the current categoryId
-        'itemId': itemId,                  // Pass the selected itemId
-      },
+  void _navigateToProspectDetails(String prospectId) {
+    // TODO: Update this to your prospect details route when created
+    // context.pushNamed('edit_prospect_details_screen', pathParameters: {'prospectId': prospectId});
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Navigate to details for prospect $prospectId'),
+        backgroundColor: AppColors.primary,
+      ),
+    );
+  }
+
+  void _navigateToAddProspect() {
+    // TODO: Update this to your "Add Prospect" route
+    // context.push('/add-prospect');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Add Prospect screen coming soon!'),
+        backgroundColor: AppColors.primary,
+        behavior: SnackBarBehavior.floating,
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final searchQuery = ref.watch(itemListSearchQueryProvider);
-    final searchedItemsAsync =
-    ref.watch(searchedCategoryItemsProvider(widget.categoryId));
+    final searchQuery = ref.watch(prospectSearchQueryProvider);
+    final searchedProspectsAsync = ref.watch(searchedProspectsProvider);
 
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textdark),
-          onPressed: () => context.pop(),
-        ),
         title: Text(
-          widget.categoryName,
+          'Prospect',
           style: TextStyle(
             color: AppColors.textdark,
             fontSize: 20.sp,
             fontWeight: FontWeight.w600,
-            fontFamily: 'Poppins',
           ),
         ),
       ),
@@ -81,15 +79,16 @@ class _CategoryItemListScreenState
             child: SvgPicture.asset(
               'assets/images/corner_bubble.svg',
               fit: BoxFit.cover,
-              height: 160.h,
+              height: 180.h,
             ),
           ),
           Column(
             children: [
               Container(
-                height: 100.h, // Spacer height
+                height: 120.h,
                 color: Colors.transparent,
               ),
+              // Search Bar Section
               Container(
                 color: Colors.transparent,
                 padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 16.h),
@@ -97,7 +96,7 @@ class _CategoryItemListScreenState
                   controller: _searchController,
                   onChanged: _onSearchChanged,
                   decoration: InputDecoration(
-                    hintText: 'Search within ${widget.categoryName}',
+                    hintText: 'Search',
                     hintStyle: TextStyle(
                       color: Colors.grey.shade400,
                       fontSize: 14.sp,
@@ -133,8 +132,7 @@ class _CategoryItemListScreenState
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.r),
-                      borderSide:
-                      BorderSide(color: AppColors.primary, width: 2),
+                      borderSide: BorderSide(color: AppColors.primary, width: 2),
                     ),
                     contentPadding: EdgeInsets.symmetric(
                       horizontal: 16.w,
@@ -143,13 +141,15 @@ class _CategoryItemListScreenState
                   ),
                 ),
               ),
-              Padding(
+              // Header
+              Container(
+                color: Colors.transparent,
                 padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 12.h),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Items',
+                      'Prospect',
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w600,
@@ -160,29 +160,30 @@ class _CategoryItemListScreenState
                   ],
                 ),
               ),
+              // Prospect List
               Expanded(
-                child: searchedItemsAsync.when(
-                  data: (items) {
-                    if (items.isEmpty) {
+                child: searchedProspectsAsync.when(
+                  data: (prospects) {
+                    if (prospects.isEmpty) {
                       return Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
-                              Icons.inventory_2_outlined,
+                              Icons.person_search, // Icon for prospects
                               size: 64.sp,
                               color: Colors.grey.shade400,
                             ),
                             SizedBox(height: 16.h),
                             Text(
                               searchQuery.isEmpty
-                                  ? 'No items found in this category'
+                                  ? 'No prospects found'
                                   : 'No results for "$searchQuery"',
                               style: TextStyle(
                                 fontSize: 16.sp,
                                 color: Colors.grey.shade600,
+                                fontFamily: 'Poppins',
                               ),
-                              textAlign: TextAlign.center,
                             ),
                           ],
                         ),
@@ -190,89 +191,103 @@ class _CategoryItemListScreenState
                     }
                     return RefreshIndicator(
                       onRefresh: () async {
-                        await ref
-                            .read(categoryItemListViewModelProvider(
-                            widget.categoryId)
-                            .notifier)
-                            .refresh();
+                        await ref.read(prospectViewModelProvider.notifier).refresh();
                       },
                       color: AppColors.primary,
                       child: ListView.separated(
                         padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 80.h),
-                        itemCount: items.length,
+                        itemCount: prospects.length,
                         separatorBuilder: (context, index) =>
                             SizedBox(height: 12.h),
                         itemBuilder: (context, index) {
-                          final item = items[index];
+                          final prospect = prospects[index];
+                          // --- UPDATED TO MATCH PARTIES_SCREEN ---
                           return UniversalListCard(
-                            leadingImageAsset: item.imageAssetPath,
-                            isLeadingCircle: false,
-                            leadingSize: 56.w,
-                            leadingBackgroundColor: Colors.transparent, // Or light grey
-                            title: item.name,
-                            subtitle: item.subCategory ?? 'View Details',
-                            secondarySubtitle: item.sku,
+                            leadingIcon: Icon(
+                              Icons.person_outline, // Using person icon
+                              color: Colors.white,
+                              size: 24.sp,
+                            ),
+                            isLeadingCircle: true,
+                            leadingBackgroundColor: AppColors.primary,
+                            leadingSize: 48.w,
+                            title: prospect.name,
+                            subtitle: prospect.location, // Using location
+                            onTap: () => _navigateToProspectDetails(prospect.id),
                             showArrow: true,
                             arrowColor: AppColors.primary,
-                            onTap: () => _navigateToItemDetails(item.id),
                           );
+                          // --- END OF UPDATE ---
                         },
                       ),
                     );
                   },
-                  // --- UPDATED LOADING BLOCK ---
                   loading: () => Skeletonizer(
                     enabled: true,
                     child: ListView.separated(
                       padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 80.h),
-                      itemCount: 8, // Number of skeleton items
+                      itemCount: 7,
                       separatorBuilder: (context, index) =>
                           SizedBox(height: 12.h),
                       itemBuilder: (context, index) {
-                        // Use your REAL card with placeholder data
-                        // This card matches your item list (with 2 subtitles)
+                        // --- UPDATED TO MATCH PARTIES_SCREEN SKELETON ---
                         return UniversalListCard(
-                          leadingImageAsset: null,
-                          isLeadingCircle: false,
-                          leadingSize: 56.w,
+                          leadingIcon: Icon(
+                            Icons.person_outline,
+                            color: AppColors.primary,
+                            size: 24.sp,
+                          ),
+                          isLeadingCircle: true,
                           leadingBackgroundColor: Colors.transparent,
-                          title: "Item Name Placeholder",
-                          subtitle: "Category Placeholder",
-                          secondarySubtitle: "SKU-XXXXXX",
-                          showArrow: true,
-                          arrowColor: AppColors.transparent,
+                          leadingSize: 48.w,
+                          title: "Prospect Name Placeholder",
+                          subtitle: "Location placeholder",
                           onTap: () {},
+                          showArrow: true,
+                          arrowColor: Colors.transparent,
                         );
+                        // --- END OF UPDATE ---
                       },
                     ),
                   ),
                   error: (error, stack) => Center(
-                    child: Padding( // Add padding around error
-                      padding: EdgeInsets.all(32.w),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                          SizedBox(height: 16.h),
-                          Text(
-                            'Failed to load items',
-                            style: TextStyle(fontSize: 16.sp, color: AppColors.textdark),
-                            textAlign: TextAlign.center,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 64.sp,
+                          color: AppColors.error,
+                        ),
+                        SizedBox(height: 16.h),
+                        Text(
+                          'Failed to load prospects',
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            color: AppColors.textdark,
+                            fontWeight: FontWeight.w500,
                           ),
-                          SizedBox(height: 8.h),
-                          Text(
+                        ),
+                        SizedBox(height: 8.h),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 32.w),
+                          child: Text(
                             error.toString(),
-                            style: TextStyle(fontSize: 12.sp, color: Colors.grey.shade600),
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              color: Colors.grey.shade600,
+                            ),
                             textAlign: TextAlign.center,
                           ),
-                          // Optionally add a retry button
-                          SizedBox(height: 16.h),
-                          ElevatedButton(
-                            onPressed: () => ref.invalidate(searchedCategoryItemsProvider(widget.categoryId)),
-                            child: const Text('Retry'),
-                          )
-                        ],
-                      ),
+                        ),
+                        SizedBox(height: 16.h),
+                        ElevatedButton(
+                          onPressed: () {
+                            ref.read(prospectViewModelProvider.notifier).refresh();
+                          },
+                          child: const Text('Retry'),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -280,6 +295,25 @@ class _CategoryItemListScreenState
             ],
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _navigateToAddProspect,
+        backgroundColor: AppColors.primary,
+        elevation: 4,
+        icon: Icon(
+          Icons.add,
+          color: Colors.white,
+          size: 20.sp,
+        ),
+        label: Text(
+          'Add Prospect',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            fontFamily: 'Poppins',
+            fontSize: 14.sp,
+          ),
+        ),
       ),
     );
   }
