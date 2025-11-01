@@ -129,7 +129,7 @@ class CustomButton extends StatelessWidget {
       onPressed: isButtonDisabled ? null : onPressed,
       style: ElevatedButton.styleFrom(
         backgroundColor: backgroundColor ?? AppColors.secondary,
-        disabledBackgroundColor: AppColors.neutral.withOpacity(0.3),
+        disabledBackgroundColor: AppColors.neutral.withValues(alpha: 0.3),
         foregroundColor: textColor ?? Colors.white,
         padding: padding ?? EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
         shape: RoundedRectangleBorder(
@@ -148,7 +148,7 @@ class CustomButton extends StatelessWidget {
       onPressed: isButtonDisabled ? null : onPressed,
       style: ElevatedButton.styleFrom(
         backgroundColor: backgroundColor ?? AppColors.primary,
-        disabledBackgroundColor: AppColors.neutral.withOpacity(0.3),
+        disabledBackgroundColor: AppColors.neutral.withValues(alpha: 0.3),
         foregroundColor: textColor ?? Colors.white,
         padding: padding ?? EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
         shape: RoundedRectangleBorder(
@@ -210,13 +210,13 @@ class CustomButton extends StatelessWidget {
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
               ),
-        color: isButtonDisabled ? AppColors.neutral.withOpacity(0.3) : null,
+        color: isButtonDisabled ? AppColors.neutral.withValues(alpha: 0.3) : null,
         borderRadius: BorderRadius.circular(borderRadius ?? 12.r),
         boxShadow: isButtonDisabled
             ? null
             : [
                 BoxShadow(
-                  color: AppColors.secondary.withOpacity(0.3),
+                  color: AppColors.secondary.withValues(alpha: 0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),

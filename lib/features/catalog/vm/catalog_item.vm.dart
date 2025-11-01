@@ -2,11 +2,10 @@ import 'dart:async';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sales_sphere/features/catalog/models/catalog_item.model.dart';
 
-part 'catalog_list.vm.g.dart';
+part 'catalog_item.vm.g.dart';
 
 @riverpod
 class CategoryItemListViewModel extends _$CategoryItemListViewModel {
-  @override
   late String categoryId;
 
   @override
@@ -15,24 +14,31 @@ class CategoryItemListViewModel extends _$CategoryItemListViewModel {
     return _fetchItemsForCategory(categoryId);
   }
 
+  // Fetch items for a specific category (replace with your actual API/DB call)
   Future<List<CatalogItem>> _fetchItemsForCategory(String categoryId) async {
     try {
+      // You can add an artificial delay here for testing skeletons
+      // await Future.delayed(const Duration(seconds: 3));
       await Future.delayed(const Duration(milliseconds: 600));
       return _getMockItems()
           .where((item) => item.categoryId == categoryId)
           .toList();
     } catch (e) {
-      throw Exception('Failed to fetch items for category $categoryId: $e');
+      print('Error fetching items for category $categoryId: $e');
+      throw Exception('Failed to fetch items: $e');
     }
   }
 
+  // Refresh the list for the current category
   Future<void> refresh() async {
-    state = const AsyncValue.loading();
+    state = const AsyncValue.loading(); // Set state to loading
+    // Re-fetch data using the stored categoryId
     state = await AsyncValue.guard(() => _fetchItemsForCategory(categoryId));
   }
 
-  // --- Mock Data ---
+  // --- Mock Data (Replace with your actual data source) ---
   List<CatalogItem> _getMockItems() {
+    // Example mock data - ensure categoryIds match your actual categories
     return [
       const CatalogItem(
         id: '101',
@@ -115,21 +121,17 @@ Future<List<CatalogItem>> searchedCategoryItems(
     Ref ref,
     String categoryId,
     ) async {
+
   final searchQuery = ref.watch(itemListSearchQueryProvider);
-  final allItemsAsync = ref.watch(categoryItemListViewModelProvider(categoryId));
 
-  return allItemsAsync.when(
-    data: (allItems) {
-      if (searchQuery.isEmpty) return allItems;
+  final allItems = await ref.watch(categoryItemListViewModelProvider(categoryId).future);
 
-      final lowerQuery = searchQuery.toLowerCase();
-      return allItems.where((item) {
-        return item.name.toLowerCase().contains(lowerQuery) ||
-            (item.sku?.toLowerCase().contains(lowerQuery) ?? false) ||
-            (item.subCategory?.toLowerCase().contains(lowerQuery) ?? false);
-      }).toList();
-    },
-    loading: () => [],
-    error: (_, __) => [],
-  );
+  if (searchQuery.isEmpty) return allItems;
+
+  final lowerQuery = searchQuery.toLowerCase();
+  return allItems.where((item) {
+    return item.name.toLowerCase().contains(lowerQuery) ||
+        (item.sku?.toLowerCase().contains(lowerQuery) ?? false) ||
+        (item.subCategory?.toLowerCase().contains(lowerQuery) ?? false);
+  }).toList();
 }

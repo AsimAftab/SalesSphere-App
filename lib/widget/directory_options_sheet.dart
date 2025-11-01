@@ -54,7 +54,7 @@ class DirectoryOptionsSheet extends StatelessWidget {
             ),
           ),
 
-          Divider(height: 1, color: AppColors.border.withOpacity(0.3)),
+          Divider(height: 1, color: AppColors.border.withValues(alpha: 0.3)),
 
           SizedBox(height: 8.h),
 
@@ -124,12 +124,12 @@ class DirectoryOptionsSheet extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(16.r),
           border: Border.all(
-            color: AppColors.border.withOpacity(0.3),
+            color: AppColors.border.withValues(alpha: 0.3),
             width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
+              color: Colors.black.withValues(alpha: 0.03),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -144,7 +144,7 @@ class DirectoryOptionsSheet extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12.r),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
