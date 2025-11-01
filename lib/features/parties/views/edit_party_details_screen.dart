@@ -13,6 +13,7 @@ import 'package:sales_sphere/features/parties/models/parties.model.dart';
 import 'package:sales_sphere/features/parties/vm/edit_party.vm.dart';
 import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class EditPartyDetailsScreen extends ConsumerStatefulWidget {
   final String partyId;
@@ -93,7 +94,7 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
     _dateJoinedController.dispose();
     super.dispose();
   }
-  //TODO : Required Fixing Handle Save Method
+
   Future<void> _handleSave() async {
     if (_formKey.currentState?.validate() ?? false) {
       if (_currentParty == null) return;
@@ -162,7 +163,7 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                   Container(
                     padding: EdgeInsets.all(8.w),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8.r),
                     ),
                     child: Icon(
@@ -190,7 +191,7 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                         Text(
                           'Party details updated successfully',
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.9),
+                            color: Colors.white.withValues(alpha: 0.9),
                             fontSize: 12.sp,
                             fontFamily: 'Poppins',
                           ),
@@ -239,7 +240,7 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                   Container(
                     padding: EdgeInsets.all(8.w),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8.r),
                     ),
                     child: Icon(
@@ -267,7 +268,7 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                         Text(
                           e.toString().replaceAll('Exception: ', ''),
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.9),
+                            color: Colors.white.withValues(alpha: 0.9),
                             fontSize: 12.sp,
                             fontFamily: 'Poppins',
                           ),
@@ -342,6 +343,276 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
     }
   }
 
+  // --- CREATE A NEW HELPER METHOD for the UI ---
+  Widget _buildPageContent(PartyDetails? party) {
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            child: Padding(
+              padding: EdgeInsets.only(top: 100.h, bottom: 16.h),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(20.w),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16.r),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.04),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            // Use placeholder if controller is empty (i.e., loading)
+                            _nameController.text.isEmpty ? "Party Name" : _nameController.text,
+                            style: TextStyle(
+                              fontSize: 20.sp,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textdark,
+                              fontFamily: 'Poppins',
+                            ),
+                          ),
+                          SizedBox(height: 8.h),
+                          InkWell(
+                            // Disable tap if 'party' is null (loading)
+                            onTap: party == null ? null : () => _openGoogleMaps(party),
+                            borderRadius: BorderRadius.circular(8.r),
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(vertical: 4.h),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.location_on_outlined,
+                                    size: 14.sp,
+                                    color: AppColors.primary,
+                                  ),
+                                  SizedBox(width: 6.w),
+                                  Expanded(
+                                    child: Text(
+                                      _fullAddressController.text.isEmpty
+                                          ? 'No address set'
+                                          : _fullAddressController.text,
+                                      style: TextStyle(
+                                        fontSize: 13.sp,
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                  ),
+                                  SizedBox(width: 4.w),
+                                  Icon(
+                                    Icons.open_in_new,
+                                    size: 13.sp,
+                                    color: AppColors.primary.withValues(alpha: 0.7), // Kept
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 24.h),
+                    Text(
+                      'Party Details',
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textdark,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                    SizedBox(height: 16.h),
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(14.w),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16.r),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha:0.04), // Kept
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          PrimaryTextField(
+                            hintText: "Owner Name",
+                            controller: _ownerNameController,
+                            prefixIcon: Icons.person_outline,
+                            hasFocusBorder: true,
+                            enabled: _isEditMode,
+                            textInputAction: TextInputAction.next,
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Owner name is required';
+                              }
+                              return null;
+                            },
+                          ),
+                          SizedBox(height: 16.h),
+                          PrimaryTextField(
+                            hintText: "PAN/VAT Number",
+                            controller: _panVatNumberController,
+                            prefixIcon: Icons.receipt_long_outlined,
+                            hasFocusBorder: true,
+                            enabled: _isEditMode,
+                            textInputAction: TextInputAction.next,
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'PAN/VAT number is required';
+                              }
+                              return null;
+                            },
+                          ),
+                          SizedBox(height: 16.h),
+                          PrimaryTextField(
+                            hintText: "Phone/Mobile Number",
+                            controller: _phoneController,
+                            prefixIcon: Icons.phone_outlined,
+                            hasFocusBorder: true,
+                            enabled: _isEditMode,
+                            keyboardType: TextInputType.phone,
+                            textInputAction: TextInputAction.next,
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Phone number is required';
+                              }
+                              return FieldValidators.validatePhone(value);
+                            },
+                          ),
+                          SizedBox(height: 16.h),
+                          PrimaryTextField(
+                            hintText: "Email Address",
+                            controller: _emailController,
+                            prefixIcon: Icons.email_outlined,
+                            hasFocusBorder: true,
+                            enabled: _isEditMode,
+                            keyboardType: TextInputType.emailAddress,
+                            textInputAction: TextInputAction.next,
+                            validator: (value) {
+                              if (value != null && value.trim().isNotEmpty) {
+                                return FieldValidators.validateEmail(value);
+                              }
+                              return null;
+                            },
+                          ),
+                          SizedBox(height: 16.h),
+                          PrimaryTextField(
+                            hintText: "Full Address",
+                            controller: _fullAddressController,
+                            prefixIcon: Icons.location_on_outlined,
+                            hasFocusBorder: true,
+                            enabled: _isEditMode,
+                            keyboardType: TextInputType.multiline,
+                            minLines: 1,
+                            maxLines: 5,
+                            textInputAction: TextInputAction.newline,
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Full address is required';
+                              }
+                              return null;
+                            },
+                          ),
+                          SizedBox(height: 16.h),
+                          PrimaryTextField(
+                            hintText: "Notes",
+                            controller: _notesController,
+                            prefixIcon: Icons.note_outlined,
+                            hasFocusBorder: true,
+                            enabled: _isEditMode,
+                            minLines: 1,
+                            maxLines: 5,
+                            textInputAction: TextInputAction.newline,
+                          ),
+                          SizedBox(height: 16.h,),
+                          PrimaryTextField(
+                            hintText: "Latitude",
+                            controller: _latitudeController,
+                            prefixIcon: Icons.explore_outlined,
+                            hasFocusBorder: true,
+                            enabled: false,
+                            keyboardType: TextInputType.numberWithOptions(decimal: true),
+                            textInputAction: TextInputAction.next,
+                          ),
+                          SizedBox(height: 16.h),
+                          PrimaryTextField(
+                            hintText: "Longitude",
+                            controller: _longitudeController,
+                            prefixIcon: Icons.explore_outlined,
+                            hasFocusBorder: true,
+                            enabled: false,
+                            textInputAction: TextInputAction.next,
+                          ),
+                          SizedBox(height: 16.h),
+                          PrimaryTextField(
+                            hintText: "Date Joined",
+                            controller: _dateJoinedController,
+                            prefixIcon: Icons.date_range_outlined,
+                            hasFocusBorder: true,
+                            enabled: false,
+                            textInputAction: TextInputAction.newline,
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 80.h),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        Container(
+          padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, MediaQuery.of(context).padding.bottom + 16.h),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.06),
+                blurRadius: 10,
+                offset: const Offset(0, -2),
+              ),
+            ],
+          ),
+          child: _isEditMode
+              ? PrimaryButton(
+            label: 'Save Changes',
+            onPressed: _handleSave,
+            leadingIcon: Icons.check_rounded,
+            size: ButtonSize.medium,
+          )
+              : PrimaryButton(
+            label: 'Edit Detail',
+            // Disable button if 'party' is null (loading)
+            onPressed: party == null ? null : _toggleEditMode,
+            leadingIcon: Icons.edit_outlined,
+            size: ButtonSize.medium,
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -398,9 +669,11 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
             child: SvgPicture.asset(
               'assets/images/corner_bubble.svg',
               fit: BoxFit.cover,
-              height: 160.h,
+              height: 180.h,
             ),
           ),
+
+          // --- 3. UPDATED .when() BLOCK ---
           partyAsync.when(
             data: (party) {
               if (party == null) {
@@ -412,9 +685,8 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                 );
               }
 
-              // Populate fields immediately when party data is first loaded or changes
+              // Populate fields when data is first loaded or changes
               if (_currentParty == null || _currentParty!.id != party.id) {
-                // Use postFrameCallback to avoid calling setState during build
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   if (mounted) {
                     _populateFields(party);
@@ -422,274 +694,16 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                 });
               }
 
-              return Column(
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: EdgeInsets.symmetric(horizontal: 16.w),
-                      child: Padding(
-                        padding: EdgeInsets.only(top: 100.h, bottom: 16.h),
-                        child: Form(
-                          key: _formKey,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                width: double.infinity,
-                                padding: EdgeInsets.all(20.w),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(16.r),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.04),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      _nameController.text,
-                                      style: TextStyle(
-                                        fontSize: 20.sp,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.textdark,
-                                        fontFamily: 'Poppins',
-                                      ),
-                                    ),
-                                    SizedBox(height: 8.h),
-                                    InkWell(
-                                      onTap: () => _openGoogleMaps(party),
-                                      borderRadius: BorderRadius.circular(8.r),
-                                      child: Padding(
-                                        padding: EdgeInsets.symmetric(vertical: 4.h),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(
-                                              Icons.location_on_outlined,
-                                              size: 14.sp,
-                                              color: AppColors.primary,
-                                            ),
-                                            SizedBox(width: 6.w),
-                                            Expanded(
-                                              child: Text(
-                                                _fullAddressController.text.isEmpty
-                                                    ? 'No address set'
-                                                    : _fullAddressController.text,
-                                                style: TextStyle(
-                                                  fontSize: 13.sp,
-                                                  color: AppColors.primary,
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                                overflow: TextOverflow.ellipsis,
-                                                maxLines: 1,
-                                              ),
-                                            ),
-                                            SizedBox(width: 4.w),
-                                            Icon(
-                                              Icons.open_in_new,
-                                              size: 13.sp,
-                                              color: AppColors.primary.withValues(alpha: 0.7),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              SizedBox(height: 24.h),
-                              Text(
-                                'Party Details',
-                                style: TextStyle(
-                                  fontSize: 16.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textdark,
-                                  fontFamily: 'Poppins',
-                                ),
-                              ),
-                              SizedBox(height: 16.h),
-                              Container(
-                                width: double.infinity,
-                                padding: EdgeInsets.all(14.w),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(16.r),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(alpha:0.04),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: Column(
-                                  children: [
-                                    PrimaryTextField(
-                                      hintText: "Owner Name",
-                                      controller: _ownerNameController,
-                                      prefixIcon: Icons.person_outline,
-                                      hasFocusBorder: true,
-                                      enabled: _isEditMode,
-                                      textInputAction: TextInputAction.next,
-                                      validator: (value) {
-                                        if (value == null || value.trim().isEmpty) {
-                                          return 'Owner name is required';
-                                        }
-                                        return null;
-                                      },
-                                    ),
-                                    SizedBox(height: 16.h),
-                                    PrimaryTextField(
-                                      hintText: "PAN/VAT Number",
-                                      controller: _panVatNumberController,
-                                      prefixIcon: Icons.receipt_long_outlined,
-                                      hasFocusBorder: true,
-                                      enabled: _isEditMode,
-                                      textInputAction: TextInputAction.next,
-                                      validator: (value) {
-                                        if (value == null || value.trim().isEmpty) {
-                                          return 'PAN/VAT number is required';
-                                        }
-                                        return null;
-                                      },
-                                    ),
-                                    SizedBox(height: 16.h),
-                                    PrimaryTextField(
-                                      hintText: "Phone/Mobile Number",
-                                      controller: _phoneController,
-                                      prefixIcon: Icons.phone_outlined,
-                                      hasFocusBorder: true,
-                                      enabled: _isEditMode,
-                                      keyboardType: TextInputType.phone,
-                                      textInputAction: TextInputAction.next,
-                                      validator: (value) {
-                                        if (value == null || value.trim().isEmpty) {
-                                          return 'Phone number is required';
-                                        }
-                                        return FieldValidators.validatePhone(value);
-                                      },
-                                    ),
-                                    SizedBox(height: 16.h),
-                                    PrimaryTextField(
-                                      hintText: "Email Address",
-                                      controller: _emailController,
-                                      prefixIcon: Icons.email_outlined,
-                                      hasFocusBorder: true,
-                                      enabled: _isEditMode,
-                                      keyboardType: TextInputType.emailAddress,
-                                      textInputAction: TextInputAction.next,
-                                      validator: (value) {
-                                        if (value != null && value.trim().isNotEmpty) {
-                                          return FieldValidators.validateEmail(value);
-                                        }
-                                        return null;
-                                      },
-                                    ),
-                                    SizedBox(height: 16.h),
-                                    PrimaryTextField(
-                                      hintText: "Full Address",
-                                      controller: _fullAddressController,
-                                      prefixIcon: Icons.location_on_outlined,
-                                      hasFocusBorder: true,
-                                      enabled: _isEditMode,
-                                      keyboardType: TextInputType.multiline,
-                                      minLines: 1,
-                                      maxLines: 5,
-                                      textInputAction: TextInputAction.newline,
-                                      validator: (value) {
-                                        if (value == null || value.trim().isEmpty) {
-                                          return 'Full address is required';
-                                        }
-                                        return null;
-                                      },
-                                    ),
-                                    SizedBox(height: 16.h),
-                                    PrimaryTextField(
-                                      hintText: "Notes",
-                                      controller: _notesController,
-                                      prefixIcon: Icons.note_outlined,
-                                      hasFocusBorder: true,
-                                      enabled: _isEditMode,
-                                      minLines: 1,
-                                      maxLines: 5,
-                                      textInputAction: TextInputAction.newline,
-                                    ),
-                                    SizedBox(height: 16.h,),
-                                    PrimaryTextField(
-                                      hintText: "Latitude",
-                                      controller: _latitudeController,
-                                      prefixIcon: Icons.explore_outlined,
-                                      hasFocusBorder: true,
-                                      enabled: false,
-                                      keyboardType: TextInputType.numberWithOptions(decimal: true),
-                                      textInputAction: TextInputAction.next,
-                                    ),
-                                    SizedBox(height: 16.h),
-                                    PrimaryTextField(
-                                      hintText: "Longitude",
-                                      controller: _longitudeController,
-                                      prefixIcon: Icons.explore_outlined,
-                                      hasFocusBorder: true,
-                                      enabled: false,
-
-                                      textInputAction: TextInputAction.next,
-                                    ),
-                                    SizedBox(height: 16.h),
-                                    PrimaryTextField(
-                                      hintText: "Date Joined",
-                                      controller: _dateJoinedController,
-                                      prefixIcon: Icons.date_range_outlined,
-                                      hasFocusBorder: true,
-                                      enabled: false,
-                                      textInputAction: TextInputAction.newline,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              SizedBox(height: 80.h),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Container(
-                    padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, MediaQuery.of(context).padding.bottom + 16.h),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.06),
-                          blurRadius: 10,
-                          offset: const Offset(0, -2),
-                        ),
-                      ],
-                    ),
-                    child: _isEditMode
-                        ? PrimaryButton(
-                      label: 'Save Changes',
-                      onPressed: _handleSave,
-                      leadingIcon: Icons.check_rounded,
-                      size: ButtonSize.medium,
-                    )
-                        : PrimaryButton(
-                      label: 'Edit Detail',
-                      onPressed: _toggleEditMode,
-                      leadingIcon: Icons.edit_outlined,
-                      size: ButtonSize.medium,
-                    ),
-                  ),
-                ],
+              // Build the real UI
+              return _buildPageContent(party);
+            },
+            loading: () {
+              // Build the skeleton UI
+              return Skeletonizer(
+                enabled: true,
+                child: _buildPageContent(null),
               );
             },
-            loading: () => Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
-            ),
             error: (error, stack) => Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
