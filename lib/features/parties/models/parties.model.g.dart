@@ -163,6 +163,67 @@ Map<String, dynamic> _$UpdatePartyLocationToJson(
   'longitude': instance.longitude,
 };
 
+_CreatePartyRequest _$CreatePartyRequestFromJson(Map<String, dynamic> json) =>
+    _CreatePartyRequest(
+      partyName: json['partyName'] as String,
+      ownerName: json['ownerName'] as String,
+      dateJoined: json['dateJoined'] as String,
+      panVatNumber: json['panVatNumber'] as String,
+      contact: CreatePartyContact.fromJson(
+        json['contact'] as Map<String, dynamic>,
+      ),
+      location: CreatePartyLocation.fromJson(
+        json['location'] as Map<String, dynamic>,
+      ),
+      description: json['description'] as String?,
+    );
+
+Map<String, dynamic> _$CreatePartyRequestToJson(_CreatePartyRequest instance) =>
+    <String, dynamic>{
+      'partyName': instance.partyName,
+      'ownerName': instance.ownerName,
+      'dateJoined': instance.dateJoined,
+      'panVatNumber': instance.panVatNumber,
+      'contact': instance.contact,
+      'location': instance.location,
+      'description': instance.description,
+    };
+
+_CreatePartyContact _$CreatePartyContactFromJson(Map<String, dynamic> json) =>
+    _CreatePartyContact(
+      phone: json['phone'] as String,
+      email: json['email'] as String?,
+    );
+
+Map<String, dynamic> _$CreatePartyContactToJson(_CreatePartyContact instance) =>
+    <String, dynamic>{'phone': instance.phone, 'email': instance.email};
+
+_CreatePartyLocation _$CreatePartyLocationFromJson(Map<String, dynamic> json) =>
+    _CreatePartyLocation(
+      address: json['address'] as String,
+      latitude: (json['latitude'] as num).toDouble(),
+      longitude: (json['longitude'] as num).toDouble(),
+    );
+
+Map<String, dynamic> _$CreatePartyLocationToJson(
+  _CreatePartyLocation instance,
+) => <String, dynamic>{
+  'address': instance.address,
+  'latitude': instance.latitude,
+  'longitude': instance.longitude,
+};
+
+_CreatePartyApiResponse _$CreatePartyApiResponseFromJson(
+  Map<String, dynamic> json,
+) => _CreatePartyApiResponse(
+  success: json['success'] as bool,
+  data: PartyDetailApiData.fromJson(json['data'] as Map<String, dynamic>),
+);
+
+Map<String, dynamic> _$CreatePartyApiResponseToJson(
+  _CreatePartyApiResponse instance,
+) => <String, dynamic>{'success': instance.success, 'data': instance.data};
+
 _PartyListItem _$PartyListItemFromJson(Map<String, dynamic> json) =>
     _PartyListItem(
       id: json['id'] as String,

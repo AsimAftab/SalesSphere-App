@@ -9,53 +9,50 @@ part of 'edit_party.vm.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
-@ProviderFor(PartyViewModel)
-const partyViewModelProvider = PartyViewModelProvider._();
+@ProviderFor(EditPartyViewModel)
+const editPartyViewModelProvider = EditPartyViewModelProvider._();
 
-final class PartyViewModelProvider
-    extends $AsyncNotifierProvider<PartyViewModel, List<PartyDetails>> {
-  const PartyViewModelProvider._()
+final class EditPartyViewModelProvider
+    extends $AsyncNotifierProvider<EditPartyViewModel, void> {
+  const EditPartyViewModelProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'partyViewModelProvider',
+        name: r'editPartyViewModelProvider',
         isAutoDispose: true,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$partyViewModelHash();
+  String debugGetCreateSourceHash() => _$editPartyViewModelHash();
 
   @$internal
   @override
-  PartyViewModel create() => PartyViewModel();
+  EditPartyViewModel create() => EditPartyViewModel();
 }
 
-<<<<<<< HEAD
-String _$partyViewModelHash() => r'80ea82f688e013b449c36d356f82bb63d42f54de';
-=======
-String _$partyViewModelHash() => r'd39c3e58e838ef494ed657c43d4b4956457d4c5c';
->>>>>>> 032bd2e90df25e0b380930e4ed1288129e517a4c
+String _$editPartyViewModelHash() =>
+    r'c43d0b4b078cc191b402db3a5ee790bf4e27974a';
 
-abstract class _$PartyViewModel extends $AsyncNotifier<List<PartyDetails>> {
-  FutureOr<List<PartyDetails>> build();
+
+abstract class _$EditPartyViewModel extends $AsyncNotifier<void> {
+  FutureOr<void> build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final created = build();
-    final ref =
-        this.ref as $Ref<AsyncValue<List<PartyDetails>>, List<PartyDetails>>;
+    build();
+    final ref = this.ref as $Ref<AsyncValue<void>, void>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<AsyncValue<List<PartyDetails>>, List<PartyDetails>>,
-              AsyncValue<List<PartyDetails>>,
+              AnyNotifier<AsyncValue<void>, void>,
+              AsyncValue<void>,
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    element.handleValue(ref, null);
   }
 }
 
@@ -114,7 +111,7 @@ final class PartyByIdProvider
   }
 }
 
-String _$partyByIdHash() => r'ac45455d3fcb999b2ffd920205f5320414ee3d7c';
+String _$partyByIdHash() => r'7f2dccbc54b8d1c1eacab4a8eba884e371c9f673';
 
 final class PartyByIdFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<PartyDetails?>, String> {
