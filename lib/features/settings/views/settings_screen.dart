@@ -87,7 +87,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 icon: Icons.person_outline,
                 title: 'Profile',
                 onTap: () {
-                  // TODO: Navigate to Profile screen
+                  context.push('/profile');
                 },
               ),
               SettingsTile(
@@ -113,7 +113,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 icon: Icons.info_outline,
                 title: 'About Sales Sphere',
                 onTap: () {
-                  // TODO: Navigate to About screen
+                  context.push('/about');
                 },
               ),
               SettingsTile(
