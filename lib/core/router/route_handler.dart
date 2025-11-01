@@ -12,8 +12,8 @@ import 'package:sales_sphere/features/parties/views/parties_screen.dart';
 import 'package:sales_sphere/features/parties/views/edit_party_details_screen.dart';
 import 'package:sales_sphere/features/parties/views/add_party_screen.dart';
 import 'package:sales_sphere/features/profile/view/profile_screen.dart';
-
 import 'package:sales_sphere/features/settings/views/settings_screen.dart';
+import 'package:sales_sphere/features/settings/views/about_screen.dart';
 import 'package:sales_sphere/features/auth/models/login.models.dart';
 
 import '../providers/user_controller.dart';
@@ -41,6 +41,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final isGoingToEditParty = requestedPath.startsWith('/edit_party_details_screen');
       final isGoingToDetailAdded = requestedPath == '/detail-added';
       final isGoingToProfile = requestedPath == '/profile';
+      final isGoingToAbout = requestedPath == '/about';
 
       // If user is not logged in AND not going to one of the allowed pages...
       if (!isLoggedIn &&
@@ -50,7 +51,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           !isGoingToDirectory &&
           !isGoingToEditParty &&
           !isGoingToDetailAdded &&
-          !isGoingToProfile) {
+          !isGoingToProfile &&
+          !isGoingToAbout) {
         return '/';
       }
 
@@ -96,6 +98,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/profile',
         name: 'profile',
         builder: (context, state) => const ProfileScreen(),
+      ),
+      GoRoute(
+        path: '/about',
+        name: 'about',
+        builder: (context, state) => const AboutScreen(),
       ),
 
       // ========================================
@@ -225,7 +232,7 @@ class ErrorPage extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Text(
-            'Error: ${error ?? "Unknown error"}',
+            'Error: \${error ?? "Unknown error"}',
             style: const TextStyle(fontSize: 18, color: Colors.red),
             textAlign: TextAlign.center,
           ),

@@ -33,7 +33,11 @@ final class PartyViewModelProvider
   PartyViewModel create() => PartyViewModel();
 }
 
+<<<<<<< HEAD
+String _$partyViewModelHash() => r'80ea82f688e013b449c36d356f82bb63d42f54de';
+=======
 String _$partyViewModelHash() => r'd39c3e58e838ef494ed657c43d4b4956457d4c5c';
+>>>>>>> 032bd2e90df25e0b380930e4ed1288129e517a4c
 
 abstract class _$PartyViewModel extends $AsyncNotifier<List<PartyDetails>> {
   FutureOr<List<PartyDetails>> build();
