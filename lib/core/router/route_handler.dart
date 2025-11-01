@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sales_sphere/features/Detail-Added/view/detail_added.dart';
+import 'package:sales_sphere/features/catalog/views/catalog_item_details_screen.dart';
 import 'package:sales_sphere/features/catalog/views/catalog_item_list_screen.dart';
+import 'package:sales_sphere/features/prospects/views/prospects_screen.dart';
 import 'package:sales_sphere/widget/main_shell.dart';
 import 'package:sales_sphere/features/auth/views/login_screen.dart';
 import 'package:sales_sphere/features/home/views/home_screen.dart';
@@ -38,6 +40,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final isGoingToCatalog = requestedPath.startsWith('/catalog');
       final isGoingToParties = requestedPath.startsWith('/parties');
       final isGoingToDirectory = requestedPath.startsWith('/directory');
+      final isGoingToProspects = requestedPath.startsWith('/prospects');
       final isGoingToEditParty = requestedPath.startsWith('/edit_party_details_screen');
       final isGoingToDetailAdded = requestedPath == '/detail-added';
       final isGoingToProfile = requestedPath == '/profile';
@@ -49,6 +52,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           !isGoingToCatalog &&
           !isGoingToParties &&
           !isGoingToDirectory &&
+          !isGoingToProspects &&
           !isGoingToEditParty &&
           !isGoingToDetailAdded &&
           !isGoingToProfile &&
@@ -114,9 +118,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const PartiesScreen(),
       ),
       GoRoute(
-        path: '/directory/prospect-list',
-        name: 'prospect-list',
-        builder: (context, state) => const PartiesScreen(),
+        path: '/directory/prospects-list',
+        name: 'prospects-list',
+        builder: (context, state) => const ProspectsScreen(),
       ),
       GoRoute(
         path: '/directory/sites-list',
@@ -139,7 +143,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             currentIndex = 1;
           } else if (location.startsWith('/invoice')) {
             currentIndex = 2;
-          } else if (location.startsWith('/parties') || location.startsWith('/directory')) {
+          } else if (location.startsWith('/parties') ||
+              location.startsWith('/directory') ||
+              location.startsWith('/prospects')) {
             currentIndex = 3;
           } else if (location.startsWith('/settings')) {
             currentIndex = 4;
@@ -179,6 +185,17 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     categoryName: categoryName,
                   );
                 },
+                routes: [
+                  GoRoute(
+                    path: ':itemId', // e.g., /catalog/1/101
+                    name: 'catalog_item_details', // The name for your new route
+                    builder: (context, state) {
+                      final itemId = state.pathParameters['itemId'] ?? 'error';
+                      // Note: We don't need categoryId here, but it's in the path
+                      return CatalogItemDetailsScreen(itemId: itemId);
+                    },
+                  ),
+                ],
               ),
             ],
           ),
@@ -198,6 +215,15 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             name: 'parties',
             pageBuilder: (context, state) => const NoTransitionPage(
               child: PartiesScreen(),
+            ),
+          ),
+
+          // Prospets Tab (Keep for backwards compatibility)
+          GoRoute(
+            path: '/prospects',
+            name: 'prospects',
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: ProspectsScreen(),
             ),
           ),
 

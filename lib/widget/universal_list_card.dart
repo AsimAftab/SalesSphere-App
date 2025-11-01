@@ -89,7 +89,7 @@ class UniversalListCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 16.sp,
                           fontWeight: FontWeight.w600,
-                          color: Colors.black87,
+                          color: AppColors.textdark,
                           fontFamily: 'Poppins',
                         ),
                         maxLines: 1,
