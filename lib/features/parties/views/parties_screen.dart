@@ -5,7 +5,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
-import 'package:sales_sphere/features/parties/vm/edit_party.vm.dart';
 import 'package:sales_sphere/features/parties/vm/parties.vm.dart';
 import 'package:sales_sphere/widget/universal_list_card.dart';
 
@@ -191,7 +190,7 @@ class _PartiesScreenState extends ConsumerState<PartiesScreen> {
                     }
                     return RefreshIndicator(
                       onRefresh: () async {
-                        await ref.read(partyViewModelProvider.notifier).refresh();
+                        await ref.read(partiesViewModelProvider.notifier).refresh();
                       },
                       color: AppColors.primary,
                       child: ListView.separated(
@@ -283,7 +282,7 @@ class _PartiesScreenState extends ConsumerState<PartiesScreen> {
                         SizedBox(height: 16.h),
                         ElevatedButton(
                           onPressed: () {
-                            ref.read(partyViewModelProvider.notifier).refresh();
+                            ref.read(partiesViewModelProvider.notifier).refresh();
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
