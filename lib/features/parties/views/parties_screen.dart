@@ -313,25 +313,6 @@ class _PartiesScreenState extends ConsumerState<PartiesScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _navigateToAddParty,
-        backgroundColor: AppColors.primary,
-        elevation: 4,
-        icon: Icon(
-          Icons.add,
-          color: Colors.white,
-          size: 20.sp,
-        ),
-        label: Text(
-          'Add Party',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-            fontFamily: 'Poppins',
-            fontSize: 14.sp,
-          ),
-        ),
-      ),
     );
   }
 }
