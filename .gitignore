@@ -12,6 +12,10 @@
 .swiftpm/
 migrate_working_dir/
 .env
+<<<<<<< HEAD
+=======
+
+>>>>>>> 3e15a47e9268892af27c95ee46838a55fd2559d6
 
 # IntelliJ related
 *.iml
@@ -44,3 +48,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Ignore .env files
+.env

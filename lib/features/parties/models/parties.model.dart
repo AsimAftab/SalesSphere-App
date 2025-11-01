@@ -169,6 +169,64 @@ abstract class UpdatePartyLocation with _$UpdatePartyLocation {
 }
 
 // ============================================================================
+// Create Request Models
+// ============================================================================
+
+/// Create party request model for POST /api/v1/parties
+@freezed
+abstract class CreatePartyRequest with _$CreatePartyRequest {
+  const factory CreatePartyRequest({
+    required String partyName,
+    required String ownerName,
+    required String dateJoined,
+    required String panVatNumber,
+    required CreatePartyContact contact,
+    required CreatePartyLocation location,
+    String? description,
+  }) = _CreatePartyRequest;
+
+  factory CreatePartyRequest.fromJson(Map<String, dynamic> json) =>
+      _$CreatePartyRequestFromJson(json);
+}
+
+/// Contact info for create request
+@freezed
+abstract class CreatePartyContact with _$CreatePartyContact {
+  const factory CreatePartyContact({
+    required String phone,
+    String? email,
+  }) = _CreatePartyContact;
+
+  factory CreatePartyContact.fromJson(Map<String, dynamic> json) =>
+      _$CreatePartyContactFromJson(json);
+}
+
+/// Location info for create request
+@freezed
+abstract class CreatePartyLocation with _$CreatePartyLocation {
+  const factory CreatePartyLocation({
+    required String address,
+    required double latitude,
+    required double longitude,
+  }) = _CreatePartyLocation;
+
+  factory CreatePartyLocation.fromJson(Map<String, dynamic> json) =>
+      _$CreatePartyLocationFromJson(json);
+}
+
+/// API Response wrapper for create party endpoint
+@freezed
+abstract class CreatePartyApiResponse with _$CreatePartyApiResponse {
+  const factory CreatePartyApiResponse({
+    required bool success,
+    required PartyDetailApiData data,
+  }) = _CreatePartyApiResponse;
+
+  factory CreatePartyApiResponse.fromJson(Map<String, dynamic> json) =>
+      _$CreatePartyApiResponseFromJson(json);
+}
+
+// ============================================================================
 // App Models
 // ============================================================================
 

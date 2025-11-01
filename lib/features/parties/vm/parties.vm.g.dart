@@ -9,6 +9,52 @@ part of 'parties.vm.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
+@ProviderFor(PartiesViewModel)
+const partiesViewModelProvider = PartiesViewModelProvider._();
+
+final class PartiesViewModelProvider
+    extends $AsyncNotifierProvider<PartiesViewModel, List<PartyDetails>> {
+  const PartiesViewModelProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'partiesViewModelProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$partiesViewModelHash();
+
+  @$internal
+  @override
+  PartiesViewModel create() => PartiesViewModel();
+}
+
+String _$partiesViewModelHash() => r'51c52cffc9b277016da3349cbb960bce9b067097';
+
+abstract class _$PartiesViewModel extends $AsyncNotifier<List<PartyDetails>> {
+  FutureOr<List<PartyDetails>> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref =
+        this.ref as $Ref<AsyncValue<List<PartyDetails>>, List<PartyDetails>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<List<PartyDetails>>, List<PartyDetails>>,
+              AsyncValue<List<PartyDetails>>,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}
+
 @ProviderFor(SearchQuery)
 const searchQueryProvider = SearchQueryProvider._();
 
@@ -100,7 +146,7 @@ final class SearchedPartiesProvider
   }
 }
 
-String _$searchedPartiesHash() => r'34cb1f404931a08e2d7d4b07a3620e991ca28c28';
+String _$searchedPartiesHash() => r'88de13b320b37140e93cc3f7bc8762f30d732382';
 
 @ProviderFor(partyCount)
 const partyCountProvider = PartyCountProvider._();
@@ -140,7 +186,7 @@ final class PartyCountProvider extends $FunctionalProvider<int, int, int>
   }
 }
 
-String _$partyCountHash() => r'cf9080dec74addf9f58f50f54d87a4371afc7976';
+String _$partyCountHash() => r'9e7d229b6650890b4e9ec2470daf22dd4f0b857c';
 
 @ProviderFor(activePartyCount)
 const activePartyCountProvider = ActivePartyCountProvider._();
@@ -180,4 +226,4 @@ final class ActivePartyCountProvider extends $FunctionalProvider<int, int, int>
   }
 }
 
-String _$activePartyCountHash() => r'42f5be4250384142a858d0f6908c9af032c55a67';
+String _$activePartyCountHash() => r'314144fd7cfe92c7d0009324d1fcdbd5221eb9c1';
