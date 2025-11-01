@@ -2841,6 +2841,1142 @@ as double?,
 
 
 /// @nodoc
+mixin _$CreatePartyRequest {
+
+ String get partyName; String get ownerName; String get dateJoined; String get panVatNumber; CreatePartyContact get contact; CreatePartyLocation get location; String? get description;
+/// Create a copy of CreatePartyRequest
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$CreatePartyRequestCopyWith<CreatePartyRequest> get copyWith => _$CreatePartyRequestCopyWithImpl<CreatePartyRequest>(this as CreatePartyRequest, _$identity);
+
+  /// Serializes this CreatePartyRequest to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CreatePartyRequest&&(identical(other.partyName, partyName) || other.partyName == partyName)&&(identical(other.ownerName, ownerName) || other.ownerName == ownerName)&&(identical(other.dateJoined, dateJoined) || other.dateJoined == dateJoined)&&(identical(other.panVatNumber, panVatNumber) || other.panVatNumber == panVatNumber)&&(identical(other.contact, contact) || other.contact == contact)&&(identical(other.location, location) || other.location == location)&&(identical(other.description, description) || other.description == description));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,partyName,ownerName,dateJoined,panVatNumber,contact,location,description);
+
+@override
+String toString() {
+  return 'CreatePartyRequest(partyName: $partyName, ownerName: $ownerName, dateJoined: $dateJoined, panVatNumber: $panVatNumber, contact: $contact, location: $location, description: $description)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $CreatePartyRequestCopyWith<$Res>  {
+  factory $CreatePartyRequestCopyWith(CreatePartyRequest value, $Res Function(CreatePartyRequest) _then) = _$CreatePartyRequestCopyWithImpl;
+@useResult
+$Res call({
+ String partyName, String ownerName, String dateJoined, String panVatNumber, CreatePartyContact contact, CreatePartyLocation location, String? description
+});
+
+
+$CreatePartyContactCopyWith<$Res> get contact;$CreatePartyLocationCopyWith<$Res> get location;
+
+}
+/// @nodoc
+class _$CreatePartyRequestCopyWithImpl<$Res>
+    implements $CreatePartyRequestCopyWith<$Res> {
+  _$CreatePartyRequestCopyWithImpl(this._self, this._then);
+
+  final CreatePartyRequest _self;
+  final $Res Function(CreatePartyRequest) _then;
+
+/// Create a copy of CreatePartyRequest
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? partyName = null,Object? ownerName = null,Object? dateJoined = null,Object? panVatNumber = null,Object? contact = null,Object? location = null,Object? description = freezed,}) {
+  return _then(_self.copyWith(
+partyName: null == partyName ? _self.partyName : partyName // ignore: cast_nullable_to_non_nullable
+as String,ownerName: null == ownerName ? _self.ownerName : ownerName // ignore: cast_nullable_to_non_nullable
+as String,dateJoined: null == dateJoined ? _self.dateJoined : dateJoined // ignore: cast_nullable_to_non_nullable
+as String,panVatNumber: null == panVatNumber ? _self.panVatNumber : panVatNumber // ignore: cast_nullable_to_non_nullable
+as String,contact: null == contact ? _self.contact : contact // ignore: cast_nullable_to_non_nullable
+as CreatePartyContact,location: null == location ? _self.location : location // ignore: cast_nullable_to_non_nullable
+as CreatePartyLocation,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+/// Create a copy of CreatePartyRequest
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$CreatePartyContactCopyWith<$Res> get contact {
+  
+  return $CreatePartyContactCopyWith<$Res>(_self.contact, (value) {
+    return _then(_self.copyWith(contact: value));
+  });
+}/// Create a copy of CreatePartyRequest
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$CreatePartyLocationCopyWith<$Res> get location {
+  
+  return $CreatePartyLocationCopyWith<$Res>(_self.location, (value) {
+    return _then(_self.copyWith(location: value));
+  });
+}
+}
+
+
+/// Adds pattern-matching-related methods to [CreatePartyRequest].
+extension CreatePartyRequestPatterns on CreatePartyRequest {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _CreatePartyRequest value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _CreatePartyRequest() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _CreatePartyRequest value)  $default,){
+final _that = this;
+switch (_that) {
+case _CreatePartyRequest():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _CreatePartyRequest value)?  $default,){
+final _that = this;
+switch (_that) {
+case _CreatePartyRequest() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String partyName,  String ownerName,  String dateJoined,  String panVatNumber,  CreatePartyContact contact,  CreatePartyLocation location,  String? description)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _CreatePartyRequest() when $default != null:
+return $default(_that.partyName,_that.ownerName,_that.dateJoined,_that.panVatNumber,_that.contact,_that.location,_that.description);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String partyName,  String ownerName,  String dateJoined,  String panVatNumber,  CreatePartyContact contact,  CreatePartyLocation location,  String? description)  $default,) {final _that = this;
+switch (_that) {
+case _CreatePartyRequest():
+return $default(_that.partyName,_that.ownerName,_that.dateJoined,_that.panVatNumber,_that.contact,_that.location,_that.description);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String partyName,  String ownerName,  String dateJoined,  String panVatNumber,  CreatePartyContact contact,  CreatePartyLocation location,  String? description)?  $default,) {final _that = this;
+switch (_that) {
+case _CreatePartyRequest() when $default != null:
+return $default(_that.partyName,_that.ownerName,_that.dateJoined,_that.panVatNumber,_that.contact,_that.location,_that.description);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _CreatePartyRequest implements CreatePartyRequest {
+  const _CreatePartyRequest({required this.partyName, required this.ownerName, required this.dateJoined, required this.panVatNumber, required this.contact, required this.location, this.description});
+  factory _CreatePartyRequest.fromJson(Map<String, dynamic> json) => _$CreatePartyRequestFromJson(json);
+
+@override final  String partyName;
+@override final  String ownerName;
+@override final  String dateJoined;
+@override final  String panVatNumber;
+@override final  CreatePartyContact contact;
+@override final  CreatePartyLocation location;
+@override final  String? description;
+
+/// Create a copy of CreatePartyRequest
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$CreatePartyRequestCopyWith<_CreatePartyRequest> get copyWith => __$CreatePartyRequestCopyWithImpl<_CreatePartyRequest>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$CreatePartyRequestToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CreatePartyRequest&&(identical(other.partyName, partyName) || other.partyName == partyName)&&(identical(other.ownerName, ownerName) || other.ownerName == ownerName)&&(identical(other.dateJoined, dateJoined) || other.dateJoined == dateJoined)&&(identical(other.panVatNumber, panVatNumber) || other.panVatNumber == panVatNumber)&&(identical(other.contact, contact) || other.contact == contact)&&(identical(other.location, location) || other.location == location)&&(identical(other.description, description) || other.description == description));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,partyName,ownerName,dateJoined,panVatNumber,contact,location,description);
+
+@override
+String toString() {
+  return 'CreatePartyRequest(partyName: $partyName, ownerName: $ownerName, dateJoined: $dateJoined, panVatNumber: $panVatNumber, contact: $contact, location: $location, description: $description)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$CreatePartyRequestCopyWith<$Res> implements $CreatePartyRequestCopyWith<$Res> {
+  factory _$CreatePartyRequestCopyWith(_CreatePartyRequest value, $Res Function(_CreatePartyRequest) _then) = __$CreatePartyRequestCopyWithImpl;
+@override @useResult
+$Res call({
+ String partyName, String ownerName, String dateJoined, String panVatNumber, CreatePartyContact contact, CreatePartyLocation location, String? description
+});
+
+
+@override $CreatePartyContactCopyWith<$Res> get contact;@override $CreatePartyLocationCopyWith<$Res> get location;
+
+}
+/// @nodoc
+class __$CreatePartyRequestCopyWithImpl<$Res>
+    implements _$CreatePartyRequestCopyWith<$Res> {
+  __$CreatePartyRequestCopyWithImpl(this._self, this._then);
+
+  final _CreatePartyRequest _self;
+  final $Res Function(_CreatePartyRequest) _then;
+
+/// Create a copy of CreatePartyRequest
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? partyName = null,Object? ownerName = null,Object? dateJoined = null,Object? panVatNumber = null,Object? contact = null,Object? location = null,Object? description = freezed,}) {
+  return _then(_CreatePartyRequest(
+partyName: null == partyName ? _self.partyName : partyName // ignore: cast_nullable_to_non_nullable
+as String,ownerName: null == ownerName ? _self.ownerName : ownerName // ignore: cast_nullable_to_non_nullable
+as String,dateJoined: null == dateJoined ? _self.dateJoined : dateJoined // ignore: cast_nullable_to_non_nullable
+as String,panVatNumber: null == panVatNumber ? _self.panVatNumber : panVatNumber // ignore: cast_nullable_to_non_nullable
+as String,contact: null == contact ? _self.contact : contact // ignore: cast_nullable_to_non_nullable
+as CreatePartyContact,location: null == location ? _self.location : location // ignore: cast_nullable_to_non_nullable
+as CreatePartyLocation,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+/// Create a copy of CreatePartyRequest
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$CreatePartyContactCopyWith<$Res> get contact {
+  
+  return $CreatePartyContactCopyWith<$Res>(_self.contact, (value) {
+    return _then(_self.copyWith(contact: value));
+  });
+}/// Create a copy of CreatePartyRequest
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$CreatePartyLocationCopyWith<$Res> get location {
+  
+  return $CreatePartyLocationCopyWith<$Res>(_self.location, (value) {
+    return _then(_self.copyWith(location: value));
+  });
+}
+}
+
+
+/// @nodoc
+mixin _$CreatePartyContact {
+
+ String get phone; String? get email;
+/// Create a copy of CreatePartyContact
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$CreatePartyContactCopyWith<CreatePartyContact> get copyWith => _$CreatePartyContactCopyWithImpl<CreatePartyContact>(this as CreatePartyContact, _$identity);
+
+  /// Serializes this CreatePartyContact to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CreatePartyContact&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.email, email) || other.email == email));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,phone,email);
+
+@override
+String toString() {
+  return 'CreatePartyContact(phone: $phone, email: $email)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $CreatePartyContactCopyWith<$Res>  {
+  factory $CreatePartyContactCopyWith(CreatePartyContact value, $Res Function(CreatePartyContact) _then) = _$CreatePartyContactCopyWithImpl;
+@useResult
+$Res call({
+ String phone, String? email
+});
+
+
+
+
+}
+/// @nodoc
+class _$CreatePartyContactCopyWithImpl<$Res>
+    implements $CreatePartyContactCopyWith<$Res> {
+  _$CreatePartyContactCopyWithImpl(this._self, this._then);
+
+  final CreatePartyContact _self;
+  final $Res Function(CreatePartyContact) _then;
+
+/// Create a copy of CreatePartyContact
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? phone = null,Object? email = freezed,}) {
+  return _then(_self.copyWith(
+phone: null == phone ? _self.phone : phone // ignore: cast_nullable_to_non_nullable
+as String,email: freezed == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [CreatePartyContact].
+extension CreatePartyContactPatterns on CreatePartyContact {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _CreatePartyContact value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _CreatePartyContact() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _CreatePartyContact value)  $default,){
+final _that = this;
+switch (_that) {
+case _CreatePartyContact():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _CreatePartyContact value)?  $default,){
+final _that = this;
+switch (_that) {
+case _CreatePartyContact() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String phone,  String? email)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _CreatePartyContact() when $default != null:
+return $default(_that.phone,_that.email);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String phone,  String? email)  $default,) {final _that = this;
+switch (_that) {
+case _CreatePartyContact():
+return $default(_that.phone,_that.email);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String phone,  String? email)?  $default,) {final _that = this;
+switch (_that) {
+case _CreatePartyContact() when $default != null:
+return $default(_that.phone,_that.email);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _CreatePartyContact implements CreatePartyContact {
+  const _CreatePartyContact({required this.phone, this.email});
+  factory _CreatePartyContact.fromJson(Map<String, dynamic> json) => _$CreatePartyContactFromJson(json);
+
+@override final  String phone;
+@override final  String? email;
+
+/// Create a copy of CreatePartyContact
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$CreatePartyContactCopyWith<_CreatePartyContact> get copyWith => __$CreatePartyContactCopyWithImpl<_CreatePartyContact>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$CreatePartyContactToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CreatePartyContact&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.email, email) || other.email == email));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,phone,email);
+
+@override
+String toString() {
+  return 'CreatePartyContact(phone: $phone, email: $email)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$CreatePartyContactCopyWith<$Res> implements $CreatePartyContactCopyWith<$Res> {
+  factory _$CreatePartyContactCopyWith(_CreatePartyContact value, $Res Function(_CreatePartyContact) _then) = __$CreatePartyContactCopyWithImpl;
+@override @useResult
+$Res call({
+ String phone, String? email
+});
+
+
+
+
+}
+/// @nodoc
+class __$CreatePartyContactCopyWithImpl<$Res>
+    implements _$CreatePartyContactCopyWith<$Res> {
+  __$CreatePartyContactCopyWithImpl(this._self, this._then);
+
+  final _CreatePartyContact _self;
+  final $Res Function(_CreatePartyContact) _then;
+
+/// Create a copy of CreatePartyContact
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? phone = null,Object? email = freezed,}) {
+  return _then(_CreatePartyContact(
+phone: null == phone ? _self.phone : phone // ignore: cast_nullable_to_non_nullable
+as String,email: freezed == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$CreatePartyLocation {
+
+ String get address; double get latitude; double get longitude;
+/// Create a copy of CreatePartyLocation
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$CreatePartyLocationCopyWith<CreatePartyLocation> get copyWith => _$CreatePartyLocationCopyWithImpl<CreatePartyLocation>(this as CreatePartyLocation, _$identity);
+
+  /// Serializes this CreatePartyLocation to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CreatePartyLocation&&(identical(other.address, address) || other.address == address)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,address,latitude,longitude);
+
+@override
+String toString() {
+  return 'CreatePartyLocation(address: $address, latitude: $latitude, longitude: $longitude)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $CreatePartyLocationCopyWith<$Res>  {
+  factory $CreatePartyLocationCopyWith(CreatePartyLocation value, $Res Function(CreatePartyLocation) _then) = _$CreatePartyLocationCopyWithImpl;
+@useResult
+$Res call({
+ String address, double latitude, double longitude
+});
+
+
+
+
+}
+/// @nodoc
+class _$CreatePartyLocationCopyWithImpl<$Res>
+    implements $CreatePartyLocationCopyWith<$Res> {
+  _$CreatePartyLocationCopyWithImpl(this._self, this._then);
+
+  final CreatePartyLocation _self;
+  final $Res Function(CreatePartyLocation) _then;
+
+/// Create a copy of CreatePartyLocation
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? address = null,Object? latitude = null,Object? longitude = null,}) {
+  return _then(_self.copyWith(
+address: null == address ? _self.address : address // ignore: cast_nullable_to_non_nullable
+as String,latitude: null == latitude ? _self.latitude : latitude // ignore: cast_nullable_to_non_nullable
+as double,longitude: null == longitude ? _self.longitude : longitude // ignore: cast_nullable_to_non_nullable
+as double,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [CreatePartyLocation].
+extension CreatePartyLocationPatterns on CreatePartyLocation {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _CreatePartyLocation value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _CreatePartyLocation() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _CreatePartyLocation value)  $default,){
+final _that = this;
+switch (_that) {
+case _CreatePartyLocation():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _CreatePartyLocation value)?  $default,){
+final _that = this;
+switch (_that) {
+case _CreatePartyLocation() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String address,  double latitude,  double longitude)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _CreatePartyLocation() when $default != null:
+return $default(_that.address,_that.latitude,_that.longitude);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String address,  double latitude,  double longitude)  $default,) {final _that = this;
+switch (_that) {
+case _CreatePartyLocation():
+return $default(_that.address,_that.latitude,_that.longitude);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String address,  double latitude,  double longitude)?  $default,) {final _that = this;
+switch (_that) {
+case _CreatePartyLocation() when $default != null:
+return $default(_that.address,_that.latitude,_that.longitude);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _CreatePartyLocation implements CreatePartyLocation {
+  const _CreatePartyLocation({required this.address, required this.latitude, required this.longitude});
+  factory _CreatePartyLocation.fromJson(Map<String, dynamic> json) => _$CreatePartyLocationFromJson(json);
+
+@override final  String address;
+@override final  double latitude;
+@override final  double longitude;
+
+/// Create a copy of CreatePartyLocation
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$CreatePartyLocationCopyWith<_CreatePartyLocation> get copyWith => __$CreatePartyLocationCopyWithImpl<_CreatePartyLocation>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$CreatePartyLocationToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CreatePartyLocation&&(identical(other.address, address) || other.address == address)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,address,latitude,longitude);
+
+@override
+String toString() {
+  return 'CreatePartyLocation(address: $address, latitude: $latitude, longitude: $longitude)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$CreatePartyLocationCopyWith<$Res> implements $CreatePartyLocationCopyWith<$Res> {
+  factory _$CreatePartyLocationCopyWith(_CreatePartyLocation value, $Res Function(_CreatePartyLocation) _then) = __$CreatePartyLocationCopyWithImpl;
+@override @useResult
+$Res call({
+ String address, double latitude, double longitude
+});
+
+
+
+
+}
+/// @nodoc
+class __$CreatePartyLocationCopyWithImpl<$Res>
+    implements _$CreatePartyLocationCopyWith<$Res> {
+  __$CreatePartyLocationCopyWithImpl(this._self, this._then);
+
+  final _CreatePartyLocation _self;
+  final $Res Function(_CreatePartyLocation) _then;
+
+/// Create a copy of CreatePartyLocation
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? address = null,Object? latitude = null,Object? longitude = null,}) {
+  return _then(_CreatePartyLocation(
+address: null == address ? _self.address : address // ignore: cast_nullable_to_non_nullable
+as String,latitude: null == latitude ? _self.latitude : latitude // ignore: cast_nullable_to_non_nullable
+as double,longitude: null == longitude ? _self.longitude : longitude // ignore: cast_nullable_to_non_nullable
+as double,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$CreatePartyApiResponse {
+
+ bool get success; PartyDetailApiData get data;
+/// Create a copy of CreatePartyApiResponse
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$CreatePartyApiResponseCopyWith<CreatePartyApiResponse> get copyWith => _$CreatePartyApiResponseCopyWithImpl<CreatePartyApiResponse>(this as CreatePartyApiResponse, _$identity);
+
+  /// Serializes this CreatePartyApiResponse to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CreatePartyApiResponse&&(identical(other.success, success) || other.success == success)&&(identical(other.data, data) || other.data == data));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,success,data);
+
+@override
+String toString() {
+  return 'CreatePartyApiResponse(success: $success, data: $data)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $CreatePartyApiResponseCopyWith<$Res>  {
+  factory $CreatePartyApiResponseCopyWith(CreatePartyApiResponse value, $Res Function(CreatePartyApiResponse) _then) = _$CreatePartyApiResponseCopyWithImpl;
+@useResult
+$Res call({
+ bool success, PartyDetailApiData data
+});
+
+
+$PartyDetailApiDataCopyWith<$Res> get data;
+
+}
+/// @nodoc
+class _$CreatePartyApiResponseCopyWithImpl<$Res>
+    implements $CreatePartyApiResponseCopyWith<$Res> {
+  _$CreatePartyApiResponseCopyWithImpl(this._self, this._then);
+
+  final CreatePartyApiResponse _self;
+  final $Res Function(CreatePartyApiResponse) _then;
+
+/// Create a copy of CreatePartyApiResponse
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? success = null,Object? data = null,}) {
+  return _then(_self.copyWith(
+success: null == success ? _self.success : success // ignore: cast_nullable_to_non_nullable
+as bool,data: null == data ? _self.data : data // ignore: cast_nullable_to_non_nullable
+as PartyDetailApiData,
+  ));
+}
+/// Create a copy of CreatePartyApiResponse
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$PartyDetailApiDataCopyWith<$Res> get data {
+  
+  return $PartyDetailApiDataCopyWith<$Res>(_self.data, (value) {
+    return _then(_self.copyWith(data: value));
+  });
+}
+}
+
+
+/// Adds pattern-matching-related methods to [CreatePartyApiResponse].
+extension CreatePartyApiResponsePatterns on CreatePartyApiResponse {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _CreatePartyApiResponse value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _CreatePartyApiResponse() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _CreatePartyApiResponse value)  $default,){
+final _that = this;
+switch (_that) {
+case _CreatePartyApiResponse():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _CreatePartyApiResponse value)?  $default,){
+final _that = this;
+switch (_that) {
+case _CreatePartyApiResponse() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool success,  PartyDetailApiData data)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _CreatePartyApiResponse() when $default != null:
+return $default(_that.success,_that.data);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool success,  PartyDetailApiData data)  $default,) {final _that = this;
+switch (_that) {
+case _CreatePartyApiResponse():
+return $default(_that.success,_that.data);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool success,  PartyDetailApiData data)?  $default,) {final _that = this;
+switch (_that) {
+case _CreatePartyApiResponse() when $default != null:
+return $default(_that.success,_that.data);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _CreatePartyApiResponse implements CreatePartyApiResponse {
+  const _CreatePartyApiResponse({required this.success, required this.data});
+  factory _CreatePartyApiResponse.fromJson(Map<String, dynamic> json) => _$CreatePartyApiResponseFromJson(json);
+
+@override final  bool success;
+@override final  PartyDetailApiData data;
+
+/// Create a copy of CreatePartyApiResponse
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$CreatePartyApiResponseCopyWith<_CreatePartyApiResponse> get copyWith => __$CreatePartyApiResponseCopyWithImpl<_CreatePartyApiResponse>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$CreatePartyApiResponseToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CreatePartyApiResponse&&(identical(other.success, success) || other.success == success)&&(identical(other.data, data) || other.data == data));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,success,data);
+
+@override
+String toString() {
+  return 'CreatePartyApiResponse(success: $success, data: $data)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$CreatePartyApiResponseCopyWith<$Res> implements $CreatePartyApiResponseCopyWith<$Res> {
+  factory _$CreatePartyApiResponseCopyWith(_CreatePartyApiResponse value, $Res Function(_CreatePartyApiResponse) _then) = __$CreatePartyApiResponseCopyWithImpl;
+@override @useResult
+$Res call({
+ bool success, PartyDetailApiData data
+});
+
+
+@override $PartyDetailApiDataCopyWith<$Res> get data;
+
+}
+/// @nodoc
+class __$CreatePartyApiResponseCopyWithImpl<$Res>
+    implements _$CreatePartyApiResponseCopyWith<$Res> {
+  __$CreatePartyApiResponseCopyWithImpl(this._self, this._then);
+
+  final _CreatePartyApiResponse _self;
+  final $Res Function(_CreatePartyApiResponse) _then;
+
+/// Create a copy of CreatePartyApiResponse
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? success = null,Object? data = null,}) {
+  return _then(_CreatePartyApiResponse(
+success: null == success ? _self.success : success // ignore: cast_nullable_to_non_nullable
+as bool,data: null == data ? _self.data : data // ignore: cast_nullable_to_non_nullable
+as PartyDetailApiData,
+  ));
+}
+
+/// Create a copy of CreatePartyApiResponse
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$PartyDetailApiDataCopyWith<$Res> get data {
+  
+  return $PartyDetailApiDataCopyWith<$Res>(_self.data, (value) {
+    return _then(_self.copyWith(data: value));
+  });
+}
+}
+
+
+/// @nodoc
 mixin _$PartyListItem {
 
  String get id; String get name; String get ownerName;@JsonKey(name: 'full_address') String get fullAddress;@JsonKey(name: 'phone_number') String? get phoneNumber;@JsonKey(name: 'is_active') bool get isActive;

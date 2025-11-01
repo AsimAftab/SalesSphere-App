@@ -1,19 +1,33 @@
 import 'package:flutter/material.dart';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:sales_sphere/core/utils/date_formatter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
+import 'package:sales_sphere/core/services/google_places_service.dart';
+import 'package:sales_sphere/core/services/location_service.dart';
 import 'package:sales_sphere/core/utils/field_validators.dart';
 import 'package:sales_sphere/features/parties/models/parties.model.dart';
 import 'package:sales_sphere/features/parties/vm/edit_party.vm.dart';
 import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
+import 'package:sales_sphere/widget/location_picker_widget.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+
+// Google Places service provider
+final googlePlacesServiceProvider = Provider<GooglePlacesService>((ref) {
+  final apiKey = dotenv.env['GOOGLE_MAPS_API_KEY'] ?? '';
+  return GooglePlacesService(apiKey: apiKey);
+});
+
+// Location service provider
+final locationServiceProvider = Provider<LocationService>((ref) {
+  return LocationService();
+});
 
 class EditPartyDetailsScreen extends ConsumerStatefulWidget {
   final String partyId;
@@ -43,6 +57,7 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
   late TextEditingController _dateJoinedController;
 
   PartyDetails? _currentParty;
+  LatLng? _initialLocation;
   @override
   void initState() {
     super.initState();
@@ -76,8 +91,12 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
       _longitudeController.text = party.longitude?.toString() ?? '';
       _notesController.text = party.notes ?? '';
       _dateJoinedController.text = DateFormatter.formatDateOnly(party.dateJoined);
-    });
 
+      // Set initial location for map if coordinates exist
+      if (party.latitude != null && party.longitude != null) {
+        _initialLocation = LatLng(party.latitude!, party.longitude!);
+      }
+    });
   }
 
   @override
@@ -99,7 +118,7 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
     if (_formKey.currentState?.validate() ?? false) {
       if (_currentParty == null) return;
 
-      final vm = ref.read(partyViewModelProvider.notifier);
+      final vm = ref.read(editPartyViewModelProvider.notifier);
 
       final updatedParty = _currentParty!.copyWith(
         name: _nameController.text.trim(),
@@ -515,25 +534,7 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                               return null;
                             },
                           ),
-                          SizedBox(height: 16.h),
-                          PrimaryTextField(
-                            hintText: "Full Address",
-                            controller: _fullAddressController,
-                            prefixIcon: Icons.location_on_outlined,
-                            hasFocusBorder: true,
-                            enabled: _isEditMode,
-                            keyboardType: TextInputType.multiline,
-                            minLines: 1,
-                            maxLines: 5,
-                            textInputAction: TextInputAction.newline,
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Full address is required';
-                              }
-                              return null;
-                            },
-                          ),
-                          SizedBox(height: 16.h),
+                          SizedBox(height: 16.h,),
                           PrimaryTextField(
                             hintText: "Notes",
                             controller: _notesController,
@@ -544,19 +545,62 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                             maxLines: 5,
                             textInputAction: TextInputAction.newline,
                           ),
-                          SizedBox(height: 16.h,),
+                          SizedBox(height: 16.h),
+
+                          // Location Picker with Google Maps (includes address search)
+                          LocationPickerWidget(
+                            addressController: _fullAddressController,
+                            latitudeController: _latitudeController,
+                            longitudeController: _longitudeController,
+                            initialLocation: _initialLocation,
+                            placesService: ref.read(googlePlacesServiceProvider),
+                            locationService: ref.read(locationServiceProvider),
+                            enabled: _isEditMode,
+                            addressValidator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Full address is required';
+                              }
+                              return null;
+                            },
+                            onLocationSelected: (location, address) {
+                              // Optional: Update latitude/longitude when location is selected
+                              if (mounted) {
+                                setState(() {
+                                  _latitudeController.text = location.latitude.toStringAsFixed(6);
+                                  _longitudeController.text = location.longitude.toStringAsFixed(6);
+                                });
+                              }
+                            },
+                          ),
+                          SizedBox(height: 16.h),
+
+                          // Location Details Section
+                          Text(
+                            "Location Details (Auto-generated from map)",
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey.shade600,
+                              fontFamily: 'Poppins',
+                            ),
+                          ),
+                          SizedBox(height: 12.h),
+
+                          // Latitude (Non-editable)
                           PrimaryTextField(
-                            hintText: "Latitude",
+                            hintText: "Latitude (Auto-generated)",
                             controller: _latitudeController,
                             prefixIcon: Icons.explore_outlined,
                             hasFocusBorder: true,
                             enabled: false,
-                            keyboardType: TextInputType.numberWithOptions(decimal: true),
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
                             textInputAction: TextInputAction.next,
                           ),
                           SizedBox(height: 16.h),
+
+                          // Longitude (Non-editable)
                           PrimaryTextField(
-                            hintText: "Longitude",
+                            hintText: "Longitude (Auto-generated)",
                             controller: _longitudeController,
                             prefixIcon: Icons.explore_outlined,
                             hasFocusBorder: true,
@@ -564,6 +608,9 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                             textInputAction: TextInputAction.next,
                           ),
                           SizedBox(height: 16.h),
+
+
+
                           PrimaryTextField(
                             hintText: "Date Joined",
                             controller: _dateJoinedController,
@@ -616,7 +663,6 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
 
     final partyAsync = ref.watch(partyByIdProvider(widget.partyId));
 

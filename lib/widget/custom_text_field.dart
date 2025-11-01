@@ -26,6 +26,7 @@ class PrimaryTextField extends StatefulWidget {
   final void Function(String)? onChanged;
   final int? minLines;
   final int? maxLines;
+  final bool showCounter;
 
   const PrimaryTextField({
     super.key,
@@ -49,6 +50,7 @@ class PrimaryTextField extends StatefulWidget {
     this.onChanged,
     this.minLines,
     this.maxLines,
+    this.showCounter = false,
   });
 
   @override
@@ -103,6 +105,12 @@ class _PrimaryTextFieldState extends State<PrimaryTextField> {
             }
             widget.onChanged?.call(value);
           },
+          buildCounter: widget.showCounter
+              ? null  // Show default counter
+              : (context, {required currentLength, required isFocused, maxLength}) {
+            return const SizedBox.shrink();  // Hide counter
+          },
+
           decoration: InputDecoration(
             contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
             hintText: widget.hintText,
