@@ -10,7 +10,7 @@ import 'package:sales_sphere/features/catalog/views/catalog_screen.dart';
 import 'package:sales_sphere/features/invoice/views/invoice_screen.dart';
 import 'package:sales_sphere/features/parties/views/parties_screen.dart';
 import 'package:sales_sphere/features/parties/views/edit_party_details_screen.dart';
-import 'package:sales_sphere/features/profile/view/profile_screen.dart';
+import 'package:sales_sphere/features/profile/views/profile_screen.dart';
 import 'package:sales_sphere/features/settings/views/settings_screen.dart';
 import 'package:sales_sphere/features/auth/models/login.models.dart';
 
