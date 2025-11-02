@@ -1,24 +1,27 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
+// lib/features/prospects/models/prospects.model.dart
 
+import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'prospects.model.freezed.dart';
 part 'prospects.model.g.dart';
 
 @freezed
-// UPDATED class name to plural
 abstract class Prospects with _$Prospects {
   const factory Prospects({
     required String id,
     required String name,
-    required String location, // e.g., "Binamod, Nepal" or "Location"
-
-    // Add other fields you might need for a prospects details page later
+    required String location,
     String? ownerName,
     String? phoneNumber,
     String? email,
+    String? panVatNumber,
+    double? latitude,
+    double? longitude,
+    String? notes,
+    String? dateJoined,
+
     @Default(true) bool isActive,
     DateTime? createdAt,
-
   }) = _Prospects;
 
   factory Prospects.fromJson(Map<String, dynamic> json) =>

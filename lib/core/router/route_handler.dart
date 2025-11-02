@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:sales_sphere/features/Detail-Added/view/detail_added.dart';
 import 'package:sales_sphere/features/catalog/views/catalog_item_details_screen.dart';
 import 'package:sales_sphere/features/catalog/views/catalog_item_list_screen.dart';
+import 'package:sales_sphere/features/prospects/views/add_prospect_screen.dart';
+import 'package:sales_sphere/features/prospects/views/edit_prospect_details_screen.dart';
 import 'package:sales_sphere/features/prospects/views/prospects_screen.dart';
 import 'package:sales_sphere/widget/main_shell.dart';
 import 'package:sales_sphere/features/auth/views/login_screen.dart';
@@ -90,6 +92,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           return EditPartyDetailsScreen(partyId: partyId);
         },
       ),
+      GoRoute(
+        path: '/edit_prospect_details_screen/:prospectId',
+        name: 'edit_prospect_details_screen',
+        builder: (context, state) {
+          final prospectId = state.pathParameters['prospectId'] ?? '1';
+          return EditProspectDetailsScreen(prospectId: prospectId);
+        },
+      ),
       // ========================================
       // STANDALONE ROUTES (No Bottom Navigation)
       // ========================================
@@ -97,6 +107,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/add-party',
         name: 'add-party',
         builder: (context, state) => const AddPartyScreen(),
+      ),
+      GoRoute(
+        path: '/add-prospect',
+        name: 'add-prospect',
+        builder: (context, state) => const AddProspectScreen(),
       ),
       GoRoute(
         path: '/profile',

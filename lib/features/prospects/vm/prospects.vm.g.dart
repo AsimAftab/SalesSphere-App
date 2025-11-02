@@ -36,7 +36,7 @@ final class ProspectViewModelProvider
   ProspectViewModel create() => ProspectViewModel();
 }
 
-String _$prospectViewModelHash() => r'382618ada1135ddeae2e6179da016b4d07ca5d45';
+String _$prospectViewModelHash() => r'1538ca7e6adb7e6752587123d908f22890132419';
 
 /// Main Prospects ViewModel - Manages all prospects
 
