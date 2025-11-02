@@ -255,8 +255,11 @@ class _AttendanceHistoryScreenState extends ConsumerState<AttendanceHistoryScree
     }
 
     return GestureDetector(
-      onTap: record != null && record.id.isNotEmpty
-          ? () => context.push('/attendance/details', extra: record)
+      behavior: HitTestBehavior.opaque,
+      onDoubleTap: record != null && record.id.isNotEmpty
+          ? () {
+              context.push('/attendance/details', extra: record);
+            }
           : null,
       child: Container(
         margin: EdgeInsets.all(2.w),

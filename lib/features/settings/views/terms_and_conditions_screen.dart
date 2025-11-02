@@ -526,7 +526,7 @@ class TermsAndConditionsScreen extends StatelessWidget {
               width: 6.w,
               height: 6.h,
               decoration: BoxDecoration(
-                color: AppColors.textOrange,
+                color: AppColors.secondary,
                 shape: BoxShape.circle,
               ),
             ),
@@ -535,7 +535,7 @@ class TermsAndConditionsScreen extends StatelessWidget {
             child: Text(
               text,
               style: TextStyle(
-                fontSize: 13.sp,
+                fontSize: 14.sp,
                 fontWeight: FontWeight.w400,
                 color: AppColors.textSecondary,
                 height: 1.5,

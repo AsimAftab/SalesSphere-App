@@ -222,6 +222,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
@@ -231,170 +233,230 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       },
       child: Scaffold(
         resizeToAvoidBottomInset: true,
-        body: Container(
-          width: double.infinity,
-          height: double.infinity,
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppColors.primary,
-                AppColors.secondary,
-              ],
+        body: Stack(
+          children: [
+            // Background Gradient
+            Container(
+              width: double.infinity,
+              height: double.infinity,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.primary,
+                    AppColors.secondary,
+                  ],
+                ),
+              ),
             ),
-          ),
-          child: SafeArea(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.symmetric(horizontal: 24.w),
-              child: Column(
-                children: [
-                  SizedBox(height: 20.h),
 
-                  // Back Button
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: IconButton(
-                      icon: Icon(
-                        Icons.arrow_back,
-                        color: Colors.white,
-                        size: 24.sp,
-                      ),
-                      onPressed: () => context.go('/'),
+            // Back Button
+            SafeArea(
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: Padding(
+                  padding: EdgeInsets.only(left: 12.w, top: 8.h),
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.arrow_back,
+                      color: Colors.white,
+                      size: 24.sp,
                     ),
+                    onPressed: () => context.go('/'),
                   ),
+                ),
+              ),
+            ),
 
-                  SizedBox(height: 20.h),
+            // Main Content
+            SafeArea(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.symmetric(horizontal: 24.w),
+                child: Column(
+                  children: [
+                    SizedBox(height: 60.h),
 
-                  // Illustration
-                  SvgPicture.asset(
-                    'assets/images/forgot_password.svg',
-                    height: 200.h,
-                  ),
-
-                  SizedBox(height: 20.h),
-
-                  // Card Container
-                  Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.all(24.w),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade50,
-                      borderRadius: BorderRadius.circular(24.r),
-                      border: Border.all(
-                        color: Colors.grey.shade200,
-                        width: 1,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.06),
-                          spreadRadius: 0,
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
+                    // Illustration
+                    SvgPicture.asset(
+                      'assets/images/forgot_password.svg',
+                      height: 200.h,
                     ),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          // Title
-                          Text(
-                            'Forgot Password?',
-                            style: TextStyle(
-                              fontFamily: 'Poppins',
-                              fontSize: 24.sp,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.primary,
-                            ),
-                          ),
 
-                          SizedBox(height: 8.h),
+                    SizedBox(height: 20.h),
 
-                          // Description
-                          Text(
-                            "Enter your email to receive a password reset link.",
-                            style: TextStyle(
-                              color: Colors.grey.shade600,
-                              fontSize: 14.sp,
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w400,
-                              height: 1.5,
-                            ),
-                          ),
+                    // Spacer to push the card down
+                    SizedBox(height: 280.h),
 
-                          SizedBox(height: 28.h),
-
-                          // Email Field
-                          PrimaryTextField(
-                            hintText: "Email Address",
-                            controller: _emailController,
-                            prefixIcon: Icons.email_outlined,
-                            hasFocusBorder: true,
-                            keyboardType: TextInputType.emailAddress,
-                            autofillHints: const [AutofillHints.email],
-                            textInputAction: TextInputAction.done,
-                            onFieldSubmitted: (_) => _handleSubmit(),
-                            validator: (value) {
-                              return FieldValidators.validateEmail(value);
-                            },
-                          ),
-
-                          SizedBox(height: 24.h),
-
-                          // Submit Button
-                          PrimaryButton(
-                            label: 'Send Reset Link',
-                            onPressed: _handleSubmit,
-                            size: ButtonSize.medium,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(height: 32.h),
-
-                  // Back to Login
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Remember your password? ',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14.sp,
-                          fontFamily: 'Poppins',
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () => context.go('/'),
-                        style: TextButton.styleFrom(
-                          padding: EdgeInsets.zero,
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        child: Text(
-                          'Login',
+                    // Back to Login
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Remember your password? ',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 14.sp,
                             fontFamily: 'Poppins',
-                            fontWeight: FontWeight.w600,
-                            decoration: TextDecoration.underline,
-                            decorationColor: Colors.white,
                           ),
                         ),
+                        TextButton(
+                          onPressed: () => context.go('/'),
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: Text(
+                            'Login',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14.sp,
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w600,
+                              decoration: TextDecoration.underline,
+                              decorationColor: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    SizedBox(height: 40.h),
+                  ],
+                ),
+              ),
+            ),
+
+            // Forgot Password Card (Animated)
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              top: isKeyboardVisible
+                  ? (MediaQuery.of(context).size.height - 400.h) / 2
+                  : 300.h, // Adjust 400.h to approximate card height
+              left: 24.w,
+              right: 24.w,
+              child: Material(
+                color: Colors.transparent,
+                child: Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(24.w),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(24.r),
+                    border: Border.all(
+                      color: Colors.grey.shade200,
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withOpacity(0.06),
+                        spreadRadius: 0,
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
                       ),
                     ],
                   ),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Title
+                        Text(
+                          'Forgot Password?',
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 24.sp,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary,
+                          ),
+                        ),
 
-                  SizedBox(height: 40.h),
-                ],
+                        SizedBox(height: 8.h),
+
+                        // Description
+                        Text(
+                          "Enter your email to receive a password reset link.",
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 14.sp,
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w400,
+                            height: 1.5,
+                          ),
+                        ),
+
+                        SizedBox(height: 28.h),
+
+                        // Email Field
+                        PrimaryTextField(
+                          hintText: "Email Address",
+                          controller: _emailController,
+                          prefixIcon: Icons.email_outlined,
+                          hasFocusBorder: true,
+                          keyboardType: TextInputType.emailAddress,
+                          autofillHints: const [AutofillHints.email],
+                          textInputAction: TextInputAction.done,
+                          onFieldSubmitted: (_) => _handleSubmit(),
+                          validator: (value) {
+                            return FieldValidators.validateEmail(value);
+                          },
+                        ),
+
+                        SizedBox(height: 24.h),
+
+                        // Submit Button
+                        PrimaryButton(
+                          label: 'Send Reset Link',
+                          onPressed: _handleSubmit,
+                          size: ButtonSize.medium,
+                        ),
+
+                        SizedBox(height: 24.h),
+
+                        // Back to Login
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Remember your password? ',
+                              style: TextStyle(
+                                color: Colors.grey.shade600,
+                                fontSize: 14.sp,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () => context.go('/'),
+                              style: TextButton.styleFrom(
+                                padding: EdgeInsets.zero,
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: Text(
+                                'Login',
+                                style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontSize: 14.sp,
+                                  fontFamily: 'Poppins',
+                                  fontWeight: FontWeight.w600,
+                                  decoration: TextDecoration.underline,
+                                  decorationColor: AppColors.primary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );
