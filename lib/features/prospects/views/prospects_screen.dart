@@ -29,26 +29,14 @@ class _ProspectsScreenState extends ConsumerState<ProspectsScreen> {
   }
 
   void _navigateToProspectDetails(String prospectId) {
-    // TODO: Update this to your prospect details route when created
-    // context.pushNamed('edit_prospect_details_screen', pathParameters: {'prospectId': prospectId});
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Navigate to details for prospect $prospectId'),
-        backgroundColor: AppColors.primary,
-      ),
+    context.pushNamed(
+      'edit_prospect_details_screen',
+      pathParameters: {'prospectId': prospectId},
     );
   }
 
   void _navigateToAddProspect() {
-    // TODO: Update this to your "Add Prospect" route
-    // context.push('/add-prospect');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Add Prospect screen coming soon!'),
-        backgroundColor: AppColors.primary,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    context.push('/add-prospect');
   }
 
   @override
@@ -201,10 +189,9 @@ class _ProspectsScreenState extends ConsumerState<ProspectsScreen> {
                             SizedBox(height: 12.h),
                         itemBuilder: (context, index) {
                           final prospect = prospects[index];
-                          // --- UPDATED TO MATCH PARTIES_SCREEN ---
                           return UniversalListCard(
                             leadingIcon: Icon(
-                              Icons.person_outline, // Using person icon
+                              Icons.person_outline,
                               color: Colors.white,
                               size: 24.sp,
                             ),
@@ -212,12 +199,11 @@ class _ProspectsScreenState extends ConsumerState<ProspectsScreen> {
                             leadingBackgroundColor: AppColors.primary,
                             leadingSize: 48.w,
                             title: prospect.name,
-                            subtitle: prospect.location, // Using location
+                            subtitle: prospect.location,
                             onTap: () => _navigateToProspectDetails(prospect.id),
                             showArrow: true,
                             arrowColor: AppColors.primary,
                           );
-                          // --- END OF UPDATE ---
                         },
                       ),
                     );
@@ -230,7 +216,6 @@ class _ProspectsScreenState extends ConsumerState<ProspectsScreen> {
                       separatorBuilder: (context, index) =>
                           SizedBox(height: 12.h),
                       itemBuilder: (context, index) {
-                        // --- UPDATED TO MATCH PARTIES_SCREEN SKELETON ---
                         return UniversalListCard(
                           leadingIcon: Icon(
                             Icons.person_outline,
@@ -246,7 +231,6 @@ class _ProspectsScreenState extends ConsumerState<ProspectsScreen> {
                           showArrow: true,
                           arrowColor: Colors.transparent,
                         );
-                        // --- END OF UPDATE ---
                       },
                     ),
                   ),

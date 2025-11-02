@@ -336,7 +336,7 @@ class AboutScreen extends StatelessWidget {
             margin: EdgeInsets.only(top: 2.h, right: 12.w),
             padding: EdgeInsets.all(8.w),
             decoration: BoxDecoration(
-              color: AppColors.textOrange.withOpacity(0.1),
+              color: AppColors.textOrange.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8.r),
             ),
             child: Icon(
