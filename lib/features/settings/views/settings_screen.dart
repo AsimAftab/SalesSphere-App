@@ -120,7 +120,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 icon: Icons.article_outlined,
                 title: 'Terms and Conditions',
                 onTap: () {
-                  // TODO: Navigate to T&C screen
+                  context.push('/terms-and-conditions');
                 },
               ),
               SettingsTile(

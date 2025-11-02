@@ -48,7 +48,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   void _forgotPassword() {
-    Navigator.pushNamed(context, '/forgot-password'); // Update with your route
+    context.go('/forgot-password');
   }
 
 
