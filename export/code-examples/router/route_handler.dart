@@ -17,12 +17,6 @@ import 'package:sales_sphere/features/settings/views/settings_screen.dart';
 import 'package:sales_sphere/features/settings/views/about_screen.dart';
 import 'package:sales_sphere/features/auth/models/login.models.dart';
 import 'package:sales_sphere/features/settings/views/terms_and_conditions_screen.dart';
-import 'package:sales_sphere/features/attendance/views/attendance_screen.dart';
-import 'package:sales_sphere/features/attendance/views/attendance_history_screen.dart';
-import 'package:sales_sphere/features/attendance/views/attendance_details_screen.dart';
-import 'package:sales_sphere/features/attendance/views/attendance_monthly_details_screen.dart'
-    show AttendanceMonthlyDetailsScreen, AttendanceFilter;
-import 'package:sales_sphere/features/attendance/models/attendance.models.dart';
 import '../providers/user_controller.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
@@ -51,7 +45,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final isGoingToProfile = requestedPath == '/profile';
       final isGoingToAbout = requestedPath == '/about';
       final isGoingToTerms = requestedPath == '/terms-and-conditions';
-      final isGoingToAttendance = requestedPath.startsWith('/attendance');
 
       // If user is not logged in AND not going to one of the allowed pages...
       if (!isLoggedIn &&
@@ -64,8 +57,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           !isGoingToDetailAdded &&
           !isGoingToProfile &&
           !isGoingToAbout &&
-          !isGoingToTerms &&
-          !isGoingToAttendance) {
+          !isGoingToTerms) {
         return '/';
       }
 
@@ -126,41 +118,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/terms-and-conditions',
         name: 'terms-and-conditions',
         builder: (context, state) => const TermsAndConditionsScreen(),
-      ),
-
-      // ========================================
-      // ATTENDANCE ROUTES (No Bottom Navigation)
-      // ========================================
-      GoRoute(
-        path: '/attendance',
-        name: 'attendance',
-        builder: (context, state) => const AttendanceScreen(),
-      ),
-      GoRoute(
-        path: '/attendance/history',
-        name: 'attendance-history',
-        builder: (context, state) => const AttendanceHistoryScreen(),
-      ),
-      GoRoute(
-        path: '/attendance/details',
-        name: 'attendance-details',
-        builder: (context, state) {
-          final record = state.extra as AttendanceRecord;
-          return AttendanceDetailsScreen(record: record);
-        },
-      ),
-      GoRoute(
-        path: '/attendance/monthly-details',
-        name: 'attendance-monthly-details',
-        builder: (context, state) {
-          final extras = state.extra as Map<String, dynamic>?;
-          final initialMonth = extras?['month'] as DateTime?;
-          final filter = extras?['filter'] as AttendanceFilter?;
-          return AttendanceMonthlyDetailsScreen(
-            initialMonth: initialMonth,
-            filter: filter,
-          );
-        },
       ),
 
       // ========================================

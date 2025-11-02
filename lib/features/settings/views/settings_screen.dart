@@ -94,7 +94,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 icon: Icons.calendar_today_outlined,
                 title: 'Attendance',
                 onTap: () {
-                  // TODO: Navigate to Attendance screen
+                  context.push('/attendance');
                 },
               ),
 
