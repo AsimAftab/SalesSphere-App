@@ -499,9 +499,11 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
                           return null;
                         },
                         onLocationSelected: (location, address) {
-                          // Optional callback if needed
+                          // Store full formatted address and coordinates
                           if (mounted) {
                             setState(() {
+                              // Store the full formatted address for backend
+                              _addressController.text = address;
                               _latitudeController.text = location.latitude
                                   .toStringAsFixed(6);
                               _longitudeController.text = location.longitude

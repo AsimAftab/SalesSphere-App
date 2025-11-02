@@ -411,14 +411,19 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                             child: Padding(
                               padding: EdgeInsets.symmetric(vertical: 4.h),
                               child: Row(
-                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.center, // ✅ Center vertically
                                 children: [
-                                  Icon(
-                                    Icons.location_on_outlined,
-                                    size: 14.sp,
-                                    color: AppColors.primary,
+                                  Padding(
+                                    padding: EdgeInsets.only(top: 2.h), // ✅ small visual tweak
+                                    child: Icon(
+                                      Icons.location_on_outlined,
+                                      size: 14.sp,
+                                      color: AppColors.primary,
+                                    ),
                                   ),
                                   SizedBox(width: 6.w),
+
+                                  // ✅ Expanded so text wraps multiple lines neatly
                                   Expanded(
                                     child: Text(
                                       _fullAddressController.text.isEmpty
@@ -428,21 +433,25 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                                         fontSize: 13.sp,
                                         color: AppColors.primary,
                                         fontWeight: FontWeight.w500,
+                                        height: 1.4, // ✅ gives better line spacing
                                       ),
-                                      overflow: TextOverflow.ellipsis,
-                                      maxLines: 1,
+                                      softWrap: true,
+                                      overflow: TextOverflow.visible,
                                     ),
                                   ),
+
                                   SizedBox(width: 4.w),
                                   Icon(
                                     Icons.open_in_new,
                                     size: 13.sp,
-                                    color: AppColors.primary.withValues(alpha: 0.7), // Kept
+                                    color: AppColors.primary.withValues(alpha: 0.7),
                                   ),
                                 ],
                               ),
                             ),
-                          ),
+                          )
+
+
                         ],
                       ),
                     ),
@@ -563,9 +572,11 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                               return null;
                             },
                             onLocationSelected: (location, address) {
-                              // Optional: Update latitude/longitude when location is selected
+                              // Store full formatted address and coordinates
                               if (mounted) {
                                 setState(() {
+                                  // Store the full formatted address for backend
+                                  _fullAddressController.text = address;
                                   _latitudeController.text = location.latitude.toStringAsFixed(6);
                                   _longitudeController.text = location.longitude.toStringAsFixed(6);
                                 });

@@ -44,6 +44,7 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
   LatLng? _selectedLocation;
   List<PlacePrediction> _addressSuggestions = [];
   Timer? _debounce;
+  String? _fullFormattedAddress; // Store full address separately
 
   // Default location (Bangalore, India)
   final LatLng _defaultLocation = const LatLng(13.1349646, 77.5668106);
@@ -65,9 +66,12 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
     }
 
     // Set initial lat/long if provided
-    if (widget.latitudeController != null && widget.longitudeController != null) {
-      widget.latitudeController!.text = _selectedLocation!.latitude.toStringAsFixed(6);
-      widget.longitudeController!.text = _selectedLocation!.longitude.toStringAsFixed(6);
+    if (widget.latitudeController != null &&
+        widget.longitudeController != null) {
+      widget.latitudeController!.text = _selectedLocation!.latitude
+          .toStringAsFixed(6);
+      widget.longitudeController!.text = _selectedLocation!.longitude
+          .toStringAsFixed(6);
     }
   }
 
@@ -86,10 +90,11 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
 
     _debounce = Timer(const Duration(milliseconds: 500), () async {
       if (query.length >= 2) {
-        final suggestions = await widget.placesService.getAutocompletePredictions(
-          query,
-          location: _selectedLocation ?? _defaultLocation,
-        );
+        final suggestions = await widget.placesService
+            .getAutocompletePredictions(
+              query,
+              location: _selectedLocation ?? _defaultLocation,
+            );
 
         if (mounted) {
           setState(() {
@@ -111,12 +116,19 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
     });
 
     // Fetch place details to get exact coordinates
-    final placeDetails = await widget.placesService.getPlaceDetails(suggestion.placeId);
+    final placeDetails = await widget.placesService.getPlaceDetails(
+      suggestion.placeId,
+    );
 
     if (placeDetails != null && mounted) {
+      // Set only the place name in the search field
+      widget.addressController.text = suggestion.mainText;
+
+      // Store full formatted address separately for display below map
       _updateLocation(
         placeDetails.location,
         placeDetails.formattedAddress,
+        placeName: placeDetails.name ?? suggestion.mainText,
       );
 
       // Move camera to selected location with smooth animation
@@ -139,26 +151,6 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
   void _onMapTap(LatLng location) async {
     if (!widget.enabled) return;
 
-    setState(() {
-      _selectedLocation = location;
-
-      // Update marker
-      _markers.clear();
-      _markers.add(
-        Marker(
-          markerId: const MarkerId('selected_location'),
-          position: location,
-          infoWindow: const InfoWindow(title: 'Selected Location'),
-        ),
-      );
-    });
-
-    // Update lat/long controllers
-    if (widget.latitudeController != null && widget.longitudeController != null) {
-      widget.latitudeController!.text = location.latitude.toStringAsFixed(6);
-      widget.longitudeController!.text = location.longitude.toStringAsFixed(6);
-    }
-
     // Reverse geocode to get address using geocoding package
     try {
       final placemarks = await placemarkFromCoordinates(
@@ -168,19 +160,44 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
 
       if (placemarks.isNotEmpty && mounted) {
         final place = placemarks.first;
-        final addressParts = [
-          place.name,
+
+        // Extract place name for search field
+        final placeName =
+            place.name ??
+            place.street ??
+            place.subLocality ??
+            place.locality ??
+            'Selected Location';
+
+        // Build comprehensive address with all available components
+        // Build comprehensive address ensuring placeName (landmark/institution) comes first
+        // Build comprehensive address ensuring placeName (landmark/institution) comes first
+        final List<String?> addressParts = [
+          if (placeName != null && placeName.isNotEmpty) placeName,
+          place.street,
+          place.subThoroughfare,
+          place.thoroughfare,
           place.subLocality,
           place.locality,
+          place.subAdministrativeArea,
           place.administrativeArea,
+          place.postalCode,
           place.country,
-        ].where((part) => part != null && part.isNotEmpty).join(', ');
+        ];
 
-        widget.addressController.text = addressParts;
-        widget.onLocationSelected?.call(location, addressParts);
+        final fullAddress = addressParts
+            .where((part) => part != null && part!.isNotEmpty)
+            .join(', ');
+
+        // Update location: place name in search field, full address below map
+        _updateLocation(location, fullAddress, placeName: placeName);
+      } else {
+        // If no address found, still update location with coordinates only
+        _updateLocation(location, null);
       }
     } catch (e) {
-      // Silent fail - user can still use the coordinates
+      // If geocoding fails, still update location with coordinates only
+      _updateLocation(location, null);
     }
   }
 
@@ -220,8 +237,6 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
       }
 
       if (location != null) {
-        _updateLocation(location, null);
-
         // Move camera to current location
         _mapController?.animateCamera(
           CameraUpdate.newCameraPosition(
@@ -238,19 +253,38 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
 
           if (placemarks.isNotEmpty && mounted) {
             final place = placemarks.first;
-            final addressParts = [
-              place.name,
-              place.subLocality,
-              place.locality,
-              place.administrativeArea,
-              place.country,
+
+            // Extract place name for search field
+            final placeName =
+                place.name ??
+                place.street ??
+                place.subLocality ??
+                place.locality ??
+                'Current Location';
+
+            // Build comprehensive address with all available components
+            final fullAddress = [
+              place.name, // Place/landmark name (e.g., "BMSIT College")
+              place.street, // Street name
+              place.subThoroughfare, // Street number
+              place.thoroughfare, // Street name (alternative)
+              place.subLocality, // Sub-locality
+              place.locality, // City/Town
+              place.subAdministrativeArea, // Sub-district/Taluk
+              place.administrativeArea, // State/Province
+              place.postalCode, // Postal/ZIP code
+              place.country, // Country
             ].where((part) => part != null && part.isNotEmpty).join(', ');
 
-            widget.addressController.text = addressParts;
-            widget.onLocationSelected?.call(location, addressParts);
+            // Update location: place name in search field, full address below map
+            _updateLocation(location, fullAddress, placeName: placeName);
+          } else {
+            // If no address found, still update location with coordinates only
+            _updateLocation(location, null);
           }
         } catch (e) {
-          // Silent fail - coordinates are still set
+          // If geocoding fails, still update location with coordinates only
+          _updateLocation(location, null);
         }
 
         if (mounted) {
@@ -265,7 +299,9 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
               ),
               backgroundColor: AppColors.success,
               behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.r),
+              ),
               margin: EdgeInsets.all(16.w),
               duration: const Duration(seconds: 2),
             ),
@@ -280,13 +316,17 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
                   Icon(Icons.error_outline, color: Colors.white, size: 20.sp),
                   SizedBox(width: 12.w),
                   const Expanded(
-                    child: Text('Could not get location. Please check permissions and GPS.'),
+                    child: Text(
+                      'Could not get location. Please check permissions and GPS.',
+                    ),
                   ),
                 ],
               ),
               backgroundColor: AppColors.error,
               behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.r),
+              ),
               margin: EdgeInsets.all(16.w),
               duration: const Duration(seconds: 3),
               action: SnackBarAction(
@@ -314,7 +354,9 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
             ),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12.r),
+            ),
             margin: EdgeInsets.all(16.w),
           ),
         );
@@ -323,33 +365,76 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
   }
 
   // Helper method to update location
-  void _updateLocation(LatLng location, String? address) {
+  void _updateLocation(LatLng location, String? address, {String? placeName}) {
     setState(() {
       _selectedLocation = location;
 
-      // Update lat/long controllers
+      String? formattedAddress;
+
+      if (placeName != null && placeName.isNotEmpty) {
+        if (address != null && address.isNotEmpty) {
+          // Remove duplicate placeName (case-insensitive check)
+          if (address.toLowerCase().startsWith(placeName.toLowerCase())) {
+            formattedAddress = address;
+          } else {
+            formattedAddress = '$placeName, $address';
+          }
+        } else {
+          formattedAddress = placeName;
+        }
+      } else {
+        formattedAddress = address;
+      }
+
+      // ✅ Handle duplicate Plus Codes like "4HP8+2RJ, 4HP8+2RJ"
+      if (formattedAddress != null && formattedAddress.isNotEmpty) {
+        final parts = formattedAddress.split(',').map((e) => e.trim()).toList();
+
+        // Remove consecutive or duplicate identical parts
+        final uniqueParts = <String>[];
+        for (final part in parts) {
+          if (part.isNotEmpty && !uniqueParts.contains(part)) {
+            uniqueParts.add(part);
+          }
+        }
+
+        formattedAddress = uniqueParts.join(', ');
+      }
+
+      _fullFormattedAddress = formattedAddress;
+
+      // ✅ Keep the text field simple
+      if (placeName != null && placeName.isNotEmpty) {
+        widget.addressController.text = placeName;
+      } else if (address != null && address.isNotEmpty) {
+        widget.addressController.text = address;
+      }
+
+      // ✅ Update lat/long controllers
       if (widget.latitudeController != null && widget.longitudeController != null) {
         widget.latitudeController!.text = location.latitude.toStringAsFixed(6);
         widget.longitudeController!.text = location.longitude.toStringAsFixed(6);
       }
 
-      // Update marker
+      // ✅ Update map marker
       _markers.clear();
       _markers.add(
         Marker(
           markerId: const MarkerId('selected_location'),
           position: location,
           infoWindow: InfoWindow(
-            title: address ?? 'Selected Location',
+            title: placeName ?? address ?? 'Selected Location',
           ),
         ),
       );
     });
 
-    if (address != null) {
-      widget.onLocationSelected?.call(location, address);
+    // ✅ Notify parent with the clean, non-duplicated address
+    if (_fullFormattedAddress != null && _fullFormattedAddress!.isNotEmpty) {
+      widget.onLocationSelected?.call(location, _fullFormattedAddress!);
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -388,12 +473,12 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
             ),
             filled: true,
             fillColor: widget.enabled ? Colors.white : Colors.grey.shade100,
-            contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 16.w,
+              vertical: 14.h,
+            ),
           ),
-          style: TextStyle(
-            fontSize: 14.sp,
-            fontFamily: 'Poppins',
-          ),
+          style: TextStyle(fontSize: 14.sp, fontFamily: 'Poppins'),
           maxLines: 1,
           textInputAction: TextInputAction.search,
           onChanged: (value) {
@@ -475,15 +560,14 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
                 onTap: _getCurrentLocation,
                 borderRadius: BorderRadius.circular(12.r),
                 child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 16.w),
+                  padding: EdgeInsets.symmetric(
+                    vertical: 14.h,
+                    horizontal: 16.w,
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.my_location,
-                        color: Colors.white,
-                        size: 20.sp,
-                      ),
+                      Icon(Icons.my_location, color: Colors.white, size: 20.sp),
                       SizedBox(width: 10.w),
                       Text(
                         'Use My Current Location',
@@ -534,6 +618,54 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
           ),
         ),
         SizedBox(height: 12.h),
+
+        // Full Address Display (shown below map)
+        if (_fullFormattedAddress != null && _fullFormattedAddress!.isNotEmpty)
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.all(14.w),
+            decoration: BoxDecoration(
+              color: Colors.green.shade50,
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(color: Colors.green.shade200),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.location_on,
+                      color: Colors.green.shade700,
+                      size: 20.sp,
+                    ),
+                    SizedBox(width: 8.w),
+                    Text(
+                      'Full Address',
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.green.shade900,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 8.h),
+                Text(
+                  _fullFormattedAddress!,
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    color: Colors.green.shade900,
+                    fontFamily: 'Poppins',
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        if (_fullFormattedAddress != null && _fullFormattedAddress!.isNotEmpty)
+          SizedBox(height: 12.h),
 
         // Map Instructions
         Container(
