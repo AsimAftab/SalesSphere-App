@@ -94,7 +94,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 icon: Icons.calendar_today_outlined,
                 title: 'Attendance',
                 onTap: () {
-                  // TODO: Navigate to Attendance screen
+                  context.push('/attendance');
                 },
               ),
 
@@ -120,7 +120,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 icon: Icons.article_outlined,
                 title: 'Terms and Conditions',
                 onTap: () {
-                  // TODO: Navigate to T&C screen
+                  context.push('/terms-and-conditions');
                 },
               ),
               SettingsTile(

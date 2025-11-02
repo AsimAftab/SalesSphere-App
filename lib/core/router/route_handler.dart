@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sales_sphere/features/Detail-Added/view/detail_added.dart';
-import 'package:sales_sphere/features/catalog/views/catalog_item_details_screen.dart';
 import 'package:sales_sphere/features/catalog/views/catalog_item_list_screen.dart';
-import 'package:sales_sphere/features/prospects/views/add_prospect_screen.dart';
-import 'package:sales_sphere/features/prospects/views/edit_prospect_details_screen.dart';
-import 'package:sales_sphere/features/prospects/views/prospects_screen.dart';
+import 'package:sales_sphere/features/catalog/views/catalog_item_details_screen.dart';
 import 'package:sales_sphere/widget/main_shell.dart';
 import 'package:sales_sphere/features/auth/views/login_screen.dart';
+import 'package:sales_sphere/features/auth/views/forgot_password_screen.dart';
 import 'package:sales_sphere/features/home/views/home_screen.dart';
 import 'package:sales_sphere/features/catalog/views/catalog_screen.dart';
 import 'package:sales_sphere/features/invoice/views/invoice_screen.dart';
@@ -16,8 +14,18 @@ import 'package:sales_sphere/features/parties/views/parties_screen.dart';
 import 'package:sales_sphere/features/parties/views/edit_party_details_screen.dart';
 import 'package:sales_sphere/features/parties/views/add_party_screen.dart';
 import 'package:sales_sphere/features/profile/view/profile_screen.dart';
+import 'package:sales_sphere/features/attendance/views/attendance_screen.dart';
+import 'package:sales_sphere/features/attendance/views/attendance_dashboard_screen.dart';
+import 'package:sales_sphere/features/attendance/views/attendance_history_screen.dart';
+import 'package:sales_sphere/features/attendance/views/attendance_details_screen.dart';
+import 'package:sales_sphere/features/attendance/views/attendance_monthly_details_screen.dart';
+import 'package:sales_sphere/features/attendance/models/attendance.models.dart';
+import 'package:sales_sphere/features/prospects/views/prospects_screen.dart';
+import 'package:sales_sphere/features/prospects/views/add_prospect_screen.dart';
+import 'package:sales_sphere/features/prospects/views/edit_prospect_details_screen.dart';
 import 'package:sales_sphere/features/settings/views/settings_screen.dart';
 import 'package:sales_sphere/features/settings/views/about_screen.dart';
+import 'package:sales_sphere/features/settings/views/terms_and_conditions_screen.dart';
 import 'package:sales_sphere/features/auth/models/login.models.dart';
 
 import '../providers/user_controller.dart';
@@ -39,26 +47,32 @@ final goRouterProvider = Provider<GoRouter>((ref) {
 
       // Check against your allowed routes
       final isGoingToLogin = requestedPath == '/';
+      final isGoingToForgotPassword = requestedPath == '/forgot-password';
       final isGoingToCatalog = requestedPath.startsWith('/catalog');
       final isGoingToParties = requestedPath.startsWith('/parties');
-      final isGoingToDirectory = requestedPath.startsWith('/directory');
-      final isGoingToProspects = requestedPath.startsWith('/prospects');
+      final isGoingToDirectory = requestedPath.startsWith('/directory') || requestedPath.startsWith('/directory/prospects-list');
       final isGoingToEditParty = requestedPath.startsWith('/edit_party_details_screen');
       final isGoingToDetailAdded = requestedPath == '/detail-added';
       final isGoingToProfile = requestedPath == '/profile';
+      final isGoingToAttendance = requestedPath.startsWith('/attendance');
+      final isGoingToProspects = requestedPath.startsWith('/prospects') || requestedPath.startsWith('/add-prospect') || requestedPath.startsWith('/edit-prospect');
       final isGoingToAbout = requestedPath == '/about';
+      final isGoingToTerms = requestedPath == '/terms-and-conditions';
 
       // If user is not logged in AND not going to one of the allowed pages...
       if (!isLoggedIn &&
           !isGoingToLogin &&
+          !isGoingToForgotPassword &&
           !isGoingToCatalog &&
           !isGoingToParties &&
           !isGoingToDirectory &&
-          !isGoingToProspects &&
           !isGoingToEditParty &&
           !isGoingToDetailAdded &&
           !isGoingToProfile &&
-          !isGoingToAbout) {
+          !isGoingToAttendance &&
+          !isGoingToProspects &&
+          !isGoingToAbout &&
+          !isGoingToTerms) {
         return '/';
       }
 
@@ -80,6 +94,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const LoginScreen(),
       ),
       GoRoute(
+        path: '/forgot-password',
+        name: 'forgot-password',
+        builder: (context, state) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
         path: '/detail-added',
         name: 'detail-added',
         builder: (context, state) => const DetailAdded(),
@@ -92,14 +111,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           return EditPartyDetailsScreen(partyId: partyId);
         },
       ),
-      GoRoute(
-        path: '/edit_prospect_details_screen/:prospectId',
-        name: 'edit_prospect_details_screen',
-        builder: (context, state) {
-          final prospectId = state.pathParameters['prospectId'] ?? '1';
-          return EditProspectDetailsScreen(prospectId: prospectId);
-        },
-      ),
       // ========================================
       // STANDALONE ROUTES (No Bottom Navigation)
       // ========================================
@@ -109,19 +120,93 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const AddPartyScreen(),
       ),
       GoRoute(
+        path: '/profile',
+        name: 'profile',
+        builder: (context, state) => const ProfileScreen(),
+      ),
+
+      // ========================================
+      // ATTENDANCE ROUTES (No Bottom Navigation)
+      // ========================================
+      GoRoute(
+        path: '/attendance',
+        name: 'attendance',
+        builder: (context, state) => const AttendanceScreen(),
+      ),
+      GoRoute(
+        path: '/attendance/dashboard',
+        name: 'attendance-dashboard',
+        builder: (context, state) => const AttendanceDashboardScreen(),
+      ),
+      GoRoute(
+        path: '/attendance/history',
+        name: 'attendance-history',
+        builder: (context, state) => const AttendanceHistoryScreen(),
+      ),
+      GoRoute(
+        path: '/attendance/details',
+        name: 'attendance-details',
+        builder: (context, state) {
+          final record = state.extra as AttendanceRecord;
+          return AttendanceDetailsScreen(record: record);
+        },
+      ),
+      GoRoute(
+        path: '/attendance/monthly-details',
+        name: 'attendance-monthly-details',
+        builder: (context, state) {
+          final extras = state.extra as Map<String, dynamic>?;
+          final month = extras?['month'] as DateTime?;
+          final filter = extras?['filter'];
+          return AttendanceMonthlyDetailsScreen(
+            initialMonth: month,
+            filter: filter,
+          );
+        },
+      ),
+
+      // ========================================
+      // PROSPECTS ROUTES (No Bottom Navigation)
+      // ========================================
+      GoRoute(
+        path: '/prospects',
+        name: 'prospects',
+        builder: (context, state) => const ProspectsScreen(),
+      ),
+      GoRoute(
         path: '/add-prospect',
         name: 'add-prospect',
         builder: (context, state) => const AddProspectScreen(),
       ),
       GoRoute(
-        path: '/profile',
-        name: 'profile',
-        builder: (context, state) => const ProfileScreen(),
+        path: '/edit-prospect/:prospectId',
+        name: 'edit-prospect',
+        builder: (context, state) {
+          final prospectId = state.pathParameters['prospectId'] ?? '1';
+          return EditProspectDetailsScreen(prospectId: prospectId);
+        },
       ),
+      GoRoute(
+        path: '/edit_prospect_details_screen/:prospectId',
+        name: 'edit_prospect_details_screen',
+        builder: (context, state) {
+          final prospectId = state.pathParameters['prospectId'] ?? '1';
+          return EditProspectDetailsScreen(prospectId: prospectId);
+        },
+      ),
+
+      // ========================================
+      // SETTINGS ROUTES (No Bottom Navigation)
+      // ========================================
       GoRoute(
         path: '/about',
         name: 'about',
         builder: (context, state) => const AboutScreen(),
+      ),
+      GoRoute(
+        path: '/terms-and-conditions',
+        name: 'terms-and-conditions',
+        builder: (context, state) => const TermsAndConditionsScreen(),
       ),
 
       // ========================================
@@ -158,9 +243,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             currentIndex = 1;
           } else if (location.startsWith('/invoice')) {
             currentIndex = 2;
-          } else if (location.startsWith('/parties') ||
-              location.startsWith('/directory') ||
-              location.startsWith('/prospects')) {
+          } else if (location.startsWith('/parties') || location.startsWith('/directory')) {
             currentIndex = 3;
           } else if (location.startsWith('/settings')) {
             currentIndex = 4;
@@ -202,11 +285,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                 },
                 routes: [
                   GoRoute(
-                    path: ':itemId', // e.g., /catalog/1/101
-                    name: 'catalog_item_details', // The name for your new route
+                    path: 'item/:itemId',
+                    name: 'catalog_item_details',
                     builder: (context, state) {
                       final itemId = state.pathParameters['itemId'] ?? 'error';
-                      // Note: We don't need categoryId here, but it's in the path
                       return CatalogItemDetailsScreen(itemId: itemId);
                     },
                   ),
@@ -230,15 +312,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             name: 'parties',
             pageBuilder: (context, state) => const NoTransitionPage(
               child: PartiesScreen(),
-            ),
-          ),
-
-          // Prospets Tab (Keep for backwards compatibility)
-          GoRoute(
-            path: '/prospects',
-            name: 'prospects',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: ProspectsScreen(),
             ),
           ),
 
@@ -273,7 +346,7 @@ class ErrorPage extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Text(
-            'Error: \${error ?? "Unknown error"}',
+            'Error: ${error ?? "Unknown error"}',
             style: const TextStyle(fontSize: 18, color: Colors.red),
             textAlign: TextAlign.center,
           ),
