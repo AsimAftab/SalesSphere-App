@@ -36,7 +36,6 @@ final class EditPartyViewModelProvider
 String _$editPartyViewModelHash() =>
     r'c43d0b4b078cc191b402db3a5ee790bf4e27974a';
 
-
 abstract class _$EditPartyViewModel extends $AsyncNotifier<void> {
   FutureOr<void> build();
   @$mustCallSuper

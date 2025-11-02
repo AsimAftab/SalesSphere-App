@@ -15,9 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Prospects {
 
- String get id; String get name; String get location;// e.g., "Binamod, Nepal" or "Location"
-// Add other fields you might need for a prospects details page later
- String? get ownerName; String? get phoneNumber; String? get email; bool get isActive; DateTime? get createdAt;
+ String get id; String get name; String get location; String? get ownerName; String? get phoneNumber; String? get email; String? get panVatNumber; double? get latitude; double? get longitude; String? get notes; String? get dateJoined; bool get isActive; DateTime? get createdAt;
 /// Create a copy of Prospects
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -30,16 +28,16 @@ $ProspectsCopyWith<Prospects> get copyWith => _$ProspectsCopyWithImpl<Prospects>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Prospects&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.location, location) || other.location == location)&&(identical(other.ownerName, ownerName) || other.ownerName == ownerName)&&(identical(other.phoneNumber, phoneNumber) || other.phoneNumber == phoneNumber)&&(identical(other.email, email) || other.email == email)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Prospects&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.location, location) || other.location == location)&&(identical(other.ownerName, ownerName) || other.ownerName == ownerName)&&(identical(other.phoneNumber, phoneNumber) || other.phoneNumber == phoneNumber)&&(identical(other.email, email) || other.email == email)&&(identical(other.panVatNumber, panVatNumber) || other.panVatNumber == panVatNumber)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&(identical(other.notes, notes) || other.notes == notes)&&(identical(other.dateJoined, dateJoined) || other.dateJoined == dateJoined)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,location,ownerName,phoneNumber,email,isActive,createdAt);
+int get hashCode => Object.hash(runtimeType,id,name,location,ownerName,phoneNumber,email,panVatNumber,latitude,longitude,notes,dateJoined,isActive,createdAt);
 
 @override
 String toString() {
-  return 'Prospects(id: $id, name: $name, location: $location, ownerName: $ownerName, phoneNumber: $phoneNumber, email: $email, isActive: $isActive, createdAt: $createdAt)';
+  return 'Prospects(id: $id, name: $name, location: $location, ownerName: $ownerName, phoneNumber: $phoneNumber, email: $email, panVatNumber: $panVatNumber, latitude: $latitude, longitude: $longitude, notes: $notes, dateJoined: $dateJoined, isActive: $isActive, createdAt: $createdAt)';
 }
 
 
@@ -50,7 +48,7 @@ abstract mixin class $ProspectsCopyWith<$Res>  {
   factory $ProspectsCopyWith(Prospects value, $Res Function(Prospects) _then) = _$ProspectsCopyWithImpl;
 @useResult
 $Res call({
- String id, String name, String location, String? ownerName, String? phoneNumber, String? email, bool isActive, DateTime? createdAt
+ String id, String name, String location, String? ownerName, String? phoneNumber, String? email, String? panVatNumber, double? latitude, double? longitude, String? notes, String? dateJoined, bool isActive, DateTime? createdAt
 });
 
 
@@ -67,7 +65,7 @@ class _$ProspectsCopyWithImpl<$Res>
 
 /// Create a copy of Prospects
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? location = null,Object? ownerName = freezed,Object? phoneNumber = freezed,Object? email = freezed,Object? isActive = null,Object? createdAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? location = null,Object? ownerName = freezed,Object? phoneNumber = freezed,Object? email = freezed,Object? panVatNumber = freezed,Object? latitude = freezed,Object? longitude = freezed,Object? notes = freezed,Object? dateJoined = freezed,Object? isActive = null,Object? createdAt = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -75,6 +73,11 @@ as String,location: null == location ? _self.location : location // ignore: cast
 as String,ownerName: freezed == ownerName ? _self.ownerName : ownerName // ignore: cast_nullable_to_non_nullable
 as String?,phoneNumber: freezed == phoneNumber ? _self.phoneNumber : phoneNumber // ignore: cast_nullable_to_non_nullable
 as String?,email: freezed == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
+as String?,panVatNumber: freezed == panVatNumber ? _self.panVatNumber : panVatNumber // ignore: cast_nullable_to_non_nullable
+as String?,latitude: freezed == latitude ? _self.latitude : latitude // ignore: cast_nullable_to_non_nullable
+as double?,longitude: freezed == longitude ? _self.longitude : longitude // ignore: cast_nullable_to_non_nullable
+as double?,notes: freezed == notes ? _self.notes : notes // ignore: cast_nullable_to_non_nullable
+as String?,dateJoined: freezed == dateJoined ? _self.dateJoined : dateJoined // ignore: cast_nullable_to_non_nullable
 as String?,isActive: null == isActive ? _self.isActive : isActive // ignore: cast_nullable_to_non_nullable
 as bool,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,
@@ -162,10 +165,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String location,  String? ownerName,  String? phoneNumber,  String? email,  bool isActive,  DateTime? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String location,  String? ownerName,  String? phoneNumber,  String? email,  String? panVatNumber,  double? latitude,  double? longitude,  String? notes,  String? dateJoined,  bool isActive,  DateTime? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Prospects() when $default != null:
-return $default(_that.id,_that.name,_that.location,_that.ownerName,_that.phoneNumber,_that.email,_that.isActive,_that.createdAt);case _:
+return $default(_that.id,_that.name,_that.location,_that.ownerName,_that.phoneNumber,_that.email,_that.panVatNumber,_that.latitude,_that.longitude,_that.notes,_that.dateJoined,_that.isActive,_that.createdAt);case _:
   return orElse();
 
 }
@@ -183,10 +186,10 @@ return $default(_that.id,_that.name,_that.location,_that.ownerName,_that.phoneNu
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String location,  String? ownerName,  String? phoneNumber,  String? email,  bool isActive,  DateTime? createdAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String location,  String? ownerName,  String? phoneNumber,  String? email,  String? panVatNumber,  double? latitude,  double? longitude,  String? notes,  String? dateJoined,  bool isActive,  DateTime? createdAt)  $default,) {final _that = this;
 switch (_that) {
 case _Prospects():
-return $default(_that.id,_that.name,_that.location,_that.ownerName,_that.phoneNumber,_that.email,_that.isActive,_that.createdAt);case _:
+return $default(_that.id,_that.name,_that.location,_that.ownerName,_that.phoneNumber,_that.email,_that.panVatNumber,_that.latitude,_that.longitude,_that.notes,_that.dateJoined,_that.isActive,_that.createdAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -203,10 +206,10 @@ return $default(_that.id,_that.name,_that.location,_that.ownerName,_that.phoneNu
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String location,  String? ownerName,  String? phoneNumber,  String? email,  bool isActive,  DateTime? createdAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String location,  String? ownerName,  String? phoneNumber,  String? email,  String? panVatNumber,  double? latitude,  double? longitude,  String? notes,  String? dateJoined,  bool isActive,  DateTime? createdAt)?  $default,) {final _that = this;
 switch (_that) {
 case _Prospects() when $default != null:
-return $default(_that.id,_that.name,_that.location,_that.ownerName,_that.phoneNumber,_that.email,_that.isActive,_that.createdAt);case _:
+return $default(_that.id,_that.name,_that.location,_that.ownerName,_that.phoneNumber,_that.email,_that.panVatNumber,_that.latitude,_that.longitude,_that.notes,_that.dateJoined,_that.isActive,_that.createdAt);case _:
   return null;
 
 }
@@ -218,17 +221,20 @@ return $default(_that.id,_that.name,_that.location,_that.ownerName,_that.phoneNu
 @JsonSerializable()
 
 class _Prospects implements Prospects {
-  const _Prospects({required this.id, required this.name, required this.location, this.ownerName, this.phoneNumber, this.email, this.isActive = true, this.createdAt});
+  const _Prospects({required this.id, required this.name, required this.location, this.ownerName, this.phoneNumber, this.email, this.panVatNumber, this.latitude, this.longitude, this.notes, this.dateJoined, this.isActive = true, this.createdAt});
   factory _Prospects.fromJson(Map<String, dynamic> json) => _$ProspectsFromJson(json);
 
 @override final  String id;
 @override final  String name;
 @override final  String location;
-// e.g., "Binamod, Nepal" or "Location"
-// Add other fields you might need for a prospects details page later
 @override final  String? ownerName;
 @override final  String? phoneNumber;
 @override final  String? email;
+@override final  String? panVatNumber;
+@override final  double? latitude;
+@override final  double? longitude;
+@override final  String? notes;
+@override final  String? dateJoined;
 @override@JsonKey() final  bool isActive;
 @override final  DateTime? createdAt;
 
@@ -245,16 +251,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Prospects&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.location, location) || other.location == location)&&(identical(other.ownerName, ownerName) || other.ownerName == ownerName)&&(identical(other.phoneNumber, phoneNumber) || other.phoneNumber == phoneNumber)&&(identical(other.email, email) || other.email == email)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Prospects&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.location, location) || other.location == location)&&(identical(other.ownerName, ownerName) || other.ownerName == ownerName)&&(identical(other.phoneNumber, phoneNumber) || other.phoneNumber == phoneNumber)&&(identical(other.email, email) || other.email == email)&&(identical(other.panVatNumber, panVatNumber) || other.panVatNumber == panVatNumber)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&(identical(other.notes, notes) || other.notes == notes)&&(identical(other.dateJoined, dateJoined) || other.dateJoined == dateJoined)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,location,ownerName,phoneNumber,email,isActive,createdAt);
+int get hashCode => Object.hash(runtimeType,id,name,location,ownerName,phoneNumber,email,panVatNumber,latitude,longitude,notes,dateJoined,isActive,createdAt);
 
 @override
 String toString() {
-  return 'Prospects(id: $id, name: $name, location: $location, ownerName: $ownerName, phoneNumber: $phoneNumber, email: $email, isActive: $isActive, createdAt: $createdAt)';
+  return 'Prospects(id: $id, name: $name, location: $location, ownerName: $ownerName, phoneNumber: $phoneNumber, email: $email, panVatNumber: $panVatNumber, latitude: $latitude, longitude: $longitude, notes: $notes, dateJoined: $dateJoined, isActive: $isActive, createdAt: $createdAt)';
 }
 
 
@@ -265,7 +271,7 @@ abstract mixin class _$ProspectsCopyWith<$Res> implements $ProspectsCopyWith<$Re
   factory _$ProspectsCopyWith(_Prospects value, $Res Function(_Prospects) _then) = __$ProspectsCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name, String location, String? ownerName, String? phoneNumber, String? email, bool isActive, DateTime? createdAt
+ String id, String name, String location, String? ownerName, String? phoneNumber, String? email, String? panVatNumber, double? latitude, double? longitude, String? notes, String? dateJoined, bool isActive, DateTime? createdAt
 });
 
 
@@ -282,7 +288,7 @@ class __$ProspectsCopyWithImpl<$Res>
 
 /// Create a copy of Prospects
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? location = null,Object? ownerName = freezed,Object? phoneNumber = freezed,Object? email = freezed,Object? isActive = null,Object? createdAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? location = null,Object? ownerName = freezed,Object? phoneNumber = freezed,Object? email = freezed,Object? panVatNumber = freezed,Object? latitude = freezed,Object? longitude = freezed,Object? notes = freezed,Object? dateJoined = freezed,Object? isActive = null,Object? createdAt = freezed,}) {
   return _then(_Prospects(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -290,6 +296,11 @@ as String,location: null == location ? _self.location : location // ignore: cast
 as String,ownerName: freezed == ownerName ? _self.ownerName : ownerName // ignore: cast_nullable_to_non_nullable
 as String?,phoneNumber: freezed == phoneNumber ? _self.phoneNumber : phoneNumber // ignore: cast_nullable_to_non_nullable
 as String?,email: freezed == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
+as String?,panVatNumber: freezed == panVatNumber ? _self.panVatNumber : panVatNumber // ignore: cast_nullable_to_non_nullable
+as String?,latitude: freezed == latitude ? _self.latitude : latitude // ignore: cast_nullable_to_non_nullable
+as double?,longitude: freezed == longitude ? _self.longitude : longitude // ignore: cast_nullable_to_non_nullable
+as double?,notes: freezed == notes ? _self.notes : notes // ignore: cast_nullable_to_non_nullable
+as String?,dateJoined: freezed == dateJoined ? _self.dateJoined : dateJoined // ignore: cast_nullable_to_non_nullable
 as String?,isActive: null == isActive ? _self.isActive : isActive // ignore: cast_nullable_to_non_nullable
 as bool,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,

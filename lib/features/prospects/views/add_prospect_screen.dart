@@ -7,12 +7,13 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/services/google_places_service.dart';
 import 'package:sales_sphere/core/services/location_service.dart';
-import 'package:sales_sphere/features/parties/vm/add_party.vm.dart';
+import 'package:sales_sphere/features/prospects/vm/add_prospect.vm.dart';
+import 'package:sales_sphere/features/prospects/vm/prospects.vm.dart';
 import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
 import 'package:sales_sphere/widget/custom_date_picker.dart';
 import 'package:sales_sphere/widget/location_picker_widget.dart';
-import 'package:sales_sphere/features/parties/models/parties.model.dart';
+import 'package:sales_sphere/features/prospects/models/add_prospect.model.dart';
 import 'package:intl/intl.dart';
 
 // Google Places service provider
@@ -26,14 +27,14 @@ final locationServiceProvider = Provider<LocationService>((ref) {
   return LocationService();
 });
 
-class AddPartyScreen extends ConsumerStatefulWidget {
-  const AddPartyScreen({super.key});
+class AddProspectScreen extends ConsumerStatefulWidget {
+  const AddProspectScreen({super.key});
 
   @override
-  ConsumerState<AddPartyScreen> createState() => _AddPartyScreenState();
+  ConsumerState<AddProspectScreen> createState() => _AddProspectScreenState();
 }
 
-class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
+class _AddProspectScreenState extends ConsumerState<AddProspectScreen> {
   final _formKey = GlobalKey<FormState>();
 
   // Controllers
@@ -89,7 +90,7 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
     super.dispose();
   }
 
-  // Save party via API
+  // Save prospect (Local - No API)
   Future<void> _handleSave() async {
     if (_formKey.currentState?.validate() ?? false) {
       // Validate latitude and longitude are set
@@ -127,52 +128,57 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
                   SizedBox(
                     width: 20.w,
                     height: 20.h,
-                    child: CircularProgressIndicator(
+                    child: const CircularProgressIndicator(
                       strokeWidth: 2,
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   ),
                   SizedBox(width: 16.w),
-                  Text('Creating party...'),
+                  const Text('Creating prospect...'),
                 ],
               ),
-              duration: Duration(seconds: 30),
+              duration: const Duration(seconds: 30),
               backgroundColor: AppColors.primary,
             ),
           );
         }
 
         // Create request object
-        final createRequest = CreatePartyRequest(
-          partyName: _nameController.text.trim(),
+        final createRequest = CreateProspectRequest(
+          name: _nameController.text.trim(),
           ownerName: _ownerNameController.text.trim(),
           dateJoined: _dateJoinedController.text.trim().isEmpty
               ? DateFormat('yyyy-MM-dd').format(DateTime.now())
               : _dateJoinedController.text.trim(),
-          panVatNumber: _panVatController.text.trim(),
-          contact: CreatePartyContact(
+          panVatNumber: _panVatController.text.trim().isEmpty
+              ? null
+              : _panVatController.text.trim(),
+          contact: CreateProspectContact(
             phone: _phoneController.text.trim(),
             email: _emailController.text.trim().isEmpty
                 ? null
                 : _emailController.text.trim(),
           ),
-          location: CreatePartyLocation(
+          location: CreateProspectLocation(
             address: _addressController.text.trim(),
             latitude: double.parse(_latitudeController.text.trim()),
             longitude: double.parse(_longitudeController.text.trim()),
           ),
-          description: _notesController.text.trim().isEmpty
+          notes: _notesController.text.trim().isEmpty
               ? null
               : _notesController.text.trim(),
         );
 
-        // Call API
-        final vm = ref.read(addPartyViewModelProvider.notifier);
-        await vm.createParty(createRequest);
+        // Call ViewModel and wait for completion
+        final vm = ref.read(addProspectViewModelProvider.notifier);
+        final createdProspect = await vm.createProspect(createRequest);
 
         if (mounted) {
           // Close loading
           ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+          // ✅ CRITICAL: Add to list BEFORE popping
+          ref.read(prospectViewModelProvider.notifier).addProspect(createdProspect);
 
           // Show success
           ScaffoldMessenger.of(context).showSnackBar(
@@ -208,7 +214,7 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
                         ),
                         SizedBox(height: 2.h),
                         Text(
-                          'Party created successfully',
+                          'Prospect created successfully',
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.9),
                             fontSize: 12.sp,
@@ -222,7 +228,7 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
               ),
               backgroundColor: AppColors.success,
               behavior: SnackBarBehavior.floating,
-              duration: Duration(seconds: 3),
+              duration: const Duration(seconds: 3),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12.r),
               ),
@@ -231,7 +237,7 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
             ),
           );
 
-          // Navigate back to parties list
+          // Navigate back AFTER adding to list
           context.pop();
         }
       } catch (e) {
@@ -289,7 +295,7 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
               ),
               backgroundColor: AppColors.error,
               behavior: SnackBarBehavior.floating,
-              duration: Duration(seconds: 4),
+              duration: const Duration(seconds: 4),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12.r),
               ),
@@ -325,7 +331,7 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text(
-                  "New member in the Family",
+                  "New Prospect Incoming",
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.8),
                     fontSize: 16.sp,
@@ -336,7 +342,7 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  "Add New Party",
+                  "Add New Prospect",
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 24.sp,
@@ -375,16 +381,16 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // Party Name
+                      // Prospect Name
                       PrimaryTextField(
-                        hintText: "Party Name",
+                        hintText: "Prospect Name",
                         controller: _nameController,
-                        prefixIcon: Icons.business_outlined,
+                        prefixIcon: Icons.business_center_outlined,
                         hasFocusBorder: true,
                         textInputAction: TextInputAction.next,
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Party name is required';
+                            return 'Prospect name is required';
                           }
                           return null;
                         },
@@ -407,19 +413,18 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
                       ),
                       SizedBox(height: 16.h),
 
-                      // PAN/VAT Number
+                      // PAN/VAT Number (OPTIONAL)
                       PrimaryTextField(
-                        hintText: "PAN/VAT Number (Max 14 characters)",
+                        hintText: "PAN/VAT Number (Optional)",
                         controller: _panVatController,
                         prefixIcon: Icons.receipt_long_outlined,
                         hasFocusBorder: true,
                         textInputAction: TextInputAction.next,
                         maxLength: 14,
                         validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'PAN/VAT number is required';
-                          }
-                          if (value.trim().length > 14) {
+                          if (value != null &&
+                              value.trim().isNotEmpty &&
+                              value.trim().length > 14) {
                             return 'PAN/VAT number cannot exceed 14 characters';
                           }
                           return null;
@@ -429,7 +434,7 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
 
                       // Phone
                       PrimaryTextField(
-                        hintText: "Phone Number (10 digits)",
+                        hintText: "Phone Number",
                         controller: _phoneController,
                         prefixIcon: Icons.phone_outlined,
                         hasFocusBorder: true,
@@ -440,7 +445,6 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
                           if (value == null || value.trim().isEmpty) {
                             return 'Phone number is required';
                           }
-                          // Remove any spaces or special characters for validation
                           final cleanedValue = value.replaceAll(
                             RegExp(r'[^\d]'),
                             '',
@@ -455,7 +459,7 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
 
                       // Email
                       PrimaryTextField(
-                        hintText: "Email Address",
+                        hintText: "Email Address (Optional)",
                         controller: _emailController,
                         prefixIcon: Icons.email_outlined,
                         hasFocusBorder: true,
@@ -472,8 +476,10 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
                         enabled: true,
                       ),
                       SizedBox(height: 16.h),
+
+                      // Notes
                       PrimaryTextField(
-                        hintText: "Notes",
+                        hintText: "Notes (Optional)",
                         controller: _notesController,
                         prefixIcon: Icons.note_outlined,
                         hasFocusBorder: true,
@@ -483,7 +489,7 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
                       ),
                       SizedBox(height: 16.h),
 
-                      // Location Picker with Google Maps (includes address search)
+                      // Location Picker with Google Maps
                       LocationPickerWidget(
                         addressController: _addressController,
                         latitudeController: _latitudeController,
@@ -499,7 +505,6 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
                           return null;
                         },
                         onLocationSelected: (location, address) {
-                          // Optional callback if needed
                           if (mounted) {
                             setState(() {
                               _latitudeController.text = location.latitude
@@ -550,6 +555,7 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
               ),
             ),
           ),
+
           // Sticky Bottom Bar
           Container(
             padding: EdgeInsets.fromLTRB(
@@ -569,7 +575,7 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
               ],
             ),
             child: PrimaryButton(
-              label: 'Add Party',
+              label: 'Add Prospect',
               onPressed: _handleSave,
               leadingIcon: Icons.add_circle_outline,
               size: ButtonSize.medium,

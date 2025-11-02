@@ -13,6 +13,11 @@ _Prospects _$ProspectsFromJson(Map<String, dynamic> json) => _Prospects(
   ownerName: json['ownerName'] as String?,
   phoneNumber: json['phoneNumber'] as String?,
   email: json['email'] as String?,
+  panVatNumber: json['panVatNumber'] as String?,
+  latitude: (json['latitude'] as num?)?.toDouble(),
+  longitude: (json['longitude'] as num?)?.toDouble(),
+  notes: json['notes'] as String?,
+  dateJoined: json['dateJoined'] as String?,
   isActive: json['isActive'] as bool? ?? true,
   createdAt: json['createdAt'] == null
       ? null
@@ -27,6 +32,11 @@ Map<String, dynamic> _$ProspectsToJson(_Prospects instance) =>
       'ownerName': instance.ownerName,
       'phoneNumber': instance.phoneNumber,
       'email': instance.email,
+      'panVatNumber': instance.panVatNumber,
+      'latitude': instance.latitude,
+      'longitude': instance.longitude,
+      'notes': instance.notes,
+      'dateJoined': instance.dateJoined,
       'isActive': instance.isActive,
       'createdAt': instance.createdAt?.toIso8601String(),
     };

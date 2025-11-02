@@ -27,37 +27,86 @@ class ProspectViewModel extends _$ProspectViewModel {
     state = await AsyncValue.guard(_fetchProspects);
   }
 
-  // Mock data based on your UI image
+  // Add a prospect to the list
+  void addProspect(Prospects newProspect) {
+    state.whenData((currentProspects) {
+      // Add the new prospect to the beginning of the list
+      final updatedList = [newProspect, ...currentProspects];
+      state = AsyncValue.data(updatedList);
+    });
+  }
+
+  // Mock data with ALL fields
   List<Prospects> _getMockProspects() {
     return [
       Prospects(
         id: 'p1',
         name: 'Agarwal Traders',
         location: 'Binamod, Nepal',
+        ownerName: 'Rajesh Agarwal',
+        phoneNumber: '9876543210',
+        email: 'rajesh@agarwaltraders.com',
+        panVatNumber: '1234567890',
+        latitude: 27.7172,
+        longitude: 85.3240,
+        notes: 'Premium customer',
+        dateJoined: '2024-01-15',
         createdAt: DateTime.now().subtract(const Duration(days: 2)),
       ),
       Prospects(
         id: 'p2',
         name: 'Traders I',
-        location: 'Location',
+        location: 'Kathmandu, Nepal',
+        ownerName: 'Owner I',
+        phoneNumber: '9876543211',
+        email: 'owner1@traders.com',
+        panVatNumber: null,
+        latitude: 27.7172,
+        longitude: 85.3240,
+        notes: null,
+        dateJoined: '2024-01-10',
         createdAt: DateTime.now().subtract(const Duration(days: 5)),
       ),
       Prospects(
         id: 'p3',
         name: 'Traders II',
-        location: 'Location',
+        location: 'Pokhara, Nepal',
+        ownerName: 'Owner II',
+        phoneNumber: '9876543212',
+        email: null,
+        panVatNumber: null,
+        latitude: 28.2096,
+        longitude: 83.9856,
+        notes: null,
+        dateJoined: '2024-01-05',
         createdAt: DateTime.now().subtract(const Duration(days: 10)),
       ),
       Prospects(
         id: 'p4',
         name: 'Traders III',
-        location: 'Location',
+        location: 'Lalitpur, Nepal',
+        ownerName: 'Owner III',
+        phoneNumber: '9876543213',
+        email: null,
+        panVatNumber: null,
+        latitude: 27.6710,
+        longitude: 85.3238,
+        notes: null,
+        dateJoined: '2024-01-03',
         createdAt: DateTime.now().subtract(const Duration(days: 12)),
       ),
       Prospects(
         id: 'p5',
         name: 'Trader IV',
-        location: 'Location',
+        location: 'Bhaktapur, Nepal',
+        ownerName: 'Owner IV',
+        phoneNumber: '9876543214',
+        email: null,
+        panVatNumber: null,
+        latitude: 27.6710,
+        longitude: 85.4298,
+        notes: null,
+        dateJoined: '2024-01-01',
         createdAt: DateTime.now().subtract(const Duration(days: 15)),
       ),
     ];
