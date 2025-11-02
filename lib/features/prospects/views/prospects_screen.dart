@@ -5,17 +5,17 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
-import 'package:sales_sphere/features/parties/vm/parties.vm.dart';
+import 'package:sales_sphere/features/prospects/vm/prospects.vm.dart';
 import 'package:sales_sphere/widget/universal_list_card.dart';
 
-class PartiesScreen extends ConsumerStatefulWidget {
-  const PartiesScreen({super.key});
+class ProspectsScreen extends ConsumerStatefulWidget {
+  const ProspectsScreen({super.key});
 
   @override
-  ConsumerState<PartiesScreen> createState() => _PartiesScreenState();
+  ConsumerState<ProspectsScreen> createState() => _ProspectsScreenState();
 }
 
-class _PartiesScreenState extends ConsumerState<PartiesScreen> {
+class _ProspectsScreenState extends ConsumerState<ProspectsScreen> {
   final TextEditingController _searchController = TextEditingController();
 
   @override
@@ -25,43 +25,32 @@ class _PartiesScreenState extends ConsumerState<PartiesScreen> {
   }
 
   void _onSearchChanged(String query) {
-    ref.read(searchQueryProvider.notifier).updateQuery(query);
+    ref.read(prospectSearchQueryProvider.notifier).updateQuery(query);
   }
 
-  void _navigateToPartyDetails(String partyId) {
+  void _navigateToProspectDetails(String prospectId) {
     context.pushNamed(
-      'edit_party_details_screen',
-      pathParameters: {'partyId': partyId},
+      'edit_prospect_details_screen',
+      pathParameters: {'prospectId': prospectId},
     );
   }
 
-  void _navigateToAddParty() {
-    context.push('/add-party');
-  }
-
-  String _extractLocation(String fullAddress) {
-    final parts = fullAddress.split(',');
-    if (parts.length >= 2) {
-      return '${parts[0].trim()}, ${parts[1].trim()}';
-    }
-    return fullAddress.length > 30
-        ? '${fullAddress.substring(0, 30)}...'
-        : fullAddress;
+  void _navigateToAddProspect() {
+    context.push('/add-prospect');
   }
 
   @override
   Widget build(BuildContext context) {
-    final searchQuery = ref.watch(searchQueryProvider);
-    final searchedPartiesAsync = ref.watch(searchedPartiesProvider);
+    final searchQuery = ref.watch(prospectSearchQueryProvider);
+    final searchedProspectsAsync = ref.watch(searchedProspectsProvider);
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(
-          'Parties',
+          'Prospect',
           style: TextStyle(
             color: AppColors.textdark,
             fontSize: 20.sp,
@@ -140,7 +129,7 @@ class _PartiesScreenState extends ConsumerState<PartiesScreen> {
                   ),
                 ),
               ),
-              // Parties Header
+              // Header
               Container(
                 color: Colors.transparent,
                 padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 12.h),
@@ -148,7 +137,7 @@ class _PartiesScreenState extends ConsumerState<PartiesScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Parties',
+                      'Prospect',
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w600,
@@ -159,24 +148,24 @@ class _PartiesScreenState extends ConsumerState<PartiesScreen> {
                   ],
                 ),
               ),
-              // Party List
+              // Prospect List
               Expanded(
-                child: searchedPartiesAsync.when(
-                  data: (parties) {
-                    if (parties.isEmpty) {
+                child: searchedProspectsAsync.when(
+                  data: (prospects) {
+                    if (prospects.isEmpty) {
                       return Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
-                              Icons.people_outline,
+                              Icons.person_search, // Icon for prospects
                               size: 64.sp,
                               color: Colors.grey.shade400,
                             ),
                             SizedBox(height: 16.h),
                             Text(
                               searchQuery.isEmpty
-                                  ? 'No parties found'
+                                  ? 'No prospects found'
                                   : 'No results for "$searchQuery"',
                               style: TextStyle(
                                 fontSize: 16.sp,
@@ -190,16 +179,16 @@ class _PartiesScreenState extends ConsumerState<PartiesScreen> {
                     }
                     return RefreshIndicator(
                       onRefresh: () async {
-                        await ref.read(partiesViewModelProvider.notifier).refresh();
+                        await ref.read(prospectViewModelProvider.notifier).refresh();
                       },
                       color: AppColors.primary,
                       child: ListView.separated(
                         padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 80.h),
-                        itemCount: parties.length,
+                        itemCount: prospects.length,
                         separatorBuilder: (context, index) =>
                             SizedBox(height: 12.h),
                         itemBuilder: (context, index) {
-                          final party = parties[index];
+                          final prospect = prospects[index];
                           return UniversalListCard(
                             leadingIcon: Icon(
                               Icons.person_outline,
@@ -209,9 +198,9 @@ class _PartiesScreenState extends ConsumerState<PartiesScreen> {
                             isLeadingCircle: true,
                             leadingBackgroundColor: AppColors.primary,
                             leadingSize: 48.w,
-                            title: party.name,
-                            subtitle: _extractLocation(party.fullAddress),
-                            onTap: () => _navigateToPartyDetails(party.id),
+                            title: prospect.name,
+                            subtitle: prospect.location,
+                            onTap: () => _navigateToProspectDetails(prospect.id),
                             showArrow: true,
                             arrowColor: AppColors.primary,
                           );
@@ -227,23 +216,19 @@ class _PartiesScreenState extends ConsumerState<PartiesScreen> {
                       separatorBuilder: (context, index) =>
                           SizedBox(height: 12.h),
                       itemBuilder: (context, index) {
-                        // Use your REAL card with placeholder data
                         return UniversalListCard(
                           leadingIcon: Icon(
                             Icons.person_outline,
-                            // 1. SET ICON COLOR (so it's not white)
                             color: AppColors.primary,
                             size: 24.sp,
                           ),
                           isLeadingCircle: true,
-                          // 2. SET LEADING BACKGROUND TO TRANSPARENT
                           leadingBackgroundColor: Colors.transparent,
                           leadingSize: 48.w,
-                          title: "Party Name Placeholder",
-                          subtitle: "Address placeholder",
+                          title: "Prospect Name Placeholder",
+                          subtitle: "Location placeholder",
                           onTap: () {},
                           showArrow: true,
-                          // 3. SET ARROW BACKGROUND TO TRANSPARENT
                           arrowColor: Colors.transparent,
                         );
                       },
@@ -260,7 +245,7 @@ class _PartiesScreenState extends ConsumerState<PartiesScreen> {
                         ),
                         SizedBox(height: 16.h),
                         Text(
-                          'Failed to load parties',
+                          'Failed to load prospects',
                           style: TextStyle(
                             fontSize: 16.sp,
                             color: AppColors.textdark,
@@ -282,26 +267,9 @@ class _PartiesScreenState extends ConsumerState<PartiesScreen> {
                         SizedBox(height: 16.h),
                         ElevatedButton(
                           onPressed: () {
-                            ref.read(partiesViewModelProvider.notifier).refresh();
+                            ref.read(prospectViewModelProvider.notifier).refresh();
                           },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 24.w,
-                              vertical: 12.h,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12.r),
-                            ),
-                          ),
-                          child: Text(
-                            'Retry',
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                          child: const Text('Retry'),
                         ),
                       ],
                     ),
@@ -313,7 +281,7 @@ class _PartiesScreenState extends ConsumerState<PartiesScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _navigateToAddParty,
+        onPressed: _navigateToAddProspect,
         backgroundColor: AppColors.primary,
         elevation: 4,
         icon: Icon(
@@ -322,7 +290,7 @@ class _PartiesScreenState extends ConsumerState<PartiesScreen> {
           size: 20.sp,
         ),
         label: Text(
-          'Add Party',
+          'Add Prospect',
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.w600,

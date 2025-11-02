@@ -144,16 +144,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
                 ],
               ),
               child: ClipOval(
-                child: profile.profileImageUrl != null
-                    ? _buildProfileImage(profile.profileImageUrl!, profile.fullName)
-                    : _buildAvatarFallback(profile.fullName),
+                child: profile.avatarUrl != null
+                    ? _buildProfileImage(profile.avatarUrl!, profile.name)
+                    : _buildAvatarFallback(profile.name),
               ),
             ),
 
@@ -188,7 +188,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
         // Name
         Text(
-          profile.fullName,
+          profile.name,
           style: TextStyle(
             fontSize: 20.sp,
             fontFamily: 'Poppins',
@@ -200,7 +200,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
         // Role
         Text(
-          profile.role ?? 'Sales Representative',
+          profile.role,
           style: TextStyle(
             fontSize: 14.sp,
             fontFamily: 'Poppins',
@@ -270,12 +270,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   /// Stats Cards Row
+  /// Note: Using mock data as these features are still in progress
   Widget _buildStatsCards(Profile profile) {
+    // Mock data for stats (not yet available from API)
+    const int mockTotalVisits = 45;
+    const double mockAttendancePercentage = 92.5;
+    const int mockTotalOrders = 32;
+
     return Row(
       children: [
         Expanded(
           child: _buildStatCard(
-            value: profile.totalVisits.toString(),
+            value: mockTotalVisits.toString(),
             label: 'Visits',
             valueColor: AppColors.secondary,
           ),
@@ -283,7 +289,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         SizedBox(width: 12.w),
         Expanded(
           child: _buildStatCard(
-            value: '${profile.attendancePercentage.toStringAsFixed(0)}%',
+            value: '${mockAttendancePercentage.toStringAsFixed(0)}%',
             label: 'Attendance',
             valueColor: AppColors.success,
           ),
@@ -291,7 +297,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         SizedBox(width: 12.w),
         Expanded(
           child: _buildStatCard(
-            value: profile.totalOrders.toString(),
+            value: mockTotalOrders.toString(),
             label: 'Orders',
             valueColor: AppColors.warning,
           ),
@@ -313,7 +319,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -354,7 +360,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -383,21 +389,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           _buildInfoRow(
             icon: Icons.person_outline,
             label: 'Full Name',
-            value: profile.fullName,
+            value: profile.name,
           ),
           SizedBox(height: 16.h),
 
           _buildInfoRow(
             icon: Icons.wc_outlined,
             label: 'Gender',
-            value: profile.gender ?? 'N/A',
+            value: profile.gender,
           ),
           SizedBox(height: 16.h),
 
           _buildInfoRow(
             icon: Icons.phone_outlined,
             label: 'Phone Number',
-            value: profile.phoneNumber,
+            value: profile.phone,
           ),
           SizedBox(height: 16.h),
 
@@ -409,16 +415,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           SizedBox(height: 16.h),
 
           _buildInfoRow(
+            icon: Icons.badge_outlined,
+            label: 'Age',
+            value: '${profile.age} years',
+          ),
+          SizedBox(height: 16.h),
+
+          _buildInfoRow(
             icon: Icons.flag_outlined,
-            label: 'Citizenship',
-            value: profile.citizenship ?? 'N/A',
+            label: 'Citizenship Number',
+            value: profile.citizenshipNumber,
           ),
           SizedBox(height: 16.h),
 
           _buildInfoRow(
             icon: Icons.receipt_long_outlined,
             label: 'PAN Number',
-            value: profile.panNumber ?? 'N/A',
+            value: profile.panNumber,
           ),
           SizedBox(height: 16.h),
 
@@ -432,19 +445,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           _buildInfoRow(
             icon: Icons.cake_outlined,
             label: 'Date of Birth',
-            value: profile.dateOfBirth != null
-                ? DateFormat('MMM dd, yyyy').format(profile.dateOfBirth!)
-                : 'N/A',
+            value: DateFormat('MMM dd, yyyy').format(profile.dateOfBirth),
           ),
           SizedBox(height: 16.h),
 
           _buildInfoRow(
             icon: Icons.calendar_today_outlined,
             label: 'Date Joined',
-            value: profile.dateJoined != null
-                ? DateFormat('MMM dd, yyyy').format(profile.dateJoined!)
-                : 'N/A',
+            value: DateFormat('MMM dd, yyyy').format(profile.dateJoined),
           ),
+          SizedBox(height: 16.h),
+
+          _buildInfoRow(
+            icon: Icons.work_outline,
+            label: 'Role',
+            value: profile.role,
+          ),
+
         ],
       ),
     );
@@ -463,7 +480,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           width: 40.w,
           height: 40.h,
           decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.1),
+            color: AppColors.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8.r),
           ),
           child: Icon(
@@ -532,7 +549,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   width: 40.w,
                   height: 40.h,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: AppColors.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8.r),
                   ),
                   child: Icon(
@@ -560,7 +577,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   width: 40.w,
                   height: 40.h,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: AppColors.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8.r),
                   ),
                   child: Icon(
@@ -630,11 +647,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           );
         }
 
-        // TODO: Upload image to server and get URL
-        // For now, just use the local file path
+        // Upload image to server
         final bool success = await ref
             .read(profileViewModelProvider.notifier)
-            .updateProfileImage(image.path);
+            .uploadProfileImage(image.path);
 
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

@@ -15,7 +15,7 @@ class ApiEndpoints {
 
   // User Endpoints
   static const String profile = '/users/me';
-  static const String updateProfile = '/user/profile';
+  static const String uploadProfileImage = '/users/me/profile-image';
   static const String deleteAccount = '/user/delete';
 
   // Example: Sales Endpoints

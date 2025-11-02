@@ -218,7 +218,6 @@ class AboutScreen extends StatelessWidget {
   Widget _buildParagraph(String text) {
     return Text(
       text,
-      textAlign: TextAlign.justify,
       style: TextStyle(
         fontSize: 14.sp,
         fontWeight: FontWeight.w400,
@@ -240,7 +239,6 @@ class AboutScreen extends StatelessWidget {
               width: 6.w,
               height: 6.h,
               decoration: BoxDecoration(
-                color: AppColors.secondary,
                 shape: BoxShape.circle,
               ),
             ),
@@ -301,7 +299,6 @@ class AboutScreen extends StatelessWidget {
             style: TextStyle(
               fontSize: 16.sp,
               fontWeight: FontWeight.w600,
-              color: AppColors.secondary,
             ),
           ),
           SizedBox(height: 4.h),
@@ -329,12 +326,10 @@ class AboutScreen extends StatelessWidget {
             margin: EdgeInsets.only(top: 2.h, right: 12.w),
             padding: EdgeInsets.all(8.w),
             decoration: BoxDecoration(
-              color: AppColors.secondary.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8.r),
             ),
             child: Icon(
               Icons.check_circle,
-              color: AppColors.secondary,
               size: 20.sp,
             ),
           ),
@@ -378,7 +373,6 @@ class AboutScreen extends StatelessWidget {
             margin: EdgeInsets.only(top: 2.h, right: 12.w),
             child: Icon(
               Icons.trending_up,
-              color: AppColors.secondary,
               size: 20.sp,
             ),
           ),
@@ -391,7 +385,6 @@ class AboutScreen extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 15.sp,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.secondary,
                     ),
                   ),
                   TextSpan(
@@ -425,7 +418,6 @@ class AboutScreen extends StatelessWidget {
           children: [
             Icon(
               icon,
-              color: AppColors.secondary,
               size: 20.sp,
             ),
             SizedBox(width: 12.w),

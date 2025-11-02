@@ -120,7 +120,11 @@ class ExampleApiService {
     }
   }
 
-  /// Example: Update Profile
+  // Example: Update Profile
+  // Note: Profile details update is not supported by the API
+  // Only profile image upload is supported via PUT /users/me/profile-image
+  // This example method is commented out as the endpoint no longer exists
+  /*
   Future<Map<String, dynamic>> updateProfile({
     required Map<String, dynamic> data,
   }) async {
@@ -150,6 +154,7 @@ class ExampleApiService {
       );
     }
   }
+  */
 
   /// Example: Get List with Query Parameters
   Future<List<dynamic>> getProducts({

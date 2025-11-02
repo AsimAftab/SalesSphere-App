@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
-// 1. ADD SKELETONIZER IMPORT
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/features/catalog/vm/catalog_item.vm.dart';
@@ -39,11 +38,12 @@ class _CategoryItemListScreenState
   }
 
   void _navigateToItemDetails(String itemId) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Navigate to details for item $itemId'),
-        backgroundColor: AppColors.primary,
-      ),
+    context.pushNamed(
+      'catalog_item_details',
+      pathParameters: {
+        'categoryId': widget.categoryId, // Pass the current categoryId
+        'itemId': itemId,                  // Pass the selected itemId
+      },
     );
   }
 
@@ -59,13 +59,13 @@ class _CategoryItemListScreenState
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: const Icon(Icons.arrow_back, color: AppColors.textdark),
           onPressed: () => context.pop(),
         ),
         title: Text(
           widget.categoryName,
           style: TextStyle(
-            color: Colors.black87,
+            color: AppColors.textdark,
             fontSize: 20.sp,
             fontWeight: FontWeight.w600,
             fontFamily: 'Poppins',
@@ -153,7 +153,7 @@ class _CategoryItemListScreenState
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w600,
-                        color: Colors.black87,
+                        color: AppColors.textdark,
                         fontFamily: 'Poppins',
                       ),
                     ),
@@ -256,7 +256,7 @@ class _CategoryItemListScreenState
                           SizedBox(height: 16.h),
                           Text(
                             'Failed to load items',
-                            style: TextStyle(fontSize: 16.sp, color: Colors.black87),
+                            style: TextStyle(fontSize: 16.sp, color: AppColors.textdark),
                             textAlign: TextAlign.center,
                           ),
                           SizedBox(height: 8.h),

@@ -1,3 +1,5 @@
+// lib/features/prospects/views/edit_prospect_details_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -11,8 +13,8 @@ import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/services/google_places_service.dart';
 import 'package:sales_sphere/core/services/location_service.dart';
 import 'package:sales_sphere/core/utils/field_validators.dart';
-import 'package:sales_sphere/features/parties/models/parties.model.dart';
-import 'package:sales_sphere/features/parties/vm/edit_party.vm.dart';
+import 'package:sales_sphere/features/prospects/models/edit_prospect_details.model.dart';
+import 'package:sales_sphere/features/prospects/vm/edit_prospect_details.vm.dart';
 import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
 import 'package:sales_sphere/widget/location_picker_widget.dart';
@@ -29,19 +31,19 @@ final locationServiceProvider = Provider<LocationService>((ref) {
   return LocationService();
 });
 
-class EditPartyDetailsScreen extends ConsumerStatefulWidget {
-  final String partyId;
+class EditProspectDetailsScreen extends ConsumerStatefulWidget {
+  final String prospectId;
 
-  const EditPartyDetailsScreen({
+  const EditProspectDetailsScreen({
     super.key,
-    required this.partyId,
+    required this.prospectId,
   });
 
   @override
-  ConsumerState<EditPartyDetailsScreen> createState() => _EditPartyDetailsScreenState();
+  ConsumerState<EditProspectDetailsScreen> createState() => _EditProspectDetailsScreenState();
 }
 
-class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen> {
+class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isEditMode = false;
 
@@ -56,8 +58,9 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
   late TextEditingController _notesController;
   late TextEditingController _dateJoinedController;
 
-  PartyDetails? _currentParty;
+  ProspectDetails? _currentProspect;
   LatLng? _initialLocation;
+
   @override
   void initState() {
     super.initState();
@@ -77,24 +80,24 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
     _dateJoinedController = TextEditingController();
   }
 
-  void _populateFields(PartyDetails party) {
+  void _populateFields(ProspectDetails prospect) {
     if (!mounted) return;
     setState(() {
-      _currentParty = party;
-      _nameController.text = party.name;
-      _phoneController.text = party.phoneNumber;
-      _emailController.text = party.email ?? '';
-      _ownerNameController.text = party.ownerName;
-      _panVatNumberController.text = party.panVatNumber;
-      _fullAddressController.text = party.fullAddress;
-      _latitudeController.text = party.latitude?.toString() ?? '';
-      _longitudeController.text = party.longitude?.toString() ?? '';
-      _notesController.text = party.notes ?? '';
-      _dateJoinedController.text = DateFormatter.formatDateOnly(party.dateJoined);
+      _currentProspect = prospect;
+      _nameController.text = prospect.name;
+      _phoneController.text = prospect.phoneNumber;
+      _emailController.text = prospect.email ?? '';
+      _ownerNameController.text = prospect.ownerName;
+      _panVatNumberController.text = prospect.panVatNumber ?? '';
+      _fullAddressController.text = prospect.fullAddress;
+      _latitudeController.text = prospect.latitude?.toString() ?? '';
+      _longitudeController.text = prospect.longitude?.toString() ?? '';
+      _notesController.text = prospect.notes ?? '';
+      _dateJoinedController.text = DateFormatter.formatDateOnly(prospect.dateJoined);
 
       // Set initial location for map if coordinates exist
-      if (party.latitude != null && party.longitude != null) {
-        _initialLocation = LatLng(party.latitude!, party.longitude!);
+      if (prospect.latitude != null && prospect.longitude != null) {
+        _initialLocation = LatLng(prospect.latitude!, prospect.longitude!);
       }
     });
   }
@@ -116,18 +119,18 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
 
   Future<void> _handleSave() async {
     if (_formKey.currentState?.validate() ?? false) {
-      if (_currentParty == null) return;
+      if (_currentProspect == null) return;
 
-      final vm = ref.read(editPartyViewModelProvider.notifier);
-
-      final updatedParty = _currentParty!.copyWith(
+      final updatedProspect = _currentProspect!.copyWith(
         name: _nameController.text.trim(),
         phoneNumber: _phoneController.text.trim(),
         email: _emailController.text.trim().isEmpty
             ? null
             : _emailController.text.trim(),
         ownerName: _ownerNameController.text.trim(),
-        panVatNumber: _panVatNumberController.text.trim(),
+        panVatNumber: _panVatNumberController.text.trim().isEmpty
+            ? null
+            : _panVatNumberController.text.trim(),
         fullAddress: _fullAddressController.text.trim(),
         latitude: double.tryParse(_latitudeController.text.trim()),
         longitude: double.tryParse(_longitudeController.text.trim()),
@@ -144,7 +147,7 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
             SnackBar(
               content: Row(
                 children: [
-                  SizedBox(
+                  const SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
@@ -152,18 +155,18 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   ),
-                  SizedBox(width: 16),
-                  Text('Updating party details...'),
+                  const SizedBox(width: 16),
+                  const Text('Updating prospect details...'),
                 ],
               ),
-              duration: Duration(seconds: 30),
+              duration: const Duration(seconds: 30),
               backgroundColor: AppColors.primary,
             ),
           );
         }
 
-        // Call API to update party
-        await vm.updateParty(updatedParty);
+        // Call helper function to update prospect (Local - No API)
+        await updateProspect(ref, updatedProspect);
 
         if (mounted) {
           // Close loading snackbar
@@ -171,7 +174,7 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
 
           setState(() {
             _isEditMode = false;
-            _currentParty = updatedParty;
+            _currentProspect = updatedProspect;
           });
 
           // Show beautiful success snackbar
@@ -208,7 +211,7 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                         ),
                         SizedBox(height: 2.h),
                         Text(
-                          'Party details updated successfully',
+                          'Prospect details updated successfully',
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.9),
                             fontSize: 12.sp,
@@ -222,7 +225,7 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
               ),
               backgroundColor: AppColors.success,
               behavior: SnackBarBehavior.floating,
-              duration: Duration(seconds: 3),
+              duration: const Duration(seconds: 3),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12.r),
               ),
@@ -231,16 +234,16 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
             ),
           );
 
-          // Refresh the party details from API to ensure data is synced
-          ref.invalidate(partyByIdProvider(widget.partyId));
+          // Refresh the prospect details to ensure data is synced
+          ref.invalidate(prospectByIdProvider(widget.prospectId));
 
           // Wait a moment for the provider to refresh, then repopulate fields
-          Future.delayed(Duration(milliseconds: 500), () {
+          Future.delayed(const Duration(milliseconds: 500), () {
             if (mounted) {
-              final refreshedPartyAsync = ref.read(partyByIdProvider(widget.partyId));
-              refreshedPartyAsync.whenData((refreshedParty) {
-                if (refreshedParty != null && mounted) {
-                  _populateFields(refreshedParty);
+              final refreshedProspectAsync = ref.read(prospectByIdProvider(widget.prospectId));
+              refreshedProspectAsync.whenData((refreshedProspect) {
+                if (refreshedProspect != null && mounted) {
+                  _populateFields(refreshedProspect);
                 }
               });
             }
@@ -301,7 +304,7 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
               ),
               backgroundColor: AppColors.error,
               behavior: SnackBarBehavior.floating,
-              duration: Duration(seconds: 4),
+              duration: const Duration(seconds: 4),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12.r),
               ),
@@ -320,20 +323,20 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
     });
   }
 
-  Future<void> _openGoogleMaps(PartyDetails party) async {
+  Future<void> _openGoogleMaps(ProspectDetails prospect) async {
     Uri? url;
 
-    if (party.latitude != null && party.longitude != null) {
+    if (prospect.latitude != null && prospect.longitude != null) {
       url = Uri(
         scheme: 'geo',
         path: '0,0',
-        queryParameters: {'q': '${party.latitude},${party.longitude}'},
+        queryParameters: {'q': '${prospect.latitude},${prospect.longitude}'},
       );
-    } else if (party.fullAddress.isNotEmpty) {
+    } else if (prospect.fullAddress.isNotEmpty) {
       url = Uri(
         scheme: 'geo',
         path: '0,0',
-        queryParameters: {'q': party.fullAddress},
+        queryParameters: {'q': prospect.fullAddress},
       );
     }
 
@@ -343,8 +346,8 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Could not open maps. Is Google Maps installed?'),
+            const SnackBar(
+              content: Text('Could not open maps. Is Google Maps installed?'),
               backgroundColor: AppColors.error,
             ),
           );
@@ -353,8 +356,8 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('No address or coordinates to show'),
+          const SnackBar(
+            content: Text('No address or coordinates to show'),
             backgroundColor: AppColors.warning,
           ),
         );
@@ -362,8 +365,8 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
     }
   }
 
-  // --- CREATE A NEW HELPER METHOD for the UI ---
-  Widget _buildPageContent(PartyDetails? party) {
+  // Helper method for the UI
+  Widget _buildPageContent(ProspectDetails? prospect) {
     return Column(
       children: [
         Expanded(
@@ -394,8 +397,7 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            // Use placeholder if controller is empty (i.e., loading)
-                            _nameController.text.isEmpty ? "Party Name" : _nameController.text,
+                            _nameController.text.isEmpty ? "Prospect Name" : _nameController.text,
                             style: TextStyle(
                               fontSize: 20.sp,
                               fontWeight: FontWeight.w700,
@@ -405,25 +407,19 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                           ),
                           SizedBox(height: 8.h),
                           InkWell(
-                            // Disable tap if 'party' is null (loading)
-                            onTap: party == null ? null : () => _openGoogleMaps(party),
+                            onTap: prospect == null ? null : () => _openGoogleMaps(prospect),
                             borderRadius: BorderRadius.circular(8.r),
                             child: Padding(
                               padding: EdgeInsets.symmetric(vertical: 4.h),
                               child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.center, // ✅ Center vertically
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Padding(
-                                    padding: EdgeInsets.only(top: 2.h), // ✅ small visual tweak
-                                    child: Icon(
-                                      Icons.location_on_outlined,
-                                      size: 14.sp,
-                                      color: AppColors.primary,
-                                    ),
+                                  Icon(
+                                    Icons.location_on_outlined,
+                                    size: 14.sp,
+                                    color: AppColors.primary,
                                   ),
                                   SizedBox(width: 6.w),
-
-                                  // ✅ Expanded so text wraps multiple lines neatly
                                   Expanded(
                                     child: Text(
                                       _fullAddressController.text.isEmpty
@@ -433,13 +429,11 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                                         fontSize: 13.sp,
                                         color: AppColors.primary,
                                         fontWeight: FontWeight.w500,
-                                        height: 1.4, // ✅ gives better line spacing
                                       ),
-                                      softWrap: true,
-                                      overflow: TextOverflow.visible,
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
                                     ),
                                   ),
-
                                   SizedBox(width: 4.w),
                                   Icon(
                                     Icons.open_in_new,
@@ -449,15 +443,13 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                                 ],
                               ),
                             ),
-                          )
-
-
+                          ),
                         ],
                       ),
                     ),
                     SizedBox(height: 24.h),
                     Text(
-                      'Party Details',
+                      'Prospect Details',
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w600,
@@ -474,7 +466,7 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                         borderRadius: BorderRadius.circular(16.r),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha:0.04), // Kept
+                            color: Colors.black.withValues(alpha: 0.04),
                             blurRadius: 10,
                             offset: const Offset(0, 2),
                           ),
@@ -498,15 +490,18 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                           ),
                           SizedBox(height: 16.h),
                           PrimaryTextField(
-                            hintText: "PAN/VAT Number",
+                            hintText: "PAN/VAT Number (Optional)",
                             controller: _panVatNumberController,
                             prefixIcon: Icons.receipt_long_outlined,
                             hasFocusBorder: true,
                             enabled: _isEditMode,
                             textInputAction: TextInputAction.next,
                             validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'PAN/VAT number is required';
+                              // ✅ OPTIONAL - No error if empty
+                              if (value != null &&
+                                  value.trim().isNotEmpty &&
+                                  value.trim().length > 14) {
+                                return 'PAN/VAT number cannot exceed 14 characters';
                               }
                               return null;
                             },
@@ -529,7 +524,7 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                           ),
                           SizedBox(height: 16.h),
                           PrimaryTextField(
-                            hintText: "Email Address",
+                            hintText: "Email Address (Optional)",
                             controller: _emailController,
                             prefixIcon: Icons.email_outlined,
                             hasFocusBorder: true,
@@ -543,9 +538,9 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                               return null;
                             },
                           ),
-                          SizedBox(height: 16.h,),
+                          SizedBox(height: 16.h),
                           PrimaryTextField(
-                            hintText: "Notes",
+                            hintText: "Notes (Optional)",
                             controller: _notesController,
                             prefixIcon: Icons.note_outlined,
                             hasFocusBorder: true,
@@ -556,7 +551,7 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                           ),
                           SizedBox(height: 16.h),
 
-                          // Location Picker with Google Maps (includes address search)
+                          // Location Picker with Google Maps
                           LocationPickerWidget(
                             addressController: _fullAddressController,
                             latitudeController: _latitudeController,
@@ -572,11 +567,8 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                               return null;
                             },
                             onLocationSelected: (location, address) {
-                              // Store full formatted address and coordinates
                               if (mounted) {
                                 setState(() {
-                                  // Store the full formatted address for backend
-                                  _fullAddressController.text = address;
                                   _latitudeController.text = location.latitude.toStringAsFixed(6);
                                   _longitudeController.text = location.longitude.toStringAsFixed(6);
                                 });
@@ -620,15 +612,13 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                           ),
                           SizedBox(height: 16.h),
 
-
-
                           PrimaryTextField(
                             hintText: "Date Joined",
                             controller: _dateJoinedController,
                             prefixIcon: Icons.date_range_outlined,
                             hasFocusBorder: true,
                             enabled: false,
-                            textInputAction: TextInputAction.newline,
+                            textInputAction: TextInputAction.done,
                           ),
                         ],
                       ),
@@ -661,8 +651,7 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
           )
               : PrimaryButton(
             label: 'Edit Detail',
-            // Disable button if 'party' is null (loading)
-            onPressed: party == null ? null : _toggleEditMode,
+            onPressed: prospect == null ? null : _toggleEditMode,
             leadingIcon: Icons.edit_outlined,
             size: ButtonSize.medium,
           ),
@@ -673,9 +662,7 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    final partyAsync = ref.watch(partyByIdProvider(widget.partyId));
+    final prospectAsync = ref.watch(prospectByIdProvider(widget.prospectId));
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -701,8 +688,8 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
               onPressed: () {
                 setState(() {
                   _isEditMode = false;
-                  if (_currentParty != null) {
-                    _populateFields(_currentParty!);
+                  if (_currentProspect != null) {
+                    _populateFields(_currentProspect!);
                   }
                 });
               },
@@ -730,32 +717,29 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
             ),
           ),
 
-          // --- 3. UPDATED .when() BLOCK ---
-          partyAsync.when(
-            data: (party) {
-              if (party == null) {
+          prospectAsync.when(
+            data: (prospect) {
+              if (prospect == null) {
                 return Center(
                   child: Text(
-                    'Party not found',
+                    'Prospect not found',
                     style: TextStyle(fontSize: 16.sp, color: AppColors.textdark),
                   ),
                 );
               }
 
               // Populate fields when data is first loaded or changes
-              if (_currentParty == null || _currentParty!.id != party.id) {
+              if (_currentProspect == null || _currentProspect!.id != prospect.id) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   if (mounted) {
-                    _populateFields(party);
+                    _populateFields(prospect);
                   }
                 });
               }
 
-              // Build the real UI
-              return _buildPageContent(party);
+              return _buildPageContent(prospect);
             },
             loading: () {
-              // Build the skeleton UI
               return Skeletonizer(
                 enabled: true,
                 child: _buildPageContent(null),
@@ -768,8 +752,12 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                   Icon(Icons.error_outline, size: 64.sp, color: AppColors.error),
                   SizedBox(height: 16.h),
                   Text(
-                    'Failed to load party details',
-                    style: TextStyle(fontSize: 16.sp, color: AppColors.textdark, fontWeight: FontWeight.w500),
+                    'Failed to load prospect details',
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      color: AppColors.textdark,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                   SizedBox(height: 8.h),
                   Padding(
