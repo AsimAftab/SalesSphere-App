@@ -166,7 +166,7 @@ class CustomButton extends StatelessWidget {
         backgroundColor: backgroundColor ?? AppColors.primary,
         disabledBackgroundColor: AppColors.neutral.withValues(alpha: 0.3),
         foregroundColor: textColor ?? Colors.white,
-        padding: customPadding ?? padding ?? EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+        padding: padding ?? EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(borderRadius ?? 12.r),
         ),
@@ -208,7 +208,7 @@ class CustomButton extends StatelessWidget {
       style: TextButton.styleFrom(
         foregroundColor: textColor ?? AppColors.secondary,
         disabledForegroundColor: AppColors.textDisabled,
-        padding: customPadding ?? padding ?? EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+        padding: padding ?? EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(borderRadius ?? 12.r),
         ),
@@ -295,20 +295,26 @@ class CustomButton extends StatelessWidget {
 
     // Label
     children.add(
-      Text(
-        label,
-        style: textStyle ??
-            TextStyle(
-              fontSize: _getFontSizeForSize(),
-              fontWeight: FontWeight.w600,
-              fontFamily: 'Poppins',
-              color: forceWhiteColor
-                  ? Colors.white
-                  : (textColor ??
-                  (type == ButtonType.outlined || type == ButtonType.text
-                      ? AppColors.secondary
-                      : Colors.white)),
-            ),
+      Flexible(
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          softWrap: true,
+          maxLines: 2,
+          overflow: TextOverflow.visible,
+          style: textStyle ??
+              TextStyle(
+                fontSize: _getFontSizeForSize(),
+                fontWeight: FontWeight.w600,
+                fontFamily: 'Poppins',
+                color: forceWhiteColor
+                    ? Colors.white
+                    : (textColor ??
+                    (type == ButtonType.outlined || type == ButtonType.text
+                        ? AppColors.secondary
+                        : Colors.white)),
+              ),
+        ),
       ),
     );
 
@@ -321,9 +327,9 @@ class CustomButton extends StatelessWidget {
         color: forceWhiteColor
             ? Colors.white
             : (textColor ??
-            (type == ButtonType.outlined || type == ButtonType.text
-                ? AppColors.secondary
-                : Colors.white)),
+                (type == ButtonType.outlined || type == ButtonType.text
+                    ? AppColors.secondary
+                    : Colors.white)),
       ));
     }
 

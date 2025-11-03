@@ -465,7 +465,7 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12.r),
-              borderSide: BorderSide(color: AppColors.secondary),
+              borderSide: BorderSide(color: Colors.grey.shade300,width: 1.5),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12.r),
