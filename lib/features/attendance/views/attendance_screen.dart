@@ -37,7 +37,6 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
         .length;
     final monthlyAbsentDays = monthlyRecords
         .where((r) => r.status == AttendanceStatus.absent)
-<<<<<<< Updated upstream
         .length; // Informed leave - employee leave with notes/reasons
     final monthlyLeaveDays = monthlyRecords
         .where((r) => r.status == AttendanceStatus.onLeave)
