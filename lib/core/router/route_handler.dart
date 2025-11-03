@@ -4,9 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:sales_sphere/features/Detail-Added/view/detail_added.dart';
 import 'package:sales_sphere/features/catalog/views/catalog_item_details_screen.dart';
 import 'package:sales_sphere/features/catalog/views/catalog_item_list_screen.dart';
-import 'package:sales_sphere/features/prospects/views/add_prospect_screen.dart';
-import 'package:sales_sphere/features/prospects/views/edit_prospect_details_screen.dart';
-import 'package:sales_sphere/features/prospects/views/prospects_screen.dart';
+
 import 'package:sales_sphere/features/sites/views/add_sites_screen.dart';
 import 'package:sales_sphere/features/sites/views/edit_site_details_screen.dart';
 import 'package:sales_sphere/features/sites/views/sites_images_screen.dart';
@@ -106,14 +104,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           return EditPartyDetailsScreen(partyId: partyId);
         },
       ),
-      GoRoute(
-        path: '/edit_prospect_details_screen/:prospectId',
-        name: 'edit_prospect_details_screen',
-        builder: (context, state) {
-          final prospectId = state.pathParameters['prospectId'] ?? '1';
-          return EditProspectDetailsScreen(prospectId: prospectId);
-        },
-      ),
+
       GoRoute(
         path: '/edit_site_details_screen/:siteId',
         name: 'edit_site_details_screen',
@@ -142,11 +133,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         name: 'add-party',
         builder: (context, state) => const AddPartyScreen(),
       ),
-      GoRoute(
-        path: '/add-prospect',
-        name: 'add-prospect',
-        builder: (context, state) => const AddProspectScreen(),
-      ),
+
       GoRoute(
         path: '/add-site',
         name: 'add-site',
@@ -171,11 +158,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         name: 'party-list',
         builder: (context, state) => const PartiesScreen(),
       ),
-      GoRoute(
-        path: '/directory/prospects-list',
-        name: 'prospects-list',
-        builder: (context, state) => const ProspectsScreen(),
-      ),
+
       GoRoute(
         path: '/directory/sites-list',
         name: 'sites-list',
@@ -273,14 +256,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             ),
           ),
 
-          // Prospets Tab (Keep for backwards compatibility)
-          GoRoute(
-            path: '/prospects',
-            name: 'prospects',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: ProspectsScreen(),
-            ),
-          ),
+
 
           //Sites Tab (Keep for backwards compatibility)
           GoRoute(
