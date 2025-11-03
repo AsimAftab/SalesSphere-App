@@ -40,30 +40,33 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       color: AppColors.textPrimary,
                     ),
                   ),
-                  Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppColors.textOrange,
-                        width: 2.5,
-                      ),
-                    ),
-                    child: CircleAvatar(
-                      radius: 26.r,
-                      backgroundColor: AppColors.primary,
-                      backgroundImage: user?.avatarUrl != null
-                          ? NetworkImage(user!.avatarUrl!)
-                          : null,
-                      child: user?.avatarUrl == null
-                          ? Text(
-                        _getInitials(user?.name ?? 'User'),
-                        style: TextStyle(
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textWhite,
+                  GestureDetector(
+                    onTap: () => context.push('/profile'),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppColors.textOrange,
+                          width: 2.5,
                         ),
-                      )
-                          : null,
+                      ),
+                      child: CircleAvatar(
+                        radius: 26.r,
+                        backgroundColor: AppColors.primary,
+                        backgroundImage: user?.avatarUrl != null
+                            ? NetworkImage(user!.avatarUrl!)
+                            : null,
+                        child: user?.avatarUrl == null
+                            ? Text(
+                          _getInitials(user?.name ?? 'User'),
+                          style: TextStyle(
+                            fontSize: 18.sp,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textWhite,
+                          ),
+                        )
+                            : null,
+                      ),
                     ),
                   ),
                 ],
@@ -94,7 +97,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 icon: Icons.calendar_today_outlined,
                 title: 'Attendance',
                 onTap: () {
-                  // TODO: Navigate to Attendance screen
+                  context.push('/attendance');
                 },
               ),
 
@@ -120,7 +123,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 icon: Icons.article_outlined,
                 title: 'Terms and Conditions',
                 onTap: () {
-                  // TODO: Navigate to T&C screen
+                  context.push('/terms-and-conditions');
                 },
               ),
               SettingsTile(
