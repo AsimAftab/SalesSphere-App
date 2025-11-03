@@ -251,24 +251,6 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               ),
             ),
 
-            // Back Button
-            SafeArea(
-              child: Align(
-                alignment: Alignment.topLeft,
-                child: Padding(
-                  padding: EdgeInsets.only(left: 12.w, top: 8.h),
-                  child: IconButton(
-                    icon: Icon(
-                      Icons.arrow_back,
-                      color: Colors.white,
-                      size: 24.sp,
-                    ),
-                    onPressed: () => context.go('/'),
-                  ),
-                ),
-              ),
-            ),
-
             // Main Content
             SafeArea(
               child: SingleChildScrollView(
@@ -426,6 +408,24 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                         ),
                       ],
                     ),
+                  ),
+                ),
+              ),
+            ),
+
+            // Back Button (Positioned on top of everything)
+            SafeArea(
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: Padding(
+                  padding: EdgeInsets.only(left: 12.w, top: 8.h),
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.arrow_back,
+                      color: Colors.white,
+                      size: 24.sp,
+                    ),
+                    onPressed: () => context.go('/'),
                   ),
                 ),
               ),
