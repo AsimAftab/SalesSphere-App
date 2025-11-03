@@ -7,6 +7,10 @@ import 'package:sales_sphere/features/catalog/views/catalog_item_list_screen.dar
 import 'package:sales_sphere/features/prospects/views/add_prospect_screen.dart';
 import 'package:sales_sphere/features/prospects/views/edit_prospect_details_screen.dart';
 import 'package:sales_sphere/features/prospects/views/prospects_screen.dart';
+import 'package:sales_sphere/features/sites/views/add_sites_screen.dart';
+import 'package:sales_sphere/features/sites/views/edit_site_details_screen.dart';
+import 'package:sales_sphere/features/sites/views/sites_images_screen.dart';
+import 'package:sales_sphere/features/sites/views/sites_screen.dart';
 import 'package:sales_sphere/widget/main_shell.dart';
 import 'package:sales_sphere/features/auth/views/login_screen.dart';
 import 'package:sales_sphere/features/home/views/home_screen.dart';
@@ -43,7 +47,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final isGoingToParties = requestedPath.startsWith('/parties');
       final isGoingToDirectory = requestedPath.startsWith('/directory');
       final isGoingToProspects = requestedPath.startsWith('/prospects');
+      final isGoingToSites = requestedPath.startsWith('/sites');
       final isGoingToEditParty = requestedPath.startsWith('/edit_party_details_screen');
+      final isGoingToEditProspect = requestedPath.startsWith('/edit_prospect_details_screen');
+      final isGoingToEditSite = requestedPath.startsWith('/edit_site_details_screen');
+      final isGoingToAddSite = requestedPath == '/add-site';
+      final isGoingToSiteImages = requestedPath.startsWith('/sites_images_screen');
       final isGoingToDetailAdded = requestedPath == '/detail-added';
       final isGoingToProfile = requestedPath == '/profile';
       final isGoingToAbout = requestedPath == '/about';
@@ -55,7 +64,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           !isGoingToParties &&
           !isGoingToDirectory &&
           !isGoingToProspects &&
+          !isGoingToSites &&
           !isGoingToEditParty &&
+          !isGoingToEditProspect &&
+          !isGoingToEditSite &&
+          !isGoingToAddSite &&
+          !isGoingToSiteImages &&
           !isGoingToDetailAdded &&
           !isGoingToProfile &&
           !isGoingToAbout) {
@@ -100,6 +114,26 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           return EditProspectDetailsScreen(prospectId: prospectId);
         },
       ),
+      GoRoute(
+        path: '/edit_site_details_screen/:siteId',
+        name: 'edit_site_details_screen',
+        builder: (context, state) {
+          final siteId = state.pathParameters['siteId'] ?? '1';
+          return EditSiteDetailsScreen(siteId: siteId);
+        },
+      ),
+      GoRoute(
+        path: '/sites_images_screen/:siteId',
+        name: 'sites_images_screen',
+        builder: (context, state) {
+          final siteId = state.pathParameters['siteId'] ?? '';
+          final siteName = state.extra as String? ?? 'Site Images';
+          return SitesImagesScreen(
+            siteId: siteId,
+            siteName: siteName,
+          );
+        },
+      ),
       // ========================================
       // STANDALONE ROUTES (No Bottom Navigation)
       // ========================================
@@ -112,6 +146,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/add-prospect',
         name: 'add-prospect',
         builder: (context, state) => const AddProspectScreen(),
+      ),
+      GoRoute(
+        path: '/add-site',
+        name: 'add-site',
+        builder: (context, state) => const AddSitesScreen(),
       ),
       GoRoute(
         path: '/profile',
@@ -140,7 +179,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/directory/sites-list',
         name: 'sites-list',
-        builder: (context, state) => const PartiesScreen(),
+        builder: (context, state) => const SitesScreen(),
       ),
 
       // ========================================
@@ -160,7 +199,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             currentIndex = 2;
           } else if (location.startsWith('/parties') ||
               location.startsWith('/directory') ||
-              location.startsWith('/prospects')) {
+              location.startsWith('/prospects') ||
+              location.startsWith('/sites')) {
             currentIndex = 3;
           } else if (location.startsWith('/settings')) {
             currentIndex = 4;
@@ -239,6 +279,15 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             name: 'prospects',
             pageBuilder: (context, state) => const NoTransitionPage(
               child: ProspectsScreen(),
+            ),
+          ),
+
+          //Sites Tab (Keep for backwards compatibility)
+          GoRoute(
+            path: '/sites',
+            name: 'sites',
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: SitesScreen(),
             ),
           ),
 

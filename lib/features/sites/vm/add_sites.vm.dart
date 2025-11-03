@@ -1,46 +1,45 @@
-// lib/features/prospects/vm/add_prospect.vm.dart
+// lib/features/sites/vm/add_sites.vm.dart
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:sales_sphere/features/prospects/models/add_prospect.model.dart';
-import 'package:sales_sphere/features/prospects/models/prospects.model.dart';
+import 'package:sales_sphere/features/sites/models/sites.model.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 
-part 'add_prospect.vm.g.dart';
+part 'add_sites.vm.g.dart';
 
 // ============================================================================
-// ADD PROSPECT VIEW MODEL
-// Handles: Create new prospect (Local only - No API)
+// ADD SITE VIEW MODEL
+// Handles: Create new site (Local only - No API)
 // ============================================================================
 
 @riverpod
-class AddProspectViewModel extends _$AddProspectViewModel {
+class AddSiteViewModel extends _$AddSiteViewModel {
   @override
   FutureOr<void> build() {
     // No initial state needed
   }
 
-  // CREATE NEW PROSPECT (LOCAL MOCK - NO API)
-  Future<Prospects> createProspect(CreateProspectRequest newProspectRequest) async {
+  // CREATE NEW SITE (LOCAL MOCK - NO API)
+  Future<Sites> createSite(CreateSiteRequest newSiteRequest) async {
     try {
-      AppLogger.i('Creating new prospect: ${newProspectRequest.name}');
+      AppLogger.i('Creating new site: ${newSiteRequest.name}');
 
       // Simulate network delay
       await Future.delayed(const Duration(milliseconds: 800));
 
       // Generate a unique ID (in real app, this comes from API)
-      final newId = 'p${DateTime.now().millisecondsSinceEpoch}';
+      final newId = 's${DateTime.now().millisecondsSinceEpoch}';
 
-      // Convert request to Prospects model
-      final createdProspect = newProspectRequest.toProspects(newId);
+      // Convert request to Sites model
+      final createdSite = newSiteRequest.toSites(newId);
 
-      AppLogger.i('✅ Prospect created successfully (local): ${createdProspect.name}');
+      AppLogger.i('✅ Site created successfully (local): ${createdSite.name}');
 
-      // Return the created prospect - screen will add it to the list
-      return createdProspect;
+      // Return the created site - screen will add it to the list
+      return createdSite;
     } catch (e, stackTrace) {
-      AppLogger.e('❌ Error creating prospect: $e');
+      AppLogger.e('❌ Error creating site: $e');
       AppLogger.e('Stack trace: $stackTrace');
-      throw Exception('Failed to create prospect: $e');
+      throw Exception('Failed to create site: $e');
     }
   }
 
@@ -48,33 +47,22 @@ class AddProspectViewModel extends _$AddProspectViewModel {
   // VALIDATION HELPERS
   // ============================================================================
 
-  String? validateProspectName(String? value) {
+  String? validateSiteName(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return 'Prospect name is required';
+      return 'Site name is required';
     }
     if (value.trim().length < 2) {
-      return 'Prospect name must be at least 2 characters';
+      return 'Site name must be at least 2 characters';
     }
     return null;
   }
 
-  String? validateOwnerName(String? value) {
+  String? validateManagerName(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return 'Owner name is required';
+      return 'Manager name is required';
     }
     if (value.trim().length < 2) {
-      return 'Owner name must be at least 2 characters';
-    }
-    return null;
-  }
-
-  String? validatePanVatNumber(String? value) {
-    // ✅ OPTIONAL - Can be empty
-    if (value == null || value.trim().isEmpty) {
-      return null; // Valid if empty
-    }
-    if (value.trim().length > 14) {
-      return 'PAN/VAT number cannot exceed 14 characters';
+      return 'Manager name must be at least 2 characters';
     }
     return null;
   }

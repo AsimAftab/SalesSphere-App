@@ -1,3 +1,5 @@
+// lib/features/sites/views/sites_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -5,17 +7,17 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
-import 'package:sales_sphere/features/prospects/vm/prospects.vm.dart';
+import 'package:sales_sphere/features/sites/vm/sites.vm.dart';
 import 'package:sales_sphere/widget/universal_list_card.dart';
 
-class ProspectsScreen extends ConsumerStatefulWidget {
-  const ProspectsScreen({super.key});
+class SitesScreen extends ConsumerStatefulWidget {
+  const SitesScreen({super.key});
 
   @override
-  ConsumerState<ProspectsScreen> createState() => _ProspectsScreenState();
+  ConsumerState<SitesScreen> createState() => _SitesScreenState();
 }
 
-class _ProspectsScreenState extends ConsumerState<ProspectsScreen> {
+class _SitesScreenState extends ConsumerState<SitesScreen> {
   final TextEditingController _searchController = TextEditingController();
 
   @override
@@ -25,24 +27,24 @@ class _ProspectsScreenState extends ConsumerState<ProspectsScreen> {
   }
 
   void _onSearchChanged(String query) {
-    ref.read(prospectSearchQueryProvider.notifier).updateQuery(query);
+    ref.read(siteSearchQueryProvider.notifier).updateQuery(query);
   }
 
-  void _navigateToProspectDetails(String prospectId) {
+  void _navigateToSiteDetails(String siteId) {
     context.pushNamed(
-      'edit_prospect_details_screen',
-      pathParameters: {'prospectId': prospectId},
+      'edit_site_details_screen',
+      pathParameters: {'siteId': siteId},
     );
   }
 
-  void _navigateToAddProspect() {
-    context.push('/add-prospect');
+  void _navigateToAddSite() {
+    context.push('/add-site');
   }
 
   @override
   Widget build(BuildContext context) {
-    final searchQuery = ref.watch(prospectSearchQueryProvider);
-    final searchedProspectsAsync = ref.watch(searchedProspectsProvider);
+    final searchQuery = ref.watch(siteSearchQueryProvider);
+    final searchedSitesAsync = ref.watch(searchedSitesProvider);
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -50,7 +52,7 @@ class _ProspectsScreenState extends ConsumerState<ProspectsScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(
-          'Prospect',
+          'Sites',
           style: TextStyle(
             color: AppColors.textdark,
             fontSize: 20.sp,
@@ -137,7 +139,7 @@ class _ProspectsScreenState extends ConsumerState<ProspectsScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Prospect',
+                      'Sites',
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w600,
@@ -148,24 +150,24 @@ class _ProspectsScreenState extends ConsumerState<ProspectsScreen> {
                   ],
                 ),
               ),
-              // Prospect List
+              // Sites List
               Expanded(
-                child: searchedProspectsAsync.when(
-                  data: (prospects) {
-                    if (prospects.isEmpty) {
+                child: searchedSitesAsync.when(
+                  data: (sites) {
+                    if (sites.isEmpty) {
                       return Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
-                              Icons.person_search, // Icon for prospects
+                              Icons.location_city_outlined,
                               size: 64.sp,
                               color: Colors.grey.shade400,
                             ),
                             SizedBox(height: 16.h),
                             Text(
                               searchQuery.isEmpty
-                                  ? 'No prospects found'
+                                  ? 'No sites found'
                                   : 'No results for "$searchQuery"',
                               style: TextStyle(
                                 fontSize: 16.sp,
@@ -179,28 +181,28 @@ class _ProspectsScreenState extends ConsumerState<ProspectsScreen> {
                     }
                     return RefreshIndicator(
                       onRefresh: () async {
-                        await ref.read(prospectViewModelProvider.notifier).refresh();
+                        await ref.read(siteViewModelProvider.notifier).refresh();
                       },
                       color: AppColors.primary,
                       child: ListView.separated(
                         padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 80.h),
-                        itemCount: prospects.length,
+                        itemCount: sites.length,
                         separatorBuilder: (context, index) =>
                             SizedBox(height: 12.h),
                         itemBuilder: (context, index) {
-                          final prospect = prospects[index];
+                          final site = sites[index];
                           return UniversalListCard(
                             leadingIcon: Icon(
-                              Icons.person_outline,
+                              Icons.location_city,
                               color: Colors.white,
                               size: 24.sp,
                             ),
                             isLeadingCircle: true,
                             leadingBackgroundColor: AppColors.primary,
                             leadingSize: 48.w,
-                            title: prospect.name,
-                            subtitle: prospect.location,
-                            onTap: () => _navigateToProspectDetails(prospect.id),
+                            title: site.name,
+                            subtitle: site.location,
+                            onTap: () => _navigateToSiteDetails(site.id),
                             showArrow: true,
                             arrowColor: AppColors.primary,
                           );
@@ -218,14 +220,14 @@ class _ProspectsScreenState extends ConsumerState<ProspectsScreen> {
                       itemBuilder: (context, index) {
                         return UniversalListCard(
                           leadingIcon: Icon(
-                            Icons.person_outline,
+                            Icons.location_city,
                             color: AppColors.primary,
                             size: 24.sp,
                           ),
                           isLeadingCircle: true,
                           leadingBackgroundColor: Colors.transparent,
                           leadingSize: 48.w,
-                          title: "Prospect Name Placeholder",
+                          title: "Site Name Placeholder",
                           subtitle: "Location placeholder",
                           onTap: () {},
                           showArrow: true,
@@ -245,7 +247,7 @@ class _ProspectsScreenState extends ConsumerState<ProspectsScreen> {
                         ),
                         SizedBox(height: 16.h),
                         Text(
-                          'Failed to load prospects',
+                          'Failed to load sites',
                           style: TextStyle(
                             fontSize: 16.sp,
                             color: AppColors.textdark,
@@ -267,7 +269,7 @@ class _ProspectsScreenState extends ConsumerState<ProspectsScreen> {
                         SizedBox(height: 16.h),
                         ElevatedButton(
                           onPressed: () {
-                            ref.read(prospectViewModelProvider.notifier).refresh();
+                            ref.read(siteViewModelProvider.notifier).refresh();
                           },
                           child: const Text('Retry'),
                         ),
@@ -281,7 +283,7 @@ class _ProspectsScreenState extends ConsumerState<ProspectsScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _navigateToAddProspect,
+        onPressed: _navigateToAddSite,
         backgroundColor: AppColors.primary,
         elevation: 4,
         icon: Icon(
@@ -290,7 +292,7 @@ class _ProspectsScreenState extends ConsumerState<ProspectsScreen> {
           size: 20.sp,
         ),
         label: Text(
-          'Add Prospect',
+          'Add Site',
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.w600,

@@ -1,20 +1,23 @@
+// lib/features/sites/views/add_sites_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:intl/intl.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/services/google_places_service.dart';
 import 'package:sales_sphere/core/services/location_service.dart';
-import 'package:sales_sphere/features/prospects/vm/add_prospect.vm.dart';
-import 'package:sales_sphere/features/prospects/vm/prospects.vm.dart';
+import 'package:sales_sphere/core/utils/field_validators.dart';
+import 'package:sales_sphere/features/sites/models/sites.model.dart';
+import 'package:sales_sphere/features/sites/vm/add_sites.vm.dart';
+import 'package:sales_sphere/features/sites/vm/sites.vm.dart';
 import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
 import 'package:sales_sphere/widget/custom_date_picker.dart';
 import 'package:sales_sphere/widget/location_picker_widget.dart';
-import 'package:sales_sphere/features/prospects/models/add_prospect.model.dart';
-import 'package:intl/intl.dart';
 
 // Google Places service provider
 final googlePlacesServiceProvider = Provider<GooglePlacesService>((ref) {
@@ -27,20 +30,19 @@ final locationServiceProvider = Provider<LocationService>((ref) {
   return LocationService();
 });
 
-class AddProspectScreen extends ConsumerStatefulWidget {
-  const AddProspectScreen({super.key});
+class AddSitesScreen extends ConsumerStatefulWidget {
+  const AddSitesScreen({super.key});
 
   @override
-  ConsumerState<AddProspectScreen> createState() => _AddProspectScreenState();
+  ConsumerState<AddSitesScreen> createState() => _AddSitesScreenState();
 }
 
-class _AddProspectScreenState extends ConsumerState<AddProspectScreen> {
+class _AddSitesScreenState extends ConsumerState<AddSitesScreen> {
   final _formKey = GlobalKey<FormState>();
 
   // Controllers
   late TextEditingController _nameController;
-  late TextEditingController _ownerNameController;
-  late TextEditingController _panVatController;
+  late TextEditingController _managerNameController;
   late TextEditingController _phoneController;
   late TextEditingController _emailController;
   late TextEditingController _addressController;
@@ -64,8 +66,7 @@ class _AddProspectScreenState extends ConsumerState<AddProspectScreen> {
 
   void _initializeControllers() {
     _nameController = TextEditingController();
-    _ownerNameController = TextEditingController();
-    _panVatController = TextEditingController();
+    _managerNameController = TextEditingController();
     _phoneController = TextEditingController();
     _emailController = TextEditingController();
     _addressController = TextEditingController();
@@ -78,8 +79,7 @@ class _AddProspectScreenState extends ConsumerState<AddProspectScreen> {
   @override
   void dispose() {
     _nameController.dispose();
-    _ownerNameController.dispose();
-    _panVatController.dispose();
+    _managerNameController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
     _addressController.dispose();
@@ -90,7 +90,7 @@ class _AddProspectScreenState extends ConsumerState<AddProspectScreen> {
     super.dispose();
   }
 
-  // Save prospect (Local - No API)
+  // Save site (Local - No API)
   Future<void> _handleSave() async {
     if (_formKey.currentState?.validate() ?? false) {
       // Validate latitude and longitude are set
@@ -134,7 +134,7 @@ class _AddProspectScreenState extends ConsumerState<AddProspectScreen> {
                     ),
                   ),
                   SizedBox(width: 16.w),
-                  const Text('Creating prospect...'),
+                  const Text('Creating site...'),
                 ],
               ),
               duration: const Duration(seconds: 30),
@@ -144,22 +144,17 @@ class _AddProspectScreenState extends ConsumerState<AddProspectScreen> {
         }
 
         // Create request object
-        final createRequest = CreateProspectRequest(
+        final createRequest = CreateSiteRequest(
           name: _nameController.text.trim(),
-          ownerName: _ownerNameController.text.trim(),
+          managerName: _managerNameController.text.trim(),
+          phoneNumber: _phoneController.text.trim(),
+          email: _emailController.text.trim().isEmpty
+              ? null
+              : _emailController.text.trim(),
           dateJoined: _dateJoinedController.text.trim().isEmpty
               ? DateFormat('yyyy-MM-dd').format(DateTime.now())
               : _dateJoinedController.text.trim(),
-          panVatNumber: _panVatController.text.trim().isEmpty
-              ? null
-              : _panVatController.text.trim(),
-          contact: CreateProspectContact(
-            phone: _phoneController.text.trim(),
-            email: _emailController.text.trim().isEmpty
-                ? null
-                : _emailController.text.trim(),
-          ),
-          location: CreateProspectLocation(
+          location: CreateSiteLocation(
             address: _addressController.text.trim(),
             latitude: double.parse(_latitudeController.text.trim()),
             longitude: double.parse(_longitudeController.text.trim()),
@@ -170,15 +165,13 @@ class _AddProspectScreenState extends ConsumerState<AddProspectScreen> {
         );
 
         // Call ViewModel and wait for completion
-        final vm = ref.read(addProspectViewModelProvider.notifier);
-        final createdProspect = await vm.createProspect(createRequest);
+        final vm = ref.read(addSiteViewModelProvider.notifier);
+        final createdSite = await vm.createSite(createRequest);
 
         if (mounted) {
           // Close loading
           ScaffoldMessenger.of(context).hideCurrentSnackBar();
-
-          // ✅ CRITICAL: Add to list BEFORE popping
-          ref.read(prospectViewModelProvider.notifier).addProspect(createdProspect);
+          ref.read(siteViewModelProvider.notifier).addSite(createdSite);
 
           // Show success
           ScaffoldMessenger.of(context).showSnackBar(
@@ -214,7 +207,7 @@ class _AddProspectScreenState extends ConsumerState<AddProspectScreen> {
                         ),
                         SizedBox(height: 2.h),
                         Text(
-                          'Prospect created successfully',
+                          'Site created successfully',
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.9),
                             fontSize: 12.sp,
@@ -331,7 +324,7 @@ class _AddProspectScreenState extends ConsumerState<AddProspectScreen> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text(
-                  "New Prospect Incoming",
+                  "New Site Incoming",
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.8),
                     fontSize: 16.sp,
@@ -342,7 +335,7 @@ class _AddProspectScreenState extends ConsumerState<AddProspectScreen> {
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  "Add New Prospect",
+                  "Add New Site",
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 24.sp,
@@ -381,51 +374,32 @@ class _AddProspectScreenState extends ConsumerState<AddProspectScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // Prospect Name
+                      // Site Name
                       PrimaryTextField(
-                        hintText: "Prospect Name",
+                        hintText: "Site Name",
                         controller: _nameController,
-                        prefixIcon: Icons.business_center_outlined,
+                        prefixIcon: Icons.business_outlined,
                         hasFocusBorder: true,
                         textInputAction: TextInputAction.next,
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Prospect name is required';
+                            return 'Site name is required';
                           }
                           return null;
                         },
                       ),
                       SizedBox(height: 16.h),
 
-                      // Owner Name
+                      // Manager Name
                       PrimaryTextField(
-                        hintText: "Owner Name",
-                        controller: _ownerNameController,
+                        hintText: "Manager Name",
+                        controller: _managerNameController,
                         prefixIcon: Icons.person_outline,
                         hasFocusBorder: true,
                         textInputAction: TextInputAction.next,
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Owner name is required';
-                          }
-                          return null;
-                        },
-                      ),
-                      SizedBox(height: 16.h),
-
-                      // PAN/VAT Number (OPTIONAL)
-                      PrimaryTextField(
-                        hintText: "PAN/VAT Number (Optional)",
-                        controller: _panVatController,
-                        prefixIcon: Icons.receipt_long_outlined,
-                        hasFocusBorder: true,
-                        textInputAction: TextInputAction.next,
-                        maxLength: 14,
-                        validator: (value) {
-                          if (value != null &&
-                              value.trim().isNotEmpty &&
-                              value.trim().length > 14) {
-                            return 'PAN/VAT number cannot exceed 14 characters';
+                            return 'Manager name is required';
                           }
                           return null;
                         },
@@ -445,14 +419,7 @@ class _AddProspectScreenState extends ConsumerState<AddProspectScreen> {
                           if (value == null || value.trim().isEmpty) {
                             return 'Phone number is required';
                           }
-                          final cleanedValue = value.replaceAll(
-                            RegExp(r'[^\d]'),
-                            '',
-                          );
-                          if (cleanedValue.length != 10) {
-                            return 'Phone number must be exactly 10 digits';
-                          }
-                          return null;
+                          return FieldValidators.validatePhone(value);
                         },
                       ),
                       SizedBox(height: 16.h),
@@ -465,6 +432,12 @@ class _AddProspectScreenState extends ConsumerState<AddProspectScreen> {
                         hasFocusBorder: true,
                         keyboardType: TextInputType.emailAddress,
                         textInputAction: TextInputAction.next,
+                        validator: (value) {
+                          if (value != null && value.trim().isNotEmpty) {
+                            return FieldValidators.validateEmail(value);
+                          }
+                          return null;
+                        },
                       ),
                       SizedBox(height: 16.h),
 
@@ -507,10 +480,10 @@ class _AddProspectScreenState extends ConsumerState<AddProspectScreen> {
                         onLocationSelected: (location, address) {
                           if (mounted) {
                             setState(() {
-                              _latitudeController.text = location.latitude
-                                  .toStringAsFixed(6);
-                              _longitudeController.text = location.longitude
-                                  .toStringAsFixed(6);
+                              _latitudeController.text =
+                                  location.latitude.toStringAsFixed(6);
+                              _longitudeController.text =
+                                  location.longitude.toStringAsFixed(6);
                             });
                           }
                         },
@@ -575,7 +548,7 @@ class _AddProspectScreenState extends ConsumerState<AddProspectScreen> {
               ],
             ),
             child: PrimaryButton(
-              label: 'Add Prospect',
+              label: 'Add Site',
               onPressed: _handleSave,
               leadingIcon: Icons.add_circle_outline,
               size: ButtonSize.medium,

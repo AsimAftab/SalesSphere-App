@@ -1,4 +1,4 @@
-// lib/features/prospects/views/edit_prospect_details_screen.dart
+// lib/features/sites/views/edit_site_details_screen.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,13 +8,13 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:sales_sphere/core/utils/date_formatter.dart';
+import 'package:sales_sphere/features/sites/models/sites.model.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/services/google_places_service.dart';
 import 'package:sales_sphere/core/services/location_service.dart';
 import 'package:sales_sphere/core/utils/field_validators.dart';
-import 'package:sales_sphere/features/prospects/models/edit_prospect_details.model.dart';
-import 'package:sales_sphere/features/prospects/vm/edit_prospect_details.vm.dart';
+import 'package:sales_sphere/features/sites/vm/edit_site_details.vm.dart';
 import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
 import 'package:sales_sphere/widget/location_picker_widget.dart';
@@ -31,34 +31,33 @@ final locationServiceProvider = Provider<LocationService>((ref) {
   return LocationService();
 });
 
-class EditProspectDetailsScreen extends ConsumerStatefulWidget {
-  final String prospectId;
+class EditSiteDetailsScreen extends ConsumerStatefulWidget {
+  final String siteId;
 
-  const EditProspectDetailsScreen({
+  const EditSiteDetailsScreen({
     super.key,
-    required this.prospectId,
+    required this.siteId,
   });
 
   @override
-  ConsumerState<EditProspectDetailsScreen> createState() => _EditProspectDetailsScreenState();
+  ConsumerState<EditSiteDetailsScreen> createState() => _EditSiteDetailsScreenState();
 }
 
-class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsScreen> {
+class _EditSiteDetailsScreenState extends ConsumerState<EditSiteDetailsScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isEditMode = false;
 
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
   late TextEditingController _emailController;
-  late TextEditingController _ownerNameController;
-  late TextEditingController _panVatNumberController;
+  late TextEditingController _managerNameController;
   late TextEditingController _fullAddressController;
   late TextEditingController _latitudeController;
   late TextEditingController _longitudeController;
   late TextEditingController _notesController;
   late TextEditingController _dateJoinedController;
 
-  ProspectDetails? _currentProspect;
+  SiteDetails? _currentSite;
   LatLng? _initialLocation;
 
   @override
@@ -71,8 +70,7 @@ class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsS
     _nameController = TextEditingController();
     _phoneController = TextEditingController();
     _emailController = TextEditingController();
-    _ownerNameController = TextEditingController();
-    _panVatNumberController = TextEditingController();
+    _managerNameController = TextEditingController();
     _fullAddressController = TextEditingController();
     _latitudeController = TextEditingController();
     _longitudeController = TextEditingController();
@@ -80,24 +78,22 @@ class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsS
     _dateJoinedController = TextEditingController();
   }
 
-  void _populateFields(ProspectDetails prospect) {
+  void _populateFields(SiteDetails site) {
     if (!mounted) return;
     setState(() {
-      _currentProspect = prospect;
-      _nameController.text = prospect.name;
-      _phoneController.text = prospect.phoneNumber;
-      _emailController.text = prospect.email ?? '';
-      _ownerNameController.text = prospect.ownerName;
-      _panVatNumberController.text = prospect.panVatNumber ?? '';
-      _fullAddressController.text = prospect.fullAddress;
-      _latitudeController.text = prospect.latitude?.toString() ?? '';
-      _longitudeController.text = prospect.longitude?.toString() ?? '';
-      _notesController.text = prospect.notes ?? '';
-      _dateJoinedController.text = DateFormatter.formatDateOnly(prospect.dateJoined);
+      _currentSite = site;
+      _nameController.text = site.name;
+      _phoneController.text = site.phoneNumber;
+      _emailController.text = site.email ?? '';
+      _managerNameController.text = site.managerName;
+      _fullAddressController.text = site.fullAddress;
+      _latitudeController.text = site.latitude?.toString() ?? '';
+      _longitudeController.text = site.longitude?.toString() ?? '';
+      _notesController.text = site.notes ?? '';
+      _dateJoinedController.text = DateFormatter.formatDateOnly(site.dateJoined);
 
-      // Set initial location for map if coordinates exist
-      if (prospect.latitude != null && prospect.longitude != null) {
-        _initialLocation = LatLng(prospect.latitude!, prospect.longitude!);
+      if (site.latitude != null && site.longitude != null) {
+        _initialLocation = LatLng(site.latitude!, site.longitude!);
       }
     });
   }
@@ -107,8 +103,7 @@ class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsS
     _nameController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
-    _ownerNameController.dispose();
-    _panVatNumberController.dispose();
+    _managerNameController.dispose();
     _fullAddressController.dispose();
     _latitudeController.dispose();
     _longitudeController.dispose();
@@ -119,18 +114,15 @@ class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsS
 
   Future<void> _handleSave() async {
     if (_formKey.currentState?.validate() ?? false) {
-      if (_currentProspect == null) return;
+      if (_currentSite == null) return;
 
-      final updatedProspect = _currentProspect!.copyWith(
+      final updatedSite = _currentSite!.copyWith(
         name: _nameController.text.trim(),
         phoneNumber: _phoneController.text.trim(),
         email: _emailController.text.trim().isEmpty
             ? null
             : _emailController.text.trim(),
-        ownerName: _ownerNameController.text.trim(),
-        panVatNumber: _panVatNumberController.text.trim().isEmpty
-            ? null
-            : _panVatNumberController.text.trim(),
+        managerName: _managerNameController.text.trim(),
         fullAddress: _fullAddressController.text.trim(),
         latitude: double.tryParse(_latitudeController.text.trim()),
         longitude: double.tryParse(_longitudeController.text.trim()),
@@ -141,13 +133,12 @@ class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsS
       );
 
       try {
-        // Show loading indicator
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
+            const SnackBar(
               content: Row(
                 children: [
-                  const SizedBox(
+                  SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
@@ -155,29 +146,25 @@ class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsS
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  const Text('Updating prospect details...'),
+                  SizedBox(width: 16),
+                  Text('Updating site details...'),
                 ],
               ),
-              duration: const Duration(seconds: 30),
+              duration: Duration(seconds: 30),
               backgroundColor: AppColors.primary,
             ),
           );
         }
 
-        // Call helper function to update prospect (Local - No API)
-        await updateProspect(ref, updatedProspect);
+        await updateSite(ref, updatedSite);
 
         if (mounted) {
-          // Close loading snackbar
           ScaffoldMessenger.of(context).hideCurrentSnackBar();
-
           setState(() {
             _isEditMode = false;
-            _currentProspect = updatedProspect;
+            _currentSite = updatedSite;
           });
 
-          // Show beautiful success snackbar
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Row(
@@ -211,7 +198,7 @@ class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsS
                         ),
                         SizedBox(height: 2.h),
                         Text(
-                          'Prospect details updated successfully',
+                          'Site details updated successfully',
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.9),
                             fontSize: 12.sp,
@@ -234,16 +221,14 @@ class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsS
             ),
           );
 
-          // Refresh the prospect details to ensure data is synced
-          ref.invalidate(prospectByIdProvider(widget.prospectId));
+          ref.invalidate(siteByIdProvider(widget.siteId));
 
-          // Wait a moment for the provider to refresh, then repopulate fields
           Future.delayed(const Duration(milliseconds: 500), () {
             if (mounted) {
-              final refreshedProspectAsync = ref.read(prospectByIdProvider(widget.prospectId));
-              refreshedProspectAsync.whenData((refreshedProspect) {
-                if (refreshedProspect != null && mounted) {
-                  _populateFields(refreshedProspect);
+              final refreshedSiteAsync = ref.read(siteByIdProvider(widget.siteId));
+              refreshedSiteAsync.whenData((refreshedSite) {
+                if (refreshedSite != null && mounted) {
+                  _populateFields(refreshedSite);
                 }
               });
             }
@@ -251,10 +236,7 @@ class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsS
         }
       } catch (e) {
         if (mounted) {
-          // Close loading snackbar
           ScaffoldMessenger.of(context).hideCurrentSnackBar();
-
-          // Show beautiful error snackbar
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Row(
@@ -323,20 +305,20 @@ class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsS
     });
   }
 
-  Future<void> _openGoogleMaps(ProspectDetails prospect) async {
+  Future<void> _openGoogleMaps(SiteDetails site) async {
     Uri? url;
 
-    if (prospect.latitude != null && prospect.longitude != null) {
+    if (site.latitude != null && site.longitude != null) {
       url = Uri(
         scheme: 'geo',
         path: '0,0',
-        queryParameters: {'q': '${prospect.latitude},${prospect.longitude}'},
+        queryParameters: {'q': '${site.latitude},${site.longitude}'},
       );
-    } else if (prospect.fullAddress.isNotEmpty) {
+    } else if (site.fullAddress.isNotEmpty) {
       url = Uri(
         scheme: 'geo',
         path: '0,0',
-        queryParameters: {'q': prospect.fullAddress},
+        queryParameters: {'q': site.fullAddress},
       );
     }
 
@@ -365,8 +347,16 @@ class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsS
     }
   }
 
+  void _navigateToSiteImages() {
+    context.pushNamed(
+      'sites_images_screen',
+      pathParameters: {'siteId': widget.siteId},
+      extra: _currentSite?.name ?? 'Site Images',
+    );
+  }
+
   // Helper method for the UI
-  Widget _buildPageContent(ProspectDetails? prospect) {
+  Widget _buildPageContent(SiteDetails? site) {
     return Column(
       children: [
         Expanded(
@@ -397,7 +387,7 @@ class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsS
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _nameController.text.isEmpty ? "Prospect Name" : _nameController.text,
+                            _nameController.text.isEmpty ? "Site Name" : _nameController.text,
                             style: TextStyle(
                               fontSize: 20.sp,
                               fontWeight: FontWeight.w700,
@@ -407,7 +397,7 @@ class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsS
                           ),
                           SizedBox(height: 8.h),
                           InkWell(
-                            onTap: prospect == null ? null : () => _openGoogleMaps(prospect),
+                            onTap: site == null ? null : () => _openGoogleMaps(site),
                             borderRadius: BorderRadius.circular(8.r),
                             child: Padding(
                               padding: EdgeInsets.symmetric(vertical: 4.h),
@@ -449,7 +439,7 @@ class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsS
                     ),
                     SizedBox(height: 24.h),
                     Text(
-                      'Prospect Details',
+                      'Site Details',
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w600,
@@ -475,33 +465,15 @@ class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsS
                       child: Column(
                         children: [
                           PrimaryTextField(
-                            hintText: "Owner Name",
-                            controller: _ownerNameController,
+                            hintText: "Manager Name",
+                            controller: _managerNameController,
                             prefixIcon: Icons.person_outline,
                             hasFocusBorder: true,
                             enabled: _isEditMode,
                             textInputAction: TextInputAction.next,
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
-                                return 'Owner name is required';
-                              }
-                              return null;
-                            },
-                          ),
-                          SizedBox(height: 16.h),
-                          PrimaryTextField(
-                            hintText: "PAN/VAT Number (Optional)",
-                            controller: _panVatNumberController,
-                            prefixIcon: Icons.receipt_long_outlined,
-                            hasFocusBorder: true,
-                            enabled: _isEditMode,
-                            textInputAction: TextInputAction.next,
-                            validator: (value) {
-                              // ✅ OPTIONAL - No error if empty
-                              if (value != null &&
-                                  value.trim().isNotEmpty &&
-                                  value.trim().length > 14) {
-                                return 'PAN/VAT number cannot exceed 14 characters';
+                                return 'Manager name is required';
                               }
                               return null;
                             },
@@ -515,6 +487,7 @@ class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsS
                             enabled: _isEditMode,
                             keyboardType: TextInputType.phone,
                             textInputAction: TextInputAction.next,
+                            maxLength: 10,
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
                                 return 'Phone number is required';
@@ -623,15 +596,22 @@ class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsS
                         ],
                       ),
                     ),
-                    SizedBox(height: 80.h),
+                    SizedBox(height: 100.h),
                   ],
                 ),
               ),
             ),
           ),
         ),
+
+        // OPTIMIZED DUAL BUTTON BAR - Applies Table Values
         Container(
-          padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, MediaQuery.of(context).padding.bottom + 16.h),
+          padding: EdgeInsets.fromLTRB(
+            10.w,
+            12.h,
+            10.w,
+            MediaQuery.of(context).padding.bottom + 12.h,
+          ),
           decoration: BoxDecoration(
             color: Colors.white,
             boxShadow: [
@@ -642,18 +622,36 @@ class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsS
               ),
             ],
           ),
-          child: _isEditMode
-              ? PrimaryButton(
-            label: 'Save Changes',
-            onPressed: _handleSave,
-            leadingIcon: Icons.check_rounded,
-            size: ButtonSize.medium,
-          )
-              : PrimaryButton(
-            label: 'Edit Detail',
-            onPressed: prospect == null ? null : _toggleEditMode,
-            leadingIcon: Icons.edit_outlined,
-            size: ButtonSize.medium,
+          child: Row(
+            children: [
+              // Edit/Save Button (Left)
+              Expanded(
+                child: PrimaryButton(
+                  onPressed: _isEditMode ? _handleSave : (site == null ? null : _toggleEditMode),
+                  leadingIcon: _isEditMode ? Icons.check_rounded : Icons.edit_outlined,
+                  label: _isEditMode ? 'Save Changes' : 'Edit Detail',
+                  size: ButtonSize.medium,
+                  isDisabled: site == null,
+                  customFontSize: 14.sp,
+                  customIconSize: 14.sp,
+                  customPadding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 12.h),
+                ),
+              ),
+              SizedBox(width: 6.w),
+              // View Images Button (Right)
+              Expanded(
+                child: PrimaryButton(
+                  onPressed: site == null ? null : _navigateToSiteImages,
+                  leadingIcon: Icons.photo_library_outlined,
+                  label: 'View Images',
+                  size: ButtonSize.medium,
+                  isDisabled: site == null,
+                  customFontSize: 14.sp,
+                  customIconSize: 14.sp,
+                  customPadding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 12.h),
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -662,7 +660,7 @@ class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsS
 
   @override
   Widget build(BuildContext context) {
-    final prospectAsync = ref.watch(prospectByIdProvider(widget.prospectId));
+    final siteAsync = ref.watch(siteByIdProvider(widget.siteId));
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -688,8 +686,8 @@ class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsS
               onPressed: () {
                 setState(() {
                   _isEditMode = false;
-                  if (_currentProspect != null) {
-                    _populateFields(_currentProspect!);
+                  if (_currentSite != null) {
+                    _populateFields(_currentSite!);
                   }
                 });
               },
@@ -717,27 +715,27 @@ class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsS
             ),
           ),
 
-          prospectAsync.when(
-            data: (prospect) {
-              if (prospect == null) {
+          siteAsync.when(
+            data: (site) {
+              if (site == null) {
                 return Center(
                   child: Text(
-                    'Prospect not found',
+                    'Site not found',
                     style: TextStyle(fontSize: 16.sp, color: AppColors.textdark),
                   ),
                 );
               }
 
               // Populate fields when data is first loaded or changes
-              if (_currentProspect == null || _currentProspect!.id != prospect.id) {
+              if (_currentSite == null || _currentSite!.id != site.id) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   if (mounted) {
-                    _populateFields(prospect);
+                    _populateFields(site);
                   }
                 });
               }
 
-              return _buildPageContent(prospect);
+              return _buildPageContent(site);
             },
             loading: () {
               return Skeletonizer(
@@ -752,7 +750,7 @@ class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsS
                   Icon(Icons.error_outline, size: 64.sp, color: AppColors.error),
                   SizedBox(height: 16.h),
                   Text(
-                    'Failed to load prospect details',
+                    'Failed to load site details',
                     style: TextStyle(
                       fontSize: 16.sp,
                       color: AppColors.textdark,
