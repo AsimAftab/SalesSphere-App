@@ -172,7 +172,8 @@ class AttendanceDetailsScreen extends ConsumerWidget {
                         statusIcon,
                         statusColor,
                       ),
-                      if (record.notes != null)
+                      // Show notes only for Absent (informed leave), not for Leave (company holidays)
+                      if (record.notes != null && record.status != AttendanceStatus.onLeave)
                         _buildDetailItem(
                           'Notes',
                           record.notes!,
