@@ -20,9 +20,6 @@ import 'package:sales_sphere/features/attendance/views/attendance_history_screen
 import 'package:sales_sphere/features/attendance/views/attendance_details_screen.dart';
 import 'package:sales_sphere/features/attendance/views/attendance_monthly_details_screen.dart';
 import 'package:sales_sphere/features/attendance/models/attendance.models.dart';
-import 'package:sales_sphere/features/prospects/views/prospects_screen.dart';
-import 'package:sales_sphere/features/prospects/views/add_prospect_screen.dart';
-import 'package:sales_sphere/features/prospects/views/edit_prospect_details_screen.dart';
 import 'package:sales_sphere/features/settings/views/settings_screen.dart';
 import 'package:sales_sphere/features/settings/views/about_screen.dart';
 import 'package:sales_sphere/features/settings/views/terms_and_conditions_screen.dart';
@@ -168,32 +165,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       // ========================================
       // PROSPECTS ROUTES (No Bottom Navigation)
       // ========================================
-      GoRoute(
-        path: '/prospects',
-        name: 'prospects',
-        builder: (context, state) => const ProspectsScreen(),
-      ),
-      GoRoute(
-        path: '/add-prospect',
-        name: 'add-prospect',
-        builder: (context, state) => const AddProspectScreen(),
-      ),
-      GoRoute(
-        path: '/edit-prospect/:prospectId',
-        name: 'edit-prospect',
-        builder: (context, state) {
-          final prospectId = state.pathParameters['prospectId'] ?? '1';
-          return EditProspectDetailsScreen(prospectId: prospectId);
-        },
-      ),
-      GoRoute(
-        path: '/edit_prospect_details_screen/:prospectId',
-        name: 'edit_prospect_details_screen',
-        builder: (context, state) {
-          final prospectId = state.pathParameters['prospectId'] ?? '1';
-          return EditProspectDetailsScreen(prospectId: prospectId);
-        },
-      ),
+
+
+
 
       // ========================================
       // SETTINGS ROUTES (No Bottom Navigation)
@@ -217,11 +191,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         name: 'party-list',
         builder: (context, state) => const PartiesScreen(),
       ),
-      GoRoute(
-        path: '/directory/prospects-list',
-        name: 'prospects-list',
-        builder: (context, state) => const ProspectsScreen(),
-      ),
+
       GoRoute(
         path: '/directory/sites-list',
         name: 'sites-list',
