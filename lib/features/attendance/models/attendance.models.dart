@@ -26,13 +26,13 @@ extension AttendanceStatusExtension on AttendanceStatus {
       case AttendanceStatus.present:
         return 'Present';
       case AttendanceStatus.absent:
-        return 'Absent';
+        return 'Absent'; // Informed leave - employee leave with notes/reasons
       case AttendanceStatus.late:
         return 'Late';
       case AttendanceStatus.halfDay:
         return 'Half Day';
       case AttendanceStatus.onLeave:
-        return 'On Leave';
+        return 'Leave'; // Company holidays/public holidays given by the company
     }
   }
 }

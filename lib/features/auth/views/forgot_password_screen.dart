@@ -429,7 +429,6 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   ),
                 ),
               ),
-            ),>>>>>>> c0542cd35114e3945b15a3e49de2f65f863614e0
           ],
         ),
       ),

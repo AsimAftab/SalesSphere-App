@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
+import 'package:sales_sphere/core/providers/user_controller.dart';
 import '../models/attendance.models.dart';
 import '../vm/attendance.vm.dart';
 import 'attendance_monthly_details_screen.dart' show AttendanceFilter;
@@ -24,6 +25,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
   Widget build(BuildContext context) {
     final todayAttendance = ref.watch(todayAttendanceViewModelProvider);
     final attendanceHistory = ref.watch(attendanceHistoryViewModelProvider);
+    final user = ref.watch(userControllerProvider);
 
     // Calculate monthly summary for current month
     final monthlyRecords = attendanceHistory.where((record) =>
@@ -35,10 +37,11 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
         .length;
     final monthlyAbsentDays = monthlyRecords
         .where((r) => r.status == AttendanceStatus.absent)
-        .length;
+<<<<<<< Updated upstream
+        .length; // Informed leave - employee leave with notes/reasons
     final monthlyLeaveDays = monthlyRecords
         .where((r) => r.status == AttendanceStatus.onLeave)
-        .length;
+        .length; // Company holidays/public holidays given by the company
     final monthlyHalfDays = monthlyRecords
         .where((r) => r.status == AttendanceStatus.halfDay)
         .length;
@@ -94,10 +97,34 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
           ),
           Padding(
             padding: EdgeInsets.only(right: 12.w, left: 8.w),
-            child: CircleAvatar(
-              radius: 18.r,
-              backgroundColor: AppColors.primary,
-              child: Icon(Icons.person, color: Colors.white, size: 20.sp),
+            child: GestureDetector(
+              onTap: () => context.push('/profile'),
+              child: Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.textOrange,
+                    width: 2.5,
+                  ),
+                ),
+                child: CircleAvatar(
+                  radius: 18.r,
+                  backgroundColor: AppColors.primary,
+                  backgroundImage: user?.avatarUrl != null
+                      ? NetworkImage(user!.avatarUrl!)
+                      : null,
+                  child: user?.avatarUrl == null
+                      ? Text(
+                          _getInitials(user?.name ?? 'User'),
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textWhite,
+                          ),
+                        )
+                      : null,
+                ),
+              ),
             ),
           ),
         ],
@@ -699,4 +726,11 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
       ),
     );
   }
+}
+String _getInitials(String name) {
+  final trimmedName = name.trim();
+  if (trimmedName.isNotEmpty) {
+    return trimmedName[0].toUpperCase();
+  }
+  return 'U';
 }
