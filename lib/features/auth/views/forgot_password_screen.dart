@@ -293,7 +293,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
+                      color: Colors.black.withOpacity(0.08),
                       spreadRadius: 0,
                       blurRadius: 20,
                       offset: const Offset(0, -4),
@@ -429,7 +429,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   ),
                 ),
               ),
-            ),
+            ),>>>>>>> c0542cd35114e3945b15a3e49de2f65f863614e0
           ],
         ),
       ),
