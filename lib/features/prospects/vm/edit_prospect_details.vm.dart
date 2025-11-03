@@ -1,8 +1,8 @@
 // lib/features/prospects/vm/edit_prospect_details.vm.dart
 
+import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart'; // ✅ ADD THIS
-import 'package:sales_sphere/features/prospects/models/edit_prospect_details.model.dart';
+import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/features/prospects/models/prospects.model.dart';
 import 'package:sales_sphere/features/prospects/vm/prospects.vm.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
@@ -10,89 +10,154 @@ import 'package:sales_sphere/core/utils/logger.dart';
 part 'edit_prospect_details.vm.g.dart';
 
 // ============================================================================
-// STANDALONE PROVIDER FOR PROSPECT DETAILS
+// EDIT PROSPECT VIEW MODEL
+// Handles: Get specific prospect by ID, Update specific prospect
 // ============================================================================
 
 @riverpod
-Future<ProspectDetails?> prospectById(Ref ref, String prospectId) async {
-  try {
-    AppLogger.i('🔄 Fetching prospect details for ID: $prospectId');
+class EditProspectViewModel extends _$EditProspectViewModel {
+  @override
+  FutureOr<void> build() {
+    // No initial state needed
+  }
 
-    await Future.delayed(const Duration(milliseconds: 800));
+  // GET SINGLE PROSPECT BY ID FROM API
+  Future<ProspectDetails?> getProspectById(String id) async {
+    try {
+      final dio = ref.read(dioClientProvider);
+      AppLogger.i('Fetching prospect details for ID: $id');
 
-    final allProspects = await ref.watch(prospectViewModelProvider.future);
+      final response = await dio.get('/prospects/$id');
 
-    AppLogger.i('Total prospects available: ${allProspects.length}');
-    AppLogger.i('Looking for prospect with ID: $prospectId');
+      if (response.statusCode == 200) {
+        // Parse the full API response
+        final apiResponse = UpdateProspectApiResponse.fromJson(response.data);
 
-    final prospect = allProspects.firstWhere(
-          (p) {
-        AppLogger.d('Checking prospect: ${p.id} (${p.name})');
-        return p.id == prospectId;
-      },
-      orElse: () {
-        AppLogger.e('❌ Prospect not found with ID: $prospectId');
-        AppLogger.e('Available IDs: ${allProspects.map((p) => p.id).join(", ")}');
-        throw Exception('Prospect not found with ID: $prospectId');
-      },
-    );
+        // Convert API data to ProspectDetails using helper method
+        final prospect = ProspectDetails.fromApiDetail(apiResponse.data);
 
-    final prospectDetails = ProspectDetails.fromProspects(prospect);
+        AppLogger.i('✅ Fetched prospect details for: ${prospect.name}');
+        AppLogger.d('Prospect details: Phone: ${prospect.phoneNumber}, Email: ${prospect.email}, Address: ${prospect.fullAddress}');
 
-    AppLogger.i('✅ Fetched prospect details for: ${prospectDetails.name}');
-    return prospectDetails;
-  } catch (e, stackTrace) {
-    AppLogger.e('❌ Error fetching prospect $prospectId: $e');
-    AppLogger.e('Stack trace: $stackTrace');
-    rethrow;
+        return prospect;
+      } else {
+        throw Exception('Prospect not found with ID: $id');
+      }
+    } on DioException catch (e) {
+      AppLogger.e('❌ Dio error fetching prospect $id: ${e.message}');
+      throw Exception('Network error: ${e.message}');
+    } catch (e, stackTrace) {
+      AppLogger.e('❌ Error fetching prospect $id: $e');
+      AppLogger.e('Stack trace: $stackTrace');
+      throw Exception('Failed to get prospect: $e');
+    }
+  }
+
+  // UPDATE PROSPECT VIA API
+  Future<void> updateProspect(ProspectDetails updatedProspect) async {
+    try {
+      final dio = ref.read(dioClientProvider);
+      AppLogger.i('Updating prospect: ${updatedProspect.name} (ID: ${updatedProspect.id})');
+
+      // Create update request with editable fields
+      final updateRequest = UpdateProspectRequest(
+        ownerName: updatedProspect.ownerName,
+        location: UpdateProspectLocation(
+          address: updatedProspect.fullAddress,
+          latitude: updatedProspect.latitude ?? 0.0,
+          longitude: updatedProspect.longitude ?? 0.0,
+        ),
+      );
+
+      // Convert to JSON
+      final requestData = updateRequest.toJson();
+
+      AppLogger.d('Update request data: $requestData');
+
+      // Send PUT request
+      final response = await dio.put(
+        '/prospects/${updatedProspect.id}',
+        data: requestData,
+      );
+
+      if (response.statusCode == 200) {
+        AppLogger.i('✅ Prospect updated successfully');
+
+        // Invalidate the prospects list to refresh it (only if ref is still mounted)
+        if (ref.mounted) {
+          ref.invalidate(prospectViewModelProvider);
+        }
+      } else {
+        throw Exception('Failed to update prospect: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      AppLogger.e('❌ Dio error updating prospect: ${e.message}');
+      if (e.response != null) {
+        AppLogger.e('Response data: ${e.response?.data}');
+      }
+      throw Exception('Network error: ${e.message}');
+    } catch (e, stackTrace) {
+      AppLogger.e('❌ Error updating prospect: $e');
+      AppLogger.e('Stack trace: $stackTrace');
+      throw Exception('Failed to update prospect: $e');
+    }
+  }
+
+  // TRANSFER PROSPECT TO PARTY VIA API
+  Future<TransferProspectToPartyResponse> transferProspectToParty(String prospectId) async {
+    try {
+      final dio = ref.read(dioClientProvider);
+      AppLogger.i('Transferring prospect to party: $prospectId');
+
+      // Send POST request with no body
+      final response = await dio.post(
+        '/prospects/$prospectId/transfer',
+      );
+
+      if (response.statusCode != null && response.statusCode! >= 200 && response.statusCode! < 300)  {
+        AppLogger.i('✅ Prospect transferred to party successfully');
+
+        // Parse the API response
+        final transferResponse = TransferProspectToPartyResponse.fromJson(response.data);
+
+        AppLogger.d('Transferred party name: ${transferResponse.data.partyName}');
+        AppLogger.d('Transfer message: ${transferResponse.message}');
+
+        // Invalidate the prospects list to refresh it (only if ref is still mounted)
+        if (ref.mounted) {
+          ref.invalidate(prospectViewModelProvider);
+        }
+
+        return transferResponse;
+      } else {
+        throw Exception('Failed to transfer prospect: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      AppLogger.e('❌ Dio error transferring prospect: ${e.message}');
+      if (e.response != null) {
+        AppLogger.e('Response data: ${e.response?.data}');
+      }
+      throw Exception('Network error: ${e.message}');
+    } catch (e, stackTrace) {
+      AppLogger.e('❌ Error transferring prospect: $e');
+      AppLogger.e('Stack trace: $stackTrace');
+      throw Exception('Failed to transfer prospect: $e');
+    }
   }
 }
 
 // ============================================================================
-// UPDATE PROSPECT HELPER FUNCTION
+// STANDALONE PROVIDER FOR PROSPECT DETAILS
 // ============================================================================
 
-// ✅ CHANGED: Ref → WidgetRef
-Future<void> updateProspect(WidgetRef ref, ProspectDetails updatedProspectDetails) async {
-  try {
-    AppLogger.i('Updating prospect: ${updatedProspectDetails.name} (ID: ${updatedProspectDetails.id})');
-
-    await Future.delayed(const Duration(milliseconds: 800));
-
-    final updatedProspect = Prospects(
-      id: updatedProspectDetails.id,
-      name: updatedProspectDetails.name,
-      location: updatedProspectDetails.fullAddress,
-      ownerName: updatedProspectDetails.ownerName,
-      phoneNumber: updatedProspectDetails.phoneNumber,
-      email: updatedProspectDetails.email,
-      panVatNumber: updatedProspectDetails.panVatNumber,
-      latitude: updatedProspectDetails.latitude,
-      longitude: updatedProspectDetails.longitude,
-      notes: updatedProspectDetails.notes,
-      dateJoined: updatedProspectDetails.dateJoined,
-      isActive: updatedProspectDetails.isActive,
-      createdAt: updatedProspectDetails.createdAt,
-    );
-
-    final currentProspects = await ref.read(prospectViewModelProvider.future);
-
-    final updatedList = currentProspects.map((prospect) {
-      if (prospect.id == updatedProspect.id) {
-        return updatedProspect;
-      }
-      return prospect;
-    }).toList();
-
-    ref.read(prospectViewModelProvider.notifier).state =
-        AsyncValue.data(updatedList);
-
-    AppLogger.i('✅ Prospect updated successfully (local)');
-  } catch (e, stackTrace) {
-    AppLogger.e('❌ Error updating prospect: $e');
-    AppLogger.e('Stack trace: $stackTrace');
-    throw Exception('Failed to update prospect: $e');
-  }
+// Standalone provider for getting single prospect details
+// Always fetches full details from API to ensure all fields are populated
+@riverpod
+Future<ProspectDetails?> prospectById(Ref ref, String prospectId) async {
+  // Always fetch full details from API since list endpoint doesn't return all fields
+  AppLogger.i('🔄 Fetching full prospect details for ID: $prospectId');
+  final vm = ref.read(editProspectViewModelProvider.notifier);
+  return vm.getProspectById(prospectId);
 }
 
 // ============================================================================

@@ -13,8 +13,9 @@ import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
 import 'package:sales_sphere/widget/custom_date_picker.dart';
 import 'package:sales_sphere/widget/location_picker_widget.dart';
-import 'package:sales_sphere/features/prospects/models/add_prospect.model.dart';
 import 'package:intl/intl.dart';
+
+import '../models/prospects.model.dart';
 
 // Google Places service provider
 final googlePlacesServiceProvider = Provider<GooglePlacesService>((ref) {
@@ -507,6 +508,7 @@ class _AddProspectScreenState extends ConsumerState<AddProspectScreen> {
                         onLocationSelected: (location, address) {
                           if (mounted) {
                             setState(() {
+                              _addressController.text=address;
                               _latitudeController.text = location.latitude
                                   .toStringAsFixed(6);
                               _longitudeController.text = location.longitude

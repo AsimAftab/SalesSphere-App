@@ -16,14 +16,9 @@ class ApiEndpoints {
   // User Endpoints
   static const String profile = '/users/me';
   static const String uploadProfileImage = '/users/me/profile-image';
-  static const String deleteAccount = '/user/delete';
 
-  // Example: Sales Endpoints
-  static const String sales = '/sales';
-  static String saleById(String id) => '/sales/$id';
-  static const String createSale = '/sales';
-  static const String updateSale = '/sales';
-  static const String deleteSale = '/sales';
+
+
 
   // Example: Products Endpoints
   static const String products = '/products';
@@ -32,12 +27,8 @@ class ApiEndpoints {
   static const String updateProduct = '/products';
   static const String deleteProduct = '/products';
 
-  // Example: Customers Endpoints
-  static const String customers = '/customers';
-  static String customerById(String id) => '/customers/$id';
-  static const String createCustomer = '/customers';
-  static const String updateCustomer = '/customers';
-  static const String deleteCustomer = '/customers';
+
+
 
   // Parties Endpoints (Final)
   static const String parties = '/parties';
@@ -46,6 +37,13 @@ class ApiEndpoints {
   static String updateParty(String id) => '/parties/$id';
   static String deleteParty(String id) => '/parties/$id';
 
+  //Prospects EndPoints (Final)
+  static const String prospects = '/prospects';
+  static String prospectsById(String id) => '/prospects/$id';
+  static const String createProspects = '/prospects';
+  static String updateProspects(String id) => '/prospects/$id';
+  static String deleteProspects(String id) => '/parties/$id';
+  static String transferToProspect(String id) => '/prospects/$id/transfer';
   // File Upload
   static const String uploadImage = '/upload/image';
   static const String uploadFile = '/upload/file';
@@ -54,8 +52,7 @@ class ApiEndpoints {
   static const String notifications = '/notifications';
   static const String markNotificationRead = '/notifications/read';
 
-  // Analytics
+  // Home
   static const String home = '/home';
-  static const String salesReport = '/analytics/sales-report';
-  static const String revenueReport = '/analytics/revenue-report';
+
 }

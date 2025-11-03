@@ -13,12 +13,14 @@ import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/services/google_places_service.dart';
 import 'package:sales_sphere/core/services/location_service.dart';
 import 'package:sales_sphere/core/utils/field_validators.dart';
-import 'package:sales_sphere/features/prospects/models/edit_prospect_details.model.dart';
+
 import 'package:sales_sphere/features/prospects/vm/edit_prospect_details.vm.dart';
 import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
 import 'package:sales_sphere/widget/location_picker_widget.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+
+import '../models/prospects.model.dart';
 
 // Google Places service provider
 final googlePlacesServiceProvider = Provider<GooglePlacesService>((ref) {
@@ -34,16 +36,15 @@ final locationServiceProvider = Provider<LocationService>((ref) {
 class EditProspectDetailsScreen extends ConsumerStatefulWidget {
   final String prospectId;
 
-  const EditProspectDetailsScreen({
-    super.key,
-    required this.prospectId,
-  });
+  const EditProspectDetailsScreen({super.key, required this.prospectId});
 
   @override
-  ConsumerState<EditProspectDetailsScreen> createState() => _EditProspectDetailsScreenState();
+  ConsumerState<EditProspectDetailsScreen> createState() =>
+      _EditProspectDetailsScreenState();
 }
 
-class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsScreen> {
+class _EditProspectDetailsScreenState
+    extends ConsumerState<EditProspectDetailsScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isEditMode = false;
 
@@ -85,7 +86,7 @@ class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsS
     setState(() {
       _currentProspect = prospect;
       _nameController.text = prospect.name;
-      _phoneController.text = prospect.phoneNumber;
+      _phoneController.text = prospect.phoneNumber!;
       _emailController.text = prospect.email ?? '';
       _ownerNameController.text = prospect.ownerName;
       _panVatNumberController.text = prospect.panVatNumber ?? '';
@@ -93,7 +94,9 @@ class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsS
       _latitudeController.text = prospect.latitude?.toString() ?? '';
       _longitudeController.text = prospect.longitude?.toString() ?? '';
       _notesController.text = prospect.notes ?? '';
-      _dateJoinedController.text = DateFormatter.formatDateOnly(prospect.dateJoined);
+      _dateJoinedController.text = DateFormatter.formatDateOnly(
+        prospect.dateJoined,
+      );
 
       // Set initial location for map if coordinates exist
       if (prospect.latitude != null && prospect.longitude != null) {
@@ -165,8 +168,10 @@ class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsS
           );
         }
 
-        // Call helper function to update prospect (Local - No API)
-        await updateProspect(ref, updatedProspect);
+        // Call ViewModel to update prospect via API
+        await ref
+            .read(editProspectViewModelProvider.notifier)
+            .updateProspect(updatedProspect);
 
         if (mounted) {
           // Close loading snackbar
@@ -240,7 +245,9 @@ class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsS
           // Wait a moment for the provider to refresh, then repopulate fields
           Future.delayed(const Duration(milliseconds: 500), () {
             if (mounted) {
-              final refreshedProspectAsync = ref.read(prospectByIdProvider(widget.prospectId));
+              final refreshedProspectAsync = ref.read(
+                prospectByIdProvider(widget.prospectId),
+              );
               refreshedProspectAsync.whenData((refreshedProspect) {
                 if (refreshedProspect != null && mounted) {
                   _populateFields(refreshedProspect);
@@ -313,6 +320,233 @@ class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsS
             ),
           );
         }
+      }
+    }
+  }
+
+  Future<void> _handleTransferToParty() async {
+    if (_currentProspect == null) return;
+
+    // Show confirmation dialog
+    final shouldTransfer = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        title: Text(
+          'Transfer to Party?',
+          style: TextStyle(
+            fontSize: 18.sp,
+            fontWeight: FontWeight.w600,
+            fontFamily: 'Poppins',
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to transfer "${_currentProspect!.name}" to a party? This action cannot be undone.',
+          style: TextStyle(
+            fontSize: 14.sp,
+            fontFamily: 'Poppins',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.secondary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+            ),
+            child: Text(
+              'Transfer',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldTransfer != true) return;
+
+    try {
+      // Show loading indicator
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                const Text('Transferring prospect to party...'),
+              ],
+            ),
+            duration: const Duration(seconds: 30),
+            backgroundColor: AppColors.primary,
+          ),
+        );
+      }
+
+      // Call ViewModel to transfer prospect to party
+      final transferResponse = await ref
+          .read(editProspectViewModelProvider.notifier)
+          .transferProspectToParty(_currentProspect!.id);
+
+      if (mounted) {
+        // Close loading snackbar
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+        // Show beautiful success snackbar
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(8.w),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: Icon(
+                    Icons.check_circle,
+                    color: Colors.white,
+                    size: 24.sp,
+                  ),
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Success!',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                      SizedBox(height: 2.h),
+                      Text(
+                        transferResponse.message,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          fontSize: 12.sp,
+                          fontFamily: 'Poppins',
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 4),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+            margin: EdgeInsets.all(16.w),
+            elevation: 6,
+          ),
+        );
+
+        // Navigate back to prospects screen after successful transfer
+        Future.delayed(const Duration(seconds: 1), () {
+          if (mounted) {
+            context.pop();
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        // Close loading snackbar
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+        // Show beautiful error snackbar
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(8.w),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: Icon(
+                    Icons.error_outline,
+                    color: Colors.white,
+                    size: 24.sp,
+                  ),
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Transfer Failed',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                      SizedBox(height: 2.h),
+                      Text(
+                        e.toString().replaceAll('Exception: ', ''),
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          fontSize: 12.sp,
+                          fontFamily: 'Poppins',
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 4),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+            margin: EdgeInsets.all(16.w),
+            elevation: 6,
+          ),
+        );
       }
     }
   }
@@ -397,7 +631,9 @@ class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsS
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _nameController.text.isEmpty ? "Prospect Name" : _nameController.text,
+                            _nameController.text.isEmpty
+                                ? "Prospect Name"
+                                : _nameController.text,
                             style: TextStyle(
                               fontSize: 20.sp,
                               fontWeight: FontWeight.w700,
@@ -407,19 +643,29 @@ class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsS
                           ),
                           SizedBox(height: 8.h),
                           InkWell(
-                            onTap: prospect == null ? null : () => _openGoogleMaps(prospect),
+                            // Disable tap if 'party' is null (loading)
+                            onTap: prospect == null
+                                ? null
+                                : () => _openGoogleMaps(prospect),
                             borderRadius: BorderRadius.circular(8.r),
                             child: Padding(
                               padding: EdgeInsets.symmetric(vertical: 4.h),
                               child: Row(
-                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                // ✅ Center vertically
                                 children: [
-                                  Icon(
-                                    Icons.location_on_outlined,
-                                    size: 14.sp,
-                                    color: AppColors.primary,
+                                  Padding(
+                                    padding: EdgeInsets.only(top: 2.h),
+                                    // ✅ small visual tweak
+                                    child: Icon(
+                                      Icons.location_on_outlined,
+                                      size: 14.sp,
+                                      color: AppColors.primary,
+                                    ),
                                   ),
                                   SizedBox(width: 6.w),
+
+                                  // ✅ Expanded so text wraps multiple lines neatly
                                   Expanded(
                                     child: Text(
                                       _fullAddressController.text.isEmpty
@@ -429,16 +675,21 @@ class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsS
                                         fontSize: 13.sp,
                                         color: AppColors.primary,
                                         fontWeight: FontWeight.w500,
+                                        height:
+                                            1.4, // ✅ gives better line spacing
                                       ),
-                                      overflow: TextOverflow.ellipsis,
-                                      maxLines: 1,
+                                      softWrap: true,
+                                      overflow: TextOverflow.visible,
                                     ),
                                   ),
+
                                   SizedBox(width: 4.w),
                                   Icon(
                                     Icons.open_in_new,
                                     size: 13.sp,
-                                    color: AppColors.primary.withValues(alpha: 0.7),
+                                    color: AppColors.primary.withValues(
+                                      alpha: 0.7,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -557,7 +808,9 @@ class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsS
                             latitudeController: _latitudeController,
                             longitudeController: _longitudeController,
                             initialLocation: _initialLocation,
-                            placesService: ref.read(googlePlacesServiceProvider),
+                            placesService: ref.read(
+                              googlePlacesServiceProvider,
+                            ),
                             locationService: ref.read(locationServiceProvider),
                             enabled: _isEditMode,
                             addressValidator: (value) {
@@ -569,8 +822,11 @@ class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsS
                             onLocationSelected: (location, address) {
                               if (mounted) {
                                 setState(() {
-                                  _latitudeController.text = location.latitude.toStringAsFixed(6);
-                                  _longitudeController.text = location.longitude.toStringAsFixed(6);
+                                  _fullAddressController.text = address;
+                                  _latitudeController.text = location.latitude
+                                      .toStringAsFixed(6);
+                                  _longitudeController.text = location.longitude
+                                      .toStringAsFixed(6);
                                 });
                               }
                             },
@@ -596,7 +852,9 @@ class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsS
                             prefixIcon: Icons.explore_outlined,
                             hasFocusBorder: true,
                             enabled: false,
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
                             textInputAction: TextInputAction.next,
                           ),
                           SizedBox(height: 16.h),
@@ -631,7 +889,13 @@ class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsS
           ),
         ),
         Container(
-          padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, MediaQuery.of(context).padding.bottom + 16.h),
+          constraints: BoxConstraints(minHeight: 90.h),
+          padding: EdgeInsets.fromLTRB(
+            16.w,
+            20.h,
+            16.w,
+            MediaQuery.of(context).padding.bottom + 24.h,
+          ),
           decoration: BoxDecoration(
             color: Colors.white,
             boxShadow: [
@@ -644,17 +908,42 @@ class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsS
           ),
           child: _isEditMode
               ? PrimaryButton(
-            label: 'Save Changes',
-            onPressed: _handleSave,
-            leadingIcon: Icons.check_rounded,
-            size: ButtonSize.medium,
-          )
-              : PrimaryButton(
-            label: 'Edit Detail',
-            onPressed: prospect == null ? null : _toggleEditMode,
-            leadingIcon: Icons.edit_outlined,
-            size: ButtonSize.medium,
-          ),
+                  label: 'Save Changes',
+                  onPressed: _handleSave,
+                  leadingIcon: Icons.check_rounded,
+                  size: ButtonSize.medium,
+                )
+              : Row(
+                  children: [
+                    Flexible(
+                      fit: FlexFit.tight,
+                      child: PrimaryButton(
+                        label: 'Edit Detail',
+                        onPressed: prospect == null ? null : _toggleEditMode,
+                        leadingIcon: Icons.edit_outlined,
+                        size: ButtonSize.medium,
+                        customFontSize: 14.sp,
+                      ),
+                    ),
+                    SizedBox(width: 8.w), // Slightly safer gap
+                    Flexible(
+                      fit: FlexFit.tight,
+                      child: PrimaryButton(
+                        label: 'Transfer\nto Party',
+                        onPressed: prospect == null
+                            ? null
+                            : _handleTransferToParty,
+                        leadingIcon: Icons.swap_horiz_rounded,
+                        size: ButtonSize.medium,
+                        customPadding: EdgeInsets.symmetric(
+                          horizontal: 8.w,
+                          vertical: 4.h,
+                        ),
+                        customFontSize: 14.sp,
+                      ),
+                    ),
+                  ],
+                ),
         ),
       ],
     );
@@ -723,13 +1012,17 @@ class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsS
                 return Center(
                   child: Text(
                     'Prospect not found',
-                    style: TextStyle(fontSize: 16.sp, color: AppColors.textdark),
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      color: AppColors.textdark,
+                    ),
                   ),
                 );
               }
 
               // Populate fields when data is first loaded or changes
-              if (_currentProspect == null || _currentProspect!.id != prospect.id) {
+              if (_currentProspect == null ||
+                  _currentProspect!.id != prospect.id) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   if (mounted) {
                     _populateFields(prospect);
@@ -749,7 +1042,11 @@ class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsS
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.error_outline, size: 64.sp, color: AppColors.error),
+                  Icon(
+                    Icons.error_outline,
+                    size: 64.sp,
+                    color: AppColors.error,
+                  ),
                   SizedBox(height: 16.h),
                   Text(
                     'Failed to load prospect details',
@@ -764,7 +1061,10 @@ class _EditProspectDetailsScreenState extends ConsumerState<EditProspectDetailsS
                     padding: EdgeInsets.symmetric(horizontal: 32.w),
                     child: Text(
                       error.toString(),
-                      style: TextStyle(fontSize: 14.sp, color: Colors.grey.shade600),
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        color: Colors.grey.shade600,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ),

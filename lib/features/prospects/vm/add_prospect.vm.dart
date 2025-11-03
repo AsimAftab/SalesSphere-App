@@ -1,7 +1,8 @@
 // lib/features/prospects/vm/add_prospect.vm.dart
 
+import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:sales_sphere/features/prospects/models/add_prospect.model.dart';
+import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/features/prospects/models/prospects.model.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 
@@ -9,7 +10,7 @@ part 'add_prospect.vm.g.dart';
 
 // ============================================================================
 // ADD PROSPECT VIEW MODEL
-// Handles: Create new prospect (Local only - No API)
+// Handles: Create new prospect via API
 // ============================================================================
 
 @riverpod
@@ -19,27 +20,60 @@ class AddProspectViewModel extends _$AddProspectViewModel {
     // No initial state needed
   }
 
-  // CREATE NEW PROSPECT (LOCAL MOCK - NO API)
+  // CREATE NEW PROSPECT (API CALL)
   Future<Prospects> createProspect(CreateProspectRequest newProspectRequest) async {
     try {
-      AppLogger.i('Creating new prospect: ${newProspectRequest.name}');
+      final dio = ref.read(dioClientProvider);
+      AppLogger.i('Creating new prospect via API: ${newProspectRequest.name}');
 
-      // Simulate network delay
-      await Future.delayed(const Duration(milliseconds: 800));
+      // Make POST request to create prospect
+      final response = await dio.post(
+        '/prospects',
+        data: newProspectRequest.toJson(),
+      );
 
-      // Generate a unique ID (in real app, this comes from API)
-      final newId = 'p${DateTime.now().millisecondsSinceEpoch}';
+      AppLogger.d('Create prospect API status: ${response.statusCode}');
+      AppLogger.d('Create prospect API raw data: ${response.data.runtimeType} -> ${response.data}');
 
-      // Convert request to Prospects model
-      final createdProspect = newProspectRequest.toProspects(newId);
+      // ✅ Ensure we have a proper JSON map
+      if (response.data == null || response.data is! Map<String, dynamic>) {
+        throw Exception(
+          'Invalid API response format — expected a JSON object but got ${response.data.runtimeType}',
+        );
+      }
 
-      AppLogger.i('✅ Prospect created successfully (local): ${createdProspect.name}');
+      // ✅ Parse safely
+      final createResponse =
+      CreateProspectApiResponse.fromJson(response.data as Map<String, dynamic>);
 
-      // Return the created prospect - screen will add it to the list
-      return createdProspect;
+      // ✅ Check success
+      if (createResponse.success) {
+        final data = createResponse.data;
+
+        AppLogger.i('✅ Prospect created successfully: ${data.name} (${data.id})');
+
+        // Convert API response to Prospects model
+        final createdProspect = Prospects(
+          id: data.id,
+          name: data.name,
+          ownerName: data.ownerName,
+          location: ProspectLocation(
+            address:
+            data.location?.address ?? newProspectRequest.location.address,
+          ),
+        );
+
+        return createdProspect;
+      } else {
+        throw Exception(
+          'Failed to create prospect: API returned success=false',
+        );
+      }
+    } on DioException catch (e, stackTrace) {
+      AppLogger.e('DioException while creating prospect: $e\n$stackTrace');
+      throw Exception('Failed to create prospect: ${e.message}');
     } catch (e, stackTrace) {
-      AppLogger.e('❌ Error creating prospect: $e');
-      AppLogger.e('Stack trace: $stackTrace');
+      AppLogger.e('Error creating prospect: $e\n$stackTrace');
       throw Exception('Failed to create prospect: $e');
     }
   }
@@ -69,10 +103,7 @@ class AddProspectViewModel extends _$AddProspectViewModel {
   }
 
   String? validatePanVatNumber(String? value) {
-    // ✅ OPTIONAL - Can be empty
-    if (value == null || value.trim().isEmpty) {
-      return null; // Valid if empty
-    }
+    if (value == null || value.trim().isEmpty) return null; // optional
     if (value.trim().length > 14) {
       return 'PAN/VAT number cannot exceed 14 characters';
     }
@@ -83,9 +114,7 @@ class AddProspectViewModel extends _$AddProspectViewModel {
     if (value == null || value.trim().isEmpty) {
       return 'Phone number is required';
     }
-    // Remove any spaces or special characters for validation
     final cleanedValue = value.replaceAll(RegExp(r'[^\d]'), '');
-
     if (cleanedValue.length != 10) {
       return 'Phone number must be exactly 10 digits';
     }
@@ -93,12 +122,9 @@ class AddProspectViewModel extends _$AddProspectViewModel {
   }
 
   String? validateEmail(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return null; // Email is optional
-    }
-    final emailRegex = RegExp(
-      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
-    );
+    if (value == null || value.trim().isEmpty) return null; // optional
+    final emailRegex =
+    RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
     if (!emailRegex.hasMatch(value.trim())) {
       return 'Enter a valid email address';
     }

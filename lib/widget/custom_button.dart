@@ -39,6 +39,11 @@ class CustomButton extends StatelessWidget {
   final TextStyle? textStyle;
   final Widget? customChild;
 
+  // ✅ NEW: Custom override parameters for fine-grained control
+  final double? customFontSize;
+  final double? customIconSize;
+  final EdgeInsetsGeometry? customPadding;
+
   const CustomButton({
     super.key,
     required this.label,
@@ -58,6 +63,9 @@ class CustomButton extends StatelessWidget {
     this.padding,
     this.textStyle,
     this.customChild,
+    this.customFontSize,
+    this.customIconSize,
+    this.customPadding,
   });
 
   @override
@@ -84,7 +92,10 @@ class CustomButton extends StatelessWidget {
   }
 
   /// Get font size based on button size
+  /// ✅ UPDATED: Now checks for customFontSize first
   double _getFontSizeForSize() {
+    if (customFontSize != null) return customFontSize!;
+
     switch (size) {
       case ButtonSize.small:
         return 13.sp;
@@ -96,7 +107,10 @@ class CustomButton extends StatelessWidget {
   }
 
   /// Get icon size based on button size
+  /// ✅ UPDATED: Now checks for customIconSize first
   double _getIconSizeForSize() {
+    if (customIconSize != null) return customIconSize!;
+
     switch (size) {
       case ButtonSize.small:
         return 18.sp;
@@ -124,6 +138,7 @@ class CustomButton extends StatelessWidget {
   }
 
   /// Primary Button (Filled with primary color)
+  /// ✅ UPDATED: Now uses customPadding if provided
   Widget _buildPrimaryButton(bool isButtonDisabled) {
     return ElevatedButton(
       onPressed: isButtonDisabled ? null : onPressed,
@@ -131,7 +146,7 @@ class CustomButton extends StatelessWidget {
         backgroundColor: backgroundColor ?? AppColors.secondary,
         disabledBackgroundColor: AppColors.neutral.withValues(alpha: 0.3),
         foregroundColor: textColor ?? Colors.white,
-        padding: padding ?? EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+        padding: customPadding ?? padding ?? EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(borderRadius ?? 12.r),
         ),
@@ -143,6 +158,7 @@ class CustomButton extends StatelessWidget {
   }
 
   /// Secondary Button (Filled with secondary color)
+  /// ✅ UPDATED: Now uses customPadding if provided
   Widget _buildSecondaryButton(bool isButtonDisabled) {
     return ElevatedButton(
       onPressed: isButtonDisabled ? null : onPressed,
@@ -150,7 +166,7 @@ class CustomButton extends StatelessWidget {
         backgroundColor: backgroundColor ?? AppColors.primary,
         disabledBackgroundColor: AppColors.neutral.withValues(alpha: 0.3),
         foregroundColor: textColor ?? Colors.white,
-        padding: padding ?? EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+        padding: customPadding ?? padding ?? EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(borderRadius ?? 12.r),
         ),
@@ -162,13 +178,14 @@ class CustomButton extends StatelessWidget {
   }
 
   /// Outlined Button
+  /// ✅ UPDATED: Now uses customPadding if provided
   Widget _buildOutlinedButton(bool isButtonDisabled) {
     return OutlinedButton(
       onPressed: isButtonDisabled ? null : onPressed,
       style: OutlinedButton.styleFrom(
         foregroundColor: textColor ?? AppColors.secondary,
         disabledForegroundColor: AppColors.textDisabled,
-        padding: padding ?? EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+        padding: customPadding ?? padding ?? EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
         side: BorderSide(
           color: isButtonDisabled
               ? AppColors.border
@@ -184,13 +201,14 @@ class CustomButton extends StatelessWidget {
   }
 
   /// Text Button (No background)
+  /// ✅ UPDATED: Now uses customPadding if provided
   Widget _buildTextButton(bool isButtonDisabled) {
     return TextButton(
       onPressed: isButtonDisabled ? null : onPressed,
       style: TextButton.styleFrom(
         foregroundColor: textColor ?? AppColors.secondary,
         disabledForegroundColor: AppColors.textDisabled,
-        padding: padding ?? EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+        padding: customPadding ?? padding ?? EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(borderRadius ?? 12.r),
         ),
@@ -200,27 +218,28 @@ class CustomButton extends StatelessWidget {
   }
 
   /// Gradient Button
+  /// ✅ UPDATED: Now uses customPadding if provided
   Widget _buildGradientButton(bool isButtonDisabled) {
     return Container(
       decoration: BoxDecoration(
         gradient: isButtonDisabled
             ? null
             : const LinearGradient(
-                colors: [AppColors.secondary, AppColors.primary],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-              ),
+          colors: [AppColors.secondary, AppColors.primary],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
         color: isButtonDisabled ? AppColors.neutral.withValues(alpha: 0.3) : null,
         borderRadius: BorderRadius.circular(borderRadius ?? 12.r),
         boxShadow: isButtonDisabled
             ? null
             : [
-                BoxShadow(
-                  color: AppColors.secondary.withValues(alpha: 0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+          BoxShadow(
+            color: AppColors.secondary.withValues(alpha: 0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Material(
         color: Colors.transparent,
@@ -228,7 +247,7 @@ class CustomButton extends StatelessWidget {
           onTap: isButtonDisabled ? null : onPressed,
           borderRadius: BorderRadius.circular(borderRadius ?? 12.r),
           child: Container(
-            padding: padding ?? EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+            padding: customPadding ?? padding ?? EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
             child: _buildButtonContent(forceWhiteColor: true),
           ),
         ),
@@ -250,8 +269,8 @@ class CustomButton extends StatelessWidget {
             forceWhiteColor
                 ? Colors.white
                 : (textColor ?? (type == ButtonType.outlined || type == ButtonType.text
-                        ? AppColors.secondary
-                        : Colors.white)),
+                ? AppColors.secondary
+                : Colors.white)),
           ),
         ),
       );
@@ -267,29 +286,36 @@ class CustomButton extends StatelessWidget {
         color: forceWhiteColor
             ? Colors.white
             : (textColor ??
-                (type == ButtonType.outlined || type == ButtonType.text
-                    ? AppColors.secondary
-                    : Colors.white)),
+            (type == ButtonType.outlined || type == ButtonType.text
+                ? AppColors.secondary
+                : Colors.white)),
       ));
       children.add(SizedBox(width: 8.w));
     }
 
     // Label
+// Label (supports multiline)
     children.add(
-      Text(
-        label,
-        style: textStyle ??
-            TextStyle(
-              fontSize: _getFontSizeForSize(),
-              fontWeight: FontWeight.w600,
-              fontFamily: 'Poppins',
-              color: forceWhiteColor
-                  ? Colors.white
-                  : (textColor ??
-                      (type == ButtonType.outlined || type == ButtonType.text
-                          ? AppColors.secondary
-                          : Colors.white)),
-            ),
+      Flexible(
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          softWrap: true,
+          maxLines: 2,
+          overflow: TextOverflow.visible,
+          style: textStyle ??
+              TextStyle(
+                fontSize: _getFontSizeForSize(),
+                fontWeight: FontWeight.w600,
+                fontFamily: 'Poppins',
+                color: forceWhiteColor
+                    ? Colors.white
+                    : (textColor ??
+                    (type == ButtonType.outlined || type == ButtonType.text
+                        ? AppColors.secondary
+                        : Colors.white)),
+              ),
+        ),
       ),
     );
 
@@ -302,9 +328,9 @@ class CustomButton extends StatelessWidget {
         color: forceWhiteColor
             ? Colors.white
             : (textColor ??
-                (type == ButtonType.outlined || type == ButtonType.text
-                    ? AppColors.secondary
-                    : Colors.white)),
+            (type == ButtonType.outlined || type == ButtonType.text
+                ? AppColors.secondary
+                : Colors.white)),
       ));
     }
 
@@ -319,6 +345,7 @@ class CustomButton extends StatelessWidget {
 /// Convenient Shortcut Widgets
 
 /// Primary Button - Blue filled button
+/// ✅ UPDATED: Added custom sizing parameters
 class PrimaryButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
@@ -329,6 +356,9 @@ class PrimaryButton extends StatelessWidget {
   final ButtonSize size;
   final double? width;
   final double? height;
+  final double? customFontSize;
+  final double? customIconSize;
+  final EdgeInsetsGeometry? customPadding;
 
   const PrimaryButton({
     super.key,
@@ -341,6 +371,9 @@ class PrimaryButton extends StatelessWidget {
     this.size = ButtonSize.medium,
     this.width,
     this.height,
+    this.customFontSize,
+    this.customIconSize,
+    this.customPadding,
   });
 
   @override
@@ -356,11 +389,15 @@ class PrimaryButton extends StatelessWidget {
       size: size,
       width: width,
       height: height,
+      customFontSize: customFontSize,
+      customIconSize: customIconSize,
+      customPadding: customPadding,
     );
   }
 }
 
 /// Secondary Button - Dark blue filled button
+/// ✅ UPDATED: Added custom sizing parameters
 class SecondaryButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
@@ -371,6 +408,9 @@ class SecondaryButton extends StatelessWidget {
   final ButtonSize size;
   final double? width;
   final double? height;
+  final double? customFontSize;
+  final double? customIconSize;
+  final EdgeInsetsGeometry? customPadding;
 
   const SecondaryButton({
     super.key,
@@ -383,6 +423,9 @@ class SecondaryButton extends StatelessWidget {
     this.size = ButtonSize.medium,
     this.width,
     this.height,
+    this.customFontSize,
+    this.customIconSize,
+    this.customPadding,
   });
 
   @override
@@ -398,11 +441,15 @@ class SecondaryButton extends StatelessWidget {
       size: size,
       width: width,
       height: height,
+      customFontSize: customFontSize,
+      customIconSize: customIconSize,
+      customPadding: customPadding,
     );
   }
 }
 
 /// Outlined Button - Border only
+/// ✅ UPDATED: Added custom sizing parameters
 class OutlinedCustomButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
@@ -413,6 +460,9 @@ class OutlinedCustomButton extends StatelessWidget {
   final ButtonSize size;
   final double? width;
   final double? height;
+  final double? customFontSize;
+  final double? customIconSize;
+  final EdgeInsetsGeometry? customPadding;
 
   const OutlinedCustomButton({
     super.key,
@@ -425,6 +475,9 @@ class OutlinedCustomButton extends StatelessWidget {
     this.size = ButtonSize.medium,
     this.width,
     this.height,
+    this.customFontSize,
+    this.customIconSize,
+    this.customPadding,
   });
 
   @override
@@ -440,11 +493,15 @@ class OutlinedCustomButton extends StatelessWidget {
       size: size,
       width: width,
       height: height,
+      customFontSize: customFontSize,
+      customIconSize: customIconSize,
+      customPadding: customPadding,
     );
   }
 }
 
 /// Gradient Button - Gradient background
+/// ✅ UPDATED: Added custom sizing parameters
 class GradientButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
@@ -455,6 +512,9 @@ class GradientButton extends StatelessWidget {
   final ButtonSize size;
   final double? width;
   final double? height;
+  final double? customFontSize;
+  final double? customIconSize;
+  final EdgeInsetsGeometry? customPadding;
 
   const GradientButton({
     super.key,
@@ -467,6 +527,9 @@ class GradientButton extends StatelessWidget {
     this.size = ButtonSize.medium,
     this.width,
     this.height,
+    this.customFontSize,
+    this.customIconSize,
+    this.customPadding,
   });
 
   @override
@@ -482,6 +545,9 @@ class GradientButton extends StatelessWidget {
       size: size,
       width: width,
       height: height,
+      customFontSize: customFontSize,
+      customIconSize: customIconSize,
+      customPadding: customPadding,
     );
   }
 }

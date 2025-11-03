@@ -1,5 +1,10 @@
 import 'dart:async';
+import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sales_sphere/core/constants/api_constants.dart';
+import 'package:sales_sphere/core/constants/api_endpoints.dart';
+import 'package:sales_sphere/core/network_layer/dio_client.dart';
+import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:sales_sphere/features/prospects/models/prospects.model.dart';
 
 part 'prospects.vm.g.dart';
@@ -14,10 +19,28 @@ class ProspectViewModel extends _$ProspectViewModel {
 
   Future<List<Prospects>> _fetchProspects() async {
     try {
-      // Simulate network delay for loading skeleton
-      await Future.delayed(const Duration(milliseconds: 1200));
-      return _getMockProspects();
-    } catch (e) {
+      final dio = ref.read(dioClientProvider);
+      AppLogger.d('Fetching prospects from API');
+
+      final response = await dio.get(ApiEndpoints.prospects);
+
+      AppLogger.d('Prospects API response: ${response.statusCode}');
+
+      final prospectsResponse = ProspectsResponse.fromJson(response.data);
+
+      if (prospectsResponse.success) {
+        AppLogger.i('Successfully fetched ${prospectsResponse.count} prospects');
+        return prospectsResponse.data;
+      } else {
+        throw Exception('Failed to fetch prospects: API returned success=false');
+      }
+    } on DioException catch (e) {
+      AppLogger.e('DioException while fetching prospects: $e');
+      throw Exception('Failed to fetch prospects: ${e.message}');
+    } catch (e, stackTrace) {
+      AppLogger.e('DioException while fetching prospects: $e');
+      AppLogger.e('Error fetching prospects: $e\n$stackTrace');
+
       throw Exception('Failed to fetch prospects: $e');
     }
   }
@@ -34,82 +57,6 @@ class ProspectViewModel extends _$ProspectViewModel {
       final updatedList = [newProspect, ...currentProspects];
       state = AsyncValue.data(updatedList);
     });
-  }
-
-  // Mock data with ALL fields
-  List<Prospects> _getMockProspects() {
-    return [
-      Prospects(
-        id: 'p1',
-        name: 'Agarwal Traders',
-        location: 'Binamod, Nepal',
-        ownerName: 'Rajesh Agarwal',
-        phoneNumber: '9876543210',
-        email: 'rajesh@agarwaltraders.com',
-        panVatNumber: '1234567890',
-        latitude: 27.7172,
-        longitude: 85.3240,
-        notes: 'Premium customer',
-        dateJoined: '2024-01-15',
-        createdAt: DateTime.now().subtract(const Duration(days: 2)),
-      ),
-      Prospects(
-        id: 'p2',
-        name: 'Traders I',
-        location: 'Kathmandu, Nepal',
-        ownerName: 'Owner I',
-        phoneNumber: '9876543211',
-        email: 'owner1@traders.com',
-        panVatNumber: null,
-        latitude: 27.7172,
-        longitude: 85.3240,
-        notes: null,
-        dateJoined: '2024-01-10',
-        createdAt: DateTime.now().subtract(const Duration(days: 5)),
-      ),
-      Prospects(
-        id: 'p3',
-        name: 'Traders II',
-        location: 'Pokhara, Nepal',
-        ownerName: 'Owner II',
-        phoneNumber: '9876543212',
-        email: null,
-        panVatNumber: null,
-        latitude: 28.2096,
-        longitude: 83.9856,
-        notes: null,
-        dateJoined: '2024-01-05',
-        createdAt: DateTime.now().subtract(const Duration(days: 10)),
-      ),
-      Prospects(
-        id: 'p4',
-        name: 'Traders III',
-        location: 'Lalitpur, Nepal',
-        ownerName: 'Owner III',
-        phoneNumber: '9876543213',
-        email: null,
-        panVatNumber: null,
-        latitude: 27.6710,
-        longitude: 85.3238,
-        notes: null,
-        dateJoined: '2024-01-03',
-        createdAt: DateTime.now().subtract(const Duration(days: 12)),
-      ),
-      Prospects(
-        id: 'p5',
-        name: 'Trader IV',
-        location: 'Bhaktapur, Nepal',
-        ownerName: 'Owner IV',
-        phoneNumber: '9876543214',
-        email: null,
-        panVatNumber: null,
-        latitude: 27.6710,
-        longitude: 85.4298,
-        notes: null,
-        dateJoined: '2024-01-01',
-        createdAt: DateTime.now().subtract(const Duration(days: 15)),
-      ),
-    ];
   }
 }
 
@@ -141,7 +88,7 @@ class SearchedProspects extends _$SearchedProspects {
     final lowerQuery = searchQuery.toLowerCase();
     return allProspects.where((prospect) {
       return prospect.name.toLowerCase().contains(lowerQuery) ||
-          prospect.location.toLowerCase().contains(lowerQuery);
+          prospect.location.address.toLowerCase().contains(lowerQuery);
     }).toList();
   }
 }
