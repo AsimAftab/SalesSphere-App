@@ -199,7 +199,7 @@ class _ProspectsScreenState extends ConsumerState<ProspectsScreen> {
                             leadingBackgroundColor: AppColors.primary,
                             leadingSize: 48.w,
                             title: prospect.name,
-                            subtitle: prospect.location,
+                            subtitle: prospect.location.address,
                             onTap: () => _navigateToProspectDetails(prospect.id),
                             showArrow: true,
                             arrowColor: AppColors.primary,
