@@ -68,14 +68,16 @@ class ForgotPasswordViewModel extends _$ForgotPasswordViewModel {
     } on DioException catch (e) {
       AppLogger.e('❌ Forgot password request failed', e);
 
-      if (e.response?.statusCode == 404) {
-        state = AsyncError({
-          'general': 'Email address not found',
-        }, StackTrace.empty);
-      } else if (e.response?.statusCode == 400) {
-        final message = e.response?.data['message'] ?? 'Invalid request.';
+      // Handle different error scenarios
+      if (e.response?.statusCode == 400) {
+        final message = e.response?.data['message'] ?? 'Invalid email format.';
+        state = AsyncError({'general': message}, StackTrace.empty);
+      } else if (e.response != null) {
+        // Server responded with an error
+        final message = e.response?.data['message'] ?? 'Failed to send reset email.';
         state = AsyncError({'general': message}, StackTrace.empty);
       } else {
+        // Network error (no response from server)
         state = AsyncError({
           'general': 'Network error. Please check your connection.',
         }, StackTrace.empty);

@@ -7,6 +7,7 @@ import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/utils/field_validators.dart';
 import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
+import 'package:sales_sphere/features/auth/vm/forgot_password.vm.dart';
 
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -28,33 +29,31 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   Future<void> _handleSubmit() async {
     FocusScope.of(context).unfocus();
     if (_formKey.currentState?.validate() ?? false) {
-      // TODO: Backend integration will be added later
-      // For now, simulate email check (randomly for demo)
-      // In production, this will call the backend API
-      await Future.delayed(const Duration(milliseconds: 500));
+      // Call the ViewModel to send the reset email
+      final viewModel = ref.read(forgotPasswordViewModelProvider.notifier);
+      final success = await viewModel.sendResetEmail(_emailController.text.trim());
 
-      // Simulate checking if email is registered
-      // Replace this with actual backend call
-      final isEmailRegistered = _checkEmailRegistered(_emailController.text);
-
-      if (isEmailRegistered) {
+      if (success) {
+        // Always show success - backend returns same response for security
         _showSuccessBottomSheet();
       } else {
-        _showErrorBottomSheet();
+        // Only show errors for actual failures (network errors, server errors, etc.)
+        final state = ref.read(forgotPasswordViewModelProvider);
+        final errorMessage = state.error is Map<String, dynamic>
+            ? (state.error as Map<String, dynamic>)['general'] as String?
+            : null;
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage ?? 'Failed to send reset email. Please try again.'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
       }
     }
-  }
-
-  // TODO: Replace with actual backend API call
-  bool _checkEmailRegistered(String email) {
-    // Mock registered emails for testing UI
-    // In production, this will be an API call
-    final registeredEmails = [
-      'asimaftab303@gmail.com',
-      'test@gmail.com',
-    ];
-
-    return registeredEmails.contains(email.toLowerCase());
   }
 
   void _showSuccessBottomSheet() {
@@ -95,7 +94,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
             // Title
             Text(
-              'Email Sent!',
+              'Request Submitted!',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: 'Poppins',
@@ -109,7 +108,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
             // Message
             Text(
-              'A password reset link has been sent to your email address. Please check your inbox.',
+              'If that email is registered, a password reset token has been sent. Please check your inbox and spam folder.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.grey.shade600,
@@ -128,87 +127,6 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               onPressed: () {
                 Navigator.of(context).pop(); // Close bottom sheet
                 context.go('/'); // Navigate to login
-              },
-              size: ButtonSize.medium,
-            ),
-
-            SizedBox(height: 12.h),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showErrorBottomSheet() {
-    showModalBottomSheet(
-      context: context,
-      isDismissible: false,
-      enableDrag: false,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: Colors.grey.shade50,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(24.r),
-            topRight: Radius.circular(24.r),
-          ),
-        ),
-        padding: EdgeInsets.all(24.w),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Error Icon
-            Container(
-              width: 64.w,
-              height: 64.h,
-              decoration: BoxDecoration(
-                color: Colors.red.shade50,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.error_outline,
-                color: Colors.red,
-                size: 40.sp,
-              ),
-            ),
-
-            SizedBox(height: 20.h),
-
-            // Title
-            Text(
-              'Email Not Registered',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'Poppins',
-                fontSize: 24.sp,
-                fontWeight: FontWeight.w700,
-                color: Colors.red,
-              ),
-            ),
-
-            SizedBox(height: 12.h),
-
-            // Message
-            Text(
-              'This email address is not registered with us. Please check the email address or sign up for a new account.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.grey.shade600,
-                fontSize: 14.sp,
-                fontFamily: 'Poppins',
-                fontWeight: FontWeight.w400,
-                height: 1.5,
-              ),
-            ),
-
-            SizedBox(height: 28.h),
-
-            // Try Again Button
-            PrimaryButton(
-              label: 'Try Again',
-              onPressed: () {
-                Navigator.of(context).pop(); // Close bottom sheet
               },
               size: ButtonSize.medium,
             ),
@@ -365,10 +283,18 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                         SizedBox(height: 28.h),
 
                         // Submit Button
-                        PrimaryButton(
-                          label: 'Send Reset Link',
-                          onPressed: _handleSubmit,
-                          size: ButtonSize.large,
+                        Consumer(
+                          builder: (context, ref, child) {
+                            final state = ref.watch(forgotPasswordViewModelProvider);
+                            final isLoading = state.isLoading;
+
+                            return PrimaryButton(
+                              label: 'Send Reset Link',
+                              onPressed: isLoading ? null : _handleSubmit,
+                              size: ButtonSize.large,
+                              isLoading: isLoading,
+                            );
+                          },
                         ),
 
                         SizedBox(height: 20.h),
