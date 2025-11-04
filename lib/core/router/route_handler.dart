@@ -23,6 +23,10 @@ import 'package:sales_sphere/features/attendance/models/attendance.models.dart';
 import 'package:sales_sphere/features/prospects/views/prospects_screen.dart';
 import 'package:sales_sphere/features/prospects/views/add_prospect_screen.dart';
 import 'package:sales_sphere/features/prospects/views/edit_prospect_details_screen.dart';
+import 'package:sales_sphere/features/sites/views/sites_screen.dart';
+import 'package:sales_sphere/features/sites/views/add_sites_screen.dart';
+import 'package:sales_sphere/features/sites/views/edit_site_details_screen.dart';
+import 'package:sales_sphere/features/sites/views/sites_images_screen.dart';
 import 'package:sales_sphere/features/settings/views/settings_screen.dart';
 import 'package:sales_sphere/features/settings/views/about_screen.dart';
 import 'package:sales_sphere/features/settings/views/terms_and_conditions_screen.dart';
@@ -56,6 +60,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final isGoingToProfile = requestedPath == '/profile';
       final isGoingToAttendance = requestedPath.startsWith('/attendance');
       final isGoingToProspects = requestedPath.startsWith('/prospects') || requestedPath.startsWith('/add-prospect') || requestedPath.startsWith('/edit-prospect');
+      final isGoingToSites = requestedPath.startsWith('/sites') || requestedPath.startsWith('/add-site') || requestedPath.startsWith('/edit-site');
       final isGoingToAbout = requestedPath == '/about';
       final isGoingToTerms = requestedPath == '/terms-and-conditions';
 
@@ -71,6 +76,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           !isGoingToProfile &&
           !isGoingToAttendance &&
           !isGoingToProspects &&
+          !isGoingToSites &&
           !isGoingToAbout &&
           !isGoingToTerms) {
         return '/';
@@ -196,6 +202,74 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
 
       // ========================================
+      // SITES ROUTES (No Bottom Navigation)
+      // ========================================
+      GoRoute(
+        path: '/sites',
+        name: 'sites',
+        builder: (context, state) => const SitesScreen(),
+      ),
+      GoRoute(
+        path: '/add-site',
+        name: 'add-site',
+        builder: (context, state) => const AddSitesScreen(),
+      ),
+      GoRoute(
+        path: '/edit-site/:siteId',
+        name: 'edit-site',
+        builder: (context, state) {
+          final siteId = state.pathParameters['siteId'] ?? '1';
+          return EditSiteDetailsScreen(siteId: siteId);
+        },
+      ),
+      GoRoute(
+        path: '/edit_site_details_screen/:siteId',
+        name: 'edit_site_details_screen',
+        builder: (context, state) {
+          final siteId = state.pathParameters['siteId'] ?? '1';
+          return EditSiteDetailsScreen(siteId: siteId);
+        },
+      ),
+      GoRoute(
+        path: '/sites/:siteId/images',
+        name: 'site-images',
+        builder: (context, state) {
+          final siteId = state.pathParameters['siteId'] ?? '';
+          // Handle both String and Map types for siteName
+          String siteName = 'Site';
+          if (state.extra is String) {
+            siteName = state.extra as String;
+          } else if (state.extra is Map<String, dynamic>) {
+            final extras = state.extra as Map<String, dynamic>;
+            siteName = extras['siteName'] as String? ?? 'Site';
+          }
+          return SitesImagesScreen(
+            siteId: siteId,
+            siteName: siteName,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/sites_images_screen/:siteId',
+        name: 'sites_images_screen',
+        builder: (context, state) {
+          final siteId = state.pathParameters['siteId'] ?? '';
+          // Handle both String and Map types for siteName
+          String siteName = 'Site';
+          if (state.extra is String) {
+            siteName = state.extra as String;
+          } else if (state.extra is Map<String, dynamic>) {
+            final extras = state.extra as Map<String, dynamic>;
+            siteName = extras['siteName'] as String? ?? 'Site';
+          }
+          return SitesImagesScreen(
+            siteId: siteId,
+            siteName: siteName,
+          );
+        },
+      ),
+
+      // ========================================
       // SETTINGS ROUTES (No Bottom Navigation)
       // ========================================
       GoRoute(
@@ -225,7 +299,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/directory/sites-list',
         name: 'sites-list',
-        builder: (context, state) => const PartiesScreen(),
+        builder: (context, state) => const SitesScreen(),
       ),
 
       // ========================================
