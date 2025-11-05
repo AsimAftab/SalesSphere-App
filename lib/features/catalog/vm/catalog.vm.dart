@@ -1,5 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:sales_sphere/features/catalog/models/catalog.model.dart';
+import 'package:sales_sphere/features/catalog/models/catalog.models.dart';
 
 part 'catalog.vm.g.dart';
 
@@ -31,41 +31,35 @@ class CatalogViewModel extends _$CatalogViewModel {
   // --- Mock Data (based on your image) ---
   List<CatalogCategory> _getMockCategories() {
     return [
-      CatalogCategory(
+      const CatalogCategory(
         id: '1',
         name: 'Marble',
-        imageAssetPath: 'assets/images/placeholder_marble.png',
-        itemCount: 125,
+        imageAssetPath: 'assets/images/Marble.jpg',
+        itemCount: 7,
       ),
-      CatalogCategory(
+      const CatalogCategory(
         id: '2',
         name: 'Paints',
-        imageAssetPath: 'assets/images/placeholder_paints.png',
-        itemCount: 88,
+        imageAssetPath: 'assets/images/Paints.jpg',
+        itemCount: 7,
       ),
-      CatalogCategory(
+      const CatalogCategory(
         id: '3',
         name: 'Sanitary',
-        imageAssetPath: 'assets/images/placeholder_sanitary.png',
-        itemCount: 210,
+        imageAssetPath: 'assets/images/Sanitary.jpg',
+        itemCount: 7,
       ),
-      CatalogCategory(
+      const CatalogCategory(
         id: '4',
-        name: 'Cpvc',
-        imageAssetPath: 'assets/images/placeholder_cpvc.png',
-        itemCount: 74,
+        name: 'CPVC',
+        imageAssetPath: 'assets/images/Cpvc.jpg',
+        itemCount: 7,
       ),
-      CatalogCategory(
+      const CatalogCategory(
         id: '5',
         name: 'Ply',
-        imageAssetPath: 'assets/images/placeholder_ply.png',
-        itemCount: 45,
-      ),
-      CatalogCategory(
-        id: '6',
-        name: 'Pla',
-        imageAssetPath: 'assets/images/placeholder_pla.png',
-        itemCount: 50,
+        imageAssetPath: 'assets/images/Ply.jpg',
+        itemCount: 7,
       ),
     ];
   }
@@ -83,6 +77,21 @@ class CatalogSearchQuery extends _$CatalogSearchQuery {
 
   void clearQuery() {
     state = '';
+  }
+}
+
+// --- Selected Category Provider ---
+@riverpod
+class SelectedCategory extends _$SelectedCategory {
+  @override
+  String? build() => null;
+
+  void selectCategory(String? categoryId) {
+    state = categoryId;
+  }
+
+  void clearSelection() {
+    state = null;
   }
 }
 
