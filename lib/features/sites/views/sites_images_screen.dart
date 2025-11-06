@@ -218,7 +218,7 @@ class _SitesImagesScreenState extends ConsumerState<SitesImagesScreen> {
     if (confirmed == true) {
       try {
         final viewModel = ref.read(siteImagesViewModelProvider.notifier);
-        await viewModel.deleteImage(image.id, widget.siteId);
+        await viewModel.deleteImage(image.id, widget.siteId, image.imageOrder);
 
         // Refresh the images list
         ref.invalidate(siteImagesProvider(widget.siteId));
@@ -285,23 +285,54 @@ class _SitesImagesScreenState extends ConsumerState<SitesImagesScreen> {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // Image
+              // Image - Handle both network URLs and local files
               ClipRRect(
                 borderRadius: BorderRadius.circular(12.r),
-                child: Image.file(
-                  File(image.imageUrl),
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: Colors.grey.shade300,
-                      child: Icon(
-                        Icons.broken_image,
-                        size: 40.sp,
-                        color: Colors.grey.shade600,
+                child: image.imageUrl.startsWith('http') || image.imageUrl.startsWith('https')
+                    ? Image.network(
+                        image.imageUrl,
+                        fit: BoxFit.cover,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Container(
+                            color: Colors.grey.shade300,
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                value: loadingProgress.expectedTotalBytes != null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                        loadingProgress.expectedTotalBytes!
+                                    : null,
+                                color: AppColors.primary,
+                                strokeWidth: 2,
+                              ),
+                            ),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: Colors.grey.shade300,
+                            child: Icon(
+                              Icons.broken_image,
+                              size: 40.sp,
+                              color: Colors.grey.shade600,
+                            ),
+                          );
+                        },
+                      )
+                    : Image.file(
+                        File(image.imageUrl),
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: Colors.grey.shade300,
+                            child: Icon(
+                              Icons.broken_image,
+                              size: 40.sp,
+                              color: Colors.grey.shade600,
+                            ),
+                          );
+                        },
                       ),
-                    );
-                  },
-                ),
               ),
               // Delete button
               Positioned(
