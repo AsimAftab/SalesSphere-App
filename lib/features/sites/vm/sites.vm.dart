@@ -1,6 +1,10 @@
 
 import 'dart:async';
+import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sales_sphere/core/constants/api_endpoints.dart';
+import 'package:sales_sphere/core/network_layer/dio_client.dart';
+import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:sales_sphere/features/sites/models/sites.model.dart';
 
 part 'sites.vm.g.dart';
@@ -15,10 +19,46 @@ class SiteViewModel extends _$SiteViewModel {
 
   Future<List<Sites>> _fetchSites() async {
     try {
-      // Simulate network delay for loading skeleton
-      await Future.delayed(const Duration(milliseconds: 1200));
-      return _getMockSites();
-    } catch (e) {
+      AppLogger.i('Fetching all sites from API...');
+
+      // Get Dio instance
+      final dio = ref.read(dioClientProvider);
+
+      // Make API call
+      final response = await dio.get(ApiEndpoints.sites);
+
+      AppLogger.d('API Response: ${response.data}');
+
+      // Parse response
+      final fetchSitesResponse = FetchSitesResponse.fromJson(response.data);
+
+      if (!fetchSitesResponse.success) {
+        throw Exception('Failed to fetch sites');
+      }
+
+      // Convert to Sites list
+      final sites = fetchSitesResponse.toSitesList();
+
+      AppLogger.i('✅ Successfully fetched ${sites.length} sites');
+
+      return sites;
+    } on DioException catch (e) {
+      AppLogger.e('❌ DioException fetching sites: ${e.message}');
+      AppLogger.e('Response data: ${e.response?.data}');
+
+      // Extract error message from response if available
+      String errorMessage = 'Failed to fetch sites';
+      if (e.response?.data != null) {
+        final data = e.response!.data;
+        if (data is Map<String, dynamic>) {
+          errorMessage = data['message'] ?? errorMessage;
+        }
+      }
+
+      throw Exception(errorMessage);
+    } catch (e, stackTrace) {
+      AppLogger.e('❌ Error fetching sites: $e');
+      AppLogger.e('Stack trace: $stackTrace');
       throw Exception('Failed to fetch sites: $e');
     }
   }
@@ -48,117 +88,6 @@ class SiteViewModel extends _$SiteViewModel {
       }).toList();
       state = AsyncValue.data(updatedList);
     });
-  }
-
-  // Mock data with ALL fields
-  List<Sites> _getMockSites() {
-    return [
-      Sites(
-        id: 's1',
-        name: 'Downtown Construction Site',
-        location: 'Mumbai, Maharashtra',
-        ownerName: 'Rajesh Kumar',
-        phoneNumber: '9876543210',
-        email: 'rajesh.kumar@site.com',
-        panVatNumber: 'ABCDE1234F',
-        latitude: 19.0760,
-        longitude: 72.8777,
-        notes: 'Large commercial project',
-        dateJoined: '2024-01-15',
-        isActive: true,
-        createdAt: DateTime.now().subtract(const Duration(days: 2)),
-      ),
-      Sites(
-        id: 's2',
-        name: 'Residential Complex Site',
-        location: 'Bangalore, Karnataka',
-        ownerName: 'Priya Sharma',
-        phoneNumber: '9876543211',
-        email: 'priya@residentialsite.com',
-        panVatNumber: 'FGHIJ5678K',
-        latitude: 12.9716,
-        longitude: 77.5946,
-        notes: 'Luxury apartments',
-        dateJoined: '2024-01-10',
-        isActive: true,
-        createdAt: DateTime.now().subtract(const Duration(days: 5)),
-      ),
-      Sites(
-        id: 's3',
-        name: 'Industrial Park Site',
-        location: 'Pune, Maharashtra',
-        ownerName: 'Amit Patel',
-        phoneNumber: '9876543212',
-        email: null,
-        panVatNumber: null,
-        latitude: 18.5204,
-        longitude: 73.8567,
-        notes: null,
-        dateJoined: '2024-01-05',
-        isActive: true,
-        createdAt: DateTime.now().subtract(const Duration(days: 10)),
-      ),
-      Sites(
-        id: 's4',
-        name: 'Tech Park Site',
-        location: 'Hyderabad, Telangana',
-        ownerName: 'Sneha Reddy',
-        phoneNumber: '9876543213',
-        email: null,
-        panVatNumber: null,
-        latitude: 17.3850,
-        longitude: 78.4867,
-        notes: null,
-        dateJoined: '2024-01-03',
-        isActive: true,
-        createdAt: DateTime.now().subtract(const Duration(days: 12)),
-      ),
-      Sites(
-        id: 's5',
-        name: 'Highway Project Site',
-        location: 'Delhi NCR',
-        ownerName: 'Vikram Singh',
-        phoneNumber: '9876543214',
-        email: null,
-        panVatNumber: null,
-        latitude: 28.7041,
-        longitude: 77.1025,
-        notes: null,
-        dateJoined: '2024-01-01',
-        isActive: true,
-        createdAt: DateTime.now().subtract(const Duration(days: 15)),
-      ),
-      Sites(
-        id: 's6',
-        name: 'Mall Construction Site',
-        location: 'Chennai, Tamil Nadu',
-        ownerName: 'Lakshmi Iyer',
-        phoneNumber: '9876543215',
-        email: 'lakshmi@mall.com',
-        panVatNumber: 'MNOPQ9012R',
-        latitude: 13.0827,
-        longitude: 80.2707,
-        notes: 'Shopping complex',
-        dateJoined: '2023-12-28',
-        isActive: true,
-        createdAt: DateTime.now().subtract(const Duration(days: 18)),
-      ),
-      Sites(
-        id: 's7',
-        name: 'Airport Expansion Site',
-        location: 'Kolkata, West Bengal',
-        ownerName: 'Subhash Ghosh',
-        phoneNumber: '9876543216',
-        email: null,
-        panVatNumber: null,
-        latitude: 22.5726,
-        longitude: 88.3639,
-        notes: null,
-        dateJoined: '2023-12-25',
-        isActive: true,
-        createdAt: DateTime.now().subtract(const Duration(days: 20)),
-      ),
-    ];
   }
 }
 

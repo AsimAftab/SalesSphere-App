@@ -464,8 +464,25 @@ class _EditSiteDetailsScreenState extends ConsumerState<EditSiteDetailsScreen> {
                       ),
                       child: Column(
                         children: [
+                          // Site Name
                           PrimaryTextField(
-                            hintText: "Manager Name",
+                            hintText: "Site Name",
+                            controller: _nameController,
+                            prefixIcon: Icons.business_outlined,
+                            hasFocusBorder: true,
+                            enabled: _isEditMode,
+                            textInputAction: TextInputAction.next,
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Site name is required';
+                              }
+                              return null;
+                            },
+                          ),
+                          SizedBox(height: 16.h),
+                          // Owner Name
+                          PrimaryTextField(
+                            hintText: "Owner Name",
                             controller: _managerNameController,
                             prefixIcon: Icons.person_outline,
                             hasFocusBorder: true,
@@ -473,7 +490,7 @@ class _EditSiteDetailsScreenState extends ConsumerState<EditSiteDetailsScreen> {
                             textInputAction: TextInputAction.next,
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
-                                return 'Manager name is required';
+                                return 'Owner name is required';
                               }
                               return null;
                             },
@@ -524,7 +541,7 @@ class _EditSiteDetailsScreenState extends ConsumerState<EditSiteDetailsScreen> {
                           ),
                           SizedBox(height: 16.h),
 
-                          // Location Picker with Google Maps
+                          // Location Picker with Google Maps (includes address search)
                           LocationPickerWidget(
                             addressController: _fullAddressController,
                             latitudeController: _latitudeController,
@@ -540,8 +557,11 @@ class _EditSiteDetailsScreenState extends ConsumerState<EditSiteDetailsScreen> {
                               return null;
                             },
                             onLocationSelected: (location, address) {
+                              // Store full formatted address and coordinates
                               if (mounted) {
                                 setState(() {
+                                  // Store the full formatted address for backend
+                                  _fullAddressController.text = address;
                                   _latitudeController.text = location.latitude.toStringAsFixed(6);
                                   _longitudeController.text = location.longitude.toStringAsFixed(6);
                                 });

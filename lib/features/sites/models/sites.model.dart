@@ -145,13 +145,12 @@ abstract class CreateSiteRequest with _$CreateSiteRequest {
   const CreateSiteRequest._();
 
   const factory CreateSiteRequest({
-    required String name,
-    required String managerName,
-    required String phoneNumber,
-    String? email,
+    required String siteName,
+    required String ownerName,
     required String dateJoined,
+    required CreateSiteContact contact,
     required CreateSiteLocation location,
-    String? notes,
+    String? description,
   }) = _CreateSiteRequest;
 
   factory CreateSiteRequest.fromJson(Map<String, dynamic> json) =>
@@ -161,20 +160,32 @@ abstract class CreateSiteRequest with _$CreateSiteRequest {
   Sites toSites(String id) {
     return Sites(
       id: id,
-      name: name,
+      name: siteName,
       location: location.address,
-      ownerName: managerName,
-      phoneNumber: phoneNumber,
-      email: email,
+      ownerName: ownerName,
+      phoneNumber: contact.phone,
+      email: contact.email,
       panVatNumber: null,
       latitude: location.latitude,
       longitude: location.longitude,
-      notes: notes,
+      notes: description,
       dateJoined: dateJoined,
       isActive: true,
       createdAt: DateTime.now(),
     );
   }
+}
+
+/// Contact info for create site request
+@freezed
+abstract class CreateSiteContact with _$CreateSiteContact {
+  const factory CreateSiteContact({
+    required String phone,
+    String? email,
+  }) = _CreateSiteContact;
+
+  factory CreateSiteContact.fromJson(Map<String, dynamic> json) =>
+      _$CreateSiteContactFromJson(json);
 }
 
 /// Location info for create site request
@@ -200,12 +211,12 @@ abstract class UpdateSiteRequest with _$UpdateSiteRequest {
   const UpdateSiteRequest._();
 
   const factory UpdateSiteRequest({
-    required String name,
-    required String managerName,
-    required UpdateSiteContact contact,
-    required UpdateSiteLocation location,
-    String? notes,
-    bool? isActive,
+    required String siteName,
+    required String ownerName,
+    required String dateJoined,
+    required CreateSiteContact contact,
+    required CreateSiteLocation location,
+    String? description,
   }) = _UpdateSiteRequest;
 
   factory UpdateSiteRequest.fromJson(Map<String, dynamic> json) =>
@@ -214,46 +225,21 @@ abstract class UpdateSiteRequest with _$UpdateSiteRequest {
   /// Create from SiteDetails
   factory UpdateSiteRequest.fromSiteDetails(SiteDetails site) {
     return UpdateSiteRequest(
-      name: site.name,
-      managerName: site.managerName,
-      contact: UpdateSiteContact(
+      siteName: site.name,
+      ownerName: site.managerName,
+      dateJoined: site.dateJoined ?? '',
+      contact: CreateSiteContact(
         phone: site.phoneNumber,
         email: site.email,
       ),
-      location: UpdateSiteLocation(
+      location: CreateSiteLocation(
         address: site.fullAddress,
-        latitude: site.latitude,
-        longitude: site.longitude,
+        latitude: site.latitude ?? 0.0,
+        longitude: site.longitude ?? 0.0,
       ),
-      notes: site.notes,
-      isActive: site.isActive,
+      description: site.notes,
     );
   }
-}
-
-/// Contact info for update request
-@freezed
-abstract class UpdateSiteContact with _$UpdateSiteContact {
-  const factory UpdateSiteContact({
-    required String phone,
-    String? email,
-  }) = _UpdateSiteContact;
-
-  factory UpdateSiteContact.fromJson(Map<String, dynamic> json) =>
-      _$UpdateSiteContactFromJson(json);
-}
-
-/// Location info for update request
-@freezed
-abstract class UpdateSiteLocation with _$UpdateSiteLocation {
-  const factory UpdateSiteLocation({
-    required String address,
-    double? latitude,
-    double? longitude,
-  }) = _UpdateSiteLocation;
-
-  factory UpdateSiteLocation.fromJson(Map<String, dynamic> json) =>
-      _$UpdateSiteLocationFromJson(json);
 }
 
 // ============================================================================
@@ -351,6 +337,293 @@ abstract class SiteImagesResponse with _$SiteImagesResponse {
       _$SiteImagesResponseFromJson(json);
 }
 
+/// Response for create site (POST /sites)
+@freezed
+abstract class CreateSiteResponse with _$CreateSiteResponse {
+  const CreateSiteResponse._();
+
+  const factory CreateSiteResponse({
+    required bool success,
+    required String message,
+    required CreateSiteResponseData data,
+  }) = _CreateSiteResponse;
+
+  factory CreateSiteResponse.fromJson(Map<String, dynamic> json) =>
+      _$CreateSiteResponseFromJson(json);
+
+  /// Convert to Sites model
+  Sites toSites() {
+    return Sites(
+      id: data.id,
+      name: data.siteName,
+      location: data.location.address,
+      ownerName: data.ownerName,
+      phoneNumber: data.contact.phone,
+      email: data.contact.email,
+      latitude: data.location.latitude,
+      longitude: data.location.longitude,
+      notes: data.description,
+      dateJoined: data.dateJoined,
+      isActive: true,
+      createdAt: data.createdAt,
+      updatedAt: data.updatedAt,
+    );
+  }
+}
+
+/// Response for fetch all sites (GET /sites)
+@freezed
+abstract class FetchSitesResponse with _$FetchSitesResponse {
+  const FetchSitesResponse._();
+
+  const factory FetchSitesResponse({
+    required bool success,
+    required int count,
+    required List<FetchSiteData> data,
+  }) = _FetchSitesResponse;
+
+  factory FetchSitesResponse.fromJson(Map<String, dynamic> json) =>
+      _$FetchSitesResponseFromJson(json);
+
+  /// Convert to list of Sites models
+  List<Sites> toSitesList() {
+    return data.map((siteData) => siteData.toSites()).toList();
+  }
+}
+
+/// Individual site data in fetch all sites response
+@freezed
+abstract class FetchSiteData with _$FetchSiteData {
+  const FetchSiteData._();
+
+  const factory FetchSiteData({
+    @JsonKey(name: '_id') required String id,
+    required String siteName,
+    required String ownerName,
+    required String dateJoined,
+    required CreateSiteContact contact,
+    required CreateSiteLocation location,
+    String? description,
+    required String organizationId,
+    required SiteCreatedBy createdBy,
+    @Default([]) List<SiteImageData> images,
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    @JsonKey(name: '__v') int? v,
+  }) = _FetchSiteData;
+
+  factory FetchSiteData.fromJson(Map<String, dynamic> json) =>
+      _$FetchSiteDataFromJson(json);
+
+  /// Convert to Sites model
+  Sites toSites() {
+    return Sites(
+      id: id,
+      name: siteName,
+      location: location.address,
+      ownerName: ownerName,
+      phoneNumber: contact.phone,
+      email: contact.email,
+      latitude: location.latitude,
+      longitude: location.longitude,
+      notes: description,
+      dateJoined: dateJoined,
+      isActive: true,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+    );
+  }
+}
+
+/// User who created the site
+@freezed
+abstract class SiteCreatedBy with _$SiteCreatedBy {
+  const factory SiteCreatedBy({
+    @JsonKey(name: '_id') required String userId,
+    required String name,
+    required String email,
+    required String id,
+  }) = _SiteCreatedBy;
+
+  factory SiteCreatedBy.fromJson(Map<String, dynamic> json) =>
+      _$SiteCreatedByFromJson(json);
+}
+
+/// Site image data in API response
+@freezed
+abstract class SiteImageData with _$SiteImageData {
+  const factory SiteImageData({
+    required int imageNumber,
+    required String imageUrl,
+    @JsonKey(name: '_id') required String id,
+  }) = _SiteImageData;
+
+  factory SiteImageData.fromJson(Map<String, dynamic> json) =>
+      _$SiteImageDataFromJson(json);
+}
+
+/// Response for get site by ID (GET /sites/:id)
+@freezed
+abstract class GetSiteResponse with _$GetSiteResponse {
+  const GetSiteResponse._();
+
+  const factory GetSiteResponse({
+    required bool success,
+    required GetSiteData data,
+  }) = _GetSiteResponse;
+
+  factory GetSiteResponse.fromJson(Map<String, dynamic> json) =>
+      _$GetSiteResponseFromJson(json);
+
+  /// Convert to SiteDetails model
+  SiteDetails toSiteDetails() {
+    return SiteDetails(
+      id: data.id,
+      name: data.siteName,
+      managerName: data.ownerName,
+      phoneNumber: data.contact.phone,
+      email: data.contact.email,
+      fullAddress: data.location.address,
+      latitude: data.location.latitude,
+      longitude: data.location.longitude,
+      notes: data.description,
+      isActive: true,
+      dateJoined: data.dateJoined,
+      createdAt: data.createdAt,
+      updatedAt: data.updatedAt,
+    );
+  }
+}
+
+/// Get site data
+@freezed
+abstract class GetSiteData with _$GetSiteData {
+  const factory GetSiteData({
+    @JsonKey(name: '_id') required String id,
+    required String siteName,
+    required String ownerName,
+    required String dateJoined,
+    required CreateSiteContact contact,
+    required CreateSiteLocation location,
+    String? description,
+    required String organizationId,
+    required SiteCreatedBy createdBy,
+    @Default([]) List<SiteImageData> images,
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    @JsonKey(name: '__v') int? v,
+  }) = _GetSiteData;
+
+  factory GetSiteData.fromJson(Map<String, dynamic> json) =>
+      _$GetSiteDataFromJson(json);
+}
+
+/// Response for update site (PUT /sites/:id)
+@freezed
+abstract class UpdateSiteResponse with _$UpdateSiteResponse {
+  const UpdateSiteResponse._();
+
+  const factory UpdateSiteResponse({
+    required bool success,
+    required String message,
+    required UpdateSiteResponseData data,
+  }) = _UpdateSiteResponse;
+
+  factory UpdateSiteResponse.fromJson(Map<String, dynamic> json) =>
+      _$UpdateSiteResponseFromJson(json);
+
+  /// Convert to SiteDetails model
+  SiteDetails toSiteDetails() {
+    return SiteDetails(
+      id: data.id,
+      name: data.siteName,
+      managerName: data.ownerName,
+      phoneNumber: data.contact.phone,
+      email: data.contact.email,
+      fullAddress: data.location.address,
+      latitude: data.location.latitude,
+      longitude: data.location.longitude,
+      notes: data.description,
+      isActive: true,
+      dateJoined: data.dateJoined,
+      createdAt: data.createdAt,
+      updatedAt: data.updatedAt,
+    );
+  }
+}
+
+/// Update site response data
+@freezed
+abstract class UpdateSiteResponseData with _$UpdateSiteResponseData {
+  const factory UpdateSiteResponseData({
+    @JsonKey(name: '_id') required String id,
+    required String siteName,
+    required String ownerName,
+    required String dateJoined,
+    required CreateSiteContact contact,
+    required CreateSiteLocation location,
+    String? description,
+    required String organizationId,
+    required SiteCreatedBy createdBy,
+    @Default([]) List<SiteImageData> images,
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    @JsonKey(name: '__v') int? v,
+  }) = _UpdateSiteResponseData;
+
+  factory UpdateSiteResponseData.fromJson(Map<String, dynamic> json) =>
+      _$UpdateSiteResponseDataFromJson(json);
+}
+
+/// Data field of create site response
+@freezed
+abstract class CreateSiteResponseData with _$CreateSiteResponseData {
+  const factory CreateSiteResponseData({
+    @JsonKey(name: '_id') required String id,
+    required String siteName,
+    required String ownerName,
+    required String dateJoined,
+    required CreateSiteContact contact,
+    required CreateSiteLocation location,
+    String? description,
+    required String organizationId,
+    required String createdBy,
+    @Default([]) List<String> images,
+    required DateTime createdAt,
+    required DateTime updatedAt,
+  }) = _CreateSiteResponseData;
+
+  factory CreateSiteResponseData.fromJson(Map<String, dynamic> json) =>
+      _$CreateSiteResponseDataFromJson(json);
+}
+
+/// Response for upload site image (POST /sites/:id/images)
+@freezed
+abstract class UploadSiteImageResponse with _$UploadSiteImageResponse {
+  const UploadSiteImageResponse._();
+
+  const factory UploadSiteImageResponse({
+    required bool success,
+    required String message,
+    required UploadSiteImageData data,
+  }) = _UploadSiteImageResponse;
+
+  factory UploadSiteImageResponse.fromJson(Map<String, dynamic> json) =>
+      _$UploadSiteImageResponseFromJson(json);
+}
+
+/// Data field of upload site image response
+@freezed
+abstract class UploadSiteImageData with _$UploadSiteImageData {
+  const factory UploadSiteImageData({
+    required int imageNumber,
+    required String imageUrl,
+  }) = _UploadSiteImageData;
+
+  factory UploadSiteImageData.fromJson(Map<String, dynamic> json) =>
+      _$UploadSiteImageDataFromJson(json);
+}
+
 // ============================================================================
 // VALIDATION & UTILITIES
 // ============================================================================
@@ -358,17 +631,17 @@ abstract class SiteImagesResponse with _$SiteImagesResponse {
 /// Validation extensions for CreateSiteRequest
 extension SiteValidation on CreateSiteRequest {
   bool get isValid {
-    return name.trim().isNotEmpty &&
-        managerName.trim().isNotEmpty &&
-        phoneNumber.trim().isNotEmpty &&
+    return siteName.trim().isNotEmpty &&
+        ownerName.trim().isNotEmpty &&
+        contact.phone.trim().isNotEmpty &&
         location.address.trim().isNotEmpty;
   }
 
   List<String> get validationErrors {
     final errors = <String>[];
-    if (name.trim().isEmpty) errors.add('Site name is required');
-    if (managerName.trim().isEmpty) errors.add('Manager name is required');
-    if (phoneNumber.trim().isEmpty) errors.add('Phone number is required');
+    if (siteName.trim().isEmpty) errors.add('Site name is required');
+    if (ownerName.trim().isEmpty) errors.add('Owner name is required');
+    if (contact.phone.trim().isEmpty) errors.add('Phone number is required');
     if (location.address.trim().isEmpty) errors.add('Address is required');
     return errors;
   }
@@ -377,16 +650,16 @@ extension SiteValidation on CreateSiteRequest {
 /// Validation extensions for UpdateSiteRequest
 extension UpdateSiteValidation on UpdateSiteRequest {
   bool get isValid {
-    return name.trim().isNotEmpty &&
-        managerName.trim().isNotEmpty &&
+    return siteName.trim().isNotEmpty &&
+        ownerName.trim().isNotEmpty &&
         contact.phone.trim().isNotEmpty &&
         location.address.trim().isNotEmpty;
   }
 
   List<String> get validationErrors {
     final errors = <String>[];
-    if (name.trim().isEmpty) errors.add('Site name is required');
-    if (managerName.trim().isEmpty) errors.add('Manager name is required');
+    if (siteName.trim().isEmpty) errors.add('Site name is required');
+    if (ownerName.trim().isEmpty) errors.add('Owner name is required');
     if (contact.phone.trim().isEmpty) errors.add('Phone number is required');
     if (location.address.trim().isEmpty) errors.add('Address is required');
     return errors;
