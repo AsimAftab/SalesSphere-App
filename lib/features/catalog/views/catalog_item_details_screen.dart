@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/features/catalog/vm/catalog_item_details.vm.dart';
 import 'package:skeletonizer/skeletonizer.dart';
@@ -40,6 +39,8 @@ class CatalogItemDetailsScreen extends ConsumerWidget {
             fontWeight: FontWeight.w600,
             fontFamily: 'Poppins',
           ),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
         ),
       ),
       body: itemDetailsAsync.when(
@@ -49,13 +50,15 @@ class CatalogItemDetailsScreen extends ConsumerWidget {
               SliverAppBar(
                 expandedHeight: 280.h,
                 flexibleSpace: FlexibleSpaceBar(
-                  background: SvgPicture.asset(
-                    item.imageAssetPath,
-                    fit: BoxFit.cover,
-                    errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) {
-                      return _buildImagePlaceholder();
-                    },
-                  ),
+                  background: item.imageAssetPath != null
+                      ? Image.asset(
+                          item.imageAssetPath!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) {
+                            return _buildImagePlaceholder();
+                          },
+                        )
+                      : _buildImagePlaceholder(),
                 ),
                 automaticallyImplyLeading: false,
                 backgroundColor: Colors.transparent,
@@ -78,8 +81,9 @@ class CatalogItemDetailsScreen extends ConsumerWidget {
                         // Item Name and Price
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Flexible(
+                            Expanded(
                               child: Text(
                                 item.name,
                                 style: TextStyle(
@@ -88,9 +92,9 @@ class CatalogItemDetailsScreen extends ConsumerWidget {
                                   color: AppColors.textdark,
                                   fontFamily: 'Poppins',
                                 ),
-                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
+                            SizedBox(width: 12.w),
                             Text(
                               'Rs ${item.price.toStringAsFixed(2)}',
                               style: TextStyle(
