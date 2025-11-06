@@ -731,27 +731,17 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
             child: Row(
               children: [
                 // Product Thumbnail
-                GestureDetector(
-                  onTap: () {
-                    context.pushNamed(
-                      'catalog_item_details',
-                      pathParameters: {
-                        'categoryId': product.categoryId,
-                        'itemId': product.id,
-                      },
-                    );
-                  },
-                  child: Container(
-                    width: 60.w,
-                    height: 60.w,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(12.r),
-                      border: Border.all(
-                        color: Colors.grey.shade200,
-                        width: 1,
-                      ),
+                Container(
+                  width: 60.w,
+                  height: 60.w,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(
+                      color: Colors.grey.shade200,
+                      width: 1,
                     ),
+                  ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(12.r),
                       child: product.imageAssetPath != null
@@ -773,35 +763,23 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                       ),
                     ),
                   ),
-                ),
                 SizedBox(width: 12.w),
                 // Product Info
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      GestureDetector(
-                        onTap: () {
-                          context.pushNamed(
-                            'catalog_item_details',
-                            pathParameters: {
-                              'categoryId': product.categoryId,
-                              'itemId': product.id,
-                            },
-                          );
-                        },
-                        child: Text(
-                          product.name,
-                          style: TextStyle(
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.w600,
+                      Text(
+                        product.name,
+                        style: TextStyle(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w600,
                             color: const Color(0xFF202020),
                             fontFamily: 'Poppins',
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
-                      ),
                       SizedBox(height: 4.h),
                       Wrap(
                         spacing: 6.w,

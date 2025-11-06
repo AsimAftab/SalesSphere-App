@@ -7,15 +7,16 @@ import 'package:sales_sphere/features/catalog/models/catalog.models.dart';
 import 'package:sales_sphere/features/catalog/vm/catalog.vm.dart';
 import 'package:sales_sphere/features/catalog/vm/catalog_item.vm.dart';
 import 'package:sales_sphere/core/providers/order_controller.dart';
+import 'package:sales_sphere/widget/product_image_widget.dart';
 
-class CatalogScreenRedesigned extends ConsumerStatefulWidget {
-  const CatalogScreenRedesigned({super.key});
+class CatalogScreen extends ConsumerStatefulWidget {
+  const CatalogScreen({super.key});
 
   @override
-  ConsumerState<CatalogScreenRedesigned> createState() => _CatalogScreenRedesignedState();
+  ConsumerState<CatalogScreen> createState() => _CatalogScreenState();
 }
 
-class _CatalogScreenRedesignedState extends ConsumerState<CatalogScreenRedesigned> {
+class _CatalogScreenState extends ConsumerState<CatalogScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   final ScrollController _categoryScrollController = ScrollController();
@@ -58,7 +59,7 @@ class _CatalogScreenRedesignedState extends ConsumerState<CatalogScreenRedesigne
   @override
   Widget build(BuildContext context) {
     // Watch all state from Riverpod
-    final categoriesAsync = ref.watch(catalogViewModelProvider);
+    final categoriesAsync = ref.watch(categoriesWithProductsProvider);
     final allItemsAsync = ref.watch(allCatalogItemsProvider);
     final selectedCategoryId = ref.watch(selectedCategoryProvider);
     final searchQuery = ref.watch(catalogSearchQueryProvider);
@@ -244,7 +245,7 @@ class _CatalogScreenRedesignedState extends ConsumerState<CatalogScreenRedesigne
                   // Filter by selected category
                   if (selectedCategoryId != null) {
                     filteredItems = filteredItems
-                        .where((item) => item.categoryId == selectedCategoryId)
+                        .where((item) => item.category.id == selectedCategoryId)
                         .toList();
                   }
 
@@ -407,16 +408,6 @@ class _ProductCard extends ConsumerWidget {
     final quantity = orderController[item.id]?.quantity ?? 0;
     final remainingQty = (item.quantity ?? 0) - quantity;
 
-    void navigateToDetails() {
-      context.pushNamed(
-        'catalog_item_details',
-        pathParameters: {
-          'categoryId': item.categoryId,
-          'itemId': item.id,
-        },
-      );
-    }
-
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -432,54 +423,16 @@ class _ProductCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Product Image (Tappable)
+          // Product Image
           Expanded(
             flex: 5,
-            child: GestureDetector(
-              onTap: navigateToDetails,
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(12.r),
-                    topRight: Radius.circular(12.r),
-                  ),
-                ),
-                child: item.imageAssetPath != null
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(12.r),
-                          topRight: Radius.circular(12.r),
-                        ),
-                        child: item.imageAssetPath!.endsWith('.svg')
-                            ? SvgPicture.asset(
-                                item.imageAssetPath!,
-                                fit: BoxFit.cover,
-                                placeholderBuilder: (context) => Icon(
-                                  Icons.inventory_2_outlined,
-                                  size: 48.sp,
-                                  color: Colors.grey.shade400,
-                                ),
-                              )
-                            : Image.asset(
-                                item.imageAssetPath!,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) => Icon(
-                                  Icons.inventory_2_outlined,
-                                  size: 48.sp,
-                                  color: Colors.grey.shade400,
-                                ),
-                              ),
-                      )
-                    : Center(
-                        child: Icon(
-                          Icons.inventory_2_outlined,
-                          size: 48.sp,
-                          color: Colors.grey.shade400,
-                        ),
-                      ),
+            child: ProductImageWidget(
+              item: item,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(12.r),
+                topRight: Radius.circular(12.r),
               ),
+              fit: BoxFit.cover,
             ),
           ),
 
@@ -492,20 +445,17 @@ class _ProductCard extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Product Name (Tappable)
-                  GestureDetector(
-                    onTap: navigateToDetails,
-                    child: Text(
-                      item.name,
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF0C0C0C),
-                        fontFamily: 'Poppins',
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                  // Product Name
+                  Text(
+                    item.name,
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF0C0C0C),
+                      fontFamily: 'Poppins',
                     ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   SizedBox(height: 4.h),
 
@@ -530,7 +480,7 @@ class _ProductCard extends ConsumerWidget {
                         ),
                       ),
                       Text(
-                        '₹${(item.price ?? 0.0).toStringAsFixed(0)}',
+                        '₹${(item.price).toStringAsFixed(0)}',
                         style: TextStyle(
                           fontSize: 12.sp,
                           fontWeight: FontWeight.w600,
