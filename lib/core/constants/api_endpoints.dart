@@ -44,16 +44,6 @@ class ApiEndpoints {
   static String updateProspects(String id) => '/prospects/$id';
   static String deleteProspects(String id) => '/parties/$id';
   static String transferToProspect(String id) => '/prospects/$id/transfer';
-
-  // Sites Endpoints (Final)
-  static const String sites = '/sites';
-  static String siteById(String id) => '/sites/$id';
-  static const String createSite = '/sites';
-  static String updateSite(String id) => '/sites/$id';
-  static String deleteSite(String id) => '/sites/$id';
-  static String uploadSiteImage(String siteId) => '/sites/$siteId/images';
-  static String deleteSiteImage(String siteId, int imageNumber) => '/sites/$siteId/images/$imageNumber';
-
   // File Upload
   static const String uploadImage = '/upload/image';
   static const String uploadFile = '/upload/file';

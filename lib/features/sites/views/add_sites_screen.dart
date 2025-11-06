@@ -145,23 +145,21 @@ class _AddSitesScreenState extends ConsumerState<AddSitesScreen> {
 
         // Create request object
         final createRequest = CreateSiteRequest(
-          siteName: _nameController.text.trim(),
-          ownerName: _managerNameController.text.trim(),
+          name: _nameController.text.trim(),
+          managerName: _managerNameController.text.trim(),
+          phoneNumber: _phoneController.text.trim(),
+          email: _emailController.text.trim().isEmpty
+              ? null
+              : _emailController.text.trim(),
           dateJoined: _dateJoinedController.text.trim().isEmpty
               ? DateFormat('yyyy-MM-dd').format(DateTime.now())
               : _dateJoinedController.text.trim(),
-          contact: CreateSiteContact(
-            phone: _phoneController.text.trim(),
-            email: _emailController.text.trim().isEmpty
-                ? null
-                : _emailController.text.trim(),
-          ),
           location: CreateSiteLocation(
             address: _addressController.text.trim(),
             latitude: double.parse(_latitudeController.text.trim()),
             longitude: double.parse(_longitudeController.text.trim()),
           ),
-          description: _notesController.text.trim().isEmpty
+          notes: _notesController.text.trim().isEmpty
               ? null
               : _notesController.text.trim(),
         );
@@ -392,16 +390,16 @@ class _AddSitesScreenState extends ConsumerState<AddSitesScreen> {
                       ),
                       SizedBox(height: 16.h),
 
-                      // Owner Name
+                      // Manager Name
                       PrimaryTextField(
-                        hintText: "Owner Name",
+                        hintText: "Manager Name",
                         controller: _managerNameController,
                         prefixIcon: Icons.person_outline,
                         hasFocusBorder: true,
                         textInputAction: TextInputAction.next,
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Owner name is required';
+                            return 'Manager name is required';
                           }
                           return null;
                         },
@@ -464,7 +462,7 @@ class _AddSitesScreenState extends ConsumerState<AddSitesScreen> {
                       ),
                       SizedBox(height: 16.h),
 
-                      // Location Picker with Google Maps (includes address search)
+                      // Location Picker with Google Maps
                       LocationPickerWidget(
                         addressController: _addressController,
                         latitudeController: _latitudeController,
@@ -475,16 +473,13 @@ class _AddSitesScreenState extends ConsumerState<AddSitesScreen> {
                         enabled: true,
                         addressValidator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Full address is required';
+                            return 'Address is required';
                           }
                           return null;
                         },
                         onLocationSelected: (location, address) {
-                          // Store full formatted address and coordinates
                           if (mounted) {
                             setState(() {
-                              // Store the full formatted address for backend
-                              _addressController.text = address;
                               _latitudeController.text =
                                   location.latitude.toStringAsFixed(6);
                               _longitudeController.text =

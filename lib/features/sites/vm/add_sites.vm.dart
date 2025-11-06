@@ -1,8 +1,5 @@
 
-import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:sales_sphere/core/constants/api_endpoints.dart';
-import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/features/sites/models/sites.model.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 
@@ -10,7 +7,7 @@ part 'add_sites.vm.g.dart';
 
 // ============================================================================
 // ADD SITE VIEW MODEL
-// Handles: Create new site with backend API integration
+// Handles: Create new site (Local only - No API)
 // ============================================================================
 
 @riverpod
@@ -20,50 +17,24 @@ class AddSiteViewModel extends _$AddSiteViewModel {
     // No initial state needed
   }
 
-  // CREATE NEW SITE (API INTEGRATION)
+  // CREATE NEW SITE (LOCAL MOCK - NO API)
   Future<Sites> createSite(CreateSiteRequest newSiteRequest) async {
     try {
-      AppLogger.i('Creating new site: ${newSiteRequest.siteName}');
+      AppLogger.i('Creating new site: ${newSiteRequest.name}');
 
-      // Get Dio instance
-      final dio = ref.read(dioClientProvider);
+      // Simulate network delay
+      await Future.delayed(const Duration(milliseconds: 800));
 
-      // Make API call
-      final response = await dio.post(
-        ApiEndpoints.createSite,
-        data: newSiteRequest.toJson(),
-      );
+      // Generate a unique ID (in real app, this comes from API)
+      final newId = 's${DateTime.now().millisecondsSinceEpoch}';
 
-      AppLogger.d('API Response: ${response.data}');
+      // Convert request to Sites model
+      final createdSite = newSiteRequest.toSites(newId);
 
-      // Parse response
-      final createSiteResponse = CreateSiteResponse.fromJson(response.data);
-
-      if (!createSiteResponse.success) {
-        throw Exception(createSiteResponse.message);
-      }
-
-      // Convert to Sites model
-      final createdSite = createSiteResponse.toSites();
-
-      AppLogger.i('✅ Site created successfully: ${createdSite.name}');
+      AppLogger.i('✅ Site created successfully (local): ${createdSite.name}');
 
       // Return the created site - screen will add it to the list
       return createdSite;
-    } on DioException catch (e) {
-      AppLogger.e('❌ DioException creating site: ${e.message}');
-      AppLogger.e('Response data: ${e.response?.data}');
-
-      // Extract error message from response if available
-      String errorMessage = 'Failed to create site';
-      if (e.response?.data != null) {
-        final data = e.response!.data;
-        if (data is Map<String, dynamic>) {
-          errorMessage = data['message'] ?? errorMessage;
-        }
-      }
-
-      throw Exception(errorMessage);
     } catch (e, stackTrace) {
       AppLogger.e('❌ Error creating site: $e');
       AppLogger.e('Stack trace: $stackTrace');
