@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sales_sphere/core/providers/user_controller.dart';
+import 'package:go_router/go_router.dart';
 
 
 
@@ -134,30 +135,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           SizedBox(width: 12.w),
 
           // User Avatar (Your code for this was perfect)
-          Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: AppColors.textOrange,
-                width: 2.5,
-              ),
-            ),
-            child: CircleAvatar(
-              radius: 26.r,
-              backgroundColor: AppColors.primary,
-              backgroundImage: user?.avatarUrl != null
-                  ? NetworkImage(user!.avatarUrl!)
-                  : null,
-              child: user?.avatarUrl == null
-                  ? Text(
-                _getInitials(user?.name ?? 'User'),
-                style: TextStyle(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textWhite,
+          GestureDetector(
+            onTap: () => context.pushNamed('profile'),
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppColors.textOrange,
+                  width: 2.5,
                 ),
-              )
-                  : null,
+              ),
+              child: CircleAvatar(
+                radius: 26.r,
+                backgroundColor: AppColors.primary,
+                backgroundImage: user?.avatarUrl != null
+                    ? NetworkImage(user!.avatarUrl!)
+                    : null,
+                child: user?.avatarUrl == null
+                    ? Text(
+                  _getInitials(user?.name ?? 'User'),
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textWhite,
+                  ),
+                )
+                    : null,
+              ),
             ),
           ),
         ],
