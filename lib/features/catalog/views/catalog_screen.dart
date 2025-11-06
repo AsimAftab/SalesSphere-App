@@ -8,14 +8,14 @@ import 'package:sales_sphere/features/catalog/vm/catalog.vm.dart';
 import 'package:sales_sphere/features/catalog/vm/catalog_item.vm.dart';
 import 'package:sales_sphere/core/providers/order_controller.dart';
 
-class CatalogScreenRedesigned extends ConsumerStatefulWidget {
-  const CatalogScreenRedesigned({super.key});
+class CatalogScreen extends ConsumerStatefulWidget {
+  const CatalogScreen({super.key});
 
   @override
-  ConsumerState<CatalogScreenRedesigned> createState() => _CatalogScreenRedesignedState();
+  ConsumerState<CatalogScreen> createState() => _CatalogScreenState();
 }
 
-class _CatalogScreenRedesignedState extends ConsumerState<CatalogScreenRedesigned> {
+class _CatalogScreenState extends ConsumerState<CatalogScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   final ScrollController _categoryScrollController = ScrollController();

@@ -10,6 +10,9 @@ import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/custom_date_picker.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
 import 'package:sales_sphere/core/providers/order_controller.dart';
+import 'package:sales_sphere/features/invoice/models/invoice.models.dart';
+import 'package:sales_sphere/features/invoice/vm/invoice.vm.dart';
+import 'package:intl/intl.dart';
 
 class InvoiceScreen extends ConsumerStatefulWidget {
   const InvoiceScreen({super.key});
@@ -154,29 +157,43 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                     ),
                   ),
                   SizedBox(width: 12.w),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Invoice',
-                        style: TextStyle(
-                          fontSize: 24.sp,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF202020),
-                          fontFamily: 'Poppins',
-                        ),
-                      ),
-                      if (orderItems.isNotEmpty)
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text(
-                          '${orderItems.length} ${orderItems.length == 1 ? 'item' : 'items'} • ₹${totalCost.toStringAsFixed(2)}',
+                          'Invoice',
                           style: TextStyle(
-                            fontSize: 13.sp,
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 24.sp,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF202020),
                             fontFamily: 'Poppins',
                           ),
                         ),
-                    ],
+                        if (orderItems.isNotEmpty)
+                          Text(
+                            '${orderItems.length} ${orderItems.length == 1 ? 'item' : 'items'} • ₹${totalCost.toStringAsFixed(2)}',
+                            style: TextStyle(
+                              fontSize: 13.sp,
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w600,
+                              fontFamily: 'Poppins',
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  // Invoice History Icon
+                  IconButton(
+                    icon: Icon(
+                      Icons.history_rounded,
+                      color: AppColors.primary,
+                      size: 28.sp,
+                    ),
+                    onPressed: () {
+                      context.push('/invoice/history');
+                    },
+                    padding: EdgeInsets.all(8.w),
                   ),
                 ],
               ),
@@ -429,37 +446,93 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                           label: 'Generate Invoice',
                           onPressed: canGenerate
                               ? () {
-                            // TODO: Implement actual invoice generation API call
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  'Invoice generated for ${selectedParty!.name} with ${orderItems.length} items!',
+                            try {
+                              // Generate invoice number
+                              final invoiceNumber = ref.read(generateInvoiceNumberProvider);
+
+                              // Parse delivery date (format: 'dd MMM yyyy' from CustomDatePicker)
+                              final deliveryDate = DateFormat('dd MMM yyyy').parse(_deliveryDateController.text);
+
+                              // Create invoice items from order items
+                              final invoiceItems = orderItems.map((orderItem) {
+                                return InvoiceItem(
+                                  productId: orderItem.product.id,
+                                  productName: orderItem.product.name,
+                                  quantity: orderItem.quantity,
+                                  unitPrice: orderItem.setPrice,
+                                  subtotal: orderItem.subtotal,
+                                  imageAssetPath: orderItem.product.imageAssetPath,
+                                );
+                              }).toList();
+
+                              // Create the invoice
+                              final invoice = Invoice(
+                                id: 'INV-${DateTime.now().millisecondsSinceEpoch}',
+                                invoiceNumber: invoiceNumber,
+                                partyId: selectedParty!.id,
+                                partyName: selectedParty!.name,
+                                ownerName: selectedParty!.ownerName,
+                                deliveryDate: deliveryDate,
+                                createdAt: DateTime.now(),
+                                subtotal: subtotalCost,
+                                discountPercentage: _discountPercentage,
+                                discountAmount: discountAmount,
+                                total: totalCost,
+                                items: invoiceItems,
+                              );
+
+                              // Add invoice to history
+                              ref.read(invoiceHistoryProvider.notifier).addInvoice(invoice);
+
+                              // Show success message
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Invoice $invoiceNumber generated for ${selectedParty!.name}!',
+                                  ),
+                                  backgroundColor: Colors.green,
+                                  action: SnackBarAction(
+                                    label: 'View',
+                                    textColor: Colors.white,
+                                    onPressed: () {
+                                      context.push('/invoice/history');
+                                    },
+                                  ),
                                 ),
-                                backgroundColor: Colors.green,
-                              ),
-                            );
+                              );
 
-                            // Clear the order after invoice generation
-                            ref.read(orderControllerProvider.notifier).clearOrder();
+                              // Clear the order after invoice generation
+                              ref.read(orderControllerProvider.notifier).clearOrder();
 
-                            // Clear form fields
-                            setState(() {
-                              selectedParty = null;
-                              _partySearchController.clear();
-                              _ownerNameController.clear();
-                              _deliveryDateController.clear();
-                              _searchQuery = '';
-                              // Clear price controllers
-                              for (var controller in _priceControllers.values) {
-                                controller.dispose();
-                              }
-                              _priceControllers.clear();
-                              // Clear quantity controllers
-                              for (var controller in _quantityControllers.values) {
-                                controller.dispose();
-                              }
-                              _quantityControllers.clear();
-                            });
+                              // Clear form fields
+                              setState(() {
+                                selectedParty = null;
+                                _partySearchController.clear();
+                                _ownerNameController.clear();
+                                _deliveryDateController.clear();
+                                _discountController.clear();
+                                _discountPercentage = 0.0;
+                                _searchQuery = '';
+                                // Clear price controllers
+                                for (var controller in _priceControllers.values) {
+                                  controller.dispose();
+                                }
+                                _priceControllers.clear();
+                                // Clear quantity controllers
+                                for (var controller in _quantityControllers.values) {
+                                  controller.dispose();
+                                }
+                                _quantityControllers.clear();
+                              });
+                            } catch (e) {
+                              // Show error message
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Error generating invoice: ${e.toString()}'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
                           }
                               : null,
                           size: ButtonSize.large,
@@ -1121,66 +1194,88 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
           party.fullAddress.toLowerCase().contains(query);
     }).toList();
 
-    return Column(
-      children: [
-        // Search TextField
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12.r),
-          ),
-          child: TextFormField(
-            controller: _partySearchController,
-            focusNode: _partySearchFocusNode,
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 15.sp,
-              fontFamily: 'Poppins',
-              fontWeight: FontWeight.w400,
-            ),
-            onChanged: (value) {
-              setState(() {
-                _searchQuery = value;
-                _showPartyDropdown = true;
-                if (value.isEmpty) {
-                  selectedParty = null;
-                  _ownerNameController.clear();
-                }
-              });
-            },
-            onTap: () {
-              setState(() {
-                _showPartyDropdown = true;
-              });
-            },
-            decoration: InputDecoration(
-              contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-              hintText: 'Party Name',
-              hintStyle: TextStyle(
-                color: AppColors.textHint,
-                fontSize: 14.sp,
-                fontFamily: 'Poppins',
-                fontWeight: FontWeight.w400,
+    return GestureDetector(
+      onTap: () {
+        // Close dropdown when tapping outside
+        if (_showPartyDropdown) {
+          setState(() {
+            _showPartyDropdown = false;
+          });
+          _partySearchFocusNode.unfocus();
+        }
+      },
+      child: Column(
+        children: [
+          // Search TextField
+          GestureDetector(
+            onTap: () {}, // Prevent parent GestureDetector from triggering
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12.r),
               ),
-              prefixIcon: Icon(
-                Icons.business_outlined,
-                color: AppColors.textSecondary,
-                size: 20.sp,
-              ),
-              suffixIcon: _partySearchController.text.isNotEmpty
-                  ? IconButton(
-                icon: Icon(
-                  Icons.clear,
-                  color: Colors.grey.shade600,
-                  size: 20.sp,
+              child: TextFormField(
+                controller: _partySearchController,
+                focusNode: _partySearchFocusNode,
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 15.sp,
+                  fontFamily: 'Poppins',
+                  fontWeight: FontWeight.w400,
                 ),
-                onPressed: _clearPartySelection,
-              )
-                  : Icon(
-                _showPartyDropdown ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                color: Colors.grey.shade600,
-                size: 20.sp,
-              ),
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value;
+                    _showPartyDropdown = true;
+                    if (value.isEmpty) {
+                      selectedParty = null;
+                      _ownerNameController.clear();
+                    }
+                  });
+                },
+                onTap: () {
+                  setState(() {
+                    _showPartyDropdown = true;
+                  });
+                },
+                decoration: InputDecoration(
+                  contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+                  hintText: 'Party Name',
+                  hintStyle: TextStyle(
+                    color: AppColors.textHint,
+                    fontSize: 14.sp,
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w400,
+                  ),
+                  prefixIcon: Icon(
+                    Icons.business_outlined,
+                    color: AppColors.textSecondary,
+                    size: 20.sp,
+                  ),
+                  suffixIcon: _partySearchController.text.isNotEmpty
+                      ? IconButton(
+                    icon: Icon(
+                      Icons.clear,
+                      color: Colors.grey.shade600,
+                      size: 20.sp,
+                    ),
+                    onPressed: _clearPartySelection,
+                  )
+                      : IconButton(
+                    icon: Icon(
+                      _showPartyDropdown ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                      color: Colors.grey.shade600,
+                      size: 20.sp,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _showPartyDropdown = !_showPartyDropdown;
+                        if (!_showPartyDropdown) {
+                          _partySearchFocusNode.unfocus();
+                        }
+                      });
+                    },
+                  ),
               filled: true,
               fillColor: AppColors.surface,
               border: OutlineInputBorder(
@@ -1206,11 +1301,14 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
               ),
             ),
           ),
-        ),
+            ),
+          ),
 
-        // Dropdown List
-        if (_showPartyDropdown && parties.isNotEmpty)
-          Container(
+          // Dropdown List
+          if (_showPartyDropdown && parties.isNotEmpty)
+            GestureDetector(
+              onTap: () {}, // Prevent parent GestureDetector from triggering
+              child: Container(
             margin: EdgeInsets.only(top: 8.h),
             constraints: BoxConstraints(maxHeight: 200.h),
             decoration: BoxDecoration(
@@ -1307,8 +1405,10 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                 );
               },
             ),
-          ),
-      ],
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

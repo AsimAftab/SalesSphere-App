@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sales_sphere/features/Detail-Added/view/detail_added.dart';
-import 'package:sales_sphere/features/catalog/views/catalog_item_list_screen.dart';
 import 'package:sales_sphere/features/catalog/views/catalog_item_details_screen.dart';
 import 'package:sales_sphere/widget/main_shell.dart';
 import 'package:sales_sphere/features/auth/views/login_screen.dart';
@@ -11,6 +10,7 @@ import 'package:sales_sphere/features/home/views/home_screen.dart';
 import 'package:sales_sphere/features/catalog/views/catalog_screen.dart';
 import 'package:sales_sphere/features/catalog/views/category_selection_screen.dart';
 import 'package:sales_sphere/features/invoice/views/invoice_screen.dart';
+import 'package:sales_sphere/features/invoice/views/invoice_history_screen.dart';
 import 'package:sales_sphere/features/parties/views/parties_screen.dart';
 import 'package:sales_sphere/features/parties/views/edit_party_details_screen.dart';
 import 'package:sales_sphere/features/parties/views/add_party_screen.dart';
@@ -344,7 +344,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: '/catalog',
             name: 'catalog',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: CatalogScreenRedesigned(),
+              child: CatalogScreen(),
             ),
             routes: [
               GoRoute(
@@ -355,26 +355,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                 ),
               ),
               GoRoute(
-                path: ':categoryId',
-                name: 'catalog_items',
+                path: ':categoryId/item/:itemId',
+                name: 'catalog_item_details',
                 builder: (context, state) {
-                  final categoryId = state.pathParameters['categoryId'] ?? 'error';
-                  final categoryName = state.extra as String? ?? 'Category Items';
-                  return CategoryItemListScreen(
-                    categoryId: categoryId,
-                    categoryName: categoryName,
-                  );
+                  final itemId = state.pathParameters['itemId'] ?? 'error';
+                  return CatalogItemDetailsScreen(itemId: itemId);
                 },
-                routes: [
-                  GoRoute(
-                    path: 'item/:itemId',
-                    name: 'catalog_item_details',
-                    builder: (context, state) {
-                      final itemId = state.pathParameters['itemId'] ?? 'error';
-                      return CatalogItemDetailsScreen(itemId: itemId);
-                    },
-                  ),
-                ],
               ),
             ],
           ),
@@ -386,6 +372,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             pageBuilder: (context, state) => const NoTransitionPage(
               child: InvoiceScreen(),
             ),
+            routes: [
+              // Invoice History
+              GoRoute(
+                path: 'history',
+                name: 'invoice_history',
+                builder: (context, state) => const InvoiceHistoryScreen(),
+              ),
+            ],
           ),
 
           // Parties Tab (Keep for backwards compatibility)
