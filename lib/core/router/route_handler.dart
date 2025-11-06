@@ -9,6 +9,7 @@ import 'package:sales_sphere/features/auth/views/login_screen.dart';
 import 'package:sales_sphere/features/auth/views/forgot_password_screen.dart';
 import 'package:sales_sphere/features/home/views/home_screen.dart';
 import 'package:sales_sphere/features/catalog/views/catalog_screen.dart';
+import 'package:sales_sphere/features/catalog/views/category_selection_screen.dart';
 import 'package:sales_sphere/features/invoice/views/invoice_screen.dart';
 import 'package:sales_sphere/features/parties/views/parties_screen.dart';
 import 'package:sales_sphere/features/parties/views/edit_party_details_screen.dart';
@@ -343,9 +344,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: '/catalog',
             name: 'catalog',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: CatalogScreen(),
+              child: CatalogScreenRedesigned(),
             ),
             routes: [
+              GoRoute(
+                path: 'select-category',
+                name: 'category_selection',
+                pageBuilder: (context, state) => const NoTransitionPage(
+                  child: CategorySelectionScreen(),
+                ),
+              ),
               GoRoute(
                 path: ':categoryId',
                 name: 'catalog_items',
