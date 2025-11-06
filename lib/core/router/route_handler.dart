@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sales_sphere/features/Detail-Added/view/detail_added.dart';
-import 'package:sales_sphere/features/catalog/views/catalog_item_details_screen.dart';
+
 import 'package:sales_sphere/widget/main_shell.dart';
 import 'package:sales_sphere/features/auth/views/login_screen.dart';
 import 'package:sales_sphere/features/auth/views/forgot_password_screen.dart';
@@ -32,7 +32,6 @@ import 'package:sales_sphere/features/settings/views/settings_screen.dart';
 import 'package:sales_sphere/features/settings/views/about_screen.dart';
 import 'package:sales_sphere/features/settings/views/terms_and_conditions_screen.dart';
 import 'package:sales_sphere/features/auth/models/login.models.dart';
-
 import '../providers/user_controller.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
@@ -55,13 +54,23 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final isGoingToForgotPassword = requestedPath == '/forgot-password';
       final isGoingToCatalog = requestedPath.startsWith('/catalog');
       final isGoingToParties = requestedPath.startsWith('/parties');
-      final isGoingToDirectory = requestedPath.startsWith('/directory') || requestedPath.startsWith('/directory/prospects-list');
-      final isGoingToEditParty = requestedPath.startsWith('/edit_party_details_screen');
+      final isGoingToDirectory =
+          requestedPath.startsWith('/directory') ||
+          requestedPath.startsWith('/directory/prospects-list');
+      final isGoingToEditParty = requestedPath.startsWith(
+        '/edit_party_details_screen',
+      );
       final isGoingToDetailAdded = requestedPath == '/detail-added';
       final isGoingToProfile = requestedPath == '/profile';
       final isGoingToAttendance = requestedPath.startsWith('/attendance');
-      final isGoingToProspects = requestedPath.startsWith('/prospects') || requestedPath.startsWith('/add-prospect') || requestedPath.startsWith('/edit-prospect');
-      final isGoingToSites = requestedPath.startsWith('/sites') || requestedPath.startsWith('/add-site') || requestedPath.startsWith('/edit-site');
+      final isGoingToProspects =
+          requestedPath.startsWith('/prospects') ||
+          requestedPath.startsWith('/add-prospect') ||
+          requestedPath.startsWith('/edit-prospect');
+      final isGoingToSites =
+          requestedPath.startsWith('/sites') ||
+          requestedPath.startsWith('/add-site') ||
+          requestedPath.startsWith('/edit-site');
       final isGoingToAbout = requestedPath == '/about';
       final isGoingToTerms = requestedPath == '/terms-and-conditions';
 
@@ -244,10 +253,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             final extras = state.extra as Map<String, dynamic>;
             siteName = extras['siteName'] as String? ?? 'Site';
           }
-          return SitesImagesScreen(
-            siteId: siteId,
-            siteName: siteName,
-          );
+          return SitesImagesScreen(siteId: siteId, siteName: siteName);
         },
       ),
       GoRoute(
@@ -263,10 +269,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             final extras = state.extra as Map<String, dynamic>;
             siteName = extras['siteName'] as String? ?? 'Site';
           }
-          return SitesImagesScreen(
-            siteId: siteId,
-            siteName: siteName,
-          );
+          return SitesImagesScreen(siteId: siteId, siteName: siteName);
         },
       ),
 
@@ -318,60 +321,45 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             currentIndex = 1;
           } else if (location.startsWith('/invoice')) {
             currentIndex = 2;
-          } else if (location.startsWith('/parties') || location.startsWith('/directory')) {
+          } else if (location.startsWith('/parties') ||
+              location.startsWith('/directory')) {
             currentIndex = 3;
           } else if (location.startsWith('/settings')) {
             currentIndex = 4;
           }
 
-          return MainShell(
-            currentIndex: currentIndex,
-            child: child,
-          );
+          return MainShell(currentIndex: currentIndex, child: child);
         },
         routes: [
           // Home Tab
           GoRoute(
             path: '/home',
             name: 'home',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: HomeScreen(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: HomeScreen()),
           ),
 
           // Catalog Tab
           GoRoute(
             path: '/catalog',
             name: 'catalog',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: CatalogScreen(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: CatalogScreen()),
             routes: [
               GoRoute(
                 path: 'select-category',
                 name: 'category_selection',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: CategorySelectionScreen(),
-                ),
-              ),
-              GoRoute(
-                path: ':categoryId/item/:itemId',
-                name: 'catalog_item_details',
-                builder: (context, state) {
-                  final itemId = state.pathParameters['itemId'] ?? 'error';
-                  return CatalogItemDetailsScreen(itemId: itemId);
-                },
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: CategorySelectionScreen()),
               ),
             ],
           ),
-
           // Invoice Tab
           GoRoute(
             path: '/invoice',
             name: 'invoice',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: InvoiceScreen(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: InvoiceScreen()),
             routes: [
               // Invoice History
               GoRoute(
@@ -386,23 +374,20 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/parties',
             name: 'parties',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: PartiesScreen(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: PartiesScreen()),
           ),
 
           // Settings Tab
           GoRoute(
             path: '/settings',
             name: 'settings',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: SettingsScreen(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: SettingsScreen()),
           ),
         ],
       ),
     ],
-
     errorBuilder: (context, state) => ErrorPage(error: state.error),
   );
 });
@@ -412,6 +397,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
 // ========================================
 class ErrorPage extends StatelessWidget {
   final Object? error;
+
   const ErrorPage({super.key, this.error});
 
   @override
@@ -438,14 +424,12 @@ class ErrorPage extends StatelessWidget {
 /// Notifier that listens to user auth state changes and refreshes GoRouter
 class _UserAuthNotifier extends ChangeNotifier {
   final Ref _ref;
+
   _UserAuthNotifier(this._ref) {
     // Listen to user controller changes
-    _ref.listen<User?>(
-      userControllerProvider,
-          (previous, next) {
-        // Notify GoRouter to refresh when user state changes
-        notifyListeners();
-      },
-    );
+    _ref.listen<User?>(userControllerProvider, (previous, next) {
+      // Notify GoRouter to refresh when user state changes
+      notifyListeners();
+    });
   }
 }
