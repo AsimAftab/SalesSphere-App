@@ -105,7 +105,7 @@ class _SitesImagesViewerScreenState
       try {
         final viewModel = ref.read(siteImagesViewModelProvider.notifier);
         final imageToDelete = widget.images[_currentIndex];
-        await viewModel.deleteImage(imageToDelete.id, widget.siteId);
+        await viewModel.deleteImage(imageToDelete.id, widget.siteId, imageToDelete.imageOrder);
 
         // Refresh the images list
         ref.invalidate(siteImagesProvider(widget.siteId));
@@ -161,8 +161,13 @@ class _SitesImagesViewerScreenState
             child: PhotoViewGallery.builder(
               scrollPhysics: const BouncingScrollPhysics(),
               builder: (BuildContext context, int index) {
+                final imageUrl = widget.images[index].imageUrl;
+                final isNetworkImage = imageUrl.startsWith('http') || imageUrl.startsWith('https');
+
                 return PhotoViewGalleryPageOptions(
-                  imageProvider: FileImage(File(widget.images[index].imageUrl)),
+                  imageProvider: isNetworkImage
+                      ? NetworkImage(imageUrl)
+                      : FileImage(File(imageUrl)) as ImageProvider,
                   initialScale: PhotoViewComputedScale.contained,
                   minScale: PhotoViewComputedScale.contained,
                   maxScale: PhotoViewComputedScale.covered * 4,

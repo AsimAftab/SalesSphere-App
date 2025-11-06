@@ -1,6 +1,9 @@
 
+import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sales_sphere/core/constants/api_endpoints.dart';
+import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/features/sites/models/sites.model.dart';
 import 'package:sales_sphere/features/sites/vm/sites.vm.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
@@ -8,7 +11,7 @@ import 'package:sales_sphere/core/utils/logger.dart';
 part 'edit_site_details.vm.g.dart';
 
 // ============================================================================
-// STANDALONE PROVIDER FOR SITE DETAILS
+// STANDALONE PROVIDER FOR SITE DETAILS (GET BY ID)
 // ============================================================================
 
 @riverpod
@@ -16,29 +19,40 @@ Future<SiteDetails?> siteById(Ref ref, String siteId) async {
   try {
     AppLogger.i('🔄 Fetching site details for ID: $siteId');
 
-    await Future.delayed(const Duration(milliseconds: 800));
+    // Get Dio instance
+    final dio = ref.read(dioClientProvider);
 
-    final allSites = await ref.watch(siteViewModelProvider.future);
+    // Make API call
+    final response = await dio.get(ApiEndpoints.siteById(siteId));
 
-    AppLogger.i('Total sites available: ${allSites.length}');
-    AppLogger.i('Looking for site with ID: $siteId');
+    AppLogger.d('API Response: ${response.data}');
 
-    final site = allSites.firstWhere(
-          (s) {
-        AppLogger.d('Checking site: ${s.id} (${s.name})');
-        return s.id == siteId;
-      },
-      orElse: () {
-        AppLogger.e('❌ Site not found with ID: $siteId');
-        AppLogger.e('Available IDs: ${allSites.map((s) => s.id).join(", ")}');
-        throw Exception('Site not found with ID: $siteId');
-      },
-    );
+    // Parse response
+    final getSiteResponse = GetSiteResponse.fromJson(response.data);
 
-    final siteDetails = SiteDetails.fromSites(site);
+    if (!getSiteResponse.success) {
+      throw Exception('Failed to fetch site details');
+    }
+
+    // Convert to SiteDetails model
+    final siteDetails = getSiteResponse.toSiteDetails();
 
     AppLogger.i('✅ Fetched site details for: ${siteDetails.name}');
     return siteDetails;
+  } on DioException catch (e) {
+    AppLogger.e('❌ DioException fetching site details: ${e.message}');
+    AppLogger.e('Response data: ${e.response?.data}');
+
+    // Extract error message from response if available
+    String errorMessage = 'Failed to fetch site details';
+    if (e.response?.data != null) {
+      final data = e.response!.data;
+      if (data is Map<String, dynamic>) {
+        errorMessage = data['message'] ?? errorMessage;
+      }
+    }
+
+    throw Exception(errorMessage);
   } catch (e, stackTrace) {
     AppLogger.e('❌ Error fetching site $siteId: $e');
     AppLogger.e('Stack trace: $stackTrace');
@@ -47,35 +61,70 @@ Future<SiteDetails?> siteById(Ref ref, String siteId) async {
 }
 
 // ============================================================================
-// UPDATE SITE HELPER FUNCTION
+// UPDATE SITE HELPER FUNCTION (PUT)
 // ============================================================================
 
 Future<void> updateSite(WidgetRef ref, SiteDetails updatedSiteDetails) async {
   try {
     AppLogger.i('Updating site: ${updatedSiteDetails.name} (ID: ${updatedSiteDetails.id})');
 
-    await Future.delayed(const Duration(milliseconds: 800));
+    // Get Dio instance
+    final dio = ref.read(dioClientProvider);
 
-    final updatedSite = Sites(
-      id: updatedSiteDetails.id,
-      name: updatedSiteDetails.name,
-      location: updatedSiteDetails.fullAddress,
-      ownerName: updatedSiteDetails.managerName,
-      phoneNumber: updatedSiteDetails.phoneNumber,
-      email: updatedSiteDetails.email,
-      panVatNumber: null,
-      latitude: updatedSiteDetails.latitude,
-      longitude: updatedSiteDetails.longitude,
-      notes: updatedSiteDetails.notes,
-      dateJoined: updatedSiteDetails.dateJoined,
-      isActive: updatedSiteDetails.isActive,
-      createdAt: updatedSiteDetails.createdAt,
+    // Create update request
+    final updateRequest = UpdateSiteRequest.fromSiteDetails(updatedSiteDetails);
+
+    // Make API call
+    final response = await dio.put(
+      ApiEndpoints.updateSite(updatedSiteDetails.id),
+      data: updateRequest.toJson(),
     );
 
-    // Use the updateSite method from the ViewModel
+    AppLogger.d('API Response: ${response.data}');
+
+    // Parse response
+    final updateSiteResponse = UpdateSiteResponse.fromJson(response.data);
+
+    if (!updateSiteResponse.success) {
+      throw Exception(updateSiteResponse.message);
+    }
+
+    // Convert response to Sites model and update local state
+    final updatedSite = Sites(
+      id: updateSiteResponse.data.id,
+      name: updateSiteResponse.data.siteName,
+      location: updateSiteResponse.data.location.address,
+      ownerName: updateSiteResponse.data.ownerName,
+      phoneNumber: updateSiteResponse.data.contact.phone,
+      email: updateSiteResponse.data.contact.email,
+      panVatNumber: null,
+      latitude: updateSiteResponse.data.location.latitude,
+      longitude: updateSiteResponse.data.location.longitude,
+      notes: updateSiteResponse.data.description,
+      dateJoined: updateSiteResponse.data.dateJoined,
+      isActive: true,
+      createdAt: updateSiteResponse.data.createdAt,
+      updatedAt: updateSiteResponse.data.updatedAt,
+    );
+
+    // Use the updateSite method from the ViewModel to update local list
     ref.read(siteViewModelProvider.notifier).updateSite(updatedSite);
 
-    AppLogger.i('✅ Site updated successfully (local)');
+    AppLogger.i('✅ Site updated successfully: ${updatedSite.name}');
+  } on DioException catch (e) {
+    AppLogger.e('❌ DioException updating site: ${e.message}');
+    AppLogger.e('Response data: ${e.response?.data}');
+
+    // Extract error message from response if available
+    String errorMessage = 'Failed to update site';
+    if (e.response?.data != null) {
+      final data = e.response!.data;
+      if (data is Map<String, dynamic>) {
+        errorMessage = data['message'] ?? errorMessage;
+      }
+    }
+
+    throw Exception(errorMessage);
   } catch (e, stackTrace) {
     AppLogger.e('❌ Error updating site: $e');
     AppLogger.e('Stack trace: $stackTrace');
@@ -98,12 +147,12 @@ class SiteValidators {
     return null;
   }
 
-  static String? validateManagerName(String? value) {
+  static String? validateOwnerName(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return 'Manager name is required';
+      return 'Owner name is required';
     }
     if (value.trim().length < 2) {
-      return 'Manager name must be at least 2 characters';
+      return 'Owner name must be at least 2 characters';
     }
     return null;
   }
