@@ -30,9 +30,19 @@ class _AttendanceHistoryScreenState extends ConsumerState<AttendanceHistoryScree
   }
 
   void _nextMonth() {
-    setState(() {
-      _selectedMonth = DateTime(_selectedMonth.year, _selectedMonth.month + 1);
-    });
+    final now = DateTime.now();
+    final currentMonth = DateTime(now.year, now.month);
+
+    // Check if the CURRENT selected month is already at the current month
+    final selectedMonthNormalized = DateTime(_selectedMonth.year, _selectedMonth.month);
+
+    // Only allow going forward if we're NOT already at the current month
+    if (selectedMonthNormalized.year < currentMonth.year ||
+        (selectedMonthNormalized.year == currentMonth.year && selectedMonthNormalized.month < currentMonth.month)) {
+      setState(() {
+        _selectedMonth = DateTime(_selectedMonth.year, _selectedMonth.month + 1);
+      });
+    }
   }
 
   @override
@@ -94,6 +104,14 @@ class _AttendanceHistoryScreenState extends ConsumerState<AttendanceHistoryScree
   }
 
   Widget _buildMonthSelector() {
+    final now = DateTime.now();
+    final currentMonth = DateTime(now.year, now.month);
+    final selectedMonthNormalized = DateTime(_selectedMonth.year, _selectedMonth.month);
+
+    // Check if we're already at current month (can't go forward)
+    final isAtCurrentMonth = selectedMonthNormalized.year == currentMonth.year &&
+        selectedMonthNormalized.month == currentMonth.month;
+
     return Container(
       color: AppColors.primary,
       padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
@@ -114,8 +132,12 @@ class _AttendanceHistoryScreenState extends ConsumerState<AttendanceHistoryScree
             ),
           ),
           IconButton(
-            icon: Icon(Icons.chevron_right, color: Colors.white, size: 28.sp),
-            onPressed: _nextMonth,
+            icon: Icon(
+              Icons.chevron_right,
+              color: isAtCurrentMonth ? Colors.white.withValues(alpha: 0.3) : Colors.white,
+              size: 28.sp,
+            ),
+            onPressed: isAtCurrentMonth ? null : _nextMonth,
           ),
         ],
       ),

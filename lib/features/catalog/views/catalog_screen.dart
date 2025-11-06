@@ -104,49 +104,55 @@ class _CatalogScreenRedesignedState extends ConsumerState<CatalogScreenRedesigne
             // Search Bar
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 20.w),
-              child: Container(
-                height: 44.h,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8F8F8),
-                  borderRadius: BorderRadius.circular(22.r),
-                ),
-                child: TextField(
-                  controller: _searchController,
-                  focusNode: _searchFocusNode,
-                  onChanged: (query) {
-                    ref.read(catalogSearchQueryProvider.notifier).updateQuery(query);
-                  },
-                  decoration: InputDecoration(
-                    hintText: 'Search products or categories...',
-                    hintStyle: TextStyle(
-                      color: const Color(0xFFC7C7C7),
-                      fontSize: 16.sp,
-                      fontFamily: 'Poppins',
-                    ),
-                    prefixIcon: Icon(
-                      Icons.search,
-                      color: const Color(0xFFC7C7C7),
-                      size: 20.sp,
-                    ),
-                    suffixIcon: searchQuery.isNotEmpty
-                        ? IconButton(
-                            icon: Icon(
-                              Icons.clear,
-                              color: const Color(0xFFC7C7C7),
-                              size: 20.sp,
-                            ),
-                            onPressed: () {
-                              _searchController.clear();
-                              ref.read(catalogSearchQueryProvider.notifier).clearQuery();
-                              _searchFocusNode.unfocus();
-                            },
-                          )
-                        : null,
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 20.w,
-                      vertical: 12.h,
-                    ),
+              child: TextField(
+                controller: _searchController,
+                focusNode: _searchFocusNode,
+                onChanged: (query) {
+                  ref.read(catalogSearchQueryProvider.notifier).updateQuery(query);
+                },
+                decoration: InputDecoration(
+                  hintText: 'Search products or categories...',
+                  hintStyle: TextStyle(
+                    color: Colors.grey.shade400,
+                    fontSize: 14.sp,
+                    fontFamily: 'Poppins',
+                  ),
+                  prefixIcon: Icon(
+                    Icons.search,
+                    color: Colors.grey.shade400,
+                    size: 20.sp,
+                  ),
+                  suffixIcon: searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: Icon(
+                            Icons.clear,
+                            color: Colors.grey.shade400,
+                            size: 20.sp,
+                          ),
+                          onPressed: () {
+                            _searchController.clear();
+                            ref.read(catalogSearchQueryProvider.notifier).clearQuery();
+                            _searchFocusNode.unfocus();
+                          },
+                        )
+                      : null,
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                    borderSide: BorderSide(color: Colors.grey.shade200),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                    borderSide: const BorderSide(color: Color(0xFF1C548C), width: 2),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 12.h,
                   ),
                 ),
               ),
@@ -505,6 +511,7 @@ class _ProductCard extends ConsumerWidget {
 
                   // Price and Quantity Info
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Container(
                         padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
@@ -522,7 +529,6 @@ class _ProductCard extends ConsumerWidget {
                           ),
                         ),
                       ),
-                      SizedBox(width: 8.w),
                       Text(
                         '₹${(item.price ?? 0.0).toStringAsFixed(0)}',
                         style: TextStyle(

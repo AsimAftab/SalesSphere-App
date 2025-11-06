@@ -1155,7 +1155,7 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
             },
             decoration: InputDecoration(
               contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-              hintText: 'Company Name',
+              hintText: 'Party Name',
               hintStyle: TextStyle(
                 color: AppColors.textHint,
                 fontSize: 14.sp,
