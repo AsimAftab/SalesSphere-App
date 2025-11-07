@@ -10,6 +10,7 @@ import 'package:sales_sphere/features/home/views/home_screen.dart';
 import 'package:sales_sphere/features/catalog/views/catalog_screen.dart';
 import 'package:sales_sphere/features/catalog/views/category_selection_screen.dart';
 import 'package:sales_sphere/features/invoice/views/invoice_screen.dart';
+import 'package:sales_sphere/features/invoice/views/invoice_history_screen.dart';
 import 'package:sales_sphere/features/parties/views/parties_screen.dart';
 import 'package:sales_sphere/features/parties/views/edit_party_details_screen.dart';
 import 'package:sales_sphere/features/parties/views/add_party_screen.dart';
@@ -359,6 +360,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             name: 'invoice',
             pageBuilder: (context, state) =>
                 const NoTransitionPage(child: InvoiceScreen()),
+            routes: [
+              // Invoice History
+              GoRoute(
+                path: 'history',
+                name: 'invoice_history',
+                builder: (context, state) => const InvoiceHistoryScreen(),
+              ),
+            ],
           ),
 
           // Parties Tab (Keep for backwards compatibility)

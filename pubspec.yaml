@@ -92,7 +92,7 @@
     assets:
       - .env
       - assets/images/
-      - assets/images/products/
+
       - assets/icons/
     # To add assets to your application, add an assets section, like this:
     # assets:
