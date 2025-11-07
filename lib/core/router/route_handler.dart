@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sales_sphere/features/Detail-Added/view/detail_added.dart';
-
 import 'package:sales_sphere/widget/main_shell.dart';
 import 'package:sales_sphere/features/auth/views/login_screen.dart';
 import 'package:sales_sphere/features/auth/views/forgot_password_screen.dart';
@@ -31,6 +30,7 @@ import 'package:sales_sphere/features/settings/views/settings_screen.dart';
 import 'package:sales_sphere/features/settings/views/about_screen.dart';
 import 'package:sales_sphere/features/settings/views/terms_and_conditions_screen.dart';
 import 'package:sales_sphere/features/auth/models/login.models.dart';
+import '../../features/invoice/views/invoice_history_screen.dart';
 import '../providers/user_controller.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
@@ -359,6 +359,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             name: 'invoice',
             pageBuilder: (context, state) =>
                 const NoTransitionPage(child: InvoiceScreen()),
+          ),
+          GoRoute(
+            path: '/invoice/history',
+            name: 'invoice_history',
+            builder: (context, state) => const InvoiceHistoryScreen(),
           ),
 
           // Parties Tab (Keep for backwards compatibility)
