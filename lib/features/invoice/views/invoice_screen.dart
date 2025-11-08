@@ -442,53 +442,41 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                         final canGenerate = selectedParty != null &&
                             _deliveryDateController.text.isNotEmpty &&
                             orderItems.isNotEmpty;
-                        return PrimaryButton(
-                          label: 'Generate Invoice',
-                          onPressed: canGenerate
-                              ? () {
-                            try {
-                              // Generate invoice number
-                              final invoiceNumber = ref.read(generateInvoiceNumberProvider);
+                        final createInvoiceState = ref.watch(createInvoiceProvider);
+                        final isLoading = createInvoiceState.isLoading;
 
+                        return PrimaryButton(
+                          label: isLoading ? 'Creating Invoice...' : 'Generate Invoice',
+                          onPressed: (canGenerate && !isLoading)
+                              ? () async {
+                            try {
                               // Parse delivery date (format: 'dd MMM yyyy' from CustomDatePicker)
                               final deliveryDate = DateFormat('dd MMM yyyy').parse(_deliveryDateController.text);
 
-                              // Create invoice items from order items
-                              final invoiceItems = orderItems.map((orderItem) {
-                                return InvoiceItem(
+                              // Create invoice items for API request
+                              final requestItems = orderItems.map((orderItem) {
+                                return CreateInvoiceItemRequest(
                                   productId: orderItem.product.id,
-                                  productName: orderItem.product.name,
                                   quantity: orderItem.quantity,
-                                  unitPrice: orderItem.setPrice,
-                                  subtotal: orderItem.subtotal,
-                                  imageAssetPath: orderItem.product.imageAssetPath,
+                                  price: orderItem.setPrice,
                                 );
                               }).toList();
 
-                              // Create the invoice
-                              final invoice = Invoice(
-                                id: 'INV-${DateTime.now().millisecondsSinceEpoch}',
-                                invoiceNumber: invoiceNumber,
+                              // Call API to create invoice
+                              final response = await ref.read(createInvoiceProvider.notifier).createInvoice(
                                 partyId: selectedParty!.id,
-                                partyName: selectedParty!.name,
-                                ownerName: selectedParty!.ownerName,
-                                deliveryDate: deliveryDate,
-                                createdAt: DateTime.now(),
-                                subtotal: subtotalCost,
-                                discountPercentage: _discountPercentage,
-                                discountAmount: discountAmount,
-                                total: totalCost,
-                                items: invoiceItems,
+                                expectedDeliveryDate: deliveryDate,
+                                discount: _discountPercentage,
+                                items: requestItems,
                               );
 
-                              // Add invoice to history
-                              ref.read(invoiceHistoryProvider.notifier).addInvoice(invoice);
+                              if (!context.mounted) return;
 
                               // Show success message
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
-                                    'Invoice $invoiceNumber generated for ${selectedParty!.name}!',
+                                    'Invoice ${response.data.invoiceNumber} generated for ${selectedParty!.name}!',
                                   ),
                                   backgroundColor: Colors.green,
                                   action: SnackBarAction(
@@ -525,6 +513,8 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                                 _quantityControllers.clear();
                               });
                             } catch (e) {
+                              if (!context.mounted) return;
+
                               // Show error message
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(

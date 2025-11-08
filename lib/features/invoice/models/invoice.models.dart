@@ -8,9 +8,11 @@ part 'invoice.models.g.dart';
 // ORDER STATUS ENUM
 // ========================================
 enum OrderStatus {
-  @JsonValue('in_progress')
+  @JsonValue('pending')
+  pending,
+  @JsonValue('in progress')
   inProgress,
-  @JsonValue('in_transit')
+  @JsonValue('in transit')
   inTransit,
   @JsonValue('completed')
   completed,
@@ -21,6 +23,8 @@ enum OrderStatus {
 extension OrderStatusExtension on OrderStatus {
   String get displayName {
     switch (this) {
+      case OrderStatus.pending:
+        return 'Pending';
       case OrderStatus.inProgress:
         return 'In Progress';
       case OrderStatus.inTransit:
@@ -34,6 +38,8 @@ extension OrderStatusExtension on OrderStatus {
 
   Color get color {
     switch (this) {
+      case OrderStatus.pending:
+        return const Color(0xFF9E9E9E); // Gray
       case OrderStatus.inProgress:
         return const Color(0xFF2196F3); // Blue
       case OrderStatus.inTransit:
@@ -47,6 +53,8 @@ extension OrderStatusExtension on OrderStatus {
 
   Color get backgroundColor {
     switch (this) {
+      case OrderStatus.pending:
+        return const Color(0xFFF5F5F5); // Light Gray
       case OrderStatus.inProgress:
         return const Color(0xFFE3F2FD); // Light Blue
       case OrderStatus.inTransit:
@@ -60,6 +68,8 @@ extension OrderStatusExtension on OrderStatus {
 
   IconData get icon {
     switch (this) {
+      case OrderStatus.pending:
+        return Icons.pending_outlined;
       case OrderStatus.inProgress:
         return Icons.hourglass_empty_rounded;
       case OrderStatus.inTransit:
@@ -90,7 +100,7 @@ abstract class Invoice with _$Invoice {
     required double discountAmount,
     required double total,
     required List<InvoiceItem> items,
-    @Default(OrderStatus.inProgress) OrderStatus status,
+    @Default(OrderStatus.pending) OrderStatus status,
     String? pdfPath, // Path to saved PDF file
   }) = _Invoice;
 
@@ -114,4 +124,162 @@ abstract class InvoiceItem with _$InvoiceItem {
 
   factory InvoiceItem.fromJson(Map<String, dynamic> json) =>
       _$InvoiceItemFromJson(json);
+}
+
+// ========================================
+// CREATE INVOICE REQUEST MODEL
+// ========================================
+@freezed
+abstract class CreateInvoiceRequest with _$CreateInvoiceRequest {
+  const factory CreateInvoiceRequest({
+    required String partyId,
+    required String expectedDeliveryDate,
+    required double discount,
+    required List<CreateInvoiceItemRequest> items,
+  }) = _CreateInvoiceRequest;
+
+  factory CreateInvoiceRequest.fromJson(Map<String, dynamic> json) =>
+      _$CreateInvoiceRequestFromJson(json);
+}
+
+@freezed
+abstract class CreateInvoiceItemRequest with _$CreateInvoiceItemRequest {
+  const factory CreateInvoiceItemRequest({
+    required String productId,
+    required int quantity,
+    required double price,
+  }) = _CreateInvoiceItemRequest;
+
+  factory CreateInvoiceItemRequest.fromJson(Map<String, dynamic> json) =>
+      _$CreateInvoiceItemRequestFromJson(json);
+}
+
+// ========================================
+// CREATE INVOICE RESPONSE MODEL
+// ========================================
+@freezed
+abstract class CreateInvoiceResponse with _$CreateInvoiceResponse {
+  const factory CreateInvoiceResponse({
+    required bool success,
+    required InvoiceData data,
+  }) = _CreateInvoiceResponse;
+
+  factory CreateInvoiceResponse.fromJson(Map<String, dynamic> json) =>
+      _$CreateInvoiceResponseFromJson(json);
+}
+
+@freezed
+abstract class InvoiceData with _$InvoiceData {
+  const factory InvoiceData({
+    required String party,
+    required String organizationName,
+    required String organizationPanVatNumber,
+    required String organizationAddress,
+    required String organizationPhone,
+    required String partyName,
+    required String partyOwnerName,
+    required String partyAddress,
+    required String partyPanVatNumber,
+    required String invoiceNumber,
+    required String expectedDeliveryDate,
+    required List<InvoiceItemData> items,
+    double? subtotal,
+    double? discount,
+    double? discountAmount,
+    double? total,
+    String? id,
+    String? createdAt,
+    String? updatedAt,
+    OrderStatus? status,
+  }) = _InvoiceData;
+
+  factory InvoiceData.fromJson(Map<String, dynamic> json) =>
+      _$InvoiceDataFromJson(json);
+}
+
+@freezed
+abstract class InvoiceItemData with _$InvoiceItemData {
+  const factory InvoiceItemData({
+    required String productId,
+    required String productName,
+    required double price,
+    required int quantity,
+    required double total,
+  }) = _InvoiceItemData;
+
+  factory InvoiceItemData.fromJson(Map<String, dynamic> json) =>
+      _$InvoiceItemDataFromJson(json);
+}
+
+// ========================================
+// INVOICE HISTORY LIST RESPONSE MODEL
+// ========================================
+@freezed
+abstract class InvoiceHistoryResponse with _$InvoiceHistoryResponse {
+  const factory InvoiceHistoryResponse({
+    required bool success,
+    required int count,
+    required List<InvoiceHistoryItem> data,
+  }) = _InvoiceHistoryResponse;
+
+  factory InvoiceHistoryResponse.fromJson(Map<String, dynamic> json) =>
+      _$InvoiceHistoryResponseFromJson(json);
+}
+
+@freezed
+abstract class InvoiceHistoryItem with _$InvoiceHistoryItem {
+  const factory InvoiceHistoryItem({
+    @JsonKey(name: '_id') required String id,
+    required String partyName,
+    required String invoiceNumber,
+    required String expectedDeliveryDate,
+    required double totalAmount,
+    required OrderStatus status,
+    required String createdAt,
+  }) = _InvoiceHistoryItem;
+
+  factory InvoiceHistoryItem.fromJson(Map<String, dynamic> json) =>
+      _$InvoiceHistoryItemFromJson(json);
+}
+
+// ========================================
+// FETCH INVOICE DETAILS RESPONSE MODEL
+// ========================================
+@freezed
+abstract class FetchInvoiceDetailsResponse with _$FetchInvoiceDetailsResponse {
+  const factory FetchInvoiceDetailsResponse({
+    required bool success,
+    required InvoiceDetailsData data,
+  }) = _FetchInvoiceDetailsResponse;
+
+  factory FetchInvoiceDetailsResponse.fromJson(Map<String, dynamic> json) =>
+      _$FetchInvoiceDetailsResponseFromJson(json);
+}
+
+@freezed
+abstract class InvoiceDetailsData with _$InvoiceDetailsData {
+  const factory InvoiceDetailsData({
+    @JsonKey(name: '_id') required String id,
+    required String party,
+    required String organizationName,
+    required String organizationPanVatNumber,
+    required String organizationAddress,
+    required String organizationPhone,
+    required String partyName,
+    required String partyOwnerName,
+    required String partyAddress,
+    required String partyPanVatNumber,
+    required String invoiceNumber,
+    required String expectedDeliveryDate,
+    required List<InvoiceItemData> items,
+    required OrderStatus status,
+    required String createdAt,
+    double? totalAmount,
+    double? discount,
+    double? discountAmount,
+    String? updatedAt,
+  }) = _InvoiceDetailsData;
+
+  factory InvoiceDetailsData.fromJson(Map<String, dynamic> json) =>
+      _$InvoiceDetailsDataFromJson(json);
 }
