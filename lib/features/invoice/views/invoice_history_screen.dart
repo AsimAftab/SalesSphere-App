@@ -1,18 +1,22 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:open_file/open_file.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
+import 'package:sales_sphere/core/utils/logger.dart';
 import '../models/invoice.models.dart';
 import '../vm/invoice.vm.dart';
+import '../services/invoice_pdf_service.dart';
 
 class InvoiceHistoryScreen extends ConsumerWidget {
   const InvoiceHistoryScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final invoices = ref.watch(invoiceHistoryProvider);
+    final invoicesAsync = ref.watch(invoiceHistoryProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -33,18 +37,63 @@ class InvoiceHistoryScreen extends ConsumerWidget {
           ),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.refresh, color: Colors.white, size: 24.sp),
+            onPressed: () => ref.invalidate(invoiceHistoryProvider),
+          ),
+        ],
       ),
-      body: invoices.isEmpty
-          ? _buildEmptyState()
-          : ListView.separated(
-              padding: EdgeInsets.all(16.w),
-              itemCount: invoices.length,
-              separatorBuilder: (context, index) => SizedBox(height: 12.h),
-              itemBuilder: (context, index) {
-                final invoice = invoices[index];
-                return _buildInvoiceCard(context, invoice);
-              },
-            ),
+      body: invoicesAsync.when(
+        data: (invoices) => invoices.isEmpty
+            ? _buildEmptyState()
+            : RefreshIndicator(
+                onRefresh: () async {
+                  ref.invalidate(invoiceHistoryProvider);
+                },
+                child: ListView.separated(
+                  padding: EdgeInsets.all(16.w),
+                  itemCount: invoices.length,
+                  separatorBuilder: (context, index) => SizedBox(height: 12.h),
+                  itemBuilder: (context, index) {
+                    final invoice = invoices[index];
+                    return _buildInvoiceCard(context, ref, invoice);
+                  },
+                ),
+              ),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 48.sp, color: Colors.red),
+              SizedBox(height: 16.h),
+              Text(
+                'Failed to load invoices',
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade700,
+                ),
+              ),
+              SizedBox(height: 8.h),
+              Text(
+                error.toString(),
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  color: Colors.grey.shade500,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 16.h),
+              ElevatedButton(
+                onPressed: () => ref.invalidate(invoiceHistoryProvider),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -82,13 +131,16 @@ class InvoiceHistoryScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildInvoiceCard(BuildContext context, Invoice invoice) {
+  Widget _buildInvoiceCard(BuildContext context, WidgetRef ref, InvoiceHistoryItem invoice) {
     final dateFormat = DateFormat('MMM dd, yyyy');
     final timeFormat = DateFormat('hh:mm a');
+    final deliveryDate = DateTime.parse(invoice.expectedDeliveryDate);
+    final createdDate = DateTime.parse(invoice.createdAt);
 
     return GestureDetector(
       onTap: () {
-        _showInvoicePreview(context, invoice);
+        // Show elegant preview bottom sheet
+        _showInvoicePreview(context, ref, invoice);
       },
       child: Container(
         decoration: BoxDecoration(
@@ -209,7 +261,7 @@ class InvoiceHistoryScreen extends ConsumerWidget {
                           ),
                           SizedBox(width: 4.w),
                           Text(
-                            dateFormat.format(invoice.createdAt),
+                            dateFormat.format(createdDate),
                             style: TextStyle(
                               fontSize: 12.sp,
                               color: Colors.grey.shade600,
@@ -222,7 +274,7 @@ class InvoiceHistoryScreen extends ConsumerWidget {
                       Padding(
                         padding: EdgeInsets.only(left: 18.w),
                         child: Text(
-                          timeFormat.format(invoice.createdAt),
+                          timeFormat.format(createdDate),
                           style: TextStyle(
                             fontSize: 11.sp,
                             color: Colors.grey.shade500,
@@ -246,7 +298,7 @@ class InvoiceHistoryScreen extends ConsumerWidget {
                         ),
                       ),
                       Text(
-                        '₹${invoice.total.toStringAsFixed(2)}',
+                        '₹${invoice.totalAmount.toStringAsFixed(2)}',
                         style: TextStyle(
                           fontSize: 18.sp,
                           fontWeight: FontWeight.w700,
@@ -276,21 +328,6 @@ class InvoiceHistoryScreen extends ConsumerWidget {
                     child: Row(
                       children: [
                         Icon(
-                          Icons.inventory_2_outlined,
-                          size: 14.sp,
-                          color: Colors.grey.shade600,
-                        ),
-                        SizedBox(width: 6.w),
-                        Text(
-                          '${invoice.items.length} ${invoice.items.length == 1 ? 'item' : 'items'}',
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            color: Colors.grey.shade600,
-                            fontFamily: 'Poppins',
-                          ),
-                        ),
-                        SizedBox(width: 12.w),
-                        Icon(
                           Icons.local_shipping_outlined,
                           size: 14.sp,
                           color: Colors.grey.shade600,
@@ -298,7 +335,7 @@ class InvoiceHistoryScreen extends ConsumerWidget {
                         SizedBox(width: 6.w),
                         Flexible(
                           child: Text(
-                            dateFormat.format(invoice.deliveryDate),
+                            'Delivery: ${dateFormat.format(deliveryDate)}',
                             style: TextStyle(
                               fontSize: 12.sp,
                               color: Colors.grey.shade600,
@@ -312,7 +349,7 @@ class InvoiceHistoryScreen extends ConsumerWidget {
                   ),
                   // PDF Download Button
                   GestureDetector(
-                    onTap: () => _downloadInvoicePdf(context, invoice),
+                    onTap: () => _downloadInvoicePdf(context, ref, invoice.id, invoice.invoiceNumber),
                     child: Container(
                       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
                       decoration: BoxDecoration(
@@ -350,38 +387,188 @@ class InvoiceHistoryScreen extends ConsumerWidget {
     );
   }
 
-  void _showInvoicePreview(BuildContext context, Invoice invoice) {
+  Future<void> _downloadInvoicePdf(
+    BuildContext context,
+    WidgetRef ref,
+    String invoiceId,
+    String invoiceNumber,
+  ) async {
+    bool dialogShown = false;
+
+    try {
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => PopScope(
+          canPop: false,
+          child: Center(
+            child: Container(
+              padding: EdgeInsets.all(24.w),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(color: AppColors.primary),
+                  SizedBox(height: 16.h),
+                  Text(
+                    'Generating PDF...',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      dialogShown = true;
+
+      AppLogger.d('Fetching invoice details for: $invoiceId');
+
+      // Fetch invoice details
+      final detailsAsync = await ref.read(fetchInvoiceDetailsProvider(invoiceId).future);
+
+      if (detailsAsync == null) {
+        throw Exception('Invoice details not found');
+      }
+
+      AppLogger.d('Generating PDF for invoice: $invoiceNumber');
+
+      // Generate PDF
+      final file = await InvoicePdfService.generateInvoicePdf(detailsAsync);
+
+      AppLogger.d('PDF generated successfully: ${file.path}');
+
+      // Close loading dialog using root navigator
+      if (dialogShown && context.mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        dialogShown = false;
+      }
+
+      AppLogger.d('Dialog closed');
+
+      // Show success message with option to open
+      if (context.mounted) {
+        // Extract user-friendly display path
+        String displayPath;
+        if (file.path.contains('/Download/SalesSphere/')) {
+          displayPath = 'Downloads/SalesSphere/Invoices';
+        } else if (file.path.contains('/SalesSphere/')) {
+          final pathParts = file.path.split('/');
+          final salesSphereIndex = pathParts.indexWhere((part) => part == 'SalesSphere');
+          displayPath = salesSphereIndex != -1
+              ? pathParts.sublist(salesSphereIndex).join('/')
+              : file.path;
+        } else {
+          displayPath = file.path;
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Invoice saved to $displayPath'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 5),
+            action: SnackBarAction(
+              label: 'Open',
+              textColor: Colors.white,
+              onPressed: () async {
+                try {
+                  final result = await OpenFile.open(file.path);
+
+                  // If opening failed, show the full file path
+                  if (result.type != ResultType.done && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Could not open PDF. Location: ${file.path}'),
+                        backgroundColor: Colors.orange,
+                        behavior: SnackBarBehavior.floating,
+                        duration: const Duration(seconds: 6),
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  AppLogger.e('Error opening PDF: $e');
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Could not open PDF. Location: ${file.path}'),
+                        backgroundColor: Colors.orange,
+                        behavior: SnackBarBehavior.floating,
+                        duration: const Duration(seconds: 6),
+                      ),
+                    );
+                  }
+                }
+              },
+            ),
+          ),
+        );
+      }
+    } catch (e, stackTrace) {
+      AppLogger.e('Error in _downloadInvoicePdf: $e\n$stackTrace');
+
+      // Close loading dialog if open
+      if (dialogShown && context.mounted) {
+        try {
+          Navigator.of(context, rootNavigator: true).pop();
+          AppLogger.d('Error dialog closed');
+        } catch (popError) {
+          AppLogger.e('Error closing dialog: $popError');
+        }
+      }
+
+      // Show error message
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to generate PDF: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    }
+  }
+
+  void _showInvoicePreview(BuildContext context, WidgetRef ref, InvoiceHistoryItem invoice) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => InvoicePreviewSheet(invoice: invoice),
-    );
-  }
-
-  void _downloadInvoicePdf(BuildContext context, Invoice invoice) {
-    // TODO: Implement PDF download when backend is ready
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('PDF download for ${invoice.invoiceNumber} will be available soon'),
-        backgroundColor: AppColors.primary,
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
-      ),
+      builder: (context) => InvoicePreviewSheet(invoiceId: invoice.id, invoice: invoice, ref: ref),
     );
   }
 }
 
-// Invoice Preview Bottom Sheet
-class InvoicePreviewSheet extends StatelessWidget {
-  final Invoice invoice;
+// Elegant Invoice Preview Bottom Sheet
+class InvoicePreviewSheet extends ConsumerWidget {
+  final String invoiceId;
+  final InvoiceHistoryItem invoice;
+  final WidgetRef ref;
 
-  const InvoicePreviewSheet({super.key, required this.invoice});
+  const InvoicePreviewSheet({
+    super.key,
+    required this.invoiceId,
+    required this.invoice,
+    required this.ref,
+  });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final dateFormat = DateFormat('MMM dd, yyyy');
     final timeFormat = DateFormat('hh:mm a');
+    final invoiceDetailsAsync = ref.watch(fetchInvoiceDetailsProvider(invoiceId));
+    final deliveryDate = DateTime.parse(invoice.expectedDeliveryDate);
+    final createdDate = DateTime.parse(invoice.createdAt);
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.85,
@@ -420,56 +607,9 @@ class InvoicePreviewSheet extends StatelessWidget {
                     fontFamily: 'Poppins',
                   ),
                 ),
-                Row(
-                  children: [
-                    // Download PDF Button
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pop(context);
-                        // TODO: Implement PDF download when backend is ready
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('PDF download for ${invoice.invoiceNumber} will be available soon'),
-                            backgroundColor: AppColors.primary,
-                            behavior: SnackBarBehavior.floating,
-                            duration: const Duration(seconds: 2),
-                          ),
-                        );
-                      },
-                      child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(6.r),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.description_rounded,
-                              size: 14.sp,
-                              color: Colors.white,
-                            ),
-                            SizedBox(width: 4.w),
-                            Text(
-                              'PDF',
-                              style: TextStyle(
-                                fontSize: 11.sp,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                                fontFamily: 'Poppins',
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 8.w),
-                    IconButton(
-                      icon: Icon(Icons.close, size: 24.sp),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
+                IconButton(
+                  icon: Icon(Icons.close, size: 24.sp),
+                  onPressed: () => Navigator.pop(context),
                 ),
               ],
             ),
@@ -479,123 +619,275 @@ class InvoicePreviewSheet extends StatelessWidget {
 
           // Content
           Expanded(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.all(20.w),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Invoice Number and Date
-                  Center(
-                    child: Column(
-                      children: [
-                        Text(
-                          invoice.invoiceNumber,
-                          style: TextStyle(
-                            fontSize: 24.sp,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.primary,
-                            fontFamily: 'Poppins',
-                          ),
-                        ),
-                        SizedBox(height: 8.h),
-                        // Status Badge
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                          decoration: BoxDecoration(
-                            color: invoice.status.backgroundColor,
-                            borderRadius: BorderRadius.circular(20.r),
-                            border: Border.all(
-                              color: invoice.status.color.withValues(alpha: 0.3),
-                              width: 1.5,
+            child: invoiceDetailsAsync.when(
+              data: (details) => details == null
+                  ? const Center(child: Text('Invoice details not found'))
+                  : SingleChildScrollView(
+                      padding: EdgeInsets.all(20.w),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Invoice Number and Date
+                          Center(
+                            child: Column(
+                              children: [
+                                Text(
+                                  invoice.invoiceNumber,
+                                  style: TextStyle(
+                                    fontSize: 24.sp,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.primary,
+                                    fontFamily: 'Poppins',
+                                  ),
+                                ),
+                                SizedBox(height: 8.h),
+                                // Status Badge
+                                Container(
+                                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                                  decoration: BoxDecoration(
+                                    color: invoice.status.backgroundColor,
+                                    borderRadius: BorderRadius.circular(20.r),
+                                    border: Border.all(
+                                      color: invoice.status.color.withValues(alpha: 0.3),
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        invoice.status.icon,
+                                        size: 18.sp,
+                                        color: invoice.status.color,
+                                      ),
+                                      SizedBox(width: 6.w),
+                                      Text(
+                                        invoice.status.displayName,
+                                        style: TextStyle(
+                                          fontSize: 14.sp,
+                                          fontWeight: FontWeight.w700,
+                                          color: invoice.status.color,
+                                          fontFamily: 'Poppins',
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                SizedBox(height: 8.h),
+                                Text(
+                                  'Created: ${dateFormat.format(createdDate)} at ${timeFormat.format(createdDate)}',
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    color: Colors.grey.shade600,
+                                    fontFamily: 'Poppins',
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
+
+                          SizedBox(height: 24.h),
+
+                          // Organization & Party Details Row
+                          Row(
                             children: [
-                              Icon(
-                                invoice.status.icon,
-                                size: 18.sp,
-                                color: invoice.status.color,
+                              Expanded(
+                                child: _buildInfoCard(
+                                  'From',
+                                  Icons.business,
+                                  details.organizationName,
+                                  details.organizationPhone,
+                                ),
                               ),
-                              SizedBox(width: 6.w),
-                              Text(
-                                invoice.status.displayName,
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: invoice.status.color,
-                                  fontFamily: 'Poppins',
+                              SizedBox(width: 12.w),
+                              Expanded(
+                                child: _buildInfoCard(
+                                  'To',
+                                  Icons.person,
+                                  details.partyName,
+                                  details.partyOwnerName,
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                        SizedBox(height: 8.h),
-                        Text(
-                          'Created: ${dateFormat.format(invoice.createdAt)} at ${timeFormat.format(invoice.createdAt)}',
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            color: Colors.grey.shade600,
-                            fontFamily: 'Poppins',
+
+                          SizedBox(height: 16.h),
+
+                          // Full Address Details
+                          _buildAddressSection(
+                            'Organization Address',
+                            details.organizationAddress,
+                            details.organizationPanVatNumber,
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
 
-                  SizedBox(height: 24.h),
+                          SizedBox(height: 12.h),
 
-                  // Party Details
-                  _buildSection(
-                    'Party Details',
-                    Icons.business_rounded,
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildDetailRow('Party Name', invoice.partyName),
-                        _buildDetailRow('Owner Name', invoice.ownerName),
-                        _buildDetailRow('Delivery Date', dateFormat.format(invoice.deliveryDate)),
-                      ],
-                    ),
-                  ),
+                          _buildAddressSection(
+                            'Party Address',
+                            details.partyAddress,
+                            details.partyPanVatNumber,
+                          ),
 
-                  SizedBox(height: 20.h),
+                          SizedBox(height: 16.h),
 
-                  // Items
-                  _buildSection(
-                    'Items (${invoice.items.length})',
-                    Icons.inventory_2_rounded,
-                    Column(
-                      children: invoice.items.map((item) => _buildItemRow(item)).toList(),
-                    ),
-                  ),
+                          // Delivery Date Card
+                          Container(
+                            padding: EdgeInsets.all(16.w),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.orange.withValues(alpha: 0.1),
+                                  Colors.orange.withValues(alpha: 0.05),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(12.r),
+                              border: Border.all(
+                                color: Colors.orange.withValues(alpha: 0.3),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: EdgeInsets.all(10.w),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(10.r),
+                                  ),
+                                  child: Icon(
+                                    Icons.local_shipping,
+                                    color: Colors.orange.shade700,
+                                    size: 24.sp,
+                                  ),
+                                ),
+                                SizedBox(width: 12.w),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Expected Delivery',
+                                      style: TextStyle(
+                                        fontSize: 12.sp,
+                                        color: Colors.grey.shade600,
+                                        fontFamily: 'Poppins',
+                                      ),
+                                    ),
+                                    SizedBox(height: 2.h),
+                                    Text(
+                                      DateFormat('EEEE, MMMM dd, yyyy').format(deliveryDate),
+                                      style: TextStyle(
+                                        fontSize: 14.sp,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.orange.shade700,
+                                        fontFamily: 'Poppins',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
 
-                  SizedBox(height: 20.h),
+                          SizedBox(height: 20.h),
 
-                  // Pricing Summary
-                  _buildSection(
-                    'Pricing',
-                    Icons.payments_rounded,
-                    Column(
-                      children: [
-                        _buildPriceRow('Subtotal', invoice.subtotal, isSubtotal: true),
-                        if (invoice.discountPercentage > 0) ...[
-                          SizedBox(height: 8.h),
-                          _buildPriceRow(
-                            'Discount (${invoice.discountPercentage}%)',
-                            -invoice.discountAmount,
-                            isDiscount: true,
+                          // Items Section
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade50,
+                              borderRadius: BorderRadius.circular(12.r),
+                              border: Border.all(color: Colors.grey.shade200),
+                            ),
+                            child: Column(
+                              children: [
+                                Padding(
+                                  padding: EdgeInsets.all(16.w),
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.inventory_2_rounded, size: 20.sp, color: AppColors.primary),
+                                      SizedBox(width: 8.w),
+                                      Text(
+                                        'Items (${details.items.length})',
+                                        style: TextStyle(
+                                          fontSize: 16.sp,
+                                          fontWeight: FontWeight.w700,
+                                          color: const Color(0xFF202020),
+                                          fontFamily: 'Poppins',
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Divider(height: 1, color: Colors.grey.shade300),
+                                Padding(
+                                  padding: EdgeInsets.all(12.w),
+                                  child: Column(
+                                    children: details.items.map((item) => _buildItemRow(item)).toList(),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          SizedBox(height: 20.h),
+
+                          // Pricing Summary
+                          _buildPricingSection(details),
+
+                          SizedBox(height: 24.h),
+
+                          // Download PDF Button
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: () async {
+                                await _downloadPdf(context, details, invoice.invoiceNumber);
+                              },
+                              icon: Icon(Icons.download_rounded, size: 20.sp),
+                              label: Text(
+                                'Download PDF',
+                                style: TextStyle(
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.w600,
+                                  fontFamily: 'Poppins',
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: Colors.white,
+                                padding: EdgeInsets.symmetric(vertical: 16.h),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12.r),
+                                ),
+                                elevation: 2,
+                              ),
+                            ),
                           ),
                         ],
-                        Padding(
-                          padding: EdgeInsets.symmetric(vertical: 12.h),
-                          child: Divider(color: Colors.grey.shade300),
-                        ),
-                        _buildPriceRow('Total', invoice.total, isTotal: true),
-                      ],
+                      ),
                     ),
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, stack) => Center(
+                child: Padding(
+                  padding: EdgeInsets.all(20.w),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.error_outline, size: 48.sp, color: Colors.red),
+                      SizedBox(height: 16.h),
+                      Text(
+                        'Failed to load details',
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      SizedBox(height: 16.h),
+                      ElevatedButton(
+                        onPressed: () => ref.invalidate(fetchInvoiceDetailsProvider(invoiceId)),
+                        child: const Text('Retry'),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -604,23 +896,303 @@ class InvoicePreviewSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildSection(String title, IconData icon, Widget child) {
+  Future<void> _downloadPdf(
+    BuildContext context,
+    InvoiceDetailsData details,
+    String invoiceNumber,
+  ) async {
+    bool dialogShown = false;
+
+    try {
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => PopScope(
+          canPop: false,
+          child: Center(
+            child: Container(
+              padding: EdgeInsets.all(24.w),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(color: AppColors.primary),
+                  SizedBox(height: 16.h),
+                  Text(
+                    'Generating PDF...',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      dialogShown = true;
+
+      AppLogger.d('Starting PDF generation for: $invoiceNumber');
+
+      // Generate PDF
+      final file = await InvoicePdfService.generateInvoicePdf(details);
+
+      AppLogger.d('PDF generated successfully: ${file.path}');
+
+      // Close loading dialog using root navigator
+      if (dialogShown && context.mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        dialogShown = false;
+      }
+
+      AppLogger.d('Dialog closed');
+
+      // Close preview sheet
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
+
+      AppLogger.d('Preview sheet closed');
+
+      // Show success message with option to open
+      if (context.mounted) {
+        // Extract user-friendly display path
+        String displayPath;
+        if (file.path.contains('/Download/SalesSphere/')) {
+          displayPath = 'Downloads/SalesSphere/Invoices';
+        } else if (file.path.contains('/SalesSphere/')) {
+          final pathParts = file.path.split('/');
+          final salesSphereIndex = pathParts.indexWhere((part) => part == 'SalesSphere');
+          displayPath = salesSphereIndex != -1
+              ? pathParts.sublist(salesSphereIndex).join('/')
+              : file.path;
+        } else {
+          displayPath = file.path;
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Invoice saved to $displayPath'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 5),
+            action: SnackBarAction(
+              label: 'Open',
+              textColor: Colors.white,
+              onPressed: () async {
+                try {
+                  final result = await OpenFile.open(file.path);
+
+                  // If opening failed, show the full file path
+                  if (result.type != ResultType.done && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Could not open PDF. Location: ${file.path}'),
+                        backgroundColor: Colors.orange,
+                        behavior: SnackBarBehavior.floating,
+                        duration: const Duration(seconds: 6),
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  AppLogger.e('Error opening PDF: $e');
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Could not open PDF. Location: ${file.path}'),
+                        backgroundColor: Colors.orange,
+                        behavior: SnackBarBehavior.floating,
+                        duration: const Duration(seconds: 6),
+                      ),
+                    );
+                  }
+                }
+              },
+            ),
+          ),
+        );
+      }
+    } catch (e, stackTrace) {
+      AppLogger.e('Error in _downloadPdf: $e\n$stackTrace');
+
+      // Close loading dialog if open
+      if (dialogShown && context.mounted) {
+        try {
+          Navigator.of(context, rootNavigator: true).pop();
+          AppLogger.d('Error dialog closed');
+        } catch (popError) {
+          AppLogger.e('Error closing dialog: $popError');
+        }
+      }
+
+      // Show error message
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to generate PDF: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    }
+  }
+
+  Widget _buildInfoCard(String label, IconData icon, String name, String subtitle) {
     return Container(
+      padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        gradient: LinearGradient(
+          colors: [
+            AppColors.primary.withValues(alpha: 0.08),
+            AppColors.primary.withValues(alpha: 0.03),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
       ),
-      padding: EdgeInsets.all(16.w),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, size: 18.sp, color: AppColors.primary),
+              Icon(icon, size: 16.sp, color: AppColors.primary),
+              SizedBox(width: 6.w),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  color: Colors.grey.shade600,
+                  fontWeight: FontWeight.w500,
+                  fontFamily: 'Poppins',
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            name,
+            style: TextStyle(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF202020),
+              fontFamily: 'Poppins',
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          SizedBox(height: 2.h),
+          Text(
+            subtitle,
+            style: TextStyle(
+              fontSize: 12.sp,
+              color: Colors.grey.shade600,
+              fontFamily: 'Poppins',
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddressSection(String title, String address, String panVat) {
+    return Container(
+      padding: EdgeInsets.all(14.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w600,
+              color: AppColors.primary,
+              fontFamily: 'Poppins',
+            ),
+          ),
+          SizedBox(height: 8.h),
+          Row(
+            children: [
+              Icon(Icons.location_on_outlined, size: 14.sp, color: Colors.grey.shade600),
+              SizedBox(width: 6.w),
+              Expanded(
+                child: Text(
+                  address,
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: const Color(0xFF202020),
+                    fontFamily: 'Poppins',
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 6.h),
+          Row(
+            children: [
+              Icon(Icons.badge_outlined, size: 14.sp, color: Colors.grey.shade600),
+              SizedBox(width: 6.w),
+              Text(
+                'PAN/VAT: $panVat',
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  color: Colors.grey.shade700,
+                  fontFamily: 'Poppins',
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPricingSection(InvoiceDetailsData details) {
+    final subtotal = details.items.fold<double>(0.0, (sum, item) => sum + item.total);
+    final discountPercent = details.discount ?? 0.0;
+    final discountAmount = details.discountAmount ?? (subtotal * discountPercent / 100);
+    final total = details.totalAmount ?? (subtotal - discountAmount);
+
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppColors.primary.withValues(alpha: 0.08),
+            AppColors.primary.withValues(alpha: 0.02),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Icon(Icons.payments_rounded, size: 20.sp, color: AppColors.primary),
               SizedBox(width: 8.w),
               Text(
-                title,
+                'Pricing Summary',
                 style: TextStyle(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w700,
@@ -630,47 +1202,27 @@ class InvoicePreviewSheet extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 12.h),
-          child,
+          SizedBox(height: 16.h),
+          _buildPriceRow('Subtotal', subtotal, isSubtotal: true),
+          if (discountPercent > 0) ...[
+            SizedBox(height: 12.h),
+            _buildPriceRow(
+              'Discount ($discountPercent%)',
+              -discountAmount,
+              isDiscount: true,
+            ),
+          ],
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 14.h),
+            child: Divider(color: AppColors.primary.withValues(alpha: 0.2), thickness: 1.5),
+          ),
+          _buildPriceRow('Total Amount', total, isTotal: true),
         ],
       ),
     );
   }
 
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 8.h),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 120.w,
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 13.sp,
-                color: Colors.grey.shade600,
-                fontFamily: 'Poppins',
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: TextStyle(
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF202020),
-                fontFamily: 'Poppins',
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildItemRow(InvoiceItem item) {
+  Widget _buildItemRow(InvoiceItemData item) {
     return Container(
       margin: EdgeInsets.only(bottom: 8.h),
       padding: EdgeInsets.all(12.w),
@@ -697,7 +1249,7 @@ class InvoicePreviewSheet extends StatelessWidget {
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  'Qty: ${item.quantity} × ₹${item.unitPrice.toStringAsFixed(2)}',
+                  'Qty: ${item.quantity} × ₹${item.price.toStringAsFixed(2)}',
                   style: TextStyle(
                     fontSize: 12.sp,
                     color: Colors.grey.shade600,
@@ -708,7 +1260,7 @@ class InvoicePreviewSheet extends StatelessWidget {
             ),
           ),
           Text(
-            '₹${item.subtotal.toStringAsFixed(2)}',
+            '₹${item.total.toStringAsFixed(2)}',
             style: TextStyle(
               fontSize: 14.sp,
               fontWeight: FontWeight.w700,

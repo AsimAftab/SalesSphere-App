@@ -1,153 +1,207 @@
+import 'dart:convert';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../models/invoice.models.dart';
+import '../../../core/network_layer/dio_client.dart';
+import '../../../core/network_layer/api_endpoints.dart';
+import '../../../core/utils/logger.dart';
 
 part 'invoice.vm.g.dart';
 
-// ViewModel to manage invoice history (in-memory for now, will be replaced with API)
+// ========================================
+// INVOICE HISTORY PROVIDER (Fetch from API)
+// ========================================
 @riverpod
 class InvoiceHistory extends _$InvoiceHistory {
   @override
-  List<Invoice> build() {
-    // Return mock data for demonstration
-    return _generateMockInvoices();
+  Future<List<InvoiceHistoryItem>> build() async {
+    return fetchInvoiceHistory();
   }
 
-  // Add a new invoice to history
-  void addInvoice(Invoice invoice) {
-    state = [invoice, ...state];
+  /// Fetch invoice history from API
+  Future<List<InvoiceHistoryItem>> fetchInvoiceHistory() async {
+    try {
+      final dio = ref.read(dioClientProvider);
+
+      AppLogger.d('Fetching invoice history...');
+
+      final response = await dio.get(ApiEndpoints.invoices);
+
+      AppLogger.d('Invoice history response: ${response.data}');
+
+      // Parse response data - handle both String and Map
+      final Map<String, dynamic> responseData;
+      if (response.data is String) {
+        responseData = jsonDecode(response.data as String) as Map<String, dynamic>;
+      } else if (response.data is Map<String, dynamic>) {
+        responseData = response.data as Map<String, dynamic>;
+      } else {
+        throw Exception('Unexpected response type: ${response.data.runtimeType}');
+      }
+
+      final historyResponse = InvoiceHistoryResponse.fromJson(responseData);
+
+      AppLogger.d('Fetched ${historyResponse.count} invoices');
+
+      return historyResponse.data;
+    } catch (e, stackTrace) {
+      AppLogger.e('Error fetching invoice history: $e\n$stackTrace');
+      rethrow;
+    }
   }
 
-  // Clear all invoices
-  void clearHistory() {
-    state = [];
+  /// Refresh invoice history
+  Future<void> refresh() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() => fetchInvoiceHistory());
   }
 
-  // Generate mock invoices for demo
-  List<Invoice> _generateMockInvoices() {
-    final now = DateTime.now();
-    return [
-      Invoice(
-        id: 'INV-001',
-        invoiceNumber: 'INV-2025-001',
-        partyId: 'party-1',
-        partyName: 'ABC Tiles Ltd',
-        ownerName: 'Rajesh Kumar',
-        deliveryDate: now.add(const Duration(days: 7)),
-        createdAt: now.subtract(const Duration(days: 2)),
-        subtotal: 15000.0,
-        discountPercentage: 10.0,
-        discountAmount: 1500.0,
-        total: 13500.0,
-        status: OrderStatus.inProgress,
-        items: [
-          const InvoiceItem(
-            productId: 'prod-1',
-            productName: 'Ceramic Floor Tiles',
-            quantity: 100,
-            unitPrice: 120.0,
-            subtotal: 12000.0,
-          ),
-          const InvoiceItem(
-            productId: 'prod-2',
-            productName: 'Wall Tiles Premium',
-            quantity: 50,
-            unitPrice: 60.0,
-            subtotal: 3000.0,
-          ),
-        ],
-      ),
-      Invoice(
-        id: 'INV-002',
-        invoiceNumber: 'INV-2025-002',
-        partyId: 'party-2',
-        partyName: 'XYZ Constructions',
-        ownerName: 'Amit Sharma',
-        deliveryDate: now.add(const Duration(days: 5)),
-        createdAt: now.subtract(const Duration(days: 5)),
-        subtotal: 25000.0,
-        discountPercentage: 5.0,
-        discountAmount: 1250.0,
-        total: 23750.0,
-        status: OrderStatus.inTransit,
-        items: [
-          const InvoiceItem(
-            productId: 'prod-3',
-            productName: 'Porcelain Tiles',
-            quantity: 200,
-            unitPrice: 100.0,
-            subtotal: 20000.0,
-          ),
-          const InvoiceItem(
-            productId: 'prod-4',
-            productName: 'Adhesive Kit',
-            quantity: 50,
-            unitPrice: 100.0,
-            subtotal: 5000.0,
-          ),
-        ],
-      ),
-      Invoice(
-        id: 'INV-003',
-        invoiceNumber: 'INV-2025-003',
-        partyId: 'party-3',
-        partyName: 'Marble Palace',
-        ownerName: 'Vikram Singh',
-        deliveryDate: now.add(const Duration(days: 10)),
-        createdAt: now.subtract(const Duration(days: 10)),
-        subtotal: 50000.0,
-        discountPercentage: 0.0,
-        discountAmount: 0.0,
-        total: 50000.0,
-        status: OrderStatus.completed,
-        items: [
-          const InvoiceItem(
-            productId: 'prod-5',
-            productName: 'Italian Marble Tiles',
-            quantity: 150,
-            unitPrice: 250.0,
-            subtotal: 37500.0,
-          ),
-          const InvoiceItem(
-            productId: 'prod-6',
-            productName: 'Granite Tiles',
-            quantity: 100,
-            unitPrice: 125.0,
-            subtotal: 12500.0,
-          ),
-        ],
-      ),
-      Invoice(
-        id: 'INV-004',
-        invoiceNumber: 'INV-2025-004',
-        partyId: 'party-4',
-        partyName: 'Premium Interiors',
-        ownerName: 'Priya Mehta',
-        deliveryDate: now.subtract(const Duration(days: 2)),
-        createdAt: now.subtract(const Duration(days: 15)),
-        subtotal: 18000.0,
-        discountPercentage: 0.0,
-        discountAmount: 0.0,
-        total: 18000.0,
-        status: OrderStatus.rejected,
-        items: [
-          const InvoiceItem(
-            productId: 'prod-7',
-            productName: 'Designer Tiles',
-            quantity: 120,
-            unitPrice: 150.0,
-            subtotal: 18000.0,
-          ),
-        ],
-      ),
-    ];
+  /// Add invoice to history (optimistic update)
+  void addInvoiceOptimistic(InvoiceHistoryItem item) {
+    state.whenData((invoices) {
+      state = AsyncValue.data([item, ...invoices]);
+    });
   }
 }
 
-// Provider to generate unique invoice number
+// ========================================
+// FETCH INVOICE DETAILS PROVIDER
+// ========================================
+@riverpod
+class FetchInvoiceDetails extends _$FetchInvoiceDetails {
+  @override
+  FutureOr<InvoiceDetailsData?> build(String invoiceId) async {
+    // Auto-fetch when provider is created
+    return fetchInvoiceDetails(invoiceId);
+  }
+
+  /// Fetch specific invoice details from API
+  Future<InvoiceDetailsData> fetchInvoiceDetails(String invoiceId) async {
+    try {
+      final dio = ref.read(dioClientProvider);
+
+      AppLogger.d('Fetching invoice details for ID: $invoiceId');
+
+      final response = await dio.get(ApiEndpoints.invoiceById(invoiceId));
+
+      AppLogger.d('Invoice details response: ${response.data}');
+
+      // Parse response data - handle both String and Map
+      final Map<String, dynamic> responseData;
+      if (response.data is String) {
+        responseData = jsonDecode(response.data as String) as Map<String, dynamic>;
+      } else if (response.data is Map<String, dynamic>) {
+        responseData = response.data as Map<String, dynamic>;
+      } else {
+        throw Exception('Unexpected response type: ${response.data.runtimeType}');
+      }
+
+      final detailsResponse = FetchInvoiceDetailsResponse.fromJson(responseData);
+
+      AppLogger.d('Fetched invoice: ${detailsResponse.data.invoiceNumber}');
+
+      return detailsResponse.data;
+    } catch (e, stackTrace) {
+      AppLogger.e('Error fetching invoice details: $e\n$stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Refresh invoice details
+  Future<void> refresh(String invoiceId) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() => fetchInvoiceDetails(invoiceId));
+  }
+}
+
+// Provider to generate unique invoice number (optional - server generates it)
 @riverpod
 String generateInvoiceNumber(Ref ref) {
   final now = DateTime.now();
-  final invoices = ref.watch(invoiceHistoryProvider);
-  final count = invoices.length + 1;
-  return 'INV-${now.year}-${count.toString().padLeft(3, '0')}';
+  final invoicesAsync = ref.watch(invoiceHistoryProvider);
+  final count = invoicesAsync.maybeWhen(
+    data: (invoices) => invoices.length + 1,
+    orElse: () => 1,
+  );
+  return 'INV-${now.year}-${count.toString().padLeft(4, '0')}';
+}
+
+// ========================================
+// CREATE INVOICE PROVIDER
+// ========================================
+@riverpod
+class CreateInvoice extends _$CreateInvoice {
+  @override
+  FutureOr<CreateInvoiceResponse?> build() {
+    return null;
+  }
+
+  /// Create a new invoice via API
+  Future<CreateInvoiceResponse> createInvoice({
+    required String partyId,
+    required DateTime expectedDeliveryDate,
+    required double discount,
+    required List<CreateInvoiceItemRequest> items,
+  }) async {
+    state = const AsyncValue.loading();
+
+    state = await AsyncValue.guard(() async {
+      final dio = ref.read(dioClientProvider);
+
+      // Format date as YYYY-MM-DD
+      final formattedDate = expectedDeliveryDate.toIso8601String().split('T')[0];
+
+      final request = CreateInvoiceRequest(
+        partyId: partyId,
+        expectedDeliveryDate: formattedDate,
+        discount: discount,
+        items: items,
+      );
+
+      AppLogger.d('Creating invoice with request: ${request.toJson()}');
+
+      final response = await dio.post(
+        ApiEndpoints.invoices,
+        data: request.toJson(),
+      );
+
+      AppLogger.d('Invoice created successfully: ${response.data}');
+      AppLogger.d('Response data type: ${response.data.runtimeType}');
+
+      // Parse response data - handle both String and Map
+      final Map<String, dynamic> responseData;
+      if (response.data is String) {
+        responseData = jsonDecode(response.data as String) as Map<String, dynamic>;
+      } else if (response.data is Map<String, dynamic>) {
+        responseData = response.data as Map<String, dynamic>;
+      } else {
+        throw Exception('Unexpected response type: ${response.data.runtimeType}');
+      }
+
+      final invoiceResponse = CreateInvoiceResponse.fromJson(responseData);
+
+      // Add to invoice history (optimistic update)
+      if (invoiceResponse.success) {
+        final historyItem = InvoiceHistoryItem(
+          id: invoiceResponse.data.id ?? '',
+          partyName: invoiceResponse.data.partyName,
+          invoiceNumber: invoiceResponse.data.invoiceNumber,
+          expectedDeliveryDate: invoiceResponse.data.expectedDeliveryDate,
+          totalAmount: invoiceResponse.data.total ??
+              invoiceResponse.data.items.fold<double>(0.0, (sum, item) => sum + item.total),
+          status: invoiceResponse.data.status ?? OrderStatus.pending,
+          createdAt: invoiceResponse.data.createdAt ?? DateTime.now().toIso8601String(),
+        );
+        ref.read(invoiceHistoryProvider.notifier).addInvoiceOptimistic(historyItem);
+      }
+
+      return invoiceResponse;
+    });
+
+    // If there's an error, rethrow it
+    if (state.hasError) {
+      throw state.error!;
+    }
+
+    return state.value!;
+  }
 }

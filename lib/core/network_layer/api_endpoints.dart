@@ -34,4 +34,12 @@ class ApiEndpoints {
 
   /// Get user by ID
   static String userById(String id) => '/users/$id';
+
+  // ========================================
+  // Invoice Endpoints
+  // ========================================
+  static const String invoices = '/invoices';
+
+  /// Get invoice by ID
+  static String invoiceById(String id) => '/invoices/$id';
 }
