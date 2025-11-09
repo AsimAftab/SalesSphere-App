@@ -167,32 +167,24 @@ class _AttendanceMonthlyDetailsScreenState
     Color statusColor;
     String statusText;
     IconData statusIcon;
+    statusColor = record.status.backgroundColor;
+    statusText = record.status.displayName;
 
     switch (record.status) {
       case AttendanceStatus.present:
-        statusColor = AppColors.success;
-        statusText = 'Present';
-        statusIcon = Icons.check_circle;
-        break;
-      case AttendanceStatus.late:
-        statusColor = AppColors.success;
-        statusText = 'Present'; // Treat late as present
         statusIcon = Icons.check_circle;
         break;
       case AttendanceStatus.absent:
-        statusColor = AppColors.error;
-        statusText = 'Absent';
         statusIcon = Icons.cancel;
         break;
       case AttendanceStatus.halfDay:
-        statusColor = const Color(0xFFFFEB3B); // Bright yellow
-        statusText = 'Half-Day';
         statusIcon = Icons.schedule;
         break;
       case AttendanceStatus.onLeave:
-        statusColor = const Color(0xFFFF9800);
-        statusText = 'Leave';
         statusIcon = Icons.event_busy;
+        break;
+      case AttendanceStatus.weeklyOff:
+        statusIcon = Icons.weekend;
         break;
     }
 
@@ -294,8 +286,7 @@ class _AttendanceMonthlyDetailsScreenState
 
           // Time and Location Details (if present/half-day)
           if (record.status == AttendanceStatus.present ||
-              record.status == AttendanceStatus.halfDay ||
-              record.status == AttendanceStatus.late) ...[
+              record.status == AttendanceStatus.halfDay) ...[
             SizedBox(height: 12.h),
             Divider(color: AppColors.border, height: 1),
             SizedBox(height: 12.h),
@@ -440,9 +431,7 @@ class _AttendanceMonthlyDetailsScreenState
         return records;
       case AttendanceFilter.present:
         return records
-            .where((r) =>
-                r.status == AttendanceStatus.present ||
-                r.status == AttendanceStatus.late)
+            .where((r) => r.status == AttendanceStatus.present)
             .toList();
       case AttendanceFilter.absent:
         return records

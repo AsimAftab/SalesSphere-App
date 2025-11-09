@@ -1,4 +1,6 @@
+import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:sales_sphere/core/constants/app_colors.dart';
 
 part 'attendance.models.freezed.dart';
 part 'attendance.models.g.dart';
@@ -11,12 +13,12 @@ enum AttendanceStatus {
   present,
   @JsonValue('absent')
   absent,
-  @JsonValue('late')
-  late,
   @JsonValue('half_day')
   halfDay,
   @JsonValue('on_leave')
   onLeave,
+  @JsonValue('weekly_off')
+  weeklyOff,
 }
 
 // Extension for status display
@@ -26,14 +28,35 @@ extension AttendanceStatusExtension on AttendanceStatus {
       case AttendanceStatus.present:
         return 'Present';
       case AttendanceStatus.absent:
-        return 'Absent'; // Informed leave - employee leave with notes/reasons
-      case AttendanceStatus.late:
-        return 'Late';
+        return 'Absent';
       case AttendanceStatus.halfDay:
         return 'Half Day';
       case AttendanceStatus.onLeave:
-        return 'Leave'; // Company holidays/public holidays given by the company
+        return 'Leave';
+      case AttendanceStatus.weeklyOff:
+        return 'Weekly Off';
     }
+  }
+
+  /// Get background color for status badge
+  Color get backgroundColor {
+    switch (this) {
+      case AttendanceStatus.present:
+        return AppColors.green500;
+      case AttendanceStatus.absent:
+        return AppColors.red500;
+      case AttendanceStatus.weeklyOff:
+        return AppColors.blue500;
+      case AttendanceStatus.onLeave:
+        return AppColors.yellow500;
+      case AttendanceStatus.halfDay:
+        return AppColors.purple500;
+    }
+  }
+
+  /// Get text color for status badge (always white)
+  Color get textColor {
+    return Colors.white;
   }
 }
 
@@ -66,7 +89,7 @@ abstract class AttendanceSummary with _$AttendanceSummary {
     required int totalDays,
     required int presentDays,
     required int absentDays,
-    required int lateDays,
+    required int halfDays,
     required int leaveDays,
     required double attendancePercentage,
     required int totalHoursWorked,

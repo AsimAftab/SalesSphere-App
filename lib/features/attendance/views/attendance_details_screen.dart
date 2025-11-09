@@ -15,26 +15,22 @@ class AttendanceDetailsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     Color statusColor;
     IconData statusIcon;
+    statusColor = record.status.backgroundColor;
 
     switch (record.status) {
       case AttendanceStatus.present:
-        statusColor = AppColors.success;
         statusIcon = Icons.check_circle;
         break;
       case AttendanceStatus.absent:
-        statusColor = AppColors.error;
         statusIcon = Icons.cancel;
         break;
-      case AttendanceStatus.late:
-        statusColor = AppColors.warning;
-        statusIcon = Icons.access_time;
+      case AttendanceStatus.weeklyOff:
+        statusIcon = Icons.weekend;
         break;
       case AttendanceStatus.onLeave:
-        statusColor = AppColors.info;
         statusIcon = Icons.event_busy;
         break;
       case AttendanceStatus.halfDay:
-        statusColor = AppColors.warning;
         statusIcon = Icons.timelapse;
         break;
     }

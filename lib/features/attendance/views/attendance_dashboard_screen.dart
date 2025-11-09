@@ -291,10 +291,10 @@ class AttendanceDashboardScreen extends ConsumerWidget {
           children: [
             Expanded(
               child: _buildStatCard(
-                'Late',
-                '${summary.lateDays}',
-                AppColors.warning,
-                Icons.access_time,
+                'Half-Day',
+                '${summary.halfDays}',
+                AppColors.purple500,
+                Icons.timelapse,
               ),
             ),
             SizedBox(width: 12.w),

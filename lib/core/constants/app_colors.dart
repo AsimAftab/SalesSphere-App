@@ -40,6 +40,13 @@ class AppColors {
   static const Color warning = Color(0xFFFFA726);
   static const Color info = Color(0xFF2196F3);
 
+  // Attendance Status Colors (Tailwind-style)
+  static const Color green500 = Color(0xFF22C55E);    // Present (P)
+  static const Color red500 = Color(0xFFEF4444);      // Absent (A)
+  static const Color blue500 = Color(0xFF3B82F6);     // Weekly Off (W)
+  static const Color yellow500 = Color(0xFFEAB308);   // Leave (L)
+  static const Color purple500 = Color(0xFFA855F7);   // Half Day (H)
+
   // Border Colors
   static const Color border = Color(0xFFE0E0E0);
   static const Color borderDark = Color(0xFF424242);
