@@ -8,6 +8,9 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'app.dart';
 import 'core/utils/logger.dart';
 import 'core/network_layer/token_storage_service.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
+
+
 
 /// Riverpod 3.0 ProviderObserver for logging provider lifecycle
 final class LoggerProviderObserver extends ProviderObserver {
@@ -58,11 +61,14 @@ Future<void> main() async {
     AppLogger.e('❌ Failed to initialize token storage', e);
   }
 
-  // Global Flutter error handling
-  FlutterError.onError = (FlutterErrorDetails details) {
-    FlutterError.dumpErrorToConsole(details);
-    AppLogger.e('🚨 Flutter Error', details.exception, details.stack);
-  };
+  // Note: Sentry automatically handles FlutterError.onError
+  // We only need to log locally in debug mode
+  if (kDebugMode) {
+    FlutterError.onError = (FlutterErrorDetails details) {
+      FlutterError.dumpErrorToConsole(details);
+      AppLogger.e('🚨 Flutter Error', details.exception, details.stack);
+    };
+  }
 
   // Set system UI overlay style
   SystemChrome.setSystemUIOverlayStyle(
@@ -87,13 +93,40 @@ Future<void> main() async {
     AppLogger.i('🚀 Running in RELEASE mode');
   }
 
-  runApp(
+  await SentryFlutter.init(
+    (options) {
+      // Load DSN from environment variables
+      options.dsn = dotenv.env['SENTRY_DSN'] ?? '';
+
+      // Environment-dependent configuration
+      if (kDebugMode) {
+        // Debug mode: capture all errors for testing
+        options.tracesSampleRate = 1.0;
+        options.profilesSampleRate = 1.0;
+      } else {
+        // Production mode: sample to reduce overhead and costs
+        options.tracesSampleRate = 0.2; // 20% of transactions
+        options.profilesSampleRate = 0.2; // 20% of profiled transactions
+      }
+
+      // Set environment
+      options.environment = kDebugMode ? 'debug' : (kReleaseMode ? 'production' : 'profile');
+
+      // Enable automatic breadcrumbs
+      options.enableAutoSessionTracking = true;
+      options.attachThreads = true;
+      options.attachScreenshot = true;
+      options.screenshotQuality = SentryScreenshotQuality.low;
+      options.attachViewHierarchy = true;
+    },
+    appRunner: () => runApp(SentryWidget(child:
     const ProviderScope(
       observers: [
         if (kDebugMode) LoggerProviderObserver(),
       ],
       child: MyApp(),
     ),
+  )),
   );
 }
 

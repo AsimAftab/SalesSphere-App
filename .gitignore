@@ -14,7 +14,7 @@ migrate_working_dir/
 .env
 *.freezed.dart
 *.g.dart
-
+sentry-wizard.exe
 # IntelliJ related
 *.iml
 *.ipr
@@ -49,3 +49,5 @@ app.*.map.json
 
 # Ignore .env files
 .env
+
+sentry.properties
