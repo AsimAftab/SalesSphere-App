@@ -14,11 +14,7 @@ import 'package:sales_sphere/features/parties/views/edit_party_details_screen.da
 import 'package:sales_sphere/features/parties/views/add_party_screen.dart';
 import 'package:sales_sphere/features/profile/view/profile_screen.dart';
 import 'package:sales_sphere/features/attendance/views/attendance_screen.dart';
-import 'package:sales_sphere/features/attendance/views/attendance_dashboard_screen.dart';
-import 'package:sales_sphere/features/attendance/views/attendance_history_screen.dart';
-import 'package:sales_sphere/features/attendance/views/attendance_details_screen.dart';
 import 'package:sales_sphere/features/attendance/views/attendance_monthly_details_screen.dart';
-import 'package:sales_sphere/features/attendance/models/attendance.models.dart';
 import 'package:sales_sphere/features/prospects/views/prospects_screen.dart';
 import 'package:sales_sphere/features/prospects/views/add_prospect_screen.dart';
 import 'package:sales_sphere/features/prospects/views/edit_prospect_details_screen.dart';
@@ -150,24 +146,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/attendance',
         name: 'attendance',
         builder: (context, state) => const AttendanceScreen(),
-      ),
-      GoRoute(
-        path: '/attendance/dashboard',
-        name: 'attendance-dashboard',
-        builder: (context, state) => const AttendanceDashboardScreen(),
-      ),
-      GoRoute(
-        path: '/attendance/history',
-        name: 'attendance-history',
-        builder: (context, state) => const AttendanceHistoryScreen(),
-      ),
-      GoRoute(
-        path: '/attendance/details',
-        name: 'attendance-details',
-        builder: (context, state) {
-          final record = state.extra as AttendanceRecord;
-          return AttendanceDetailsScreen(record: record);
-        },
       ),
       GoRoute(
         path: '/attendance/monthly-details',
