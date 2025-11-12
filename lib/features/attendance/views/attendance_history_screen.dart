@@ -148,13 +148,16 @@ class _AttendanceHistoryScreenState extends ConsumerState<AttendanceHistoryScree
     return Container(
       color: Colors.white,
       padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+      child: Wrap(
+        spacing: 12.w,
+        runSpacing: 8.h,
+        alignment: WrapAlignment.center,
         children: [
-          _buildLegendItem('Present', AppColors.success),
-          _buildLegendItem('Absent', AppColors.error),
-          _buildLegendItem('Late', AppColors.warning),
-          _buildLegendItem('Leave', AppColors.info),
+          _buildLegendItem('Present', AppColors.green500),
+          _buildLegendItem('Absent', AppColors.red500),
+          _buildLegendItem('Half-Day', AppColors.purple500),
+          _buildLegendItem('Leave', AppColors.yellow500),
+          _buildLegendItem('Weekly Off', AppColors.blue500),
         ],
       ),
     );
@@ -257,23 +260,9 @@ class _AttendanceHistoryScreenState extends ConsumerState<AttendanceHistoryScree
     final isWeekend = date.weekday == DateTime.saturday || date.weekday == DateTime.sunday;
 
     if (record != null && record.id.isNotEmpty && !isWeekend) {
-      switch (record.status) {
-        case AttendanceStatus.present:
-          backgroundColor = AppColors.success.withValues(alpha: 0.2);
-          break;
-        case AttendanceStatus.absent:
-          backgroundColor = AppColors.error.withValues(alpha: 0.2);
-          break;
-        case AttendanceStatus.late:
-          backgroundColor = AppColors.warning.withValues(alpha: 0.2);
-          break;
-        case AttendanceStatus.onLeave:
-          backgroundColor = AppColors.info.withValues(alpha: 0.2);
-          break;
-        case AttendanceStatus.halfDay:
-          backgroundColor = AppColors.warning.withValues(alpha: 0.15);
-          break;
-      }
+      backgroundColor = record.status.backgroundColor.withValues(alpha: 0.2);
+    } else if (isWeekend) {
+      backgroundColor = AppColors.blue500.withValues(alpha: 0.1);
     }
 
     return GestureDetector(
@@ -354,28 +343,23 @@ class _AttendanceHistoryScreenState extends ConsumerState<AttendanceHistoryScree
   }
 
   Widget _buildRecordItem(AttendanceRecord record) {
-    Color statusColor;
+    Color statusColor = record.status.backgroundColor;
     IconData statusIcon;
 
     switch (record.status) {
       case AttendanceStatus.present:
-        statusColor = AppColors.success;
         statusIcon = Icons.check_circle;
         break;
       case AttendanceStatus.absent:
-        statusColor = AppColors.error;
         statusIcon = Icons.cancel;
         break;
-      case AttendanceStatus.late:
-        statusColor = AppColors.warning;
-        statusIcon = Icons.access_time;
+      case AttendanceStatus.weeklyOff:
+        statusIcon = Icons.weekend;
         break;
       case AttendanceStatus.onLeave:
-        statusColor = AppColors.info;
         statusIcon = Icons.event_busy;
         break;
       case AttendanceStatus.halfDay:
-        statusColor = AppColors.warning;
         statusIcon = Icons.timelapse;
         break;
     }

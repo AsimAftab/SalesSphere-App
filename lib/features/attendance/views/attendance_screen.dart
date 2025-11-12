@@ -434,45 +434,13 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
 
     if (isWeekend && record.id.isNotEmpty) {
       // Saturday with attendance record - show the status dot
-      switch (record.status) {
-        case AttendanceStatus.present:
-          dotColor = AppColors.success;
-          break;
-        case AttendanceStatus.late:
-          dotColor = AppColors.success; // Treat as present
-          break;
-        case AttendanceStatus.absent:
-          dotColor = AppColors.error;
-          break;
-        case AttendanceStatus.halfDay:
-          dotColor = const Color(0xFFFFEB3B); // Bright yellow
-          break;
-        case AttendanceStatus.onLeave:
-          dotColor = const Color(0xFFFF9800); // Orange for leave
-          break;
-      }
+      dotColor = record.status.backgroundColor;
     } else if (isWeekend) {
-      // Saturday without record - grey weekend dot
-      dotColor = AppColors.textSecondary;
+      // Saturday without record - use weeklyOff color
+      dotColor = AppColors.blue500;
     } else if (record.id.isNotEmpty) {
       // Regular working day with attendance record
-      switch (record.status) {
-        case AttendanceStatus.present:
-          dotColor = AppColors.success;
-          break;
-        case AttendanceStatus.late:
-          dotColor = AppColors.success; // Treat as present
-          break;
-        case AttendanceStatus.absent:
-          dotColor = AppColors.error;
-          break;
-        case AttendanceStatus.halfDay:
-          dotColor = const Color(0xFFFFEB3B); // Bright yellow
-          break;
-        case AttendanceStatus.onLeave:
-          dotColor = const Color(0xFFFF9800); // Orange for leave
-          break;
-      }
+      dotColor = record.status.backgroundColor;
     }
 
     if (isSelected) {
@@ -527,18 +495,18 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            _buildLegendItem('Present', AppColors.success),
-            _buildLegendItem('Absent', AppColors.error),
-            _buildLegendItem('Half-Day', const Color(0xFFFFEB3B)),
+            _buildLegendItem('Present', AppColors.green500),
+            _buildLegendItem('Absent', AppColors.red500),
+            _buildLegendItem('Half-Day', AppColors.purple500),
           ],
         ),
         SizedBox(height: 12.h),
-        // Second row: Leave, Weekend
+        // Second row: Leave, Weekly Off
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            _buildLegendItem('Leave', const Color(0xFFFF9800)),
-            _buildLegendItem('Weekend', AppColors.textSecondary),
+            _buildLegendItem('Leave', AppColors.yellow500),
+            _buildLegendItem('Weekly Off', AppColors.blue500),
             SizedBox(width: 80.w), // Empty space for alignment
           ],
         ),

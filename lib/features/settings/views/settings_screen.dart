@@ -100,6 +100,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   context.push('/attendance');
                 },
               ),
+              SettingsTile(
+                icon: Icons.lock_outline,
+                title: 'Change Password',
+                onTap: () {
+                  context.push('/settings/change-password');
+                },
+              ),
 
               SizedBox(height: 40.h),
               Text(

@@ -116,7 +116,7 @@ class AttendanceHistoryViewModel extends _$AttendanceHistoryViewModel {
         // On leave every 7th day
         status = AttendanceStatus.onLeave;
       } else if (i % 5 == 0) {
-        // Was late every 5th day, now just present
+        // Present with full hours
         status = AttendanceStatus.present;
         checkInTime = DateTime(date.year, date.month, date.day, 9, 30);
         checkOutTime = DateTime(date.year, date.month, date.day, 18, 15);
@@ -148,7 +148,7 @@ class AttendanceHistoryViewModel extends _$AttendanceHistoryViewModel {
           checkOutTime: checkOutTime,
           status: status,
           location: status == AttendanceStatus.present ||
-                  status == AttendanceStatus.late
+                  status == AttendanceStatus.halfDay
               ? 'Office - Main Branch'
               : null,
           totalHoursWorked: hoursWorked,
@@ -195,12 +195,14 @@ class AttendanceSummaryViewModel extends _$AttendanceSummaryViewModel {
 
     int totalDays = history.length;
     int presentDays = history
-        .where((r) => r.status == AttendanceStatus.present || r.status == AttendanceStatus.late)
+        .where((r) => r.status == AttendanceStatus.present)
         .length;
     int absentDays = history
         .where((r) => r.status == AttendanceStatus.absent)
         .length;
-    int lateDays = 0; // Late is now treated as present
+    int halfDays = history
+        .where((r) => r.status == AttendanceStatus.halfDay)
+        .length;
     int leaveDays = history
         .where((r) => r.status == AttendanceStatus.onLeave)
         .length;
@@ -217,7 +219,7 @@ class AttendanceSummaryViewModel extends _$AttendanceSummaryViewModel {
       totalDays: totalDays,
       presentDays: presentDays,
       absentDays: absentDays,
-      lateDays: lateDays,
+      halfDays: halfDays,
       leaveDays: leaveDays,
       attendancePercentage: attendancePercentage,
       totalHoursWorked: totalHoursWorked,
@@ -234,12 +236,14 @@ class AttendanceSummaryViewModel extends _$AttendanceSummaryViewModel {
 
     int totalDays = monthRecords.length;
     int presentDays = monthRecords
-        .where((r) => r.status == AttendanceStatus.present || r.status == AttendanceStatus.late)
+        .where((r) => r.status == AttendanceStatus.present)
         .length;
     int absentDays = monthRecords
         .where((r) => r.status == AttendanceStatus.absent)
         .length;
-    int lateDays = 0; // Late is now treated as present
+    int halfDays = monthRecords
+        .where((r) => r.status == AttendanceStatus.halfDay)
+        .length;
     int leaveDays = monthRecords
         .where((r) => r.status == AttendanceStatus.onLeave)
         .length;
@@ -256,7 +260,7 @@ class AttendanceSummaryViewModel extends _$AttendanceSummaryViewModel {
       totalDays: totalDays,
       presentDays: presentDays,
       absentDays: absentDays,
-      lateDays: lateDays,
+      halfDays: halfDays,
       leaveDays: leaveDays,
       attendancePercentage: attendancePercentage,
       totalHoursWorked: totalHoursWorked,
