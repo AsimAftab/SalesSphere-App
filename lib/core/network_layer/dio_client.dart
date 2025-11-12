@@ -53,6 +53,7 @@ class DioClient {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          'X-Client-Type': 'mobile',
         },
         validateStatus: (status) {
           // Accept all status codes and handle them in interceptors

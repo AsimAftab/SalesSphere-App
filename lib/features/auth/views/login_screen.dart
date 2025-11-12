@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -7,6 +8,7 @@ import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/utils/field_validators.dart';
 import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import '../vm/login.vm.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
