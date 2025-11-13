@@ -65,7 +65,7 @@ abstract class User with _$User {
     required String panNumber,
     required String citizenshipNumber,
     required String dateJoined,
-    required List<Document> documents,
+    @Default([]) List<Document> documents,
     required String createdAt,
     required String updatedAt,
     @JsonKey(name: '__v') required int version,

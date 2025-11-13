@@ -1,4 +1,8 @@
+import 'package:dio/dio.dart';
+import 'package:intl/intl.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
+import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 import '../models/attendance.models.dart';
 
@@ -10,58 +14,314 @@ part 'attendance.vm.g.dart';
 @riverpod
 class TodayAttendanceViewModel extends _$TodayAttendanceViewModel {
   @override
-  TodayAttendance build() {
-    // Mock data - Today's attendance (not checked in yet)
-    return const TodayAttendance(
-      isCheckedIn: false,
-      isCheckedOut: false,
-    );
+  Future<TodayAttendanceStatusResponse?> build() async {
+    // Fetch today's attendance status from API
+    return _fetchTodayStatus();
+  }
+
+  /// Fetch today's attendance status
+  Future<TodayAttendanceStatusResponse?> _fetchTodayStatus() async {
+    try {
+      AppLogger.i('📅 Fetching today\'s attendance status...');
+
+      final dio = ref.read(dioClientProvider);
+      final response = await dio.get(ApiEndpoints.attendanceTodayStatus);
+
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        final statusResponse = TodayAttendanceStatusResponse.fromJson(response.data);
+
+        if (statusResponse.data == null) {
+          AppLogger.i('ℹ️ Not marked today: ${statusResponse.message}');
+          AppLogger.i('🕐 Org Check-In Time: ${statusResponse.organizationCheckInTime}');
+        } else {
+          AppLogger.i('✅ Today\'s attendance status fetched');
+        }
+
+        return statusResponse;
+      }
+
+      return null;
+    } on DioException catch (e) {
+      AppLogger.e('❌ Failed to fetch today\'s status: $e');
+      return null;
+    } catch (e) {
+      AppLogger.e('❌ Unexpected error: $e');
+      return null;
+    }
+  }
+
+  /// Check if check-in is allowed (within 2 hours before scheduled check-in time)
+  bool isCheckInAllowed(TodayAttendanceStatusResponse? statusResponse) {
+    if (statusResponse == null) return false;
+
+    // If already checked in, don't allow check-in again
+    if (statusResponse.data?.checkInTime != null) return false;
+
+    final orgCheckInTime = statusResponse.organizationCheckInTime;
+    if (orgCheckInTime == null) return true; // Allow if no restriction
+
+    try {
+      // Parse organization check-in time (format: "HH:mm")
+      final timeParts = orgCheckInTime.split(':');
+      if (timeParts.length != 2) return true;
+
+      final hour = int.parse(timeParts[0]);
+      final minute = int.parse(timeParts[1]);
+
+      final now = DateTime.now();
+      final scheduledCheckIn = DateTime(now.year, now.month, now.day, hour, minute);
+      final twoHoursBefore = scheduledCheckIn.subtract(const Duration(hours: 2));
+
+      // Allow check-in if current time is within 2 hours before scheduled time
+      final isAllowed = now.isAfter(twoHoursBefore) || now.isAtSameMomentAs(twoHoursBefore);
+
+      if (!isAllowed) {
+        AppLogger.i('⏰ Check-in not allowed yet. Earliest: ${DateFormat('HH:mm').format(twoHoursBefore)}');
+      }
+
+      return isAllowed;
+    } catch (e) {
+      AppLogger.e('❌ Error checking check-in time: $e');
+      return true; // Allow on error to not block user
+    }
   }
 
   /// Check-in method
-  Future<void> checkIn() async {
-    AppLogger.i('📍 Checking in...');
+  Future<void> checkIn({
+    required double latitude,
+    required double longitude,
+    required String address,
+  }) async {
+    // Save the current state to restore if check-in validation fails
+    final previousState = state;
 
-    // Simulate API call delay
-    await Future.delayed(const Duration(seconds: 1));
+    state = const AsyncLoading();
 
-    state = TodayAttendance(
-      checkInTime: DateTime.now(),
-      isCheckedIn: true,
-      isCheckedOut: false,
-      location: 'Office - Main Branch',
-      hoursWorked: 0,
-    );
+    try {
+      AppLogger.i('📍 Checking in at: $address');
 
-    AppLogger.i('✅ Checked in successfully');
+      final dio = ref.read(dioClientProvider);
+      final response = await dio.post(
+        ApiEndpoints.attendanceCheckIn,
+        data: {
+          'latitude': latitude,
+          'longitude': longitude,
+          'address': address,
+        },
+      );
+
+      // Check if response indicates success
+      if (response.data['success'] == true) {
+        final checkInResponse = CheckInOutResponse.fromJson(response.data);
+
+        AppLogger.i('✅ Checked in successfully');
+        if (checkInResponse.isLate == true) {
+          AppLogger.w('⚠️ Late check-in! Expected: ${checkInResponse.expectedCheckInTime}');
+        }
+
+        // Refresh the status to get updated data with organization info
+        await refresh();
+      }
+      // Check if response is an error with detailed check-in time info
+      else if (response.data != null &&
+          response.data is Map<String, dynamic> &&
+          response.data['success'] == false) {
+        try {
+          final checkInError = CheckInError.fromJson(response.data);
+          AppLogger.w('⏰ Check-in time window error: ${checkInError.message}');
+
+          // Restore previous state (don't set to error for validation failures)
+          state = previousState;
+
+          throw CheckInErrorException(checkInError);
+        } catch (parseError) {
+          if (parseError is! CheckInErrorException) {
+            AppLogger.e('Failed to parse check-in error: $parseError');
+            state = AsyncError(parseError, StackTrace.current);
+            throw Exception(response.data['message'] ?? 'Check-in failed');
+          }
+          rethrow;
+        }
+      } else {
+        state = AsyncError(Exception('Check-in failed'), StackTrace.current);
+        throw Exception('Check-in failed');
+      }
+    } on DioException catch (e) {
+      AppLogger.e('❌ Check-in failed: ${e.response?.statusCode} - ${e.response?.data}');
+
+      // Check if response contains check-in time window error
+      if (e.response?.data != null &&
+          e.response?.data is Map<String, dynamic> &&
+          e.response?.data['success'] == false) {
+        try {
+          final checkInError = CheckInError.fromJson(e.response!.data);
+          AppLogger.w('⏰ Check-in time window error: ${checkInError.message}');
+
+          // Restore previous state (don't set to error for validation failures)
+          state = previousState;
+
+          throw CheckInErrorException(checkInError);
+        } catch (parseError) {
+          // If parsing failed for a reason other than type issues, log it
+          if (parseError is! CheckInErrorException) {
+            AppLogger.e('Failed to parse check-in error: $parseError');
+            state = AsyncError(parseError, StackTrace.current);
+          }
+          // Always rethrow to preserve the error
+          rethrow;
+        }
+      }
+
+      state = AsyncError(e, StackTrace.current);
+      rethrow;
+    } catch (e) {
+      if (e is CheckInErrorException) {
+        // Validation errors should not change the provider state
+        rethrow;
+      }
+      AppLogger.e('❌ Unexpected error during check-in: $e');
+      state = AsyncError(e, StackTrace.current);
+      rethrow;
+    }
   }
 
   /// Check-out method
-  Future<void> checkOut() async {
-    if (!state.isCheckedIn) {
-      AppLogger.w('⚠️ Cannot check out without checking in first');
-      return;
+  Future<void> checkOut({
+    required double latitude,
+    required double longitude,
+    required String address,
+    bool isHalfDay = false,
+  }) async {
+    // Save the current state to restore if check-out validation fails
+    final previousState = state;
+
+    state = const AsyncLoading();
+
+    try {
+      AppLogger.i('📍 Checking out at: $address${isHalfDay ? ' (Half-day)' : ''}');
+
+      final dio = ref.read(dioClientProvider);
+      final response = await dio.put(
+        ApiEndpoints.attendanceCheckOut,
+        data: {
+          'latitude': latitude,
+          'longitude': longitude,
+          'address': address,
+          if (isHalfDay) 'isHalfDay': true,
+        },
+      );
+
+      // Check for success response
+      if (response.data['success'] == true) {
+        final checkOutResponse = CheckInOutResponse.fromJson(response.data);
+
+        AppLogger.i('✅ Checked out successfully${isHalfDay ? ' (Half-day)' : ''}');
+
+        // Refresh the status to get updated data with organization info
+        await refresh();
+      }
+      // Handle error responses (400 status with success: false)
+      else if (response.data != null &&
+          response.data is Map<String, dynamic> &&
+          response.data['success'] == false) {
+        try {
+          final restriction = CheckoutRestriction.fromJson(response.data);
+
+          // Restore previous state (don't set to error for validation failures)
+          state = previousState;
+
+          // Check if half-day window has closed
+          if (isHalfDay && restriction.halfDayCheckoutClosedAt != null) {
+            AppLogger.w('Half-day checkout window closed: ${restriction.message}');
+            throw HalfDayWindowClosedException(restriction);
+          }
+
+          // Check if half-day fallback is available (too early for full-day)
+          if (restriction.canUseHalfDayFallback) {
+            AppLogger.w('Checkout restricted, half-day option available');
+            throw CheckoutRestrictionException(restriction);
+          }
+
+          // Generic checkout error with time info
+          AppLogger.w('Checkout time restriction: ${restriction.message}');
+          throw CheckoutRestrictionException(restriction);
+        } catch (parseError) {
+          if (parseError is CheckoutRestrictionException ||
+              parseError is HalfDayWindowClosedException) {
+            rethrow;
+          }
+          AppLogger.e('Failed to parse checkout restriction: $parseError');
+          state = AsyncError(parseError, StackTrace.current);
+          throw Exception('Check-out failed: ${response.data['message'] ?? 'Unknown error'}');
+        }
+      }
+      // Generic failure
+      else {
+        AppLogger.e('Check-out failed with status: ${response.statusCode}');
+        state = AsyncError(Exception('Check-out failed'), StackTrace.current);
+        throw Exception('Check-out failed');
+      }
+    } on CheckoutRestrictionException {
+      // Validation errors - state already restored, just re-throw
+      rethrow;
+    } on HalfDayWindowClosedException {
+      // Validation errors - state already restored, just re-throw
+      rethrow;
+    } on DioException catch (e) {
+      AppLogger.e('❌ Check-out failed: ${e.response?.data}');
+
+      // Parse error response
+      if (e.response?.data != null &&
+          e.response?.data is Map<String, dynamic> &&
+          e.response?.data['success'] == false) {
+        try {
+          final restriction = CheckoutRestriction.fromJson(e.response!.data);
+
+          // Restore previous state (don't set to error for validation failures)
+          state = previousState;
+
+          // Check if half-day window has closed
+          if (isHalfDay && restriction.halfDayCheckoutClosedAt != null) {
+            AppLogger.w('Half-day checkout window closed: ${restriction.message}');
+            throw HalfDayWindowClosedException(restriction);
+          }
+
+          // Check if half-day fallback is available (too early for full-day)
+          if (restriction.canUseHalfDayFallback) {
+            AppLogger.w('Checkout restricted, half-day option available');
+            throw CheckoutRestrictionException(restriction);
+          }
+
+          // Generic checkout error with time info
+          AppLogger.w('Checkout time restriction: ${restriction.message}');
+          throw CheckoutRestrictionException(restriction);
+        } catch (parseError) {
+          if (parseError is CheckoutRestrictionException ||
+              parseError is HalfDayWindowClosedException) {
+            rethrow;
+          }
+          AppLogger.e('Failed to parse checkout restriction: $parseError');
+          state = AsyncError(parseError, StackTrace.current);
+        }
+      }
+
+      state = AsyncError(e, StackTrace.current);
+      rethrow;
+    } catch (e) {
+      if (e is CheckoutRestrictionException || e is HalfDayWindowClosedException) {
+        // Validation errors should not change the provider state
+        rethrow;
+      }
+      AppLogger.e('❌ Unexpected error during check-out: $e');
+      state = AsyncError(e, StackTrace.current);
+      rethrow;
     }
+  }
 
-    AppLogger.i('📍 Checking out...');
-
-    // Simulate API call delay
-    await Future.delayed(const Duration(seconds: 1));
-
-    // Calculate hours worked
-    final checkInTime = state.checkInTime;
-    final checkOutTime = DateTime.now();
-    final hoursWorked = checkInTime != null
-        ? checkOutTime.difference(checkInTime).inHours
-        : 0;
-
-    state = state.copyWith(
-      checkOutTime: checkOutTime,
-      isCheckedOut: true,
-      hoursWorked: hoursWorked,
-    );
-
-    AppLogger.i('✅ Checked out successfully. Hours worked: $hoursWorked');
+  /// Refresh today's status
+  Future<void> refresh() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(_fetchTodayStatus);
   }
 }
 
@@ -265,5 +525,198 @@ class AttendanceSummaryViewModel extends _$AttendanceSummaryViewModel {
       attendancePercentage: attendancePercentage,
       totalHoursWorked: totalHoursWorked,
     );
+  }
+}
+
+// ========================================
+// MONTHLY ATTENDANCE REPORT PROVIDER
+// ========================================
+@riverpod
+class MonthlyAttendanceReportViewModel
+    extends _$MonthlyAttendanceReportViewModel {
+  @override
+  Future<MonthlyAttendanceReport> build(int month, int year) async {
+    // Fetch monthly attendance report from API
+    return _fetchMonthlyReport(month, year);
+  }
+
+  /// Fetch monthly attendance report from API
+  Future<MonthlyAttendanceReport> _fetchMonthlyReport(
+      int month, int year) async {
+    try {
+      AppLogger.i('📅 Fetching monthly attendance report for $month/$year');
+
+      final dio = ref.read(dioClientProvider);
+      final endpoint =
+          ApiEndpoints.monthlyAttendanceReport(month: month, year: year);
+
+      AppLogger.d('Endpoint: $endpoint');
+
+      final response = await dio.get(endpoint);
+
+      AppLogger.i('✅ Monthly attendance report fetched successfully');
+      AppLogger.d('Status code: ${response.statusCode}');
+      AppLogger.d('Response type: ${response.data.runtimeType}');
+
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        AppLogger.d('Response data keys: ${response.data.keys.toList()}');
+
+        final reportData = response.data['data'] as Map<String, dynamic>;
+        final report = MonthlyAttendanceReport.fromJson(reportData);
+
+        AppLogger.i('✅ Successfully parsed monthly attendance report');
+        return report;
+      } else {
+        AppLogger.e('❌ API returned unsuccessful response');
+        throw Exception('API returned success: false');
+      }
+    } on DioException catch (e) {
+      AppLogger.e('❌ Failed to fetch monthly attendance report: $e');
+      AppLogger.e('Response data: ${e.response?.data}');
+      AppLogger.e('Status code: ${e.response?.statusCode}');
+      AppLogger.e('Request URL: ${e.requestOptions.uri}');
+      rethrow;
+    } catch (e, stackTrace) {
+      AppLogger.e('❌ Unexpected error fetching attendance report: $e');
+      AppLogger.e('Stack trace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Refresh the monthly report
+  Future<void> refresh() async {
+    ref.invalidateSelf();
+    await future;
+  }
+}
+
+// ========================================
+// ATTENDANCE SEARCH PROVIDER
+// ========================================
+@riverpod
+class AttendanceSearchViewModel extends _$AttendanceSearchViewModel {
+  @override
+  Future<AttendanceSearchResponse> build({
+    List<String>? status,
+    int? month,
+    int? year,
+    String? startDate,
+    String? endDate,
+    int page = 1,
+    int limit = 20,
+  }) async {
+    return _searchAttendance(
+      status: status,
+      month: month,
+      year: year,
+      startDate: startDate,
+      endDate: endDate,
+      page: page,
+      limit: limit,
+    );
+  }
+
+  /// Search attendance records with filters
+  Future<AttendanceSearchResponse> _searchAttendance({
+    List<String>? status,
+    int? month,
+    int? year,
+    String? startDate,
+    String? endDate,
+    int page = 1,
+    int limit = 20,
+  }) async {
+    try {
+      AppLogger.i('🔍 Searching attendance records...');
+      AppLogger.d('Filters: status=$status, month=$month, year=$year, page=$page');
+
+      final dio = ref.read(dioClientProvider);
+      final endpoint = ApiEndpoints.attendanceSearch(
+        status: status,
+        month: month,
+        year: year,
+        startDate: startDate,
+        endDate: endDate,
+        page: page,
+        limit: limit,
+      );
+
+      AppLogger.d('Endpoint: $endpoint');
+
+      final response = await dio.get(endpoint);
+
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        final searchResponse = AttendanceSearchResponse.fromJson(response.data);
+        AppLogger.i('✅ Found ${searchResponse.data.length} attendance records');
+        return searchResponse;
+      } else {
+        AppLogger.e('❌ API returned unsuccessful response');
+        throw Exception('API returned success: false');
+      }
+    } on DioException catch (e) {
+      AppLogger.e('❌ Failed to search attendance: $e');
+      AppLogger.e('Response data: ${e.response?.data}');
+      rethrow;
+    } catch (e, stackTrace) {
+      AppLogger.e('❌ Unexpected error searching attendance: $e');
+      AppLogger.e('Stack trace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Load more results (pagination)
+  Future<void> loadMore() async {
+    final current = state.value;
+
+    // Guard: Don't load if no current data or no next page
+    if (current == null) {
+      AppLogger.w('⚠️ Cannot load more: No current state');
+      return;
+    }
+
+    if (!current.pagination.hasNextPage) {
+      AppLogger.i('ℹ️ No more pages to load (total: ${current.pagination.total})');
+      return;
+    }
+
+    // Guard: Don't load if already loading
+    if (state.isLoading) {
+      AppLogger.w('⚠️ Already loading, skipping loadMore');
+      return;
+    }
+
+    try {
+      AppLogger.i('📄 Loading more attendance records (page ${current.pagination.page + 1})');
+
+      state = const AsyncLoading();
+
+      final nextPage = await _searchAttendance(
+        status: current.filters.status,
+        month: current.filters.dateRange != null
+            ? DateTime.parse(current.filters.dateRange!.start).month
+            : null,
+        year: current.filters.dateRange != null
+            ? DateTime.parse(current.filters.dateRange!.start).year
+            : null,
+        page: current.pagination.page + 1,
+        limit: current.pagination.limit,
+      );
+
+      // Append new data to existing data
+      final combinedData = [...current.data, ...nextPage.data];
+      final updatedResponse = nextPage.copyWith(data: combinedData);
+
+      state = AsyncData(updatedResponse);
+      AppLogger.i('✅ Loaded ${nextPage.data.length} more records (total: ${combinedData.length})');
+    } catch (e) {
+      AppLogger.e('❌ Failed to load more: $e');
+      state = AsyncError(e, StackTrace.current);
+    }
+  }
+
+  /// Refresh search results
+  Future<void> refresh() async {
+    ref.invalidateSelf();
+    await future;
   }
 }

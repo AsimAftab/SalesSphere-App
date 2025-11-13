@@ -476,7 +476,7 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
-                                    'Invoice ${response.data.invoiceNumber} generated for ${selectedParty!.name}!',
+                                    'Invoice ${response.data?.invoiceNumber ?? 'created'} generated for ${selectedParty!.name}!',
                                   ),
                                   backgroundColor: Colors.green,
                                   action: SnackBarAction(

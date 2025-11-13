@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:sales_sphere/features/Detail-Added/view/detail_added.dart';
 import 'package:sales_sphere/widget/main_shell.dart';
 import 'package:sales_sphere/features/auth/views/login_screen.dart';
 import 'package:sales_sphere/features/auth/views/forgot_password_screen.dart';
@@ -52,7 +51,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final isGoingToParties = requestedPath.startsWith('/parties');
       final isGoingToDirectory =
           requestedPath.startsWith('/directory') ||
-              requestedPath.startsWith('/directory/prospects-list');
+          requestedPath.startsWith('/directory/prospects-list');
       final isGoingToEditParty = requestedPath.startsWith(
         '/edit_party_details_screen',
       );
@@ -61,15 +60,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final isGoingToAttendance = requestedPath.startsWith('/attendance');
       final isGoingToProspects =
           requestedPath.startsWith('/prospects') ||
-              requestedPath.startsWith('/add-prospect') ||
-              requestedPath.startsWith('/edit-prospect');
+          requestedPath.startsWith('/add-prospect') ||
+          requestedPath.startsWith('/edit-prospect');
       final isGoingToSites =
           requestedPath.startsWith('/sites') ||
-              requestedPath.startsWith('/add-site') ||
-              requestedPath.startsWith('/edit-site');
+          requestedPath.startsWith('/add-site') ||
+          requestedPath.startsWith('/edit-site');
       final isGoingToAbout = requestedPath == '/about';
       final isGoingToTerms = requestedPath == '/terms-and-conditions';
-      final isGoingToChangePassword = requestedPath == '/settings/change-password';
+      final isGoingToChangePassword =
+          requestedPath == '/settings/change-password';
 
       // If user is not logged in AND not going to one of the allowed pages...
       if (!isLoggedIn &&
@@ -111,11 +111,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/forgot-password',
         name: 'forgot-password',
         builder: (context, state) => const ForgotPasswordScreen(),
-      ),
-      GoRoute(
-        path: '/detail-added',
-        name: 'detail-added',
-        builder: (context, state) => const DetailAdded(),
       ),
       GoRoute(
         path: '/edit_party_details_screen/:partyId',
@@ -321,7 +316,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: '/home',
             name: 'home',
             pageBuilder: (context, state) =>
-            const NoTransitionPage(child: HomeScreen()),
+                const NoTransitionPage(child: HomeScreen()),
           ),
 
           // Catalog Tab
@@ -329,13 +324,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: '/catalog',
             name: 'catalog',
             pageBuilder: (context, state) =>
-            const NoTransitionPage(child: CatalogScreen()),
+                const NoTransitionPage(child: CatalogScreen()),
             routes: [
               GoRoute(
                 path: 'select-category',
                 name: 'category_selection',
                 pageBuilder: (context, state) =>
-                const NoTransitionPage(child: CategorySelectionScreen()),
+                    const NoTransitionPage(child: CategorySelectionScreen()),
               ),
             ],
           ),
@@ -344,7 +339,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: '/invoice',
             name: 'invoice',
             pageBuilder: (context, state) =>
-            const NoTransitionPage(child: InvoiceScreen()),
+                const NoTransitionPage(child: InvoiceScreen()),
           ),
           GoRoute(
             path: '/invoice/history',
@@ -357,7 +352,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: '/parties',
             name: 'parties',
             pageBuilder: (context, state) =>
-            const NoTransitionPage(child: PartiesScreen()),
+                const NoTransitionPage(child: PartiesScreen()),
           ),
 
           // Settings Tab
@@ -365,7 +360,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: '/settings',
             name: 'settings',
             pageBuilder: (context, state) =>
-            const NoTransitionPage(child: SettingsScreen()),
+                const NoTransitionPage(child: SettingsScreen()),
           ),
         ],
       ),

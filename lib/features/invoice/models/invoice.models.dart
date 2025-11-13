@@ -160,8 +160,10 @@ abstract class CreateInvoiceItemRequest with _$CreateInvoiceItemRequest {
 @freezed
 abstract class CreateInvoiceResponse with _$CreateInvoiceResponse {
   const factory CreateInvoiceResponse({
-    required bool success,
-    required InvoiceData data,
+    bool? success,
+    InvoiceData? data,
+    String? status,
+    String? message,
   }) = _CreateInvoiceResponse;
 
   factory CreateInvoiceResponse.fromJson(Map<String, dynamic> json) =>

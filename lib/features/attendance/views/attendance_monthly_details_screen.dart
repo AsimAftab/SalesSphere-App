@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import '../models/attendance.models.dart';
 import '../vm/attendance.vm.dart';
+import 'attendance_detail_screen.dart';
 
 enum AttendanceFilter {
   all,
@@ -12,7 +13,6 @@ enum AttendanceFilter {
   absent,
   leave,
   halfDay,
-  weekend,
 }
 
 class AttendanceMonthlyDetailsScreen extends ConsumerStatefulWidget {
@@ -34,30 +34,122 @@ class _AttendanceMonthlyDetailsScreenState
     extends ConsumerState<AttendanceMonthlyDetailsScreen> {
   late DateTime _selectedMonth;
   late AttendanceFilter _activeFilter;
+  final ScrollController _scrollController = ScrollController();
+  bool _isLoadingMore = false; // Prevent multiple loadMore calls
+
+  // Cache current provider to prevent multiple instances
+  AttendanceSearchViewModelProvider? _currentProvider;
 
   @override
   void initState() {
     super.initState();
     _selectedMonth = widget.initialMonth ?? DateTime.now();
     _activeFilter = widget.filter ?? AttendanceFilter.all;
+
+    // Setup pagination scroll listener
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    // Guard 1: Prevent concurrent loadMore calls
+    if (_isLoadingMore) return;
+
+    // Guard 2: Only trigger if scroll controller is attached
+    if (!_scrollController.hasClients) return;
+
+    // Guard 3: Only trigger if there's scrollable content
+    if (_scrollController.position.maxScrollExtent <= 0) return;
+
+    // Guard 4: Check if current provider data has next page
+    // This prevents scroll detection when there's no more data to load
+    if (_currentProvider != null) {
+      final currentState = ref.read(_currentProvider!);
+      final hasNextPage = currentState.maybeWhen(
+        data: (response) => response.pagination.hasNextPage,
+        orElse: () => false,
+      );
+
+      if (!hasNextPage) return;
+    }
+
+    // Trigger loadMore when user scrolls to 80% of the list
+    // The loadMore method in ViewModel has its own guards for hasNextPage
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent * 0.8) {
+      _loadMore();
+    }
+  }
+
+  Future<void> _loadMore() async {
+    if (_isLoadingMore) return;
+
+    // Use cached provider instance to avoid creating new ones
+    if (_currentProvider == null) return;
+
+    // Double-check that there's actually a next page before loading
+    final currentState = ref.read(_currentProvider!);
+    final hasNextPage = currentState.maybeWhen(
+      data: (response) => response.pagination.hasNextPage,
+      orElse: () => false,
+    );
+
+    if (!hasNextPage) return;
+
+    setState(() {
+      _isLoadingMore = true;
+    });
+
+    try {
+      await ref.read(_currentProvider!.notifier).loadMore();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingMore = false;
+        });
+      }
+    }
+  }
+
+  /// Get status codes for API filter
+  /// Uses const lists to maintain identity across builds (prevents provider recreation)
+  List<String>? _getStatusCodes() {
+    switch (_activeFilter) {
+      case AttendanceFilter.all:
+        return null; // No filter = all statuses
+      case AttendanceFilter.present:
+        return const ['P']; // const ensures same instance across calls
+      case AttendanceFilter.absent:
+        return const ['A'];
+      case AttendanceFilter.leave:
+        return const ['L'];
+      case AttendanceFilter.halfDay:
+        return const ['H'];
+    }
+  }
+
+  /// Get the appropriate search provider based on filters
+  AttendanceSearchViewModelProvider _getSearchProvider() {
+    return attendanceSearchViewModelProvider(
+      status: _getStatusCodes(), // const lists maintain identity
+      month: _selectedMonth.month,
+      year: _selectedMonth.year,
+      page: 1,
+      limit: 20,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final attendanceHistory = ref.watch(attendanceHistoryViewModelProvider);
-
-    // Filter records for selected month
-    var monthlyRecords = attendanceHistory
-        .where((record) =>
-            record.date.year == _selectedMonth.year &&
-            record.date.month == _selectedMonth.month)
-        .toList();
-
-    // Apply status filter
-    monthlyRecords = _applyFilter(monthlyRecords);
-
-    // Sort by date (latest first)
-    monthlyRecords.sort((a, b) => b.date.compareTo(a.date));
+    // Cache the provider instance to avoid multiple calls
+    final provider = _getSearchProvider();
+    _currentProvider = provider; // Store for use in _loadMore
+    final searchResult = ref.watch(provider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -91,15 +183,49 @@ class _AttendanceMonthlyDetailsScreenState
 
           // Records List
           Expanded(
-            child: monthlyRecords.isEmpty
-                ? _buildEmptyState()
-                : ListView.builder(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w),
-                    itemCount: monthlyRecords.length,
-                    itemBuilder: (context, index) {
-                      return _buildAttendanceCard(monthlyRecords[index]);
-                    },
-                  ),
+            child: searchResult.when(
+              data: (response) {
+                // Always wrap in RefreshIndicator, even for empty state
+                return RefreshIndicator(
+                  onRefresh: () async {
+                    ref.invalidate(provider);
+                  },
+                  child: response.data.isEmpty
+                      ? SingleChildScrollView(
+                          // Don't use scroll controller for empty state
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.6,
+                            child: _buildEmptyState(),
+                          ),
+                        )
+                      : ListView.builder(
+                          // Only attach scroll controller when there's data
+                          controller: response.pagination.hasNextPage
+                              ? _scrollController
+                              : null,
+                          padding: EdgeInsets.symmetric(horizontal: 16.w),
+                          itemCount: response.data.length +
+                              (response.pagination.hasNextPage ? 1 : 0),
+                          itemBuilder: (context, index) {
+                            if (index == response.data.length) {
+                              // Loading indicator for pagination
+                              return Padding(
+                                padding: EdgeInsets.symmetric(vertical: 16.h),
+                                child: const Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                              );
+                            }
+
+                            return _buildAttendanceCard(response.data[index]);
+                          },
+                        ),
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, stack) => _buildErrorState(error.toString()),
+            ),
           ),
         ],
       ),
@@ -159,50 +285,72 @@ class _AttendanceMonthlyDetailsScreenState
     );
   }
 
-  Widget _buildAttendanceCard(AttendanceRecord record) {
-    final dayName = DateFormat('EEEE').format(record.date);
-    final dateStr = DateFormat('MMM d, yyyy').format(record.date);
-    final isWeekend = record.date.weekday == DateTime.saturday;
+  Widget _buildAttendanceCard(SearchedAttendance record) {
+    // Parse date string to DateTime
+    final recordDate = DateTime.parse(record.date);
+    final dateStr = DateFormat('MMM d, yyyy').format(recordDate);
 
     Color statusColor;
     String statusText;
     IconData statusIcon;
-    statusColor = record.status.backgroundColor;
-    statusText = record.status.displayName;
 
     switch (record.status) {
       case AttendanceStatus.present:
+        statusColor = AppColors.success;
+        statusText = 'Present';
         statusIcon = Icons.check_circle;
         break;
       case AttendanceStatus.absent:
+        statusColor = AppColors.error;
+        statusText = 'Absent';
         statusIcon = Icons.cancel;
         break;
       case AttendanceStatus.halfDay:
+        statusColor = const Color(0xFFFFEB3B);
+        statusText = 'Half-Day';
         statusIcon = Icons.schedule;
         break;
       case AttendanceStatus.onLeave:
+        statusColor = const Color(0xFFFF9800);
+        statusText = 'Leave';
         statusIcon = Icons.event_busy;
         break;
       case AttendanceStatus.weeklyOff:
+        statusColor = AppColors.textSecondary;
+        statusText = 'Weekend';
         statusIcon = Icons.weekend;
+        break;
+      case AttendanceStatus.notMarked:
+        statusColor = AppColors.textSecondary;
+        statusText = 'Not Marked';
+        statusIcon = Icons.help_outline;
         break;
     }
 
-    return Container(
-      margin: EdgeInsets.only(bottom: 12.h),
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AttendanceDetailScreen(attendance: record),
           ),
-        ],
-      ),
-      child: Column(
+        );
+      },
+      child: Container(
+        margin: EdgeInsets.only(bottom: 12.h),
+        padding: EdgeInsets.all(16.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Date and Status
@@ -213,7 +361,7 @@ class _AttendanceMonthlyDetailsScreenState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    dayName,
+                    record.dayOfWeek,
                     style: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w600,
@@ -254,36 +402,6 @@ class _AttendanceMonthlyDetailsScreenState
             ],
           ),
 
-          if (isWeekend) ...[
-            SizedBox(height: 12.h),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-              decoration: BoxDecoration(
-                color: AppColors.textSecondary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(6.r),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.weekend,
-                    size: 14.sp,
-                    color: AppColors.textSecondary,
-                  ),
-                  SizedBox(width: 6.w),
-                  Text(
-                    'Weekend',
-                    style: TextStyle(
-                      fontSize: 11.sp,
-                      color: AppColors.textSecondary,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-
           // Time and Location Details (if present/half-day)
           if (record.status == AttendanceStatus.present ||
               record.status == AttendanceStatus.halfDay) ...[
@@ -299,7 +417,8 @@ class _AttendanceMonthlyDetailsScreenState
                     Icons.login,
                     'Check-in',
                     record.checkInTime != null
-                        ? DateFormat('hh:mm a').format(record.checkInTime!)
+                        ? DateFormat('hh:mm a')
+                            .format(DateTime.parse(record.checkInTime!))
                         : '--:--',
                     AppColors.success,
                   ),
@@ -310,7 +429,8 @@ class _AttendanceMonthlyDetailsScreenState
                     Icons.logout,
                     'Check-out',
                     record.checkOutTime != null
-                        ? DateFormat('hh:mm a').format(record.checkOutTime!)
+                        ? DateFormat('hh:mm a')
+                            .format(DateTime.parse(record.checkOutTime!))
                         : '--:--',
                     AppColors.error,
                   ),
@@ -327,7 +447,9 @@ class _AttendanceMonthlyDetailsScreenState
                   child: _buildDetailItem(
                     Icons.access_time,
                     'Hours Worked',
-                    '${record.totalHoursWorked}h',
+                    record.hoursWorked != null
+                        ? '${record.hoursWorked!.toStringAsFixed(1)}h'
+                        : '--',
                     AppColors.secondary,
                   ),
                 ),
@@ -336,7 +458,7 @@ class _AttendanceMonthlyDetailsScreenState
                   child: _buildDetailItem(
                     Icons.location_on,
                     'Location',
-                    record.location ?? 'Not available',
+                    record.checkInAddress ?? 'Not available',
                     AppColors.info,
                   ),
                 ),
@@ -385,6 +507,7 @@ class _AttendanceMonthlyDetailsScreenState
             ),
           ],
         ],
+        ),
       ),
     );
   }
@@ -423,34 +546,6 @@ class _AttendanceMonthlyDetailsScreenState
         ),
       ],
     );
-  }
-
-  List<AttendanceRecord> _applyFilter(List<AttendanceRecord> records) {
-    switch (_activeFilter) {
-      case AttendanceFilter.all:
-        return records;
-      case AttendanceFilter.present:
-        return records
-            .where((r) => r.status == AttendanceStatus.present)
-            .toList();
-      case AttendanceFilter.absent:
-        return records
-            .where((r) => r.status == AttendanceStatus.absent)
-            .toList();
-      case AttendanceFilter.leave:
-        return records
-            .where((r) => r.status == AttendanceStatus.onLeave)
-            .toList();
-      case AttendanceFilter.halfDay:
-        return records
-            .where((r) => r.status == AttendanceStatus.halfDay)
-            .toList();
-      case AttendanceFilter.weekend:
-        // Filter Saturdays
-        return records
-            .where((r) => r.date.weekday == DateTime.saturday)
-            .toList();
-    }
   }
 
   Widget _buildFilterDropdown() {
@@ -504,9 +599,10 @@ class _AttendanceMonthlyDetailsScreenState
                     value: AttendanceFilter.all,
                     child: Row(
                       children: [
-                        Icon(Icons.list, size: 18.sp, color: AppColors.textPrimary),
+                        Icon(Icons.list,
+                            size: 18.sp, color: AppColors.textPrimary),
                         SizedBox(width: 8.w),
-                        Text('All Days'),
+                        const Text('All Days'),
                       ],
                     ),
                   ),
@@ -514,9 +610,10 @@ class _AttendanceMonthlyDetailsScreenState
                     value: AttendanceFilter.present,
                     child: Row(
                       children: [
-                        Icon(Icons.check_circle, size: 18.sp, color: AppColors.success),
+                        Icon(Icons.check_circle,
+                            size: 18.sp, color: AppColors.success),
                         SizedBox(width: 8.w),
-                        Text('Present'),
+                        const Text('Present'),
                       ],
                     ),
                   ),
@@ -524,9 +621,10 @@ class _AttendanceMonthlyDetailsScreenState
                     value: AttendanceFilter.absent,
                     child: Row(
                       children: [
-                        Icon(Icons.cancel, size: 18.sp, color: AppColors.error),
+                        Icon(Icons.cancel,
+                            size: 18.sp, color: AppColors.error),
                         SizedBox(width: 8.w),
-                        Text('Absent'),
+                        const Text('Absent'),
                       ],
                     ),
                   ),
@@ -534,9 +632,10 @@ class _AttendanceMonthlyDetailsScreenState
                     value: AttendanceFilter.leave,
                     child: Row(
                       children: [
-                        Icon(Icons.event_busy, size: 18.sp, color: const Color(0xFFFF9800)),
+                        Icon(Icons.event_busy,
+                            size: 18.sp, color: const Color(0xFFFF9800)),
                         SizedBox(width: 8.w),
-                        Text('Leave'),
+                        const Text('Leave'),
                       ],
                     ),
                   ),
@@ -544,19 +643,10 @@ class _AttendanceMonthlyDetailsScreenState
                     value: AttendanceFilter.halfDay,
                     child: Row(
                       children: [
-                        Icon(Icons.schedule, size: 18.sp, color: const Color(0xFFFFEB3B)),
+                        Icon(Icons.schedule,
+                            size: 18.sp, color: const Color(0xFFFFEB3B)),
                         SizedBox(width: 8.w),
-                        Text('Half-Day'),
-                      ],
-                    ),
-                  ),
-                  DropdownMenuItem(
-                    value: AttendanceFilter.weekend,
-                    child: Row(
-                      children: [
-                        Icon(Icons.weekend, size: 18.sp, color: AppColors.textSecondary),
-                        SizedBox(width: 8.w),
-                        Text('Weekend'),
+                        const Text('Half-Day'),
                       ],
                     ),
                   ),
@@ -601,6 +691,54 @@ class _AttendanceMonthlyDetailsScreenState
             style: TextStyle(
               fontSize: 14.sp,
               color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState(String error) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.error_outline,
+            size: 64.sp,
+            color: AppColors.error.withValues(alpha: 0.5),
+          ),
+          SizedBox(height: 16.h),
+          Text(
+            'Error loading attendance',
+            style: TextStyle(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          SizedBox(height: 8.h),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 32.w),
+            child: Text(
+              error,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12.sp,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ),
+          SizedBox(height: 16.h),
+          ElevatedButton.icon(
+            onPressed: () {
+              ref.invalidate(_getSearchProvider());
+            },
+            icon: const Icon(Icons.refresh),
+            label: const Text('Retry'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.secondary,
+              foregroundColor: Colors.white,
             ),
           ),
         ],

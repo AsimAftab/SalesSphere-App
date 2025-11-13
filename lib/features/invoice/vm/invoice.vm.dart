@@ -160,7 +160,7 @@ class CreateInvoice extends _$CreateInvoice {
       AppLogger.d('Creating invoice with request: ${request.toJson()}');
 
       final response = await dio.post(
-        ApiEndpoints.invoices,
+        ApiEndpoints.createInvoice,
         data: request.toJson(),
       );
 
@@ -179,17 +179,30 @@ class CreateInvoice extends _$CreateInvoice {
 
       final invoiceResponse = CreateInvoiceResponse.fromJson(responseData);
 
+      // Check if response indicates an error
+      if (invoiceResponse.status == 'error' || invoiceResponse.success == false) {
+        final errorMessage = invoiceResponse.message ?? 'Failed to create invoice';
+        AppLogger.e('Invoice creation failed: $errorMessage');
+        throw Exception(errorMessage);
+      }
+
+      // Check if data is null
+      if (invoiceResponse.data == null) {
+        AppLogger.e('Invoice creation failed: No data in response');
+        throw Exception('No data in response');
+      }
+
       // Add to invoice history (optimistic update)
-      if (invoiceResponse.success) {
+      if (invoiceResponse.success == true) {
         final historyItem = InvoiceHistoryItem(
-          id: invoiceResponse.data.id ?? '',
-          partyName: invoiceResponse.data.partyName,
-          invoiceNumber: invoiceResponse.data.invoiceNumber,
-          expectedDeliveryDate: invoiceResponse.data.expectedDeliveryDate,
-          totalAmount: invoiceResponse.data.total ??
-              invoiceResponse.data.items.fold<double>(0.0, (sum, item) => sum + item.total),
-          status: invoiceResponse.data.status ?? OrderStatus.pending,
-          createdAt: invoiceResponse.data.createdAt ?? DateTime.now().toIso8601String(),
+          id: invoiceResponse.data!.id ?? '',
+          partyName: invoiceResponse.data!.partyName,
+          invoiceNumber: invoiceResponse.data!.invoiceNumber,
+          expectedDeliveryDate: invoiceResponse.data!.expectedDeliveryDate,
+          totalAmount: invoiceResponse.data!.total ??
+              invoiceResponse.data!.items.fold<double>(0.0, (sum, item) => sum + item.total),
+          status: invoiceResponse.data!.status ?? OrderStatus.pending,
+          createdAt: invoiceResponse.data!.createdAt ?? DateTime.now().toIso8601String(),
         );
         ref.read(invoiceHistoryProvider.notifier).addInvoiceOptimistic(historyItem);
       }
