@@ -10,44 +10,12 @@ import '../models/login.models.dart';
 
 part 'login.vm.g.dart';
 
-@Riverpod(keepAlive: true) // 👈 ensures it’s never disposed
+@Riverpod(keepAlive: true) // 👈 ensures it's never disposed
 class LoginViewModel extends _$LoginViewModel {
   @override
   Future<LoginResponse?> build() async {
-    final tokenStorage = ref.read(tokenStorageServiceProvider);
-    final token = await tokenStorage.getToken();
-
-    if (token != null) {
-      try {
-        final dio = ref.read(dioClientProvider);
-        final response = await dio.get(ApiEndpoints.profile);
-
-        // Profile endpoint returns: {success: true, data: {user}}
-        if (response.statusCode == 200 && response.data['success'] == true) {
-          final userData = response.data['data'] as Map<String, dynamic>;
-          final user = User.fromJson(userData);
-
-          // Save user data to SharedPreferences
-          await tokenStorage.saveUserData(userData);
-
-          // Update global user controller
-          ref.read(userControllerProvider.notifier).setUser(user);
-
-          AppLogger.i('✅ User restored from saved token: ${user.name}');
-
-          // Return null since we don't have a full LoginResponse from profile endpoint
-          return null;
-        } else {
-          AppLogger.w('⚠️ Profile endpoint returned unsuccessful response');
-          await tokenStorage.clearAuthData();
-        }
-      } catch (e, stack) {
-        AppLogger.e('⚠️ Failed to restore user from token', e, stack);
-        // Clear invalid token
-        await tokenStorage.clearAuthData();
-      }
-    }
-
+    // No initial state, just return null
+    // Token validation is handled by AppStartupProvider
     return null;
   }
 
