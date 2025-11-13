@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sales_sphere/features/Detail-Added/view/detail_added.dart';
+import 'package:sales_sphere/features/splash/views/splash_screen.dart';
 import 'package:sales_sphere/widget/main_shell.dart';
+import 'package:sales_sphere/core/providers/shared_prefs_provider.dart';
+import 'package:sales_sphere/features/onboarding/views/onboarding_screen.dart';
 import 'package:sales_sphere/features/auth/views/login_screen.dart';
 import 'package:sales_sphere/features/auth/views/forgot_password_screen.dart';
 import 'package:sales_sphere/features/home/views/home_screen.dart';
@@ -39,15 +42,34 @@ final goRouterProvider = Provider<GoRouter>((ref) {
   final user = ref.watch(userControllerProvider);
 
   return GoRouter(
-    initialLocation: '/',
+    initialLocation: '/splash',
     debugLogDiagnostics: true,
     // Refresh router when user auth state changes
     refreshListenable: _UserAuthNotifier(ref),
     redirect: (context, state) {
+      final prefs = ref.read(sharedPrefsProvider);
+      final hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
+
       final isLoggedIn = user != null;
 
       // Get the path the user is trying to access
       final requestedPath = state.uri.path;
+
+      if (requestedPath == '/splash') {
+        return null; // Don't redirect splash
+      }
+
+      final isGoingToOnboarding = requestedPath == '/onboarding';
+
+      // 1. If user hasn't seen onboarding, force them to it
+      if (!hasSeenOnboarding && !isGoingToOnboarding) {
+        return '/onboarding';
+      }
+
+      // 2. If user *has* seen it and tries to go back, send to login
+      if (hasSeenOnboarding && isGoingToOnboarding) {
+        return '/';
+      }
 
       // Check against your allowed routes
       final isGoingToLogin = requestedPath == '/';
@@ -79,6 +101,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       if (!isLoggedIn &&
           !isGoingToLogin &&
           !isGoingToForgotPassword &&
+          !isGoingToOnboarding &&
           !isGoingToCatalog &&
           !isGoingToParties &&
           !isGoingToDirectory &&
@@ -103,6 +126,18 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
+      // Splash route at the top
+      GoRoute(
+      path: '/splash',
+        name: 'splash',
+        builder: (context, state) => const SplashScreen(),
+      ),
+      GoRoute(
+        path: '/onboarding',
+        name: 'onboarding',
+        builder: (context, state) => const OnboardingScreen(),
+      ),
+
       // ========================================
       // AUTH ROUTES (No Bottom Navigation)
       // ========================================

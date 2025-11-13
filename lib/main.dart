@@ -4,12 +4,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 import 'app.dart';
 import 'core/utils/logger.dart';
 import 'core/network_layer/token_storage_service.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
-
+import 'core/providers/shared_prefs_provider.dart';
 
 
 /// Riverpod 3.0 ProviderObserver for logging provider lifecycle
@@ -61,6 +63,16 @@ Future<void> main() async {
     AppLogger.e('❌ Failed to initialize token storage', e);
   }
 
+  // Initialize SharedPreferences
+  final SharedPreferences prefs;
+  try {
+    prefs = await SharedPreferences.getInstance();
+    AppLogger.i('✅ SharedPreferences initialized');
+  } catch (e) {
+    AppLogger.e('❌ Failed to initialize SharedPreferences', e);
+    rethrow; // Re-throw if prefs fail, app can't run
+  }
+
   // Note: Sentry automatically handles FlutterError.onError
   // We only need to log locally in debug mode
   if (kDebugMode) {
@@ -94,7 +106,7 @@ Future<void> main() async {
   }
 
   await SentryFlutter.init(
-    (options) {
+        (options) {
       // Load DSN from environment variables
       options.dsn = dotenv.env['SENTRY_DSN'] ?? '';
 
@@ -120,13 +132,18 @@ Future<void> main() async {
       options.attachViewHierarchy = true;
     },
     appRunner: () => runApp(SentryWidget(child:
-    const ProviderScope(
+    // --- MODIFIED ProviderScope ---
+    ProviderScope(
       observers: [
-        if (kDebugMode) LoggerProviderObserver(),
+        if (kDebugMode) const LoggerProviderObserver(),
       ],
-      child: MyApp(),
+      // ADDED 'overrides'
+      overrides: [
+        sharedPrefsProvider.overrideWithValue(prefs),
+      ],
+      child: const MyApp(),
     ),
-  )),
+    )),
   );
 }
 
