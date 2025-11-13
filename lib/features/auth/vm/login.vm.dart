@@ -3,7 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/network_layer/token_storage_service.dart';
 
-import 'package:sales_sphere/core/constants/api_endpoints.dart';
+import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:sales_sphere/core/providers/user_controller.dart';
 import '../models/login.models.dart';
@@ -22,18 +22,25 @@ class LoginViewModel extends _$LoginViewModel {
         final dio = ref.read(dioClientProvider);
         final response = await dio.get(ApiEndpoints.profile);
 
-        final loginResponse = LoginResponse.fromJson(response.data);
+        // Profile endpoint returns: {success: true, data: {user}}
+        if (response.statusCode == 200 && response.data['success'] == true) {
+          final userData = response.data['data'] as Map<String, dynamic>;
+          final user = User.fromJson(userData);
 
-        // Save user data to SharedPreferences
-        await tokenStorage.saveUserData(loginResponse.data.user.toJson());
+          // Save user data to SharedPreferences
+          await tokenStorage.saveUserData(userData);
 
-        // Update global user controller
-        ref
-            .read(userControllerProvider.notifier)
-            .setUser(loginResponse.data.user);
+          // Update global user controller
+          ref.read(userControllerProvider.notifier).setUser(user);
 
-        AppLogger.i('✅ User restored from saved token');
-        return loginResponse;
+          AppLogger.i('✅ User restored from saved token: ${user.name}');
+
+          // Return null since we don't have a full LoginResponse from profile endpoint
+          return null;
+        } else {
+          AppLogger.w('⚠️ Profile endpoint returned unsuccessful response');
+          await tokenStorage.clearAuthData();
+        }
       } catch (e, stack) {
         AppLogger.e('⚠️ Failed to restore user from token', e, stack);
         // Clear invalid token
