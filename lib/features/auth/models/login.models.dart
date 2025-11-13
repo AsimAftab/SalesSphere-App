@@ -18,6 +18,34 @@ abstract class LoginRequest with _$LoginRequest {
 }
 
 // ========================================
+// CHECK STATUS RESPONSE MODEL
+// ========================================
+@freezed
+abstract class CheckStatusResponse with _$CheckStatusResponse {
+  const factory CheckStatusResponse({
+    required String status,
+    required String message,
+    required CheckStatusData data,
+  }) = _CheckStatusResponse;
+
+  factory CheckStatusResponse.fromJson(Map<String, dynamic> json) =>
+      _$CheckStatusResponseFromJson(json);
+}
+
+// ========================================
+// CHECK STATUS DATA MODEL (Contains User)
+// ========================================
+@freezed
+abstract class CheckStatusData with _$CheckStatusData {
+  const factory CheckStatusData({
+    required User user,
+  }) = _CheckStatusData;
+
+  factory CheckStatusData.fromJson(Map<String, dynamic> json) =>
+      _$CheckStatusDataFromJson(json);
+}
+
+// ========================================
 // LOGIN RESPONSE MODEL
 // ========================================
 @freezed

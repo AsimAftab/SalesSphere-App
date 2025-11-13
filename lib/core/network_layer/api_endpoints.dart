@@ -7,13 +7,14 @@ class ApiEndpoints {
   static const String login = '/api/v1/auth/login';
   static const String logout = '/api/v1/auth/logout';
   static const String refreshToken = '/api/v1/auth/refresh';
+  static const String checkStatus = '/api/v1/auth/check-status';
   static const String forgotPassword = '/api/v1/auth/forgotpassword';
   static const String resetPassword = '/api/v1/auth/resetpassword';
-  static const String changePassword = '/api/v1/auth/change-password';
 
   // User Endpoints
   static const String profile = '/api/v1/users/me';
   static const String uploadProfileImage = '/api/v1/users/me/profile-image';
+  static const String changePassword = '/api/v1/users/me/password';
 
   // Catalog Endpoints (Final)
   static const String categories = '/api/v1/categories';

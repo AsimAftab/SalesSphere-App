@@ -28,24 +28,41 @@ import 'package:sales_sphere/features/settings/views/change_password_screen.dart
 import 'package:sales_sphere/features/auth/models/login.models.dart';
 import '../../features/invoice/views/invoice_history_screen.dart';
 import '../providers/user_controller.dart';
+import '../providers/app_startup.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
-  // Watch the user controller to rebuild routes when auth state changes
+  // Watch app startup state - this returns User? when complete
+  final appStartup = ref.watch(appStartupProvider);
+
+  // Also watch user controller for runtime auth changes (logout, etc)
   final user = ref.watch(userControllerProvider);
 
   return GoRouter(
-    initialLocation: '/',
+    initialLocation: '/splash',
     debugLogDiagnostics: true,
     // Refresh router when user auth state changes
     refreshListenable: _UserAuthNotifier(ref),
     redirect: (context, state) {
+      final requestedPath = state.uri.path;
+
+      // If app is still initializing (checking token), stay on splash
+      if (appStartup.isLoading) {
+        return requestedPath == '/splash' ? null : '/splash';
+      }
+
+      // App initialization complete - check current user state
       final isLoggedIn = user != null;
 
+      // If we're on splash and initialization is complete, redirect
+      if (requestedPath == '/splash') {
+        return isLoggedIn ? '/home' : '/';
+      }
+
       // Get the path the user is trying to access
-      final requestedPath = state.uri.path;
 
       // Check against your allowed routes
       final isGoingToLogin = requestedPath == '/';
+      final isGoingToSplash = requestedPath == '/splash';
       final isGoingToForgotPassword = requestedPath == '/forgot-password';
       final isGoingToCatalog = requestedPath.startsWith('/catalog');
       final isGoingToParties = requestedPath.startsWith('/parties');
@@ -74,6 +91,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       // If user is not logged in AND not going to one of the allowed pages...
       if (!isLoggedIn &&
           !isGoingToLogin &&
+          !isGoingToSplash &&
           !isGoingToForgotPassword &&
           !isGoingToCatalog &&
           !isGoingToParties &&
@@ -90,8 +108,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         return '/';
       }
 
-      // If user is logged in and trying to go to login, redirect to home
-      if (isLoggedIn && isGoingToLogin) {
+      // If user is logged in and trying to go to login or splash, redirect to home
+      if (isLoggedIn && (isGoingToLogin || isGoingToSplash)) {
         return '/home';
       }
 
@@ -99,6 +117,15 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
+      // ========================================
+      // SPLASH ROUTE (Initial loading)
+      // ========================================
+      GoRoute(
+        path: '/splash',
+        name: 'splash',
+        builder: (context, state) => const SizedBox.shrink(), // Empty screen, native splash shows
+      ),
+
       // ========================================
       // AUTH ROUTES (No Bottom Navigation)
       // ========================================
