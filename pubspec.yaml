@@ -62,6 +62,7 @@ dependencies:
   open_file: ^3.5.9
   permission_handler: ^11.3.1
   sentry_flutter: ^9.8.0
+  connectivity_plus: ^7.0.0
 
 
 

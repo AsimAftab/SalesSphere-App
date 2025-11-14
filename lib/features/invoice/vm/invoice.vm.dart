@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../models/invoice.models.dart';
@@ -12,13 +13,29 @@ part 'invoice.vm.g.dart';
 // ========================================
 @riverpod
 class InvoiceHistory extends _$InvoiceHistory {
+  bool _isFetching = false;
+
   @override
   Future<List<InvoiceHistoryItem>> build() async {
+    // Keep alive for 60 seconds (prevents disposal on tab switch)
+    final link = ref.keepAlive();
+    Timer(const Duration(seconds: 60), () {
+      link.close();
+    });
+
+    // Fetch invoice history - Global wrapper handles connectivity
     return fetchInvoiceHistory();
   }
 
   /// Fetch invoice history from API
   Future<List<InvoiceHistoryItem>> fetchInvoiceHistory() async {
+    // Guard: prevent concurrent fetches
+    if (_isFetching) {
+      AppLogger.w('⚠️ Already fetching invoices, skipping duplicate request');
+      throw Exception('Fetch already in progress');
+    }
+
+    _isFetching = true;
     try {
       final dio = ref.read(dioClientProvider);
 
@@ -46,6 +63,8 @@ class InvoiceHistory extends _$InvoiceHistory {
     } catch (e, stackTrace) {
       AppLogger.e('Error fetching invoice history: $e\n$stackTrace');
       rethrow;
+    } finally {
+      _isFetching = false;
     }
   }
 
@@ -71,6 +90,7 @@ class FetchInvoiceDetails extends _$FetchInvoiceDetails {
   @override
   FutureOr<InvoiceDetailsData?> build(String invoiceId) async {
     // Auto-fetch when provider is created
+    // ConnectivityInterceptor handles offline state
     return fetchInvoiceDetails(invoiceId);
   }
 

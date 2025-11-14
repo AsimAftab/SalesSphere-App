@@ -58,11 +58,25 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Watch all state from Riverpod
-    final categoriesAsync = ref.watch(categoriesWithProductsProvider);
+    // Watch providers - Global connectivity wrapper handles offline state
     final allItemsAsync = ref.watch(allCatalogItemsProvider);
+    final allCategoriesAsync = ref.watch(catalogViewModelProvider);
     final selectedCategoryId = ref.watch(selectedCategoryProvider);
     final searchQuery = ref.watch(catalogSearchQueryProvider);
+
+    // Derive categories with products locally (avoid composite provider)
+    List<CatalogCategory> categoriesWithProducts = [];
+    if (allCategoriesAsync.hasValue && allItemsAsync.hasValue) {
+      final allCategories = allCategoriesAsync.value!;
+      final allItems = allItemsAsync.value!;
+
+      if (allItems.isNotEmpty) {
+        final productCategoryIds = allItems.map((p) => p.category.id).toSet();
+        categoriesWithProducts = allCategories
+            .where((c) => productCategoryIds.contains(c.id))
+            .toList();
+      }
+    }
 
     // Update controller text when search query changes from external source
     if (_searchController.text != searchQuery) {
@@ -74,11 +88,8 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
       _previousSelectedCategoryId = selectedCategoryId;
       // Schedule scroll after build completes
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_categoryScrollController.hasClients) {
-          final categories = categoriesAsync.value ?? [];
-          if (categories.isNotEmpty) {
-            _scrollToSelectedCategory(selectedCategoryId, categories);
-          }
+        if (_categoryScrollController.hasClients && categoriesWithProducts.isNotEmpty) {
+          _scrollToSelectedCategory(selectedCategoryId, categoriesWithProducts);
         }
       });
     }
@@ -162,11 +173,12 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
             SizedBox(height: 12.h),
 
             // Horizontal Categories
-            categoriesAsync.when(
-              data: (categories) {
+            allCategoriesAsync.when(
+              data: (allCategories) {
+                // Filter to only categories with products
                 final filteredCategories = searchQuery.isEmpty
-                    ? categories
-                    : categories
+                    ? categoriesWithProducts
+                    : categoriesWithProducts
                         .where((c) => c.name.toLowerCase().contains(searchQuery.toLowerCase()))
                         .toList();
 

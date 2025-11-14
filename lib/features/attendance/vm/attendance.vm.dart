@@ -1,8 +1,11 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sales_sphere/core/exceptions/offline_exception.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
 import 'package:sales_sphere/core/network_layer/dio_client.dart';
+import 'package:sales_sphere/core/providers/connectivity_provider.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 import '../models/attendance.models.dart';
 
@@ -16,6 +19,7 @@ class TodayAttendanceViewModel extends _$TodayAttendanceViewModel {
   @override
   Future<TodayAttendanceStatusResponse?> build() async {
     // Fetch today's attendance status from API
+    // ConnectivityInterceptor will throw OfflineException if offline
     return _fetchTodayStatus();
   }
 
@@ -537,6 +541,7 @@ class MonthlyAttendanceReportViewModel
   @override
   Future<MonthlyAttendanceReport> build(int month, int year) async {
     // Fetch monthly attendance report from API
+    // ConnectivityInterceptor will throw OfflineException if offline
     return _fetchMonthlyReport(month, year);
   }
 
@@ -605,6 +610,8 @@ class AttendanceSearchViewModel extends _$AttendanceSearchViewModel {
     int page = 1,
     int limit = 20,
   }) async {
+    // Fetch attendance search results
+    // ConnectivityInterceptor will handle offline state
     return _searchAttendance(
       status: status,
       month: month,

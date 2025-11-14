@@ -12,12 +12,28 @@ part 'sites.vm.g.dart';
 /// Main Sites ViewModel - Manages all sites
 @riverpod
 class SiteViewModel extends _$SiteViewModel {
+  bool _isFetching = false;
+
   @override
   FutureOr<List<Sites>> build() async {
+    // Keep alive for 60 seconds (prevents disposal on tab switch)
+    final link = ref.keepAlive();
+    Timer(const Duration(seconds: 60), () {
+      link.close();
+    });
+
+    // Fetch sites - Global wrapper handles connectivity
     return _fetchSites();
   }
 
   Future<List<Sites>> _fetchSites() async {
+    // Guard: prevent concurrent fetches
+    if (_isFetching) {
+      AppLogger.w('⚠️ Already fetching sites, skipping duplicate request');
+      throw Exception('Fetch already in progress');
+    }
+
+    _isFetching = true;
     try {
       AppLogger.i('Fetching all sites from API...');
 
@@ -60,6 +76,8 @@ class SiteViewModel extends _$SiteViewModel {
       AppLogger.e('❌ Error fetching sites: $e');
       AppLogger.e('Stack trace: $stackTrace');
       throw Exception('Failed to fetch sites: $e');
+    } finally {
+      _isFetching = false;
     }
   }
 

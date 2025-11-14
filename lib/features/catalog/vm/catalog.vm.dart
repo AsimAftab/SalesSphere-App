@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sales_sphere/features/catalog/models/catalog.models.dart';
@@ -5,19 +6,37 @@ import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:sales_sphere/features/catalog/vm/catalog_item.vm.dart';
+import 'package:sales_sphere/core/providers/connectivity_provider.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 part 'catalog.vm.g.dart';
 
 @riverpod
 class CatalogViewModel extends _$CatalogViewModel {
+  bool _isFetching = false;
+
   @override
   FutureOr<List<CatalogCategory>> build() async {
+    // Keep alive for 60 seconds after last use (prevents disposal on tab switch)
+    final link = ref.keepAlive();
+    Timer(const Duration(seconds: 60), () {
+      link.close();
+    });
+
     // Initial state - fetch all categories
+    // Global connectivity wrapper handles offline/online transitions
     return _fetchCategories();
   }
 
   // Fetch all categories from API/Database
   Future<List<CatalogCategory>> _fetchCategories() async {
+    // Guard: prevent concurrent fetches
+    if (_isFetching) {
+      AppLogger.w('⚠️ Already fetching categories, skipping duplicate request');
+      throw Exception('Fetch already in progress');
+    }
+
+    _isFetching = true;
     try {
       final dio = ref.read(dioClientProvider);
 
@@ -43,6 +62,8 @@ class CatalogViewModel extends _$CatalogViewModel {
     } catch (e) {
       AppLogger.e('Unexpected error fetching categories: $e');
       throw Exception('Failed to fetch categories: $e');
+    } finally {
+      _isFetching = false;
     }
   }
 

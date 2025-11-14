@@ -15,14 +15,29 @@ part 'parties.vm.g.dart';
 
 @riverpod
 class PartiesViewModel extends _$PartiesViewModel {
+  bool _isFetching = false;
+
   @override
   FutureOr<List<PartyDetails>> build() async {
-    // Initial state - fetch all parties from API
+    // Keep alive for 60 seconds (prevents disposal on tab switch)
+    final link = ref.keepAlive();
+    Timer(const Duration(seconds: 60), () {
+      link.close();
+    });
+
+    // Fetch parties - Global wrapper handles connectivity
     return _fetchParties();
   }
 
   // FETCH ALL PARTIES FROM API
   Future<List<PartyDetails>> _fetchParties() async {
+    // Guard: prevent concurrent fetches
+    if (_isFetching) {
+      AppLogger.w('⚠️ Already fetching parties, skipping duplicate request');
+      throw Exception('Fetch already in progress');
+    }
+
+    _isFetching = true;
     try {
       final dio = ref.read(dioClientProvider);
       AppLogger.i('Fetching parties from API: ${ApiEndpoints.parties}');
@@ -57,6 +72,8 @@ class PartiesViewModel extends _$PartiesViewModel {
     } catch (e) {
       AppLogger.e('❌ Error fetching parties: $e');
       throw Exception('Failed to fetch parties: $e');
+    } finally {
+      _isFetching = false;
     }
   }
 

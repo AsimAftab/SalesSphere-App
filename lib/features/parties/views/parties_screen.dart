@@ -7,6 +7,7 @@ import 'package:skeletonizer/skeletonizer.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/features/parties/vm/parties.vm.dart';
 import 'package:sales_sphere/widget/universal_list_card.dart';
+import 'package:sales_sphere/widget/error_handler_widget.dart';
 
 class PartiesScreen extends ConsumerStatefulWidget {
   const PartiesScreen({super.key});
@@ -249,62 +250,10 @@ class _PartiesScreenState extends ConsumerState<PartiesScreen> {
                       },
                     ),
                   ),
-                  error: (error, stack) => Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.error_outline,
-                          size: 64.sp,
-                          color: AppColors.error,
-                        ),
-                        SizedBox(height: 16.h),
-                        Text(
-                          'Failed to load parties',
-                          style: TextStyle(
-                            fontSize: 16.sp,
-                            color: AppColors.textdark,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        SizedBox(height: 8.h),
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 32.w),
-                          child: Text(
-                            error.toString(),
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              color: Colors.grey.shade600,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                        SizedBox(height: 16.h),
-                        ElevatedButton(
-                          onPressed: () {
-                            ref.read(partiesViewModelProvider.notifier).refresh();
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 24.w,
-                              vertical: 12.h,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12.r),
-                            ),
-                          ),
-                          child: Text(
-                            'Retry',
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                  error: (error, stack) => ErrorHandlerConsumer(
+                    error: error,
+                    onRefresh: (ref) => ref.invalidate(partiesViewModelProvider),
+                    title: 'Failed to load parties',
                   ),
                 ),
               ),
