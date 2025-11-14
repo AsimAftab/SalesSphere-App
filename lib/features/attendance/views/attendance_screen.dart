@@ -7,9 +7,12 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:dio/dio.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
+import 'package:sales_sphere/core/exceptions/offline_exception.dart';
 import 'package:sales_sphere/core/providers/user_controller.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
+import 'package:sales_sphere/widget/no_internet_screen.dart';
 import '../models/attendance.models.dart';
 import '../vm/attendance.vm.dart';
 import 'attendance_monthly_details_screen.dart' show AttendanceFilter;
@@ -1881,6 +1884,20 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
   }
 
   Widget _buildError(Object error) {
+    // Check if error is OfflineException (typed exception from connectivity check)
+    final isOffline = error is OfflineException ||
+        (error is DioException && error.error is OfflineException);
+
+    if (isOffline) {
+      return NoInternetScreen(
+        onRetry: () {
+          ref.invalidate(todayAttendanceViewModelProvider);
+          ref.invalidate(monthlyAttendanceReportViewModelProvider);
+        },
+      );
+    }
+
+    // Show generic error screen for other errors
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(

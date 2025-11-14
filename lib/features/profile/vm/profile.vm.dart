@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sales_sphere/core/network_layer/dio_client.dart';
@@ -16,13 +17,29 @@ part 'profile.vm.g.dart';
 
 @riverpod
 class ProfileViewModel extends _$ProfileViewModel {
+  bool _isFetching = false;
+
   @override
   Future<Profile?> build() async {
+    // Keep alive for 60 seconds (prevents disposal on tab switch)
+    final link = ref.keepAlive();
+    Timer(const Duration(seconds: 60), () {
+      link.close();
+    });
+
+    // Fetch profile - Global wrapper handles connectivity
     return await fetchProfile();
   }
 
   /// Fetch user profile from API
   Future<Profile?> fetchProfile() async {
+    // Guard: prevent concurrent fetches
+    if (_isFetching) {
+      AppLogger.w('⚠️ Already fetching profile, skipping duplicate request');
+      throw Exception('Fetch already in progress');
+    }
+
+    _isFetching = true;
     try {
       final dio = ref.read(dioClientProvider);
       AppLogger.i('Fetching user profile from API...');
@@ -50,6 +67,8 @@ class ProfileViewModel extends _$ProfileViewModel {
       AppLogger.e('❌ Unexpected error fetching profile: $e');
       AppLogger.e('Stack trace: $stack');
       throw Exception('Failed to load profile: $e');
+    } finally {
+      _isFetching = false;
     }
   }
 

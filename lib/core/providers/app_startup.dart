@@ -2,21 +2,49 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
 import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/network_layer/token_storage_service.dart';
+import 'package:sales_sphere/core/providers/connectivity_provider.dart';
 import 'package:sales_sphere/core/providers/user_controller.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:sales_sphere/features/auth/models/login.models.dart';
 
 part 'app_startup.g.dart';
 
+/// App Startup State
+/// Represents the result of app initialization
+class AppStartupState {
+  final bool hasInternet;
+  final User? user;
+
+  const AppStartupState({
+    required this.hasInternet,
+    this.user,
+  });
+}
+
 /// App Startup Provider
-/// Runs ONCE on app launch to validate stored token
-/// Returns the validated user or null
+/// Runs ONCE on app launch to:
+/// 1. Check connectivity
+/// 2. Validate stored token (if connected)
 @Riverpod(keepAlive: true)
 class AppStartup extends _$AppStartup {
   @override
-  Future<User?> build() async {
-    // This runs once on app startup
-    return await _validateToken();
+  Future<AppStartupState> build() async {
+    // Step 1: Check connectivity
+    final hasInternet = await ref.read(checkInitialConnectivityProvider.future);
+
+    // Step 2: If no internet, return state with no user
+    if (!hasInternet) {
+      AppLogger.w('⚠️ No internet connection - skipping token validation');
+      return const AppStartupState(hasInternet: false);
+    }
+
+    // Step 3: Validate token
+    final user = await _validateToken();
+
+    return AppStartupState(
+      hasInternet: true,
+      user: user,
+    );
   }
 
   Future<User?> _validateToken() async {

@@ -5,6 +5,8 @@ import 'package:sales_sphere/features/catalog/models/catalog.models.dart';
 import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
+import 'package:sales_sphere/core/providers/connectivity_provider.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 part 'catalog_item.vm.g.dart';
 
@@ -17,6 +19,8 @@ class CategoryItemListViewModel extends _$CategoryItemListViewModel {
   @override
   FutureOr<List<CatalogItem>> build(String categoryId) async {
     this.categoryId = categoryId;
+
+    // Fetch items for category - ConnectivityInterceptor handles offline state
     return _fetchItemsForCategory(categoryId);
   }
 
@@ -101,13 +105,30 @@ Future<List<CatalogItem>> searchedCategoryItems(
 /// This loads all items once and caches them for better performance
 @riverpod
 class AllCatalogItems extends _$AllCatalogItems {
+  bool _isFetching = false;
+
   @override
   FutureOr<List<CatalogItem>> build() async {
+    // Keep alive for 60 seconds after last use (prevents disposal on tab switch)
+    final link = ref.keepAlive();
+    Timer(const Duration(seconds: 60), () {
+      link.close();
+    });
+
+    // Fetch all products - ConnectivityInterceptor handles offline state
+    // Global connectivity wrapper handles offline/online transitions
     return _fetchAllProducts();
   }
 
   // Fetch all products from API
   Future<List<CatalogItem>> _fetchAllProducts() async {
+    // Guard: prevent concurrent fetches
+    if (_isFetching) {
+      AppLogger.w('⚠️ Already fetching products, skipping duplicate request');
+      throw Exception('Fetch already in progress');
+    }
+
+    _isFetching = true;
     try {
       final dio = ref.read(dioClientProvider);
 
@@ -131,6 +152,8 @@ class AllCatalogItems extends _$AllCatalogItems {
     } catch (e) {
       AppLogger.e('Unexpected error fetching products: $e');
       throw Exception('Failed to fetch products: $e');
+    } finally {
+      _isFetching = false;
     }
   }
 

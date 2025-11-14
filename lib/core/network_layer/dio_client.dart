@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../utils/logger.dart';
+import 'interceptors/connectivity_interceptor.dart';
 import 'interceptors/auth_interceptor.dart';
 import 'interceptors/logging_interceptor.dart';
 import 'interceptors/error_interceptor.dart';
@@ -64,6 +65,10 @@ class DioClient {
   /// Setup Interceptors
   void _setupInterceptors() {
     dio.interceptors.clear();
+
+    // 0. Connectivity Interceptor (Block requests when offline)
+    // MUST be first to prevent wasting resources on offline requests
+    dio.interceptors.add(ConnectivityInterceptor());
 
     // 1. Auth Interceptor (JWT Token)
     dio.interceptors.add(AuthInterceptor(tokenStorage));

@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
+import 'package:dio/dio.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
+import 'package:sales_sphere/core/exceptions/offline_exception.dart';
+import 'package:sales_sphere/widget/no_internet_screen.dart';
 import '../models/attendance.models.dart';
 import '../vm/attendance.vm.dart';
 import 'attendance_detail_screen.dart';
@@ -224,7 +227,7 @@ class _AttendanceMonthlyDetailsScreenState
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stack) => _buildErrorState(error.toString()),
+              error: (error, stack) => _buildErrorState(error),
             ),
           ),
         ],
@@ -698,7 +701,18 @@ class _AttendanceMonthlyDetailsScreenState
     );
   }
 
-  Widget _buildErrorState(String error) {
+  Widget _buildErrorState(Object error) {
+    // Check if error is OfflineException (typed exception)
+    final isOffline = error is OfflineException ||
+        (error is DioException && error.error is OfflineException);
+
+    if (isOffline) {
+      return NoInternetScreen(
+        onRetry: () => ref.invalidate(_getSearchProvider()),
+      );
+    }
+
+    // Show generic error state for other errors
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -721,7 +735,7 @@ class _AttendanceMonthlyDetailsScreenState
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 32.w),
             child: Text(
-              error,
+              error.toString(),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 12.sp,

@@ -11,12 +11,28 @@ part 'prospects.vm.g.dart';
 /// Main Prospects ViewModel - Manages all prospects
 @riverpod
 class ProspectViewModel extends _$ProspectViewModel {
+  bool _isFetching = false;
+
   @override
   FutureOr<List<Prospects>> build() async {
+    // Keep alive for 60 seconds (prevents disposal on tab switch)
+    final link = ref.keepAlive();
+    Timer(const Duration(seconds: 60), () {
+      link.close();
+    });
+
+    // Fetch prospects - Global wrapper handles connectivity
     return _fetchProspects();
   }
 
   Future<List<Prospects>> _fetchProspects() async {
+    // Guard: prevent concurrent fetches
+    if (_isFetching) {
+      AppLogger.w('⚠️ Already fetching prospects, skipping duplicate request');
+      throw Exception('Fetch already in progress');
+    }
+
+    _isFetching = true;
     try {
       final dio = ref.read(dioClientProvider);
       AppLogger.d('Fetching prospects from API');
@@ -41,6 +57,8 @@ class ProspectViewModel extends _$ProspectViewModel {
       AppLogger.e('Error fetching prospects: $e\n$stackTrace');
 
       throw Exception('Failed to fetch prospects: $e');
+    } finally {
+      _isFetching = false;
     }
   }
 
