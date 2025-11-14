@@ -5,6 +5,7 @@ import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sales_sphere/core/providers/user_controller.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sales_sphere/features/beat_plan/widgets/beat_plan_section.dart';
 
 
 
@@ -37,11 +38,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
             // Main Content
             Expanded(
-              child: Padding(
+              child: SingleChildScrollView(
                 padding: EdgeInsets.symmetric(horizontal: 20.w),
-                child: const Center(
-                  child: Text('Dashboard Content'),
-                ),
+                child: const BeatPlanSection(),
               ),
             ),
           ],

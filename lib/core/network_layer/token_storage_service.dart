@@ -28,42 +28,42 @@ class TokenStorageService {
     return _prefs!;
   }
 
-  /// Save JWT Token
+  /// Save Access Token
   Future<void> saveToken(String token) async {
     try {
       final prefs = await _preferences;
-      await prefs.setString(StorageKeys.authToken, token);
-      AppLogger.i('✅ Token saved successfully');
+      await prefs.setString(StorageKeys.accessToken, token);
+      AppLogger.i('✅ Access token saved successfully');
     } catch (e, stack) {
-      AppLogger.e('❌ Error saving token', e, stack);
+      AppLogger.e('❌ Error saving access token', e, stack);
     }
   }
 
-  /// Get JWT Token
+  /// Get Access Token
   Future<String?> getToken() async {
     try {
       final prefs = await _preferences;
-      final token = prefs.getString(StorageKeys.authToken);
+      final token = prefs.getString(StorageKeys.accessToken);
       if (token != null) {
-        AppLogger.d('✅ Token retrieved');
+        AppLogger.d('✅ Access token retrieved');
       } else {
-        AppLogger.d('ℹ️ No token found');
+        AppLogger.d('ℹ️ No access token found');
       }
       return token;
     } catch (e, stack) {
-      AppLogger.e('❌ Error getting token', e, stack);
+      AppLogger.e('❌ Error getting access token', e, stack);
       return null;
     }
   }
 
-  /// Delete JWT Token
+  /// Delete Access Token
   Future<void> deleteToken() async {
     try {
       final prefs = await _preferences;
-      await prefs.remove(StorageKeys.authToken);
-      AppLogger.i('✅ Token deleted successfully');
+      await prefs.remove(StorageKeys.accessToken);
+      AppLogger.i('✅ Access token deleted successfully');
     } catch (e, stack) {
-      AppLogger.e('❌ Error deleting token', e, stack);
+      AppLogger.e('❌ Error deleting access token', e, stack);
     }
   }
 
@@ -104,9 +104,11 @@ class TokenStorageService {
   /// Clear all auth data
   Future<void> clearAuthData() async {
     try {
-      await deleteToken();
       final prefs = await _preferences;
+      await prefs.remove(StorageKeys.accessToken);
+      await prefs.remove(StorageKeys.refreshToken);
       await prefs.remove(StorageKeys.userData);
+      await prefs.remove('session_expires_at');
       AppLogger.i('✅ All auth data cleared');
     } catch (e, stack) {
       AppLogger.e('❌ Error clearing auth data', e, stack);
@@ -132,6 +134,53 @@ class TokenStorageService {
     } catch (e, stack) {
       AppLogger.e('❌ Error getting refresh token', e, stack);
       return null;
+    }
+  }
+
+  /// Save Session Expiry Date
+  Future<void> saveSessionExpiresAt(String expiryDate) async {
+    try {
+      final prefs = await _preferences;
+      await prefs.setString('session_expires_at', expiryDate);
+      AppLogger.i('✅ Session expiry date saved');
+    } catch (e, stack) {
+      AppLogger.e('❌ Error saving session expiry date', e, stack);
+    }
+  }
+
+  /// Get Session Expiry Date
+  Future<String?> getSessionExpiresAt() async {
+    try {
+      final prefs = await _preferences;
+      return prefs.getString('session_expires_at');
+    } catch (e, stack) {
+      AppLogger.e('❌ Error getting session expiry date', e, stack);
+      return null;
+    }
+  }
+
+  /// Check if session has expired
+  Future<bool> isSessionExpired() async {
+    try {
+      final expiryDateStr = await getSessionExpiresAt();
+      if (expiryDateStr == null) {
+        return false; // No expiry set, assume valid
+      }
+
+      final expiryDate = DateTime.parse(expiryDateStr);
+      final now = DateTime.now();
+      final isExpired = now.isAfter(expiryDate);
+
+      if (isExpired) {
+        AppLogger.w('⚠️ Session expired at: $expiryDateStr');
+      } else {
+        AppLogger.d('✅ Session valid until: $expiryDateStr');
+      }
+
+      return isExpired;
+    } catch (e, stack) {
+      AppLogger.e('❌ Error checking session expiry', e, stack);
+      return false;
     }
   }
 }

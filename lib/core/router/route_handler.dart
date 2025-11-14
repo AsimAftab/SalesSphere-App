@@ -25,6 +25,7 @@ import 'package:sales_sphere/features/settings/views/settings_screen.dart';
 import 'package:sales_sphere/features/settings/views/about_screen.dart';
 import 'package:sales_sphere/features/settings/views/terms_and_conditions_screen.dart';
 import 'package:sales_sphere/features/settings/views/change_password_screen.dart';
+import 'package:sales_sphere/features/beat_plan/views/beat_plan_details_screen.dart';
 import 'package:sales_sphere/features/auth/models/login.models.dart';
 import '../../features/invoice/views/invoice_history_screen.dart';
 import '../providers/user_controller.dart';
@@ -87,6 +88,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final isGoingToTerms = requestedPath == '/terms-and-conditions';
       final isGoingToChangePassword =
           requestedPath == '/settings/change-password';
+      final isGoingToBeatPlan = requestedPath.startsWith('/beat-plan');
 
       // If user is not logged in AND not going to one of the allowed pages...
       if (!isLoggedIn &&
@@ -104,7 +106,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           !isGoingToSites &&
           !isGoingToAbout &&
           !isGoingToTerms &&
-          !isGoingToChangePassword) {
+          !isGoingToChangePassword &&
+          !isGoingToBeatPlan) {
         return '/';
       }
 
@@ -180,6 +183,18 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             initialMonth: month,
             filter: filter,
           );
+        },
+      ),
+
+      // ========================================
+      // BEAT PLAN ROUTES (No Bottom Navigation)
+      // ========================================
+      GoRoute(
+        path: '/beat-plan/:beatPlanId',
+        name: 'beat-plan-details',
+        builder: (context, state) {
+          final beatPlanId = state.pathParameters['beatPlanId'] ?? '';
+          return BeatPlanDetailsScreen(beatPlanId: beatPlanId);
         },
       ),
 

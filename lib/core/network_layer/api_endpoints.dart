@@ -112,4 +112,25 @@ class ApiEndpoints {
 
     return '/api/v1/attendance/search?${queryParams.join('&')}';
   }
+
+  // Beat Plan Endpoints
+  /// Get beat plans assigned to current user (minimal data for cards)
+  static const String myBeatPlans = '/api/v1/beat-plans/my-beatplans';
+
+  /// Get beat plan details by ID (full data)
+  static String beatPlanDetails(String id) => '/api/v1/beat-plans/$id/details';
+
+  /// Start a beat plan (future - real-time tracking)
+  static String startBeatPlan(String id) => '/api/v1/beat-plans/$id/start';
+
+  /// Stop a beat plan (future - real-time tracking)
+  static String stopBeatPlan(String id) => '/api/v1/beat-plans/$id/stop';
+
+  /// Mark party visit as complete
+  static String markVisitComplete(String beatPlanId, String visitId) =>
+      '/api/v1/beat-plans/$beatPlanId/visits/$visitId/complete';
+
+  /// Mark party visit as pending
+  static String markVisitPending(String beatPlanId, String visitId) =>
+      '/api/v1/beat-plans/$beatPlanId/visits/$visitId/pending';
 }

@@ -52,7 +52,8 @@ abstract class CheckStatusData with _$CheckStatusData {
 abstract class LoginResponse with _$LoginResponse {
   const factory LoginResponse({
     required String status,
-    required String token,
+    required String accessToken,
+    required String refreshToken,
     required LoginData data,
   }) = _LoginResponse;
 
@@ -71,6 +72,36 @@ abstract class LoginData with _$LoginData {
 
   factory LoginData.fromJson(Map<String, dynamic> json) =>
       _$LoginDataFromJson(json);
+}
+
+// ========================================
+// REFRESH TOKEN RESPONSE MODEL
+// ========================================
+@freezed
+abstract class RefreshTokenResponse with _$RefreshTokenResponse {
+  const factory RefreshTokenResponse({
+    required String status,
+    required String message,
+    required RefreshTokenData data,
+  }) = _RefreshTokenResponse;
+
+  factory RefreshTokenResponse.fromJson(Map<String, dynamic> json) =>
+      _$RefreshTokenResponseFromJson(json);
+}
+
+// ========================================
+// REFRESH TOKEN DATA MODEL
+// ========================================
+@freezed
+abstract class RefreshTokenData with _$RefreshTokenData {
+  const factory RefreshTokenData({
+    required String accessToken,
+    required String refreshToken,
+    required User user,
+  }) = _RefreshTokenData;
+
+  factory RefreshTokenData.fromJson(Map<String, dynamic> json) =>
+      _$RefreshTokenDataFromJson(json);
 }
 
 // ========================================
@@ -98,6 +129,7 @@ abstract class User with _$User {
     required String updatedAt,
     @JsonKey(name: '__v') required int version,
     String? avatarUrl,
+    String? sessionExpiresAt,
   }) = _User;
 
   factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
