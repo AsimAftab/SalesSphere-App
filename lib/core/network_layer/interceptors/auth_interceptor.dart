@@ -75,29 +75,51 @@ class AuthInterceptor extends Interceptor {
     handler.next(err);
   }
 
-  /// Extract token from response
+  /// Extract tokens from response and save both access and refresh tokens
   /// Adjust this based on your API response structure
   String? _extractTokenFromResponse(Response response) {
     try {
       if (response.data is Map<String, dynamic>) {
         final data = response.data as Map<String, dynamic>;
 
-        // Check common token field names
-        if (data.containsKey('token')) {
-          return data['token'] as String?;
-        }
-        if (data.containsKey('access_token')) {
-          return data['access_token'] as String?;
-        }
+        // Extract accessToken
+        String? accessToken;
         if (data.containsKey('accessToken')) {
-          return data['accessToken'] as String?;
+          accessToken = data['accessToken'] as String?;
         }
 
-        // Check nested data.token
+        // Extract refreshToken
+        String? refreshToken;
+        if (data.containsKey('refreshToken')) {
+          refreshToken = data['refreshToken'] as String?;
+        }
+
+        // Save both tokens if found
+        if (accessToken != null) {
+          tokenStorage.saveToken(accessToken);
+          if (refreshToken != null) {
+            tokenStorage.saveRefreshToken(refreshToken);
+          }
+          return accessToken;
+        }
+
+        // Check nested data for tokens
         if (data.containsKey('data') && data['data'] is Map<String, dynamic>) {
           final nestedData = data['data'] as Map<String, dynamic>;
-          if (nestedData.containsKey('token')) {
-            return nestedData['token'] as String?;
+
+          if (nestedData.containsKey('accessToken')) {
+            accessToken = nestedData['accessToken'] as String?;
+          }
+          if (nestedData.containsKey('refreshToken')) {
+            refreshToken = nestedData['refreshToken'] as String?;
+          }
+
+          if (accessToken != null) {
+            tokenStorage.saveToken(accessToken);
+            if (refreshToken != null) {
+              tokenStorage.saveRefreshToken(refreshToken);
+            }
+            return accessToken;
           }
         }
       }
@@ -109,9 +131,17 @@ class AuthInterceptor extends Interceptor {
   }
 
   /// Attempt to refresh the token
-  /// Implement your refresh token logic here
+  /// Makes API call to /api/v1/auth/refresh to get new tokens
   Future<bool> _attemptTokenRefresh(RequestOptions requestOptions) async {
     try {
+      // Check if session has expired before attempting refresh
+      final isExpired = await tokenStorage.isSessionExpired();
+      if (isExpired) {
+        AppLogger.w('⚠️ Session has expired. Cannot refresh token. Forcing logout...');
+        await tokenStorage.clearAuthData();
+        return false;
+      }
+
       final refreshToken = await tokenStorage.getRefreshToken();
 
       if (refreshToken == null || refreshToken.isEmpty) {
@@ -121,21 +151,67 @@ class AuthInterceptor extends Interceptor {
 
       AppLogger.d('🔄 Attempting to refresh token...');
 
-      // TODO: Implement your refresh token API call here
-      // Example:
-      // final dio = Dio();
-      // final response = await dio.post(
-      //   '${requestOptions.baseUrl}/auth/refresh',
-      //   data: {'refreshToken': refreshToken},
-      // );
-      //
-      // if (response.statusCode == 200) {
-      //   final newToken = response.data['token'];
-      //   await tokenStorage.saveToken(newToken);
-      //   return true;
-      // }
+      // Create a new Dio instance to avoid interceptor loops
+      final dio = Dio(BaseOptions(
+        baseUrl: requestOptions.baseUrl,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-Client-Type': 'mobile',
+        },
+      ));
 
-      return false;
+      // Make refresh token API call
+      final response = await dio.post(
+        '/api/v1/auth/refresh',
+        data: {'refreshToken': refreshToken},
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final data = response.data as Map<String, dynamic>;
+
+        // Extract new tokens and user from response
+        String? newAccessToken;
+        String? newRefreshToken;
+        String? sessionExpiresAt;
+
+        // Check if tokens are in root or nested in data
+        if (data.containsKey('data') && data['data'] is Map<String, dynamic>) {
+          final nestedData = data['data'] as Map<String, dynamic>;
+          newAccessToken = nestedData['accessToken'] as String?;
+          newRefreshToken = nestedData['refreshToken'] as String?;
+
+          // Extract sessionExpiresAt from user object if present
+          if (nestedData.containsKey('user') && nestedData['user'] is Map<String, dynamic>) {
+            final user = nestedData['user'] as Map<String, dynamic>;
+            sessionExpiresAt = user['sessionExpiresAt'] as String?;
+          }
+        } else {
+          newAccessToken = data['accessToken'] as String?;
+          newRefreshToken = data['refreshToken'] as String?;
+        }
+
+        // Save new tokens if found
+        if (newAccessToken != null) {
+          await tokenStorage.saveToken(newAccessToken);
+          if (newRefreshToken != null) {
+            await tokenStorage.saveRefreshToken(newRefreshToken);
+          }
+          // Save session expiry date if present
+          if (sessionExpiresAt != null) {
+            await tokenStorage.saveSessionExpiresAt(sessionExpiresAt);
+            AppLogger.i('✅ Session updated, expires at: $sessionExpiresAt');
+          }
+          AppLogger.i('✅ Token refreshed successfully');
+          return true;
+        } else {
+          AppLogger.w('⚠️ No access token in refresh response');
+          return false;
+        }
+      } else {
+        AppLogger.w('⚠️ Token refresh failed with status: ${response.statusCode}');
+        return false;
+      }
     } catch (e, stack) {
       AppLogger.e('❌ Token refresh failed', e, stack);
       return false;

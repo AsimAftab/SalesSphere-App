@@ -70,13 +70,20 @@ class LoginViewModel extends _$LoginViewModel {
 
         AppLogger.i('✅ Login successful for: ${loginResponse.data.user.name}');
 
-        // Save token
-        await tokenStorage.saveToken(loginResponse.token);
+        // Save access token and refresh token
+        await tokenStorage.saveToken(loginResponse.accessToken);
+        await tokenStorage.saveRefreshToken(loginResponse.refreshToken);
+
+        // Save session expiry date if present
+        if (loginResponse.data.user.sessionExpiresAt != null) {
+          await tokenStorage.saveSessionExpiresAt(loginResponse.data.user.sessionExpiresAt!);
+          AppLogger.i('✅ Session expires at: ${loginResponse.data.user.sessionExpiresAt}');
+        }
 
         // Save user data to SharedPreferences
         await tokenStorage.saveUserData(loginResponse.data.user.toJson());
 
-        AppLogger.i('✅ Token and user data stored successfully');
+        AppLogger.i('✅ Tokens and user data stored successfully');
 
         // Update global user state 👇
         ref

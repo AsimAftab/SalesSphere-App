@@ -52,6 +52,14 @@ class AppStartup extends _$AppStartup {
     final token = await tokenStorage.getToken();
 
     if (token != null) {
+      // Check if session has expired
+      final isExpired = await tokenStorage.isSessionExpired();
+      if (isExpired) {
+        AppLogger.w('⚠️ Session has expired. Forcing logout...');
+        await tokenStorage.clearAuthData();
+        return null;
+      }
+
       try {
         AppLogger.i('🔍 Checking token validity...');
         final dio = ref.read(dioClientProvider);
@@ -61,6 +69,12 @@ class AppStartup extends _$AppStartup {
         if (response.statusCode == 200 && response.data['status'] == 'success') {
           final checkStatusResponse = CheckStatusResponse.fromJson(response.data);
           final user = checkStatusResponse.data.user;
+
+          // Save session expiry date if present
+          if (user.sessionExpiresAt != null) {
+            await tokenStorage.saveSessionExpiresAt(user.sessionExpiresAt!);
+            AppLogger.i('✅ Session expires at: ${user.sessionExpiresAt}');
+          }
 
           // Save user data to SharedPreferences
           await tokenStorage.saveUserData(user.toJson());

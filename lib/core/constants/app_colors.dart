@@ -20,6 +20,7 @@ class AppColors {
   static const Color backgroundDark = Color(0xFF121212);
   static const Color surface = Color(0xFFFFFFFF);
   static const Color surfaceDark = Color(0xFF1E1E1E);
+  static const Color cardBackground = Color(0xFFFFFFFF);
 
   // Text Colors
   static const Color textPrimary = Color(0xFF212121);
@@ -51,6 +52,10 @@ class AppColors {
   static const Color border = Color(0xFFE0E0E0);
   static const Color borderDark = Color(0xFF424242);
   static const Color divider = Color(0xFFBDBDBD);
+
+  // Grey Shades
+  static const Color greyLight = Color(0xFFE0E0E0);
+  static const Color greyMedium = Color(0xFF9E9E9E);
 
   // Semantic Colors
   static const Color positive = Color(0xFF4CAF50);
