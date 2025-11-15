@@ -25,6 +25,7 @@ class TrackingCoordinator {
 
   // Subscriptions
   StreamSubscription<LocationUpdate>? _locationSubscription;
+  StreamSubscription<Map<String, dynamic>?>? _backgroundServiceSubscription;
   StreamSubscription<TrackingStoppedEvent>? _trackingStoppedSubscription;
   StreamSubscription<String>? _socketErrorSubscription;
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
@@ -131,12 +132,21 @@ class TrackingCoordinator {
       // Start background service
       await _backgroundService.startTracking(beatPlanId);
 
-      // Subscribe to location updates
+      // Subscribe to location updates from foreground service
       _locationSubscription = _locationService.locationStream.listen(
         _handleLocationUpdate,
         onError: (error) {
           AppLogger.e('❌ Location stream error: $error');
           _emitState(TrackingState.error);
+        },
+      );
+
+      // Subscribe to location updates from background service
+      // This is the PRIMARY source of location data when app is backgrounded
+      _backgroundServiceSubscription = _backgroundService.onServiceUpdate.listen(
+        _handleBackgroundServiceUpdate,
+        onError: (error) {
+          AppLogger.e('❌ Background service stream error: $error');
         },
       );
 
@@ -201,6 +211,7 @@ class TrackingCoordinator {
 
       // Cancel subscriptions
       await _locationSubscription?.cancel();
+      await _backgroundServiceSubscription?.cancel();
       await _trackingStoppedSubscription?.cancel();
       await _socketErrorSubscription?.cancel();
       _syncTimer?.cancel();
@@ -284,12 +295,12 @@ class TrackingCoordinator {
     }
   }
 
-  /// Handle location update
+  /// Handle location update from foreground service
   void _handleLocationUpdate(LocationUpdate update) async {
     if (!_isTracking || _currentBeatPlanId == null) return;
 
     try {
-      AppLogger.d('📍 Location update: ${update.latitude}, ${update.longitude}');
+      AppLogger.d('📍 Foreground location update: ${update.latitude}, ${update.longitude}');
 
       // Send to server if connected
       if (_socketService.isConnected) {
@@ -318,6 +329,49 @@ class TrackingCoordinator {
       _emitStats();
     } catch (e) {
       AppLogger.e('❌ Error handling location update: $e');
+    }
+  }
+
+  /// Handle location update from background service
+  /// This is the PRIMARY source when app is in background
+  void _handleBackgroundServiceUpdate(Map<String, dynamic>? data) async {
+    if (data == null || !_isTracking || _currentBeatPlanId == null) return;
+
+    try {
+      // Use 'num' to accept both int and double, then convert to double
+      final latitude = (data['latitude'] as num?)?.toDouble();
+      final longitude = (data['longitude'] as num?)?.toDouble();
+      final accuracy = (data['accuracy'] as num?)?.toDouble();
+      final speed = (data['speed'] as num?)?.toDouble();
+      final heading = (data['heading'] as num?)?.toDouble();
+
+      if (latitude == null || longitude == null) {
+        AppLogger.w('⚠️ Background update missing coordinates');
+        return;
+      }
+
+      AppLogger.d('📍 Background location update: $latitude, $longitude');
+
+      // Send to server if connected
+      if (_socketService.isConnected) {
+        _socketService.updateLocation(
+          beatPlanId: _currentBeatPlanId!,
+          latitude: latitude,
+          longitude: longitude,
+          accuracy: accuracy ?? 0.0,
+          speed: speed ?? 0.0,
+          heading: heading ?? 0.0,
+        );
+        AppLogger.d('✅ Background location sent to server via socket');
+      } else {
+        // Queue for later sync (though background service already saved to Hive)
+        AppLogger.d('📥 Socket not connected, background service has queued to Hive');
+      }
+
+      // Emit stats update
+      _emitStats();
+    } catch (e) {
+      AppLogger.e('❌ Error handling background service update: $e');
     }
   }
 
@@ -411,6 +465,7 @@ class TrackingCoordinator {
   Future<void> dispose() async {
     await stopTracking();
     await _locationSubscription?.cancel();
+    await _backgroundServiceSubscription?.cancel();
     await _trackingStoppedSubscription?.cancel();
     await _socketErrorSubscription?.cancel();
     await _connectivitySubscription?.cancel();

@@ -6,6 +6,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app.dart';
 import 'core/utils/logger.dart';
@@ -59,7 +61,13 @@ Future<void> main() async {
   // Initialize Hive for offline storage
   try {
     await Hive.initFlutter();
-    AppLogger.i('✅ Hive initialized');
+
+    // Save Hive path to SharedPreferences for background isolate
+    final prefs = await SharedPreferences.getInstance();
+    final hivePath = await getApplicationDocumentsDirectory();
+    await prefs.setString('hivePath', hivePath.path);
+
+    AppLogger.i('✅ Hive initialized at: ${hivePath.path}');
   } catch (e) {
     AppLogger.e('❌ Failed to initialize Hive', e);
   }

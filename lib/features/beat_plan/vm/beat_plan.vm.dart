@@ -32,16 +32,21 @@ class BeatPlanListViewModel extends _$BeatPlanListViewModel {
 
   /// Fetch beat plan summaries from API
   Future<List<BeatPlanSummary>> _fetchBeatPlans() async {
-    // Guard: prevent concurrent fetches
+    // Guard: prevent concurrent fetches - wait for current request to complete
     if (_isFetching) {
-      AppLogger.w('⚠️ Already fetching beat plans, skipping duplicate request');
-      throw Exception('Fetch already in progress');
+      AppLogger.w('⚠️ Already fetching beat plans, waiting for current request');
+      // Wait for current fetch to complete
+      while (_isFetching) {
+        await Future.delayed(const Duration(milliseconds: 100));
+      }
+      // Return current state after wait
+      return state.hasValue ? state.requireValue : [];
     }
 
     _isFetching = true;
     try {
       final dio = ref.read(dioClientProvider);
-      AppLogger.i('Fetching beat plan summaries from API...');
+      AppLogger.i('🔄 Fetching beat plan summaries from API...');
 
       final response = await dio.get(ApiEndpoints.myBeatPlans);
 
@@ -153,16 +158,21 @@ class BeatPlanDetailViewModel extends _$BeatPlanDetailViewModel {
 
   /// Fetch beat plan details from API
   Future<BeatPlanDetail?> _fetchBeatPlanDetails(String beatPlanId) async {
-    // Guard: prevent concurrent fetches
+    // Guard: prevent concurrent fetches - return null instead of throwing
     if (_isFetching) {
-      AppLogger.w('⚠️ Already fetching beat plan details, skipping duplicate request');
-      throw Exception('Fetch already in progress');
+      AppLogger.w('⚠️ Already fetching beat plan details, waiting for current request');
+      // Wait for current fetch to complete
+      while (_isFetching) {
+        await Future.delayed(const Duration(milliseconds: 100));
+      }
+      // Return current state after wait
+      return state.hasValue ? state.requireValue : null;
     }
 
     _isFetching = true;
     try {
       final dio = ref.read(dioClientProvider);
-      AppLogger.i('Fetching beat plan details for ID: $beatPlanId');
+      AppLogger.i('🔄 Fetching beat plan details for ID: $beatPlanId');
 
       final response = await dio.get(ApiEndpoints.beatPlanDetails(beatPlanId));
 
@@ -171,7 +181,7 @@ class BeatPlanDetailViewModel extends _$BeatPlanDetailViewModel {
         final beatPlanResponse = BeatPlanDetailResponse.fromJson(response.data);
 
         AppLogger.i('✅ Beat plan details loaded: ${beatPlanResponse.data.name}');
-        AppLogger.d('Parties: ${beatPlanResponse.data.parties.length}, Progress: ${beatPlanResponse.data.progress.percentage}%');
+        AppLogger.d('📊 Directories: ${beatPlanResponse.data.directories.length} (${beatPlanResponse.data.progress.totalParties} parties, ${beatPlanResponse.data.progress.totalSites} sites, ${beatPlanResponse.data.progress.totalProspects} prospects), Progress: ${beatPlanResponse.data.progress.percentage}%');
 
         return beatPlanResponse.data;
       } else {

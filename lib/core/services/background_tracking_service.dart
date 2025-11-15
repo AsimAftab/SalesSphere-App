@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:sales_sphere/core/models/queued_location.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -66,9 +68,10 @@ class BackgroundTrackingService {
     try {
       AppLogger.i('🎯 Starting background tracking for beat plan: $beatPlanId');
 
-      // Store beat plan ID in SharedPreferences for background isolate
+      // Store beat plan ID and tracking flag in SharedPreferences for background isolate
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_keyBeatPlanId, beatPlanId);
+      await prefs.setBool(_keyIsTracking, true);  // Set tracking flag!
 
       // Start the service
       final isRunning = await _service.isRunning();
@@ -91,6 +94,10 @@ class BackgroundTrackingService {
   Future<void> stopTracking() async {
     try {
       AppLogger.i('🛑 Stopping background tracking...');
+
+      // Clear tracking flag in SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_keyIsTracking, false);
 
       final isRunning = await _service.isRunning();
       if (isRunning) {
@@ -160,10 +167,35 @@ class BackgroundTrackingService {
     double totalDistance = 0.0;
     DateTime? startTime;
     Position? lastPosition;
+    Box<QueuedLocation>? locationBox;
 
     // Initialize notification plugin
     final notificationPlugin = FlutterLocalNotificationsPlugin();
     await _initializeNotifications(notificationPlugin);
+
+    // Initialize Hive for offline storage
+    try {
+      // Get application documents directory for Hive storage
+      final prefs = await SharedPreferences.getInstance();
+      final hivePath = prefs.getString('hivePath');
+
+      if (hivePath != null) {
+        // Initialize Hive with path
+        await Hive.initFlutter(hivePath);
+        AppLogger.d('Hive initialized with path: $hivePath');
+      } else {
+        AppLogger.e('❌ No Hive path found in SharedPreferences');
+      }
+
+      if (!Hive.isAdapterRegistered(0)) {
+        Hive.registerAdapter(QueuedLocationAdapter());
+        AppLogger.d('Registered QueuedLocationAdapter in background isolate');
+      }
+      locationBox = await Hive.openBox<QueuedLocation>('queued_locations');
+      AppLogger.i('✅ Hive initialized in background isolate');
+    } catch (e) {
+      AppLogger.e('❌ Error initializing Hive in background: $e');
+    }
 
     // Get beat plan ID from SharedPreferences
     final prefs = await SharedPreferences.getInstance();
@@ -171,19 +203,24 @@ class BackgroundTrackingService {
 
     if (beatPlanId == null) {
       AppLogger.e('❌ No beat plan ID found, stopping service');
+      await locationBox?.close();
       service.stopSelf();
       return;
     }
+
+    // Ensure tracking flag is set
+    await prefs.setBool(_keyIsTracking, true);
 
     // Start tracking
     startTime = DateTime.now();
     isTracking = true;
 
-    // Start location tracking
+    // Start location tracking (no timeout - runs continuously)
     positionSubscription = Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
         accuracy: LocationAccuracy.high,
         distanceFilter: 10,
+        // No timeLimit - tracking continues indefinitely until stopped
       ),
     ).listen(
       (Position position) async {
@@ -204,7 +241,25 @@ class BackgroundTrackingService {
         // Calculate duration
         final duration = DateTime.now().difference(startTime!);
 
-        // Update notification
+        // STEP 1: Save to Hive first (ALWAYS works, even offline)
+        try {
+          if (locationBox != null) {
+            final queuedLocation = QueuedLocation.fromLocationUpdate(
+              beatPlanId: beatPlanId!,
+              latitude: position.latitude,
+              longitude: position.longitude,
+              accuracy: position.accuracy,
+              speed: position.speed,
+              heading: position.heading,
+            );
+            await locationBox.add(queuedLocation);
+            AppLogger.d('💾 Location saved to Hive queue');
+          }
+        } catch (e) {
+          AppLogger.e('❌ Error saving to Hive: $e');
+        }
+
+        // STEP 2: Update notification
         await _updateNotification(
           notificationPlugin,
           beatPlanId: beatPlanId!,
@@ -212,7 +267,7 @@ class BackgroundTrackingService {
           duration: duration,
         );
 
-        // Send update to main app
+        // STEP 3: Send update to main app (will try to send to server)
         service.invoke('update', {
           'beatPlanId': beatPlanId,
           'latitude': position.latitude,
@@ -237,6 +292,8 @@ class BackgroundTrackingService {
       AppLogger.i('🛑 Received stop command');
       isTracking = false;
       await positionSubscription?.cancel();
+      await locationBox?.close();
+      AppLogger.d('Hive box closed');
       service.stopSelf();
     });
 
@@ -268,6 +325,8 @@ class BackgroundTrackingService {
         AppLogger.i('🛑 Service should stop, shutting down');
         isTracking = false;
         await positionSubscription?.cancel();
+        await locationBox?.close();
+        AppLogger.d('Hive box closed');
         timer.cancel();
         service.stopSelf();
       }

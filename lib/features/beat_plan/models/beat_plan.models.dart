@@ -170,7 +170,7 @@ abstract class BeatDirectory with _$BeatDirectory {
 abstract class BeatDirectoryContact with _$BeatDirectoryContact {
   const factory BeatDirectoryContact({
     required String phone,
-    required String email,
+    String? email,  // Optional - some directories don't have email
   }) = _BeatDirectoryContact;
 
   factory BeatDirectoryContact.fromJson(Map<String, dynamic> json) =>

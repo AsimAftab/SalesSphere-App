@@ -303,18 +303,18 @@ class LocationTrackingService {
     required bool enableBackgroundUpdates,
   }) {
     if (enableBackgroundUpdates) {
-      // Background tracking settings
+      // Background tracking settings - NO timeout (runs continuously)
       return LocationSettings(
         accuracy: accuracy,
         distanceFilter: distanceFilter.toInt(),
-        timeLimit: const Duration(seconds: _normalUpdateInterval),
+        // No timeLimit - tracking continues indefinitely until stopped
       );
     } else {
-      // Foreground only settings
+      // Foreground only settings - NO timeout (runs continuously)
       return LocationSettings(
         accuracy: accuracy,
         distanceFilter: distanceFilter.toInt(),
-        timeLimit: const Duration(seconds: _normalUpdateInterval),
+        // No timeLimit - tracking continues indefinitely until stopped
       );
     }
   }
