@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
+import 'package:sales_sphere/core/services/tracking_coordinator.dart';
 import '../models/beat_plan.models.dart';
 
 part 'beat_plan.vm.g.dart';
@@ -31,16 +32,21 @@ class BeatPlanListViewModel extends _$BeatPlanListViewModel {
 
   /// Fetch beat plan summaries from API
   Future<List<BeatPlanSummary>> _fetchBeatPlans() async {
-    // Guard: prevent concurrent fetches
+    // Guard: prevent concurrent fetches - wait for current request to complete
     if (_isFetching) {
-      AppLogger.w('⚠️ Already fetching beat plans, skipping duplicate request');
-      throw Exception('Fetch already in progress');
+      AppLogger.w('⚠️ Already fetching beat plans, waiting for current request');
+      // Wait for current fetch to complete
+      while (_isFetching) {
+        await Future.delayed(const Duration(milliseconds: 100));
+      }
+      // Return current state after wait
+      return state.hasValue ? state.requireValue : [];
     }
 
     _isFetching = true;
     try {
       final dio = ref.read(dioClientProvider);
-      AppLogger.i('Fetching beat plan summaries from API...');
+      AppLogger.i('🔄 Fetching beat plan summaries from API...');
 
       final response = await dio.get(ApiEndpoints.myBeatPlans);
 
@@ -80,6 +86,53 @@ class BeatPlanListViewModel extends _$BeatPlanListViewModel {
       rethrow;
     }
   }
+
+  /// Start a beat plan
+  ///
+  /// Parameters:
+  /// - beatPlanId: The ID of the beat plan to start
+  ///
+  /// Returns: true if successful, false otherwise
+  Future<bool> startBeatPlan(String beatPlanId) async {
+    try {
+      final dio = ref.read(dioClientProvider);
+      AppLogger.i('Starting beat plan $beatPlanId');
+
+      final response = await dio.post(
+        ApiEndpoints.startBeatPlan(beatPlanId),
+      );
+
+      if (response.statusCode == 200) {
+        AppLogger.i('✅ Beat plan started successfully on server');
+
+        // Start real-time tracking
+        try {
+          AppLogger.i('🎯 Starting real-time tracking...');
+          await TrackingCoordinator.instance.startTracking(beatPlanId);
+          AppLogger.i('✅ Real-time tracking started');
+        } catch (trackingError) {
+          AppLogger.e('❌ Failed to start tracking: $trackingError');
+          // Continue even if tracking fails - beat plan is still started on server
+        }
+
+        // Refresh the beat plan list to get updated status
+        await refresh();
+        return true;
+      } else {
+        throw Exception('Failed to start beat plan: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      AppLogger.e('❌ Dio error starting beat plan: ${e.message}');
+      if (e.response != null) {
+        AppLogger.e('Response data: ${e.response?.data}');
+      }
+      throw Exception('Network error: ${e.message}');
+    } catch (e, stack) {
+      AppLogger.e('❌ Error starting beat plan: $e');
+      AppLogger.e('Stack trace: $stack');
+      throw Exception('Failed to start beat plan: $e');
+    }
+  }
 }
 
 // ============================================================================
@@ -105,16 +158,21 @@ class BeatPlanDetailViewModel extends _$BeatPlanDetailViewModel {
 
   /// Fetch beat plan details from API
   Future<BeatPlanDetail?> _fetchBeatPlanDetails(String beatPlanId) async {
-    // Guard: prevent concurrent fetches
+    // Guard: prevent concurrent fetches - return null instead of throwing
     if (_isFetching) {
-      AppLogger.w('⚠️ Already fetching beat plan details, skipping duplicate request');
-      throw Exception('Fetch already in progress');
+      AppLogger.w('⚠️ Already fetching beat plan details, waiting for current request');
+      // Wait for current fetch to complete
+      while (_isFetching) {
+        await Future.delayed(const Duration(milliseconds: 100));
+      }
+      // Return current state after wait
+      return state.hasValue ? state.requireValue : null;
     }
 
     _isFetching = true;
     try {
       final dio = ref.read(dioClientProvider);
-      AppLogger.i('Fetching beat plan details for ID: $beatPlanId');
+      AppLogger.i('🔄 Fetching beat plan details for ID: $beatPlanId');
 
       final response = await dio.get(ApiEndpoints.beatPlanDetails(beatPlanId));
 
@@ -123,7 +181,7 @@ class BeatPlanDetailViewModel extends _$BeatPlanDetailViewModel {
         final beatPlanResponse = BeatPlanDetailResponse.fromJson(response.data);
 
         AppLogger.i('✅ Beat plan details loaded: ${beatPlanResponse.data.name}');
-        AppLogger.d('Parties: ${beatPlanResponse.data.parties.length}, Progress: ${beatPlanResponse.data.progress.percentage}%');
+        AppLogger.d('📊 Directories: ${beatPlanResponse.data.directories.length} (${beatPlanResponse.data.progress.totalParties} parties, ${beatPlanResponse.data.progress.totalSites} sites, ${beatPlanResponse.data.progress.totalProspects} prospects), Progress: ${beatPlanResponse.data.progress.percentage}%');
 
         return beatPlanResponse.data;
       } else {

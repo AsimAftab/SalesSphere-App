@@ -170,7 +170,7 @@ abstract class BeatDirectory with _$BeatDirectory {
 abstract class BeatDirectoryContact with _$BeatDirectoryContact {
   const factory BeatDirectoryContact({
     required String phone,
-    required String email,
+    String? email,  // Optional - some directories don't have email
   }) = _BeatDirectoryContact;
 
   factory BeatDirectoryContact.fromJson(Map<String, dynamic> json) =>
@@ -226,5 +226,110 @@ abstract class BeatCreator with _$BeatCreator {
 
   factory BeatCreator.fromJson(Map<String, dynamic> json) =>
       _$BeatCreatorFromJson(json);
+}
+
+// ============================================================================
+// START ENDPOINT MODELS (/api/v1/beat-plans/{id}/start)
+// Response when starting a beat plan
+// ============================================================================
+
+/// Start Beat Plan Response
+@freezed
+abstract class StartBeatPlanResponse with _$StartBeatPlanResponse {
+  const factory StartBeatPlanResponse({
+    required bool success,
+    required String message,
+    required StartBeatPlanData data,
+  }) = _StartBeatPlanResponse;
+
+  factory StartBeatPlanResponse.fromJson(Map<String, dynamic> json) =>
+      _$StartBeatPlanResponseFromJson(json);
+}
+
+/// Start Beat Plan Data
+@freezed
+abstract class StartBeatPlanData with _$StartBeatPlanData {
+  const factory StartBeatPlanData({
+    @JsonKey(name: '_id') required String id,
+    required String name,
+    required String status,
+    required BeatSchedule schedule,
+    required BeatProgress progress,
+    required List<BeatEmployee> employees,
+    required List<BeatPartyBasic> parties,
+    required List<BeatSiteBasic> sites,
+    required List<BeatProspectBasic> prospects,
+    required List<BeatVisit> visits,
+    required BeatCreator createdBy,
+    required String organizationId,
+    required String createdAt,
+    required String updatedAt,
+    String? startedAt,
+    String? completedAt,
+  }) = _StartBeatPlanData;
+
+  factory StartBeatPlanData.fromJson(Map<String, dynamic> json) =>
+      _$StartBeatPlanDataFromJson(json);
+}
+
+/// Beat Party Basic (without visit status)
+@freezed
+abstract class BeatPartyBasic with _$BeatPartyBasic {
+  const factory BeatPartyBasic({
+    @JsonKey(name: '_id') required String id,
+    required String partyName,
+    required String ownerName,
+    required BeatDirectoryContact contact,
+    required BeatDirectoryLocation location,
+    String? panVatNumber,
+  }) = _BeatPartyBasic;
+
+  factory BeatPartyBasic.fromJson(Map<String, dynamic> json) =>
+      _$BeatPartyBasicFromJson(json);
+}
+
+/// Beat Site Basic (without visit status)
+@freezed
+abstract class BeatSiteBasic with _$BeatSiteBasic {
+  const factory BeatSiteBasic({
+    @JsonKey(name: '_id') required String id,
+    required String siteName,
+    required String ownerName,
+    required BeatDirectoryContact contact,
+    required BeatDirectoryLocation location,
+  }) = _BeatSiteBasic;
+
+  factory BeatSiteBasic.fromJson(Map<String, dynamic> json) =>
+      _$BeatSiteBasicFromJson(json);
+}
+
+/// Beat Prospect Basic (without visit status)
+@freezed
+abstract class BeatProspectBasic with _$BeatProspectBasic {
+  const factory BeatProspectBasic({
+    @JsonKey(name: '_id') required String id,
+    required String prospectName,
+    required String ownerName,
+    required BeatDirectoryContact contact,
+    required BeatDirectoryLocation location,
+    String? panVatNumber,
+  }) = _BeatProspectBasic;
+
+  factory BeatProspectBasic.fromJson(Map<String, dynamic> json) =>
+      _$BeatProspectBasicFromJson(json);
+}
+
+/// Beat Visit (from visits array)
+@freezed
+abstract class BeatVisit with _$BeatVisit {
+  const factory BeatVisit({
+    @JsonKey(name: '_id') required String id,
+    required String directoryId,
+    required String directoryType, // party, site, prospect
+    required String status, // pending, completed, skipped
+  }) = _BeatVisit;
+
+  factory BeatVisit.fromJson(Map<String, dynamic> json) =>
+      _$BeatVisitFromJson(json);
 }
 

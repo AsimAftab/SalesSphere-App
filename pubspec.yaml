@@ -64,6 +64,14 @@ dependencies:
   sentry_flutter: ^9.8.0
   connectivity_plus: ^7.0.0
 
+  # Real-time tracking dependencies
+  socket_io_client: ^2.0.3+1
+  flutter_background_service: ^5.1.0
+  flutter_local_notifications: ^19.5.0
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  battery_plus: ^5.0.2
+
 
 
 

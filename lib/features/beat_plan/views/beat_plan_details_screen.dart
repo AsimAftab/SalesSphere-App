@@ -7,6 +7,9 @@ import 'package:sales_sphere/features/beat_plan/models/beat_plan.models.dart';
 import 'package:sales_sphere/features/beat_plan/vm/beat_plan.vm.dart';
 import 'package:sales_sphere/features/beat_plan/widgets/route_progress_card.dart';
 import 'package:sales_sphere/features/beat_plan/widgets/party_visit_card.dart';
+import 'package:sales_sphere/features/beat_plan/widgets/tracking_status_card.dart';
+import 'package:sales_sphere/features/beat_plan/widgets/tracking_controls_widget.dart';
+import 'package:sales_sphere/features/beat_plan/widgets/tracking_indicator_widget.dart';
 
 /// Beat Plan Details Screen
 /// Shows detailed beat plan with route progress, filter tabs, and party visit cards
@@ -39,6 +42,12 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
         ),
+        actions: const [
+          Padding(
+            padding: EdgeInsets.only(right: 16.0),
+            child: TrackingIndicatorWidget(),
+          ),
+        ],
       ),
       body: beatPlanAsync.when(
         data: (beatPlan) {
@@ -55,15 +64,15 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
   }
 
   Widget _buildContent(BeatPlanDetail beatPlan) {
-    // Filter parties based on selected tab
-    final filteredParties = _getFilteredParties(beatPlan.parties);
+    // Filter directories based on selected tab
+    final filteredDirectories = _getFilteredDirectories(beatPlan.directories);
 
     // Calculate counts for tabs
-    final allCount = beatPlan.parties.length;
-    final pendingCount = beatPlan.parties
+    final allCount = beatPlan.directories.length;
+    final pendingCount = beatPlan.directories
         .where((p) => p.visitStatus.status.toLowerCase() == 'pending')
         .length;
-    final visitedCount = beatPlan.parties
+    final visitedCount = beatPlan.directories
         .where((p) => p.visitStatus.status.toLowerCase() == 'visited')
         .length;
 
@@ -119,6 +128,19 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
               progressPercentage: beatPlan.progress.percentage,
             ),
 
+            SizedBox(height: 16.h),
+
+            // Tracking Status Card
+            const TrackingStatusCard(),
+
+            // Tracking Controls
+            TrackingControlsWidget(
+              onTrackingStopped: () {
+                // Refresh beat plan data when tracking stops
+                ref.invalidate(beatPlanDetailViewModelProvider(widget.beatPlanId));
+              },
+            ),
+
             SizedBox(height: 24.h),
 
             // Filter Tabs
@@ -149,28 +171,28 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
 
             SizedBox(height: 20.h),
 
-            // Party Visit Cards
-            if (filteredParties.isEmpty)
+            // Directory Visit Cards
+            if (filteredDirectories.isEmpty)
               _buildEmptyFilterState()
             else
               ListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: filteredParties.length,
+                itemCount: filteredDirectories.length,
                 itemBuilder: (context, index) {
-                  final party = filteredParties[index];
-                  final isLoading = _loadingVisitId == party.id;
+                  final directory = filteredDirectories[index];
+                  final isLoading = _loadingVisitId == directory.id;
 
                   return PartyVisitCard(
-                    party: party,
+                    party: directory,
                     isLoading: isLoading,
                     onMarkComplete: () => _handleMarkVisitComplete(
                       beatPlan.id,
-                      party.id,
+                      directory.id,
                     ),
                     onMarkPending: () => _handleMarkVisitPending(
                       beatPlan.id,
-                      party.id,
+                      directory.id,
                     ),
                   );
                 },
@@ -265,13 +287,13 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
     );
   }
 
-  List<BeatDirectory> _getFilteredParties(List<BeatDirectory> parties) {
+  List<BeatDirectory> _getFilteredDirectories(List<BeatDirectory> directories) {
     if (_selectedFilter == 'all') {
-      return parties;
+      return directories;
     } else if (_selectedFilter == 'pending') {
-      return parties.where((p) => p.visitStatus.status.toLowerCase() == 'pending').toList();
+      return directories.where((p) => p.visitStatus.status.toLowerCase() == 'pending').toList();
     } else {
-      return parties.where((p) => p.visitStatus.status.toLowerCase() == 'visited').toList();
+      return directories.where((p) => p.visitStatus.status.toLowerCase() == 'visited').toList();
     }
   }
 
@@ -377,7 +399,7 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
             ),
             SizedBox(height: 12.h),
             Text(
-              'No parties in this filter',
+              'No directories in this filter',
               style: TextStyle(
                 fontSize: 14.sp,
                 color: AppColors.textSecondary,

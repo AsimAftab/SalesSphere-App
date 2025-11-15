@@ -19,6 +19,48 @@ class PartyVisitCard extends StatelessWidget {
     this.isLoading = false,
   });
 
+  // Get icon based on directory type
+  IconData _getTypeIcon() {
+    switch (party.type.toLowerCase()) {
+      case 'party':
+        return Icons.store_rounded;
+      case 'site':
+        return Icons.apartment_rounded;
+      case 'prospect':
+        return Icons.group_rounded;
+      default:
+        return Icons.location_on_rounded;
+    }
+  }
+
+  // Get type label text
+  String _getTypeLabel() {
+    switch (party.type.toLowerCase()) {
+      case 'party':
+        return 'Party';
+      case 'site':
+        return 'Site';
+      case 'prospect':
+        return 'Prospect';
+      default:
+        return party.type;
+    }
+  }
+
+  // Get type badge color
+  Color _getTypeBadgeColor() {
+    switch (party.type.toLowerCase()) {
+      case 'party':
+        return AppColors.primary;
+      case 'site':
+        return AppColors.secondary;
+      case 'prospect':
+        return AppColors.warning;
+      default:
+        return AppColors.greyMedium;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isVisited = party.visitStatus.status.toLowerCase() == 'visited';
@@ -59,7 +101,7 @@ class PartyVisitCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Party name and owner
+                  // Directory name and owner
                   Row(
                     children: [
                       // Icon
@@ -70,7 +112,7 @@ class PartyVisitCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12.r),
                         ),
                         child: Icon(
-                          isVisited ? Icons.store_rounded : Icons.storefront_outlined,
+                          _getTypeIcon(),
                           size: 22.sp,
                           color: isVisited ? AppColors.success : AppColors.secondary,
                         ),
@@ -80,15 +122,46 @@ class PartyVisitCard extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              party.name,
-                              style: TextStyle(
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    party.name,
+                                    style: TextStyle(
+                                      fontSize: 16.sp,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                SizedBox(width: 8.w),
+                                // Type badge
+                                Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 8.w,
+                                    vertical: 3.h,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: _getTypeBadgeColor().withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(6.r),
+                                    border: Border.all(
+                                      color: _getTypeBadgeColor().withValues(alpha: 0.3),
+                                      width: 0.5,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    _getTypeLabel(),
+                                    style: TextStyle(
+                                      fontSize: 10.sp,
+                                      fontWeight: FontWeight.w700,
+                                      color: _getTypeBadgeColor(),
+                                      letterSpacing: 0.3,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                             SizedBox(height: 4.h),
                             Row(

@@ -4,10 +4,16 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app.dart';
 import 'core/utils/logger.dart';
 import 'core/network_layer/token_storage_service.dart';
+import 'core/services/offline_queue_service.dart';
+import 'core/services/tracking_coordinator.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
 
@@ -50,6 +56,68 @@ Future<void> main() async {
     AppLogger.i('✅ Environment variables loaded');
   } catch (e) {
     AppLogger.w('⚠️ Failed to load .env file: $e');
+  }
+
+  // Initialize Hive for offline storage
+  try {
+    await Hive.initFlutter();
+
+    // Save Hive path to SharedPreferences for background isolate
+    final prefs = await SharedPreferences.getInstance();
+    final hivePath = await getApplicationDocumentsDirectory();
+    await prefs.setString('hivePath', hivePath.path);
+
+    AppLogger.i('✅ Hive initialized at: ${hivePath.path}');
+  } catch (e) {
+    AppLogger.e('❌ Failed to initialize Hive', e);
+  }
+
+  // Initialize notification channel for tracking
+  try {
+    final notificationPlugin = FlutterLocalNotificationsPlugin();
+
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    const InitializationSettings initializationSettings =
+        InitializationSettings(android: initializationSettingsAndroid);
+
+    await notificationPlugin.initialize(initializationSettings);
+
+    // Create notification channel
+    const AndroidNotificationChannel channel = AndroidNotificationChannel(
+      'tracking_channel',
+      'Beat Plan Tracking',
+      description: 'Ongoing beat plan tracking notification',
+      importance: Importance.low,
+      playSound: false,
+      enableVibration: false,
+      showBadge: false,
+    );
+
+    await notificationPlugin
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(channel);
+
+    AppLogger.i('✅ Notification channel initialized');
+  } catch (e) {
+    AppLogger.e('❌ Failed to initialize notification channel', e);
+  }
+
+  // Initialize offline queue service
+  try {
+    await OfflineQueueService.instance.initialize();
+    AppLogger.i('✅ Offline queue service initialized');
+  } catch (e) {
+    AppLogger.e('❌ Failed to initialize offline queue service', e);
+  }
+
+  // Initialize tracking coordinator
+  try {
+    await TrackingCoordinator.instance.initialize();
+    AppLogger.i('✅ Tracking coordinator initialized');
+  } catch (e) {
+    AppLogger.e('❌ Failed to initialize tracking coordinator', e);
   }
 
   // Initialize token storage service
