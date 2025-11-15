@@ -7,6 +7,9 @@ import 'package:sales_sphere/features/beat_plan/models/beat_plan.models.dart';
 import 'package:sales_sphere/features/beat_plan/vm/beat_plan.vm.dart';
 import 'package:sales_sphere/features/beat_plan/widgets/route_progress_card.dart';
 import 'package:sales_sphere/features/beat_plan/widgets/party_visit_card.dart';
+import 'package:sales_sphere/features/beat_plan/widgets/tracking_status_card.dart';
+import 'package:sales_sphere/features/beat_plan/widgets/tracking_controls_widget.dart';
+import 'package:sales_sphere/features/beat_plan/widgets/tracking_indicator_widget.dart';
 
 /// Beat Plan Details Screen
 /// Shows detailed beat plan with route progress, filter tabs, and party visit cards
@@ -39,6 +42,12 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
         ),
+        actions: const [
+          Padding(
+            padding: EdgeInsets.only(right: 16.0),
+            child: TrackingIndicatorWidget(),
+          ),
+        ],
       ),
       body: beatPlanAsync.when(
         data: (beatPlan) {
@@ -117,6 +126,19 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
               visitedParties: beatPlan.progress.visitedDirectories,
               pendingParties: beatPlan.progress.totalDirectories - beatPlan.progress.visitedDirectories,
               progressPercentage: beatPlan.progress.percentage,
+            ),
+
+            SizedBox(height: 16.h),
+
+            // Tracking Status Card
+            const TrackingStatusCard(),
+
+            // Tracking Controls
+            TrackingControlsWidget(
+              onTrackingStopped: () {
+                // Refresh beat plan data when tracking stops
+                ref.invalidate(beatPlanDetailViewModelProvider(widget.beatPlanId));
+              },
             ),
 
             SizedBox(height: 24.h),

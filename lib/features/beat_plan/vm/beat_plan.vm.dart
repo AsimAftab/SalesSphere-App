@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
+import 'package:sales_sphere/core/services/tracking_coordinator.dart';
 import '../models/beat_plan.models.dart';
 
 part 'beat_plan.vm.g.dart';
@@ -78,6 +79,53 @@ class BeatPlanListViewModel extends _$BeatPlanListViewModel {
     } catch (e, stack) {
       state = AsyncError(e, stack);
       rethrow;
+    }
+  }
+
+  /// Start a beat plan
+  ///
+  /// Parameters:
+  /// - beatPlanId: The ID of the beat plan to start
+  ///
+  /// Returns: true if successful, false otherwise
+  Future<bool> startBeatPlan(String beatPlanId) async {
+    try {
+      final dio = ref.read(dioClientProvider);
+      AppLogger.i('Starting beat plan $beatPlanId');
+
+      final response = await dio.post(
+        ApiEndpoints.startBeatPlan(beatPlanId),
+      );
+
+      if (response.statusCode == 200) {
+        AppLogger.i('✅ Beat plan started successfully on server');
+
+        // Start real-time tracking
+        try {
+          AppLogger.i('🎯 Starting real-time tracking...');
+          await TrackingCoordinator.instance.startTracking(beatPlanId);
+          AppLogger.i('✅ Real-time tracking started');
+        } catch (trackingError) {
+          AppLogger.e('❌ Failed to start tracking: $trackingError');
+          // Continue even if tracking fails - beat plan is still started on server
+        }
+
+        // Refresh the beat plan list to get updated status
+        await refresh();
+        return true;
+      } else {
+        throw Exception('Failed to start beat plan: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      AppLogger.e('❌ Dio error starting beat plan: ${e.message}');
+      if (e.response != null) {
+        AppLogger.e('Response data: ${e.response?.data}');
+      }
+      throw Exception('Network error: ${e.message}');
+    } catch (e, stack) {
+      AppLogger.e('❌ Error starting beat plan: $e');
+      AppLogger.e('Stack trace: $stack');
+      throw Exception('Failed to start beat plan: $e');
     }
   }
 }
