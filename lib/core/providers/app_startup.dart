@@ -29,24 +29,48 @@ class AppStartupState {
 class AppStartup extends _$AppStartup {
   @override
   Future<AppStartupState> build() async {
-    // Step 1: Check connectivity
-    final hasInternet = await ref.read(checkInitialConnectivityProvider.future);
+    // OPTIMIZED: Skip expensive network calls during startup
+    // Just check if token exists locally (super fast)
+    final tokenStorage = ref.read(tokenStorageServiceProvider);
+    final hasToken = await tokenStorage.hasToken();
 
-    // Step 2: If no internet, return state with no user
-    if (!hasInternet) {
-      AppLogger.w('⚠️ No internet connection - skipping token validation');
-      return const AppStartupState(hasInternet: false);
+    if (hasToken) {
+      // Token exists - try to load cached user data
+      final user = await _loadCachedUser();
+      AppLogger.i('✅ Loaded cached user data: ${user?.name ?? "none"}');
+
+      return AppStartupState(
+        hasInternet: true, // Assume true, check lazily later
+        user: user,
+      );
     }
 
-    // Step 3: Validate token
-    final user = await _validateToken();
-
-    return AppStartupState(
-      hasInternet: true,
-      user: user,
-    );
+    // No token - user needs to login
+    AppLogger.i('ℹ️ No token found - showing login');
+    return const AppStartupState(hasInternet: true);
   }
 
+  // Load user from cached storage (no network call)
+  Future<User?> _loadCachedUser() async {
+    try {
+      final tokenStorage = ref.read(tokenStorageServiceProvider);
+      final userDataMap = await tokenStorage.getUserData();
+
+      if (userDataMap != null) {
+        final user = User.fromJson(userDataMap);
+
+        // Update global user controller
+        ref.read(userControllerProvider.notifier).setUser(user);
+
+        return user;
+      }
+    } catch (e) {
+      AppLogger.e('❌ Error loading cached user', e);
+    }
+    return null;
+  }
+
+  // Token validation with network call (used later, not on startup)
   Future<User?> _validateToken() async {
     final tokenStorage = ref.read(tokenStorageServiceProvider);
     final token = await tokenStorage.getToken();
