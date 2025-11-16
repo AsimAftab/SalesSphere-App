@@ -157,7 +157,7 @@ class OfflineQueueService {
 
         for (final location in batch) {
           try {
-            // Send location update via socket
+            // Send location update via socket (including address)
             socketService.updateLocation(
               beatPlanId: location.beatPlanId,
               latitude: location.latitude,
@@ -165,6 +165,7 @@ class OfflineQueueService {
               accuracy: location.accuracy,
               speed: location.speed,
               heading: location.heading,
+              address: location.address, // Include address
             );
 
             // Mark as synced
@@ -173,7 +174,7 @@ class OfflineQueueService {
             await _locationBox!.put(location.key, updated);
 
             syncedCount++;
-            AppLogger.d('✅ Synced: ${location.toString()}');
+            AppLogger.d('✅ Synced: ${location.toString()} ${location.address != null ? "(with address)" : ""}');
           } catch (e) {
             AppLogger.e('❌ Error syncing location: $e');
 

@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
+import 'package:sales_sphere/core/services/geofencing_service.dart';
+import 'package:sales_sphere/core/services/location_permission_service.dart';
+import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:sales_sphere/features/beat_plan/models/beat_plan.models.dart';
 import 'package:sales_sphere/features/beat_plan/vm/beat_plan.vm.dart';
 import 'package:sales_sphere/features/beat_plan/widgets/route_progress_card.dart';
-import 'package:sales_sphere/features/beat_plan/widgets/party_visit_card.dart';
+import 'package:sales_sphere/features/beat_plan/widgets/directory_visit_card.dart';
 import 'package:sales_sphere/features/beat_plan/widgets/tracking_status_card.dart';
-import 'package:sales_sphere/features/beat_plan/widgets/tracking_controls_widget.dart';
 import 'package:sales_sphere/features/beat_plan/widgets/tracking_indicator_widget.dart';
 
 /// Beat Plan Details Screen
@@ -29,6 +32,79 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
   // Filter state: 'all', 'pending', 'visited'
   String _selectedFilter = 'all';
   String? _loadingVisitId;
+
+  // Current location state for geofencing
+  Position? _currentLocation;
+  bool _isLoadingLocation = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _getCurrentLocation();
+  }
+
+  /// Get current location for geofencing
+  Future<void> _getCurrentLocation() async {
+    setState(() => _isLoadingLocation = true);
+    try {
+      // Check location permission
+      final permissionService = LocationPermissionService.instance;
+      var permission = await permissionService.checkPermission();
+
+      // Request permission if denied
+      if (permission == LocationPermission.denied) {
+        permission = await permissionService.requestPermission();
+      }
+
+      // Check if permission was granted
+      if (permission != LocationPermission.whileInUse &&
+          permission != LocationPermission.always) {
+        AppLogger.w('⚠️ Location permission denied');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Location permission required for geofencing'),
+              backgroundColor: AppColors.warning,
+              action: SnackBarAction(
+                label: 'Settings',
+                textColor: Colors.white,
+                onPressed: () async {
+                  await Geolocator.openAppSettings();
+                },
+              ),
+            ),
+          );
+        }
+        return;
+      }
+
+      // Get current position
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 10),
+        ),
+      );
+
+      setState(() {
+        _currentLocation = position;
+      });
+
+      AppLogger.i('📍 Current location: ${position.latitude}, ${position.longitude}');
+    } catch (e) {
+      AppLogger.e('❌ Error getting current location: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to get location: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      setState(() => _isLoadingLocation = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -128,18 +204,10 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
               progressPercentage: beatPlan.progress.percentage,
             ),
 
-            SizedBox(height: 16.h),
+            SizedBox(height: 10.h),
 
             // Tracking Status Card
             const TrackingStatusCard(),
-
-            // Tracking Controls
-            TrackingControlsWidget(
-              onTrackingStopped: () {
-                // Refresh beat plan data when tracking stops
-                ref.invalidate(beatPlanDetailViewModelProvider(widget.beatPlanId));
-              },
-            ),
 
             SizedBox(height: 24.h),
 
@@ -183,12 +251,13 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
                   final directory = filteredDirectories[index];
                   final isLoading = _loadingVisitId == directory.id;
 
-                  return PartyVisitCard(
-                    party: directory,
+                  return DirectoryVisitCard(
+                    directory: directory,
                     isLoading: isLoading,
+                    currentLocation: _currentLocation,
                     onMarkComplete: () => _handleMarkVisitComplete(
                       beatPlan.id,
-                      directory.id,
+                      directory,
                     ),
                     onMarkPending: () => _handleMarkVisitPending(
                       beatPlan.id,
@@ -209,9 +278,11 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
     required bool isSelected,
     required VoidCallback onTap,
   }) {
+    // Helper function to get the color for the gradient
+    // (Based on your original code)
     Color getColor() {
       if (label == 'All') return AppColors.primary;
-      if (label == 'Pending') return AppColors.secondary;
+      if (label == 'Pending') return AppColors.yellow500;
       return AppColors.success;
     }
 
@@ -220,67 +291,56 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
+        behavior: HitTestBehavior.opaque,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 8.w),
+          duration: const Duration(milliseconds: 250),
+          padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 8.w), //
           decoration: BoxDecoration(
+            // --- START: Gradient Logic (from your original code) ---
             gradient: isSelected
                 ? LinearGradient(
-                    colors: [
-                      color,
-                      color.withValues(alpha: 0.8),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  )
+              colors: [
+                color,
+                color.withValues(alpha: 0.8),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            )
                 : null,
             color: isSelected ? null : AppColors.cardBackground,
-            borderRadius: BorderRadius.circular(14.r),
+            // --- END: Gradient Logic ---
+
+            borderRadius: BorderRadius.circular(14.r), // Using your original 14.r
+
+            // Using your original border logic
             border: Border.all(
               color: isSelected ? color : AppColors.greyLight,
-              width: isSelected ? 2 : 1,
+              width: isSelected ? 1.5 : 1,
             ),
+
+            // Using your original shadow logic
             boxShadow: isSelected
                 ? [
-                    BoxShadow(
-                      color: color.withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ]
+              BoxShadow(
+                color: color.withValues(alpha: 0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ]
                 : null,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w700,
-                  color: isSelected ? Colors.white : AppColors.textPrimary,
-                  letterSpacing: 0.3,
-                ),
+          child: Center(
+            child: Text(
+              '$label ($count)', // Combined label and count (from my new code)
+              style: TextStyle(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w700,
+                // Selected text is white, unselected is primary text color
+                color: isSelected ? Colors.white : AppColors.textPrimary,
               ),
-              SizedBox(height: 6.h),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? Colors.white.withValues(alpha: 0.2)
-                      : color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                child: Text(
-                  count.toString(),
-                  style: TextStyle(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w800,
-                    color: isSelected ? Colors.white : color,
-                  ),
-                ),
-              ),
-            ],
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ),
       ),
@@ -297,16 +357,82 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
     }
   }
 
-  Future<void> _handleMarkVisitComplete(String beatPlanId, String visitId) async {
-    setState(() => _loadingVisitId = visitId);
+  Future<void> _handleMarkVisitComplete(
+    String beatPlanId,
+    BeatDirectory directory,
+  ) async {
+    // Validate geofence before allowing mark as complete
+    if (_currentLocation == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Getting your location... Please try again.'),
+            backgroundColor: AppColors.warning,
+            action: SnackBarAction(
+              label: 'Refresh',
+              textColor: Colors.white,
+              onPressed: _getCurrentLocation,
+            ),
+          ),
+        );
+      }
+      return;
+    }
+
+    // Validate geofence
+    final geofenceResult = GeofencingService.instance.validateGeofence(
+      userLat: _currentLocation!.latitude,
+      userLng: _currentLocation!.longitude,
+      targetLat: directory.location.latitude,
+      targetLng: directory.location.longitude,
+      radius: GeofencingService.defaultGeofenceRadius,
+    );
+
+    if (!geofenceResult.isWithinGeofence) {
+      // User is outside geofence - show error
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'You are ${GeofencingService.instance.formatDistance(geofenceResult.distanceOutside)} '
+              'outside the allowed radius.\n\n'
+              'Please move within ${GeofencingService.instance.formatDistance(geofenceResult.radius)} '
+              'of ${directory.name} to mark as visited.',
+            ),
+            backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 5),
+            action: SnackBarAction(
+              label: 'Refresh Location',
+              textColor: Colors.white,
+              onPressed: _getCurrentLocation,
+            ),
+          ),
+        );
+      }
+      return;
+    }
+
+    // Within geofence - proceed with marking as complete
+    setState(() => _loadingVisitId = directory.id);
     try {
-      final success = await ref.read(beatPlanDetailViewModelProvider(beatPlanId).notifier).markVisitComplete(beatPlanId, visitId);
+      // Pass current location and directory type to API
+      final success = await ref.read(beatPlanDetailViewModelProvider(beatPlanId).notifier).markVisitComplete(
+        beatPlanId,
+        directory.id,
+        directoryType: directory.type,
+        userLatitude: _currentLocation!.latitude,
+        userLongitude: _currentLocation!.longitude,
+      );
+
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Visit marked as completed'),
+            content: Text(
+              '✓ ${directory.name} marked as visited\n'
+              'Distance: ${GeofencingService.instance.formatDistance(geofenceResult.distance)}',
+            ),
             backgroundColor: AppColors.success,
-            duration: const Duration(seconds: 2),
+            duration: const Duration(seconds: 3),
           ),
         );
       }

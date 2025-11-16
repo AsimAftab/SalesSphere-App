@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+import 'package:sales_sphere/core/models/location_address.dart';
 
 /// Queued Location Model
 /// Stores location data in Hive when offline for later synchronization
@@ -31,6 +32,9 @@ class QueuedLocation extends HiveObject {
   @HiveField(8)
   final bool isSynced;
 
+  @HiveField(9)
+  final Map<String, dynamic>? address; // Stored as Map for Hive compatibility
+
   QueuedLocation({
     required this.beatPlanId,
     required this.latitude,
@@ -41,6 +45,7 @@ class QueuedLocation extends HiveObject {
     required this.timestamp,
     this.retryCount = 0,
     this.isSynced = false,
+    this.address,
   });
 
   /// Convert to JSON for API transmission
@@ -53,6 +58,7 @@ class QueuedLocation extends HiveObject {
       'speed': speed,
       'heading': heading,
       'timestamp': timestamp.toIso8601String(),
+      if (address != null) 'address': address,
     };
   }
 
@@ -64,6 +70,7 @@ class QueuedLocation extends HiveObject {
     required double accuracy,
     required double speed,
     required double heading,
+    Map<String, dynamic>? address,
   }) {
     return QueuedLocation(
       beatPlanId: beatPlanId,
@@ -73,6 +80,7 @@ class QueuedLocation extends HiveObject {
       speed: speed,
       heading: heading,
       timestamp: DateTime.now(),
+      address: address,
     );
   }
 
@@ -87,6 +95,7 @@ class QueuedLocation extends HiveObject {
     DateTime? timestamp,
     int? retryCount,
     bool? isSynced,
+    Map<String, dynamic>? address,
   }) {
     return QueuedLocation(
       beatPlanId: beatPlanId ?? this.beatPlanId,
@@ -98,6 +107,7 @@ class QueuedLocation extends HiveObject {
       timestamp: timestamp ?? this.timestamp,
       retryCount: retryCount ?? this.retryCount,
       isSynced: isSynced ?? this.isSynced,
+      address: address ?? this.address,
     );
   }
 
@@ -125,6 +135,17 @@ class QueuedLocationAdapter extends TypeAdapter<QueuedLocation> {
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
+
+    // Handle address field with proper type casting and backward compatibility
+    Map<String, dynamic>? address;
+    if (fields.containsKey(9) && fields[9] != null) {
+      // Cast from _Map<dynamic, dynamic> to Map<String, dynamic>
+      final rawAddress = fields[9];
+      if (rawAddress is Map) {
+        address = Map<String, dynamic>.from(rawAddress);
+      }
+    }
+
     return QueuedLocation(
       beatPlanId: fields[0] as String,
       latitude: fields[1] as double,
@@ -135,13 +156,14 @@ class QueuedLocationAdapter extends TypeAdapter<QueuedLocation> {
       timestamp: fields[6] as DateTime,
       retryCount: fields[7] as int,
       isSynced: fields[8] as bool,
+      address: address, // Now properly cast
     );
   }
 
   @override
   void write(BinaryWriter writer, QueuedLocation obj) {
     writer
-      ..writeByte(9)
+      ..writeByte(10) // Updated field count
       ..writeByte(0)
       ..write(obj.beatPlanId)
       ..writeByte(1)
@@ -159,7 +181,9 @@ class QueuedLocationAdapter extends TypeAdapter<QueuedLocation> {
       ..writeByte(7)
       ..write(obj.retryCount)
       ..writeByte(8)
-      ..write(obj.isSynced);
+      ..write(obj.isSynced)
+      ..writeByte(9)
+      ..write(obj.address);
   }
 
   @override

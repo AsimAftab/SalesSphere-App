@@ -51,24 +51,28 @@ class AuthInterceptor extends Interceptor {
   ) async {
     // Handle 401 Unauthorized (token expired or invalid)
     if (err.response?.statusCode == 401) {
-      AppLogger.w('⚠️ Unauthorized (401): Token may be expired');
+      AppLogger.w('⚠️ Unauthorized (401) on ${err.requestOptions.path}');
+      AppLogger.w('   Token may be expired. Attempting automatic refresh...');
 
       // Attempt to refresh token (if using refresh token strategy)
       final refreshed = await _attemptTokenRefresh(err.requestOptions);
 
       if (refreshed) {
+        AppLogger.i('✅ Token refreshed successfully. Retrying original request...');
         // Retry the original request with new token
         try {
           final response = await _retry(err.requestOptions);
+          AppLogger.i('✅ Retry successful after token refresh');
           handler.resolve(response);
           return;
         } catch (e) {
           AppLogger.e('❌ Retry failed after token refresh', e);
         }
       } else {
-        // Clear token and redirect to login
+        // Token refresh failed - clear everything and force logout
+        AppLogger.w('⚠️ Token refresh failed. Clearing auth data...');
         await tokenStorage.clearAuthData();
-        AppLogger.i('🔓 Auth data cleared due to 401');
+        AppLogger.i('🔓 Auth data cleared. User needs to log in again.');
       }
     }
 
@@ -134,22 +138,22 @@ class AuthInterceptor extends Interceptor {
   /// Makes API call to /api/v1/auth/refresh to get new tokens
   Future<bool> _attemptTokenRefresh(RequestOptions requestOptions) async {
     try {
-      // Check if session has expired before attempting refresh
+      final refreshToken = await tokenStorage.getRefreshToken();
+
+      if (refreshToken == null || refreshToken.isEmpty) {
+        AppLogger.w('⚠️ No refresh token available. Cannot refresh access token.');
+        return false;
+      }
+
+      // Check if session has expired AFTER checking refresh token exists
       final isExpired = await tokenStorage.isSessionExpired();
       if (isExpired) {
-        AppLogger.w('⚠️ Session has expired. Cannot refresh token. Forcing logout...');
+        AppLogger.w('⚠️ Session has completely expired. Refresh token is invalid. Forcing logout...');
         await tokenStorage.clearAuthData();
         return false;
       }
 
-      final refreshToken = await tokenStorage.getRefreshToken();
-
-      if (refreshToken == null || refreshToken.isEmpty) {
-        AppLogger.d('ℹ️ No refresh token available');
-        return false;
-      }
-
-      AppLogger.d('🔄 Attempting to refresh token...');
+      AppLogger.i('🔄 Attempting to refresh access token using refresh token...');
 
       // Create a new Dio instance to avoid interceptor loops
       final dio = Dio(BaseOptions(
@@ -162,10 +166,21 @@ class AuthInterceptor extends Interceptor {
       ));
 
       // Make refresh token API call
+      AppLogger.d('📡 Calling refresh token endpoint: /api/v1/auth/refresh');
       final response = await dio.post(
         '/api/v1/auth/refresh',
         data: {'refreshToken': refreshToken},
+      ).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw DioException(
+            requestOptions: RequestOptions(path: '/api/v1/auth/refresh'),
+            error: 'Token refresh timeout',
+          );
+        },
       );
+
+      AppLogger.d('📡 Refresh token response status: ${response.statusCode}');
 
       if (response.statusCode == 200 && response.data != null) {
         final data = response.data as Map<String, dynamic>;
@@ -227,8 +242,17 @@ class AuthInterceptor extends Interceptor {
 
     AppLogger.i('🔄 Retrying request: ${requestOptions.path}');
 
-    // Create a new Dio instance to avoid interceptor loops
-    final dio = Dio();
+    // Create a new Dio instance with proper base URL to avoid interceptor loops
+    final dio = Dio(BaseOptions(
+      baseUrl: requestOptions.baseUrl,
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 30),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    ));
+
     return await dio.fetch(requestOptions);
   }
 }

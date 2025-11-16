@@ -11,6 +11,9 @@ class ApiEndpoints {
   static const String forgotPassword = '/api/v1/auth/forgotpassword';
   static const String resetPassword = '/api/v1/auth/resetpassword';
 
+  /// Get active tracking sessions for current user
+  static const String activeTrackingSessions = '/api/v1/beat-plans/tracking/active';
+
   // User Endpoints
   static const String profile = '/api/v1/users/me';
   static const String uploadProfileImage = '/api/v1/users/me/profile-image';
@@ -126,7 +129,11 @@ class ApiEndpoints {
   /// Stop a beat plan (future - real-time tracking)
   static String stopBeatPlan(String id) => '/api/v1/beat-plans/$id/stop';
 
-  /// Mark party visit as complete
+  /// Mark visit (POST with location data for geofencing)
+  static String markVisit(String beatPlanId) =>
+      '/api/v1/beat-plans/$beatPlanId/visit';
+
+  /// Mark party visit as complete (deprecated - use markVisit instead)
   static String markVisitComplete(String beatPlanId, String visitId) =>
       '/api/v1/beat-plans/$beatPlanId/visits/$visitId/complete';
 

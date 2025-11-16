@@ -18,11 +18,13 @@ class TrackingStatusCard extends StatefulWidget {
 
 class _TrackingStatusCardState extends State<TrackingStatusCard> {
   TrackingStats? _currentStats;
-  TrackingState _currentState = TrackingState.idle;
+  late TrackingState _currentState;
 
   @override
   void initState() {
     super.initState();
+    // Initialize with current state from coordinator
+    _currentState = TrackingCoordinator.instance.currentState;
     _subscribeToTracking();
   }
 
@@ -54,90 +56,120 @@ class _TrackingStatusCardState extends State<TrackingStatusCard> {
 
     return Container(
       margin: EdgeInsets.all(16.w),
-      padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12.r),
+        gradient: LinearGradient(
+          colors: [
+            _getStateColor().withOpacity(0.08),
+            _getStateColor().withOpacity(0.03),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20.r),
         border: Border.all(
-          color: _getStateColor(),
+          color: _getStateColor().withOpacity(0.3),
           width: 2,
         ),
         boxShadow: [
           BoxShadow(
-            color: _getStateColor().withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: _getStateColor().withOpacity(0.15),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header with animated tracking indicator
-          Row(
-            children: [
-              // Pulsing dot indicator
-              _buildPulsingIndicator(),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          Container(
+            padding: EdgeInsets.all(20.w),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(18.r),
+                topRight: Radius.circular(18.r),
+              ),
+            ),
+            child: Row(
+              children: [
+                // Animated pulsing indicator
+                Container(
+                  padding: EdgeInsets.all(12.w),
+                  decoration: BoxDecoration(
+                    color: _getStateColor().withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: _buildPulsingIndicator(),
+                ),
+                SizedBox(width: 16.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _getStateText(),
+                        style: TextStyle(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      SizedBox(height: 4.h),
+                      Text(
+                        _getStatusDescription(),
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          color: AppColors.textSecondary,
+                          height: 1.3,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Connection status icon
+                _buildConnectionStatusIcon(),
+              ],
+            ),
+          ),
+
+          // Stats Section
+          Padding(
+            padding: EdgeInsets.all(20.w),
+            child: Column(
+              children: [
+                // Stats Grid
+                Row(
                   children: [
-                    Text(
-                      _getStateText(),
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
+                    Expanded(
+                      child: _buildStatItem(
+                        icon: Icons.timer_outlined,
+                        label: 'Duration',
+                        value: _formatDuration(_currentStats!.trackingDuration),
+                        color: AppColors.primary,
                       ),
                     ),
-                    SizedBox(height: 4.h),
-                    Text(
-                      _getStatusDescription(),
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: AppColors.textSecondary,
+                    SizedBox(width: 12.w),
+                    Expanded(
+                      child: _buildStatItem(
+                        icon: Icons.cloud_queue_outlined,
+                        label: 'Queued',
+                        value: '${_currentStats!.queuedLocations}',
+                        color: _currentStats!.queuedLocations > 0
+                            ? AppColors.warning
+                            : AppColors.success,
                       ),
                     ),
                   ],
                 ),
-              ),
-              // Connection status icon
-              _buildConnectionStatusIcon(),
-            ],
+
+                SizedBox(height: 16.h),
+
+                // Connection Status Bar
+                _buildConnectionStatusBar(),
+              ],
+            ),
           ),
-
-          SizedBox(height: 16.h),
-
-          // Stats Grid
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatItem(
-                  icon: Icons.access_time,
-                  label: 'Duration',
-                  value: _formatDuration(_currentStats!.trackingDuration),
-                  color: AppColors.primary,
-                ),
-              ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: _buildStatItem(
-                  icon: Icons.cloud_queue,
-                  label: 'Queued',
-                  value: '${_currentStats!.queuedLocations}',
-                  color: _currentStats!.queuedLocations > 0
-                      ? AppColors.warning
-                      : AppColors.success,
-                ),
-              ),
-            ],
-          ),
-
-          SizedBox(height: 12.h),
-
-          // Connection Status Bar
-          _buildConnectionStatusBar(),
         ],
       ),
     );
@@ -211,39 +243,51 @@ class _TrackingStatusCardState extends State<TrackingStatusCard> {
     required Color color,
   }) {
     return Container(
-      padding: EdgeInsets.all(12.w),
+      padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(8.r),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16.r),
         border: Border.all(
-          color: color.withOpacity(0.2),
-          width: 1,
+          color: color.withOpacity(0.15),
+          width: 1.5,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(icon, size: 16.sp, color: color),
-              SizedBox(width: 6.w),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11.sp,
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
+          Container(
+            padding: EdgeInsets.all(8.w),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10.r),
+            ),
+            child: Icon(icon, size: 18.sp, color: color),
           ),
-          SizedBox(height: 6.h),
+          SizedBox(height: 12.h),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11.sp,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
+            ),
+          ),
+          SizedBox(height: 4.h),
           Text(
             value,
             style: TextStyle(
-              fontSize: 18.sp,
+              fontSize: 20.sp,
               fontWeight: FontWeight.bold,
               color: color,
+              letterSpacing: -0.5,
             ),
           ),
         ],
@@ -263,7 +307,7 @@ class _TrackingStatusCardState extends State<TrackingStatusCard> {
     if (isSocketConnected) {
       statusText = 'Live streaming location updates';
       statusColor = AppColors.success;
-      statusIcon = Icons.stream;
+      statusIcon = Icons.wifi;
     } else if (isOnline) {
       statusText = 'Connecting to server...';
       statusColor = AppColors.warning;
@@ -271,49 +315,83 @@ class _TrackingStatusCardState extends State<TrackingStatusCard> {
     } else {
       statusText = 'Offline - Queueing location updates';
       statusColor = AppColors.error;
-      statusIcon = Icons.offline_bolt;
+      statusIcon = Icons.wifi_off;
     }
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
       decoration: BoxDecoration(
-        color: statusColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8.r),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(
+          color: statusColor.withOpacity(0.15),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: statusColor.withOpacity(0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: [
-          Icon(
-            statusIcon,
-            size: 16.sp,
-            color: statusColor,
+          Container(
+            padding: EdgeInsets.all(8.w),
+            decoration: BoxDecoration(
+              color: statusColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10.r),
+            ),
+            child: Icon(
+              statusIcon,
+              size: 18.sp,
+              color: statusColor,
+            ),
           ),
-          SizedBox(width: 8.w),
+          SizedBox(width: 12.w),
           Expanded(
-            child: Text(
-              statusText,
-              style: TextStyle(
-                fontSize: 12.sp,
-                color: statusColor,
-                fontWeight: FontWeight.w600,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  statusText,
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (queuedCount > 0 && !isSocketConnected)
+                  Padding(
+                    padding: EdgeInsets.only(top: 4.h),
+                    child: Text(
+                      '$queuedCount location${queuedCount > 1 ? 's' : ''} pending sync',
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
-          if (queuedCount > 0 && !isSocketConnected)
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-              decoration: BoxDecoration(
-                color: AppColors.warning,
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-              child: Text(
-                '$queuedCount pending',
-                style: TextStyle(
-                  fontSize: 10.sp,
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+          // Status Indicator
+          Container(
+            width: 8.w,
+            height: 8.w,
+            decoration: BoxDecoration(
+              color: statusColor,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: statusColor.withOpacity(0.4),
+                  blurRadius: 4,
+                  spreadRadius: 1,
                 ),
-              ),
+              ],
             ),
+          ),
         ],
       ),
     );
