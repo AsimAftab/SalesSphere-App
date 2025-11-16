@@ -52,6 +52,15 @@ class AuthInterceptor extends Interceptor {
     // Handle 401 Unauthorized (token expired or invalid)
     if (err.response?.statusCode == 401) {
       AppLogger.w('⚠️ Unauthorized (401) on ${err.requestOptions.path}');
+
+      // ✅ FIX: Prevent infinite loop - don't try to refresh if the failed request was already a refresh attempt
+      if (err.requestOptions.path.contains('/auth/refresh')) {
+        AppLogger.w('⚠️ Refresh token request failed. Clearing auth data...');
+        await tokenStorage.clearAuthData();
+        handler.next(err);
+        return;
+      }
+
       AppLogger.w('   Token may be expired. Attempting automatic refresh...');
 
       // Attempt to refresh token (if using refresh token strategy)
@@ -136,6 +145,7 @@ class AuthInterceptor extends Interceptor {
 
   /// Attempt to refresh the token
   /// Makes API call to /api/v1/auth/refresh to get new tokens
+  /// ✅ FIXED: Removed premature session expiry check - let backend decide!
   Future<bool> _attemptTokenRefresh(RequestOptions requestOptions) async {
     try {
       final refreshToken = await tokenStorage.getRefreshToken();
@@ -145,13 +155,8 @@ class AuthInterceptor extends Interceptor {
         return false;
       }
 
-      // Check if session has expired AFTER checking refresh token exists
-      final isExpired = await tokenStorage.isSessionExpired();
-      if (isExpired) {
-        AppLogger.w('⚠️ Session has completely expired. Refresh token is invalid. Forcing logout...');
-        await tokenStorage.clearAuthData();
-        return false;
-      }
+      // ✅ REMOVED: Premature session expiry check
+      // Let the backend decide if the session is expired!
 
       AppLogger.i('🔄 Attempting to refresh access token using refresh token...');
 
@@ -190,8 +195,12 @@ class AuthInterceptor extends Interceptor {
         String? newRefreshToken;
         String? sessionExpiresAt;
 
-        // Check if tokens are in root or nested in data
-        if (data.containsKey('data') && data['data'] is Map<String, dynamic>) {
+        // ✅ FIX: Check ROOT level first (for mobile clients with X-Client-Type header)
+        newAccessToken = data['accessToken'] as String?;
+        newRefreshToken = data['refreshToken'] as String?;
+
+        // Check nested data object as fallback
+        if (newAccessToken == null && data.containsKey('data') && data['data'] is Map<String, dynamic>) {
           final nestedData = data['data'] as Map<String, dynamic>;
           newAccessToken = nestedData['accessToken'] as String?;
           newRefreshToken = nestedData['refreshToken'] as String?;
@@ -201,32 +210,45 @@ class AuthInterceptor extends Interceptor {
             final user = nestedData['user'] as Map<String, dynamic>;
             sessionExpiresAt = user['sessionExpiresAt'] as String?;
           }
-        } else {
-          newAccessToken = data['accessToken'] as String?;
-          newRefreshToken = data['refreshToken'] as String?;
         }
 
         // Save new tokens if found
         if (newAccessToken != null) {
           await tokenStorage.saveToken(newAccessToken);
+          AppLogger.i('✅ New access token saved');
+
           if (newRefreshToken != null) {
             await tokenStorage.saveRefreshToken(newRefreshToken);
+            AppLogger.i('✅ New refresh token saved');
           }
-          // Save session expiry date if present
+
           if (sessionExpiresAt != null) {
             await tokenStorage.saveSessionExpiresAt(sessionExpiresAt);
             AppLogger.i('✅ Session updated, expires at: $sessionExpiresAt');
           }
-          AppLogger.i('✅ Token refreshed successfully');
+
           return true;
         } else {
           AppLogger.w('⚠️ No access token in refresh response');
+          AppLogger.w('Response data: $data');
           return false;
         }
       } else {
         AppLogger.w('⚠️ Token refresh failed with status: ${response.statusCode}');
         return false;
       }
+    } on DioException catch (e) {
+      // ✅ FIX: Check if it's a 401 from refresh endpoint (session expired)
+      if (e.response?.statusCode == 401) {
+        AppLogger.w('⚠️ Refresh token is invalid or session expired (401 from backend)');
+        final errorData = e.response?.data;
+        if (errorData is Map) {
+          AppLogger.w('   Backend message: ${errorData['message']}');
+        }
+      } else {
+        AppLogger.e('❌ Token refresh network error', e);
+      }
+      return false;
     } catch (e, stack) {
       AppLogger.e('❌ Token refresh failed', e, stack);
       return false;
@@ -250,6 +272,7 @@ class AuthInterceptor extends Interceptor {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        'X-Client-Type': 'mobile', // ✅ FIX: Add mobile client header
       },
     ));
 
