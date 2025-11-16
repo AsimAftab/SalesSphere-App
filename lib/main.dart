@@ -14,6 +14,7 @@ import 'core/utils/logger.dart';
 import 'core/network_layer/token_storage_service.dart';
 import 'core/services/offline_queue_service.dart';
 import 'core/services/tracking_coordinator.dart';
+import 'core/providers/shared_prefs_provider.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
 
@@ -58,14 +59,17 @@ Future<void> main() async {
     AppLogger.w('⚠️ Failed to load .env file: $e');
   }
 
+  // Initialize SharedPreferences early
+  final sharedPreferences = await SharedPreferences.getInstance();
+  AppLogger.i('✅ SharedPreferences initialized');
+
   // Initialize Hive for offline storage
   try {
     await Hive.initFlutter();
 
     // Save Hive path to SharedPreferences for background isolate
-    final prefs = await SharedPreferences.getInstance();
     final hivePath = await getApplicationDocumentsDirectory();
-    await prefs.setString('hivePath', hivePath.path);
+    await sharedPreferences.setString('hivePath', hivePath.path);
 
     AppLogger.i('✅ Hive initialized at: ${hivePath.path}');
   } catch (e) {
@@ -188,11 +192,15 @@ Future<void> main() async {
       options.attachViewHierarchy = true;
     },
     appRunner: () => runApp(SentryWidget(child:
-    const ProviderScope(
-      observers: [
-        if (kDebugMode) LoggerProviderObserver(),
+    ProviderScope(
+      overrides: [
+        // Override the sharedPrefsProvider with the initialized instance
+        sharedPrefsProvider.overrideWithValue(sharedPreferences),
       ],
-      child: MyApp(),
+      observers: [
+        if (kDebugMode) const LoggerProviderObserver(),
+      ],
+      child: const MyApp(),
     ),
   )),
   );

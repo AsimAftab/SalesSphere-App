@@ -27,6 +27,8 @@ import 'package:sales_sphere/features/settings/views/terms_and_conditions_screen
 import 'package:sales_sphere/features/settings/views/change_password_screen.dart';
 import 'package:sales_sphere/features/beat_plan/views/beat_plan_details_screen.dart';
 import 'package:sales_sphere/features/auth/models/login.models.dart';
+import 'package:sales_sphere/features/splash/views/splash_screen.dart';
+import 'package:sales_sphere/features/onboarding/views/onboarding_screen.dart';
 import '../../features/invoice/views/invoice_history_screen.dart';
 import '../providers/user_controller.dart';
 import '../providers/app_startup.dart';
@@ -46,17 +48,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final requestedPath = state.uri.path;
 
-      // If app is still initializing (checking token), stay on splash
-      if (appStartup.isLoading) {
-        return requestedPath == '/splash' ? null : '/splash';
-      }
-
       // App initialization complete - check current user state
       final isLoggedIn = user != null;
 
-      // If we're on splash and initialization is complete, redirect
-      if (requestedPath == '/splash') {
-        return isLoggedIn ? '/home' : '/';
+      // Allow splash and onboarding screens to handle their own navigation
+      // Don't redirect from splash - let SplashScreen's timer handle navigation
+      if (requestedPath == '/splash' || requestedPath == '/onboarding') {
+        return null; // Allow navigation
       }
 
       // Get the path the user is trying to access
@@ -64,6 +62,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       // Check against your allowed routes
       final isGoingToLogin = requestedPath == '/';
       final isGoingToSplash = requestedPath == '/splash';
+      final isGoingToOnboarding = requestedPath == '/onboarding';
       final isGoingToForgotPassword = requestedPath == '/forgot-password';
       final isGoingToCatalog = requestedPath.startsWith('/catalog');
       final isGoingToParties = requestedPath.startsWith('/parties');
@@ -94,6 +93,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       if (!isLoggedIn &&
           !isGoingToLogin &&
           !isGoingToSplash &&
+          !isGoingToOnboarding &&
           !isGoingToForgotPassword &&
           !isGoingToCatalog &&
           !isGoingToParties &&
@@ -111,8 +111,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         return '/';
       }
 
-      // If user is logged in and trying to go to login or splash, redirect to home
-      if (isLoggedIn && (isGoingToLogin || isGoingToSplash)) {
+      // If user is logged in and trying to go to login, splash, or onboarding, redirect to home
+      if (isLoggedIn && (isGoingToLogin || isGoingToSplash || isGoingToOnboarding)) {
         return '/home';
       }
 
@@ -126,7 +126,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/splash',
         name: 'splash',
-        builder: (context, state) => const SizedBox.shrink(), // Empty screen, native splash shows
+        builder: (context, state) => const SplashScreen(),
+      ),
+
+      // ========================================
+      // ONBOARDING ROUTE (First-time user flow)
+      // ========================================
+      GoRoute(
+        path: '/onboarding',
+        name: 'onboarding',
+        builder: (context, state) => const OnboardingScreen(),
       ),
 
       // ========================================
