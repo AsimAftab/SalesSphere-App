@@ -10,6 +10,7 @@ import 'package:sales_sphere/core/services/location_tracking_service.dart';
 import 'package:sales_sphere/core/services/tracking_socket_service.dart';
 import 'package:sales_sphere/core/services/offline_queue_service.dart';
 import 'package:sales_sphere/core/services/background_tracking_service.dart';
+import 'package:sales_sphere/core/services/notification_permission_service.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:sales_sphere/features/beat_plan/models/active_tracking_session.models.dart';
 
@@ -33,6 +34,7 @@ class TrackingCoordinator {
   StreamSubscription<LocationUpdate>? _locationSubscription;
   StreamSubscription<Map<String, dynamic>?>? _backgroundServiceSubscription;
   StreamSubscription<TrackingStoppedEvent>? _trackingStoppedSubscription;
+  StreamSubscription<TrackingForceStoppedEvent>? _trackingForceStoppedSubscription;
   StreamSubscription<String>? _socketErrorSubscription;
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
 
@@ -242,6 +244,11 @@ class TrackingCoordinator {
           _handleTrackingStopped,
         );
 
+        // Subscribe to tracking force-stopped event (when server stops tracking)
+        _trackingForceStoppedSubscription = _socketService.onTrackingForceStopped.listen(
+          _handleTrackingForceStopped,
+        );
+
         // Subscribe to socket errors
         _socketErrorSubscription = _socketService.onError.listen(
           _handleSocketError,
@@ -377,6 +384,20 @@ class TrackingCoordinator {
       AppLogger.i('🎯 Starting tracking for beat plan: $beatPlanId');
       AppLogger.i('📊 Progress: $visitedDirectories/$totalDirectories directories');
 
+      // Check notification permission (required for background service on Android 13+)
+      final notificationPermission = NotificationPermissionService.instance;
+      final hasPermission = await notificationPermission.isGranted();
+
+      if (!hasPermission) {
+        AppLogger.w('⚠️ Notification permission not granted, requesting...');
+        final granted = await notificationPermission.requestPermission();
+
+        if (!granted) {
+          AppLogger.e('❌ Notification permission denied - tracking notifications will not work');
+          // Continue anyway - tracking will still work, just no notifications
+        }
+      }
+
       _currentBeatPlanId = beatPlanId;
       _trackingStartTime = DateTime.now();
       _isTracking = true;
@@ -509,6 +530,7 @@ class TrackingCoordinator {
       await _locationSubscription?.cancel();
       await _backgroundServiceSubscription?.cancel();
       await _trackingStoppedSubscription?.cancel();
+      await _trackingForceStoppedSubscription?.cancel();
       await _socketErrorSubscription?.cancel();
       _syncTimer?.cancel();
 
@@ -725,6 +747,26 @@ class TrackingCoordinator {
     stopTracking();
   }
 
+  /// Handle tracking force-stopped event (beat plan completed/cancelled)
+  void _handleTrackingForceStopped(TrackingForceStoppedEvent event) {
+    AppLogger.w('⚠️ Tracking force-stopped by server!');
+    AppLogger.w('   Reason: ${event.reason}');
+    AppLogger.w('   Message: ${event.message}');
+    AppLogger.i('📊 Final Summary:');
+    AppLogger.i('   Distance: ${event.totalDistance ?? 0}km');
+    AppLogger.i('   Duration: ${event.totalDuration ?? 0}min');
+    AppLogger.i('   Avg Speed: ${event.averageSpeed ?? 0}km/h');
+
+    // Gracefully stop tracking
+    stopTracking();
+
+    // Emit a special state to notify UI
+    _emitState(TrackingState.forceStopped);
+
+    // Could also show a notification to user here
+    // For now, the UI listening to state changes will handle it
+  }
+
   /// Handle socket error
   void _handleSocketError(String error) {
     AppLogger.e('❌ Socket error: $error');
@@ -835,6 +877,7 @@ enum TrackingState {
   paused,
   stopping,
   stopped,
+  forceStopped, // When server forcefully stops tracking (e.g., beat plan completed)
   error,
 }
 

@@ -6,7 +6,10 @@ import 'package:go_router/go_router.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/services/geofencing_service.dart';
 import 'package:sales_sphere/core/services/location_permission_service.dart';
+import 'package:sales_sphere/core/services/tracking_coordinator.dart';
+import 'package:sales_sphere/core/providers/tracking_coordinator_provider.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
+import 'package:sales_sphere/core/utils/snackbar_utils.dart';
 import 'package:sales_sphere/features/beat_plan/models/beat_plan.models.dart';
 import 'package:sales_sphere/features/beat_plan/vm/beat_plan.vm.dart';
 import 'package:sales_sphere/features/beat_plan/widgets/route_progress_card.dart';
@@ -113,6 +116,22 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     final beatPlanAsync = ref.watch(beatPlanDetailViewModelProvider(widget.beatPlanId));
+
+    // Listen for tracking force-stopped event
+    ref.listen<AsyncValue<TrackingState>>(trackingStateStreamProvider, (previous, next) {
+      next.whenData((state) {
+        if (state == TrackingState.forceStopped) {
+          // Show success snackbar when tracking is force-stopped
+          SnackbarUtils.showSuccess(
+            context,
+            'Beat plan completed! Tracking stopped automatically.',
+            duration: const Duration(seconds: 5),
+          );
+
+          AppLogger.i('🎉 Tracking force-stopped notification shown to user');
+        }
+      });
+    });
 
     return Scaffold(
       backgroundColor: AppColors.background,
