@@ -162,7 +162,7 @@ class OnboardingScreen extends ConsumerWidget {
                       TextButton(
                         onPressed: vm.onNextPressed,
                         style: TextButton.styleFrom(
-                          backgroundColor: AppColors.primary,
+                          backgroundColor: AppColors.secondary,
                           foregroundColor: Colors.white,
                           padding: EdgeInsets.symmetric(
                             horizontal: state.currentPage == state.pages.length - 1

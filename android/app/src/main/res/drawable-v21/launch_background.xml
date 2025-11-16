@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Minimal native splash - Flutter splash will show immediately -->
+<!-- Native splash matching Flutter splash colors for seamless transition -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Just a solid white background -->
-    <item android:drawable="@android:color/white" />
+    <!-- Blue gradient matching Flutter splash exactly -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="135"
+                android:startColor="#1E88E5"
+                android:centerColor="#1976D2"
+                android:endColor="#1565C0"
+                android:type="linear" />
+        </shape>
+    </item>
 </layer-list>

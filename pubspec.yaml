@@ -93,6 +93,25 @@ dev_dependencies:
   json_serializable: ^6.11.1
   freezed: ^3.2.3
   freezed_lint: ^0.0.12
+  flutter_launcher_icons: ^0.14.2
+
+# Flutter Launcher Icons Configuration
+flutter_launcher_icons:
+  android: true
+  ios: true
+
+  min_sdk_android: 21
+  # Adaptive icon: SOLID BLUE only (no logo foreground)
+  # This prevents logo from showing during app startup
+  image_path: "assets/images/png/logo_1024.png"  # Regular launcher icon (home screen)
+  adaptive_icon_background: "#1976D2"
+  # NO adaptive_icon_foreground = solid blue adaptive icon
+  remove_alpha_ios: true  # Required for App Store
+
+# Result:
+# - Home screen icon: Logo (from image_path)
+# - Native splash: JUST blue (no logo)
+# - Flutter splash: Blue + animated logo ✨
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
