@@ -14,6 +14,7 @@ import 'core/utils/logger.dart';
 import 'core/network_layer/token_storage_service.dart';
 import 'core/services/offline_queue_service.dart';
 import 'core/services/tracking_coordinator.dart';
+import 'core/services/notification_permission_service.dart';
 import 'core/providers/shared_prefs_provider.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
@@ -106,6 +107,20 @@ Future<void> main() async {
     AppLogger.i('✅ Notification channel initialized');
   } catch (e) {
     AppLogger.e('❌ Failed to initialize notification channel', e);
+  }
+
+  // Request notification permission (Android 13+)
+  try {
+    final notificationPermission = NotificationPermissionService.instance;
+    final hasPermission = await notificationPermission.requestPermission();
+
+    if (hasPermission) {
+      AppLogger.i('✅ Notification permission granted');
+    } else {
+      AppLogger.w('⚠️ Notification permission denied - notifications will not work');
+    }
+  } catch (e) {
+    AppLogger.e('❌ Failed to request notification permission', e);
   }
 
   // Initialize offline queue service

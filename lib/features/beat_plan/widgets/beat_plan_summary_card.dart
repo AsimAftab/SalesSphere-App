@@ -256,6 +256,7 @@ class _BeatPlanSummaryCardState extends State<BeatPlanSummaryCard> {
   }
 
   /// Builds the action button based on the beat plan status
+  /// Builds the action button based on the beat plan status
   Widget _buildActionButton(String status, Color statusColor) {
     if (status == 'pending' && widget.onStartBeatPlan != null) {
       // "Start Beat Plan" Button
@@ -272,20 +273,20 @@ class _BeatPlanSummaryCardState extends State<BeatPlanSummaryCard> {
         ),
         child: widget.isLoadingStart
             ? SizedBox(
-                height: 20.h,
-                width: 20.w,
-                child: const CircularProgressIndicator(
-                  color: Colors.white,
-                  strokeWidth: 2.5,
-                ),
-              )
+          height: 20.h,
+          width: 20.w,
+          child: const CircularProgressIndicator(
+            color: Colors.white,
+            strokeWidth: 2.5,
+          ),
+        )
             : Text(
-                'Start Beat Plan',
-                style: TextStyle(
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+          'Start Beat Plan',
+          style: TextStyle(
+            fontSize: 13.sp,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       );
     } else if (status == 'completed') {
       // "View Details" Button
@@ -311,25 +312,9 @@ class _BeatPlanSummaryCardState extends State<BeatPlanSummaryCard> {
         ),
       );
     } else {
-      // "Beat Plan" (In Progress) Button
-      return ElevatedButton(
-        onPressed: widget.onTap,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: statusColor, // Uses status color (blue)
-          foregroundColor: Colors.white,
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10.r),
-          ),
-        ),
-        child: Text(
-          'Beat Plan',
-          style: TextStyle(
-            fontSize: 13.sp,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      );
+      // If status is not 'pending' or 'completed' (e.g., "in progress"),
+      // return an empty widget.
+      return const SizedBox.shrink();
     }
   }
 

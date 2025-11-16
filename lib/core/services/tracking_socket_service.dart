@@ -33,6 +33,8 @@ class TrackingSocketService {
       StreamController<TrackingStatusUpdateEvent>.broadcast();
   final StreamController<TrackingStoppedEvent> _trackingStoppedController =
       StreamController<TrackingStoppedEvent>.broadcast();
+  final StreamController<TrackingForceStoppedEvent> _trackingForceStoppedController =
+      StreamController<TrackingForceStoppedEvent>.broadcast();
   final StreamController<String> _errorController =
       StreamController<String>.broadcast();
 
@@ -49,6 +51,8 @@ class TrackingSocketService {
       _statusUpdateController.stream;
   Stream<TrackingStoppedEvent> get onTrackingStopped =>
       _trackingStoppedController.stream;
+  Stream<TrackingForceStoppedEvent> get onTrackingForceStopped =>
+      _trackingForceStoppedController.stream;
   Stream<String> get onError => _errorController.stream;
 
   /// Connect to tracking server
@@ -203,6 +207,7 @@ class TrackingSocketService {
     _socket!.on('tracking-paused', _handleTrackingPaused);
     _socket!.on('tracking-resumed', _handleTrackingResumed);
     _socket!.on('tracking-stopped', _handleTrackingStopped);
+    _socket!.on('tracking-force-stopped', _handleTrackingForceStopped);
     _socket!.on('tracking-status-update', _handleStatusUpdate);
     _socket!.on('tracking-error', _handleTrackingError);
 
@@ -481,6 +486,25 @@ class TrackingSocketService {
     }
   }
 
+  void _handleTrackingForceStopped(dynamic data) {
+    try {
+      AppLogger.w('⚠️ Tracking force-stopped by server: $data');
+
+      final event = TrackingForceStoppedEvent(
+        beatPlanId: data['beatPlanId'] ?? '',
+        userId: data['userId'] ?? '',
+        trackingSessionId: data['trackingSessionId'] ?? '',
+        reason: data['reason'] ?? 'unknown',
+        message: data['message'] ?? 'Tracking was stopped by the server',
+        summary: data['summary'] ?? {},
+      );
+
+      _trackingForceStoppedController.add(event);
+    } catch (e) {
+      AppLogger.e('Error handling tracking-force-stopped event: $e');
+    }
+  }
+
   void _handleStatusUpdate(dynamic data) {
     try {
       AppLogger.d('📊 Status update: $data');
@@ -523,6 +547,7 @@ class TrackingSocketService {
     await _locationUpdateController.close();
     await _statusUpdateController.close();
     await _trackingStoppedController.close();
+    await _trackingForceStoppedController.close();
     await _errorController.close();
     _reconnectTimer?.cancel();
   }
@@ -621,5 +646,36 @@ class TrackingStoppedEvent {
   @override
   String toString() {
     return 'TrackingStoppedEvent(success: $success, distance: ${totalDistance}km, duration: ${totalDuration}min)';
+  }
+}
+
+/// Tracking Force Stopped Event
+/// Emitted when tracking is forcefully stopped by the server
+/// (e.g., when beat plan is completed by another user/admin)
+class TrackingForceStoppedEvent {
+  final String beatPlanId;
+  final String userId;
+  final String trackingSessionId;
+  final String reason; // e.g., 'beat_plan_completed', 'session_expired', etc.
+  final String message;
+  final Map<String, dynamic> summary;
+
+  TrackingForceStoppedEvent({
+    required this.beatPlanId,
+    required this.userId,
+    required this.trackingSessionId,
+    required this.reason,
+    required this.message,
+    required this.summary,
+  });
+
+  double? get totalDistance => summary['totalDistance'];
+  double? get totalDuration => summary['totalDuration'];
+  double? get averageSpeed => summary['averageSpeed'];
+  int? get directoriesVisited => summary['directoriesVisited'];
+
+  @override
+  String toString() {
+    return 'TrackingForceStoppedEvent(reason: $reason, beatPlanId: $beatPlanId, message: $message)';
   }
 }
