@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
+import 'package:sales_sphere/core/utils/snackbar_utils.dart';
 import 'package:sales_sphere/core/services/location_permission_service.dart';
 import 'package:sales_sphere/core/widgets/location_permission_dialog.dart';
 import 'package:sales_sphere/features/beat_plan/vm/beat_plan.vm.dart';
@@ -114,12 +115,9 @@ class _BeatPlanSectionState extends ConsumerState<BeatPlanSection> {
 
         if (requestedAgain != true) {
           // User cancelled or denied
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Location permission is required for tracking'),
-              backgroundColor: AppColors.warning,
-              duration: Duration(seconds: 3),
-            ),
+          SnackbarUtils.showWarning(
+            context,
+            'Location permission is required for tracking',
           );
           return;
         }
@@ -132,12 +130,9 @@ class _BeatPlanSectionState extends ConsumerState<BeatPlanSection> {
         );
 
         if (!retryResult.success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Location permission is required for tracking'),
-              backgroundColor: AppColors.error,
-              duration: Duration(seconds: 3),
-            ),
+          SnackbarUtils.showError(
+            context,
+            'Location permission is required for tracking',
           );
           return;
         }
@@ -158,12 +153,9 @@ class _BeatPlanSectionState extends ConsumerState<BeatPlanSection> {
 
       if (success && mounted) {
         // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Beat plan started successfully! Tracking is now active.'),
-            backgroundColor: AppColors.success,
-            duration: const Duration(seconds: 3),
-          ),
+        SnackbarUtils.showSuccess(
+          context,
+          'Beat plan started successfully! Tracking is now active.',
         );
 
         // Navigate to beat plan details
@@ -175,12 +167,9 @@ class _BeatPlanSectionState extends ConsumerState<BeatPlanSection> {
     } catch (e) {
       AppLogger.e('Error starting beat plan: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to start beat plan: ${e.toString()}'),
-            backgroundColor: AppColors.error,
-            duration: const Duration(seconds: 3),
-          ),
+        SnackbarUtils.showError(
+          context,
+          'Failed to start beat plan: ${e.toString()}',
         );
       }
     } finally {

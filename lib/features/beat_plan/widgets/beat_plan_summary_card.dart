@@ -142,7 +142,7 @@ class _BeatPlanSummaryCardState extends State<BeatPlanSummaryCard> {
                 ),
 
                 // Started time if available
-                if (status == 'in-progress' && widget.beatPlan.startedAt != null) ...[
+                if ((status == 'in-progress' || status == 'active') && widget.beatPlan.startedAt != null) ...[
                   SizedBox(height: 6.h),
                   Row(
                     children: [
@@ -397,9 +397,9 @@ class _BeatPlanSummaryCardState extends State<BeatPlanSummaryCard> {
 
   Color _getProgressColor(String status, int percentage) {
     if (status == 'completed' || percentage == 100) return AppColors.success;
-    if (status == 'in-progress') return AppColors.secondary;
+    if (status == 'in-progress' || status == 'active') return AppColors.secondary;
     // For pending (0%), the widthFactor will be 0, so color doesn't matter
-    return AppColors.secondary;
+    return AppColors.greyLight;
   }
 
   String _formatDate(String dateStr) {
