@@ -37,8 +37,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
   // Watch app startup state - this returns User? when complete
   final appStartup = ref.watch(appStartupProvider);
 
-  // Also watch user controller for runtime auth changes (logout, etc)
-  final user = ref.watch(userControllerProvider);
+  // DON'T watch user here - it rebuilds router!
+  // Use refreshListenable instead to trigger redirects without rebuilding
 
   return GoRouter(
     initialLocation: '/splash',
@@ -48,13 +48,15 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final requestedPath = state.uri.path;
 
-      // App initialization complete - check current user state
+      // Read user state for redirect logic (doesn't trigger rebuild)
+      final user = ref.read(userControllerProvider);
       final isLoggedIn = user != null;
 
-      // Allow splash and onboarding screens to handle their own navigation
-      // Don't redirect from splash - let SplashScreen's timer handle navigation
+      // IMPORTANT: Always allow splash/onboarding to show
+      // Splash has critical token validation logic that runs in background
+      // Don't interfere with splash navigation - it handles its own routing
       if (requestedPath == '/splash' || requestedPath == '/onboarding') {
-        return null; // Allow navigation
+        return null; // Allow navigation - splash decides where to go next
       }
 
       // Get the path the user is trying to access
@@ -111,8 +113,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         return '/';
       }
 
-      // If user is logged in and trying to go to login, splash, or onboarding, redirect to home
-      if (isLoggedIn && (isGoingToLogin || isGoingToSplash || isGoingToOnboarding)) {
+      // If user is logged in and trying to go to login page, redirect to home
+      // Note: Splash/onboarding already handled above (they manage their own navigation)
+      if (isLoggedIn && isGoingToLogin) {
         return '/home';
       }
 
