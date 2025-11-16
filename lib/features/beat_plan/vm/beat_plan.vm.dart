@@ -105,10 +105,31 @@ class BeatPlanListViewModel extends _$BeatPlanListViewModel {
       if (response.statusCode == 200) {
         AppLogger.i('✅ Beat plan started successfully on server');
 
-        // Start real-time tracking
+        // Get beat plan details to extract progress info
+        int totalDirectories = 0;
+        int visitedDirectories = 0;
+
+        try {
+          // Fetch details to get directory counts
+          final detailsResponse = await dio.get(ApiEndpoints.beatPlanDetails(beatPlanId));
+          if (detailsResponse.statusCode == 200) {
+            final details = BeatPlanDetailResponse.fromJson(detailsResponse.data);
+            totalDirectories = details.data.progress.totalDirectories;
+            visitedDirectories = details.data.progress.visitedDirectories;
+            AppLogger.d('📊 Progress: $visitedDirectories/$totalDirectories directories');
+          }
+        } catch (e) {
+          AppLogger.w('⚠️ Could not fetch progress details: $e');
+        }
+
+        // Start real-time tracking with progress info
         try {
           AppLogger.i('🎯 Starting real-time tracking...');
-          await TrackingCoordinator.instance.startTracking(beatPlanId);
+          await TrackingCoordinator.instance.startTracking(
+            beatPlanId,
+            totalDirectories: totalDirectories,
+            visitedDirectories: visitedDirectories,
+          );
           AppLogger.i('✅ Real-time tracking started');
         } catch (trackingError) {
           AppLogger.e('❌ Failed to start tracking: $trackingError');
@@ -214,20 +235,38 @@ class BeatPlanDetailViewModel extends _$BeatPlanDetailViewModel {
     }
   }
 
-  /// Mark a party visit as complete
+  /// Mark a party visit as complete with geofencing
   ///
   /// Parameters:
   /// - beatPlanId: The ID of the beat plan
-  /// - visitId: The ID of the visit to mark as complete
+  /// - directoryId: The ID of the directory (party/site/prospect) to mark as visited
+  /// - directoryType: The type of directory ('party', 'site', 'prospect')
+  /// - userLatitude: User's current latitude (for geofencing validation)
+  /// - userLongitude: User's current longitude (for geofencing validation)
   ///
   /// Returns: true if successful, false otherwise
-  Future<bool> markVisitComplete(String beatPlanId, String visitId) async {
+  Future<bool> markVisitComplete(
+    String beatPlanId,
+    String directoryId, {
+    String directoryType = 'party',
+    required double userLatitude,
+    required double userLongitude,
+  }) async {
     try {
       final dio = ref.read(dioClientProvider);
-      AppLogger.i('Marking visit $visitId as complete for beat plan $beatPlanId');
+      AppLogger.i('Marking $directoryType $directoryId as visited for beat plan $beatPlanId');
+      AppLogger.i('📍 User location: $userLatitude, $userLongitude');
 
-      final response = await dio.put(
-        ApiEndpoints.markVisitComplete(beatPlanId, visitId),
+      final requestBody = {
+        'directoryId': directoryId,
+        'directoryType': directoryType,
+        'latitude': userLatitude,
+        'longitude': userLongitude,
+      };
+
+      final response = await dio.post(
+        ApiEndpoints.markVisit(beatPlanId),
+        data: requestBody,
       );
 
       if (response.statusCode == 200) {
@@ -236,6 +275,18 @@ class BeatPlanDetailViewModel extends _$BeatPlanDetailViewModel {
         // Refresh beat plan details to get updated data
         if (ref.mounted) {
           await refresh(beatPlanId);
+
+          // Update tracking notification with new progress
+          try {
+            // Get updated progress from refreshed state
+            if (state.hasValue && state.value != null) {
+              final visitedCount = state.value!.progress.visitedDirectories;
+              await TrackingCoordinator.instance.updateVisitProgress(visitedCount);
+              AppLogger.i('📊 Tracking notification updated with progress');
+            }
+          } catch (e) {
+            AppLogger.w('⚠️ Could not update tracking progress: $e');
+          }
         }
         return true;
       } else {
@@ -276,6 +327,18 @@ class BeatPlanDetailViewModel extends _$BeatPlanDetailViewModel {
         // Refresh beat plan details to get updated data
         if (ref.mounted) {
           await refresh(beatPlanId);
+
+          // Update tracking notification with new progress
+          try {
+            // Get updated progress from refreshed state
+            if (state.hasValue && state.value != null) {
+              final visitedCount = state.value!.progress.visitedDirectories;
+              await TrackingCoordinator.instance.updateVisitProgress(visitedCount);
+              AppLogger.i('📊 Tracking notification updated with progress');
+            }
+          } catch (e) {
+            AppLogger.w('⚠️ Could not update tracking progress: $e');
+          }
         }
         return true;
       } else {

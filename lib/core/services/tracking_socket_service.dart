@@ -263,15 +263,23 @@ class TrackingSocketService {
   }
 
   /// Start tracking a beat plan
-  Future<void> startTracking(String beatPlanId) async {
+  Future<void> startTracking(String beatPlanId, {String? sessionId}) async {
     if (!_isConnected) {
       throw Exception('Socket not connected. Call connect() first.');
     }
 
     try {
       AppLogger.i('🎯 Starting tracking for beat plan: $beatPlanId');
+      if (sessionId != null) {
+        AppLogger.i('🔑 Reconnecting to existing session: $sessionId');
+      }
 
-      _socket!.emit('start-tracking', {'beatPlanId': beatPlanId});
+      final data = <String, dynamic>{'beatPlanId': beatPlanId};
+      if (sessionId != null) {
+        data['sessionId'] = sessionId;
+      }
+
+      _socket!.emit('start-tracking', data);
     } catch (e) {
       AppLogger.e('❌ Error starting tracking: $e');
       rethrow;
@@ -286,6 +294,7 @@ class TrackingSocketService {
     required double accuracy,
     required double speed,
     required double heading,
+    Map<String, dynamic>? address,
   }) {
     if (!_isConnected) {
       AppLogger.w('⚠️ Cannot update location: Socket not connected');
@@ -293,16 +302,19 @@ class TrackingSocketService {
     }
 
     try {
-      _socket!.emit('update-location', {
+      final payload = {
         'beatPlanId': beatPlanId,
         'latitude': latitude,
         'longitude': longitude,
         'accuracy': accuracy,
         'speed': speed,
         'heading': heading,
-      });
+        if (address != null) 'address': address,
+      };
 
-      AppLogger.d('📍 Location update sent: $latitude, $longitude');
+      _socket!.emit('update-location', payload);
+
+      AppLogger.d('📍 Location update sent: $latitude, $longitude ${address != null ? "(with address)" : ""}');
     } catch (e) {
       AppLogger.e('❌ Error updating location: $e');
     }

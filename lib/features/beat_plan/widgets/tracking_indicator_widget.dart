@@ -23,12 +23,15 @@ class TrackingIndicatorWidget extends StatefulWidget {
 
 class _TrackingIndicatorWidgetState extends State<TrackingIndicatorWidget>
     with SingleTickerProviderStateMixin {
-  TrackingState _currentState = TrackingState.idle;
+  late TrackingState _currentState;
   late AnimationController _animationController;
 
   @override
   void initState() {
     super.initState();
+    // Initialize with current state from coordinator
+    _currentState = TrackingCoordinator.instance.currentState;
+
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1000),
@@ -67,45 +70,75 @@ class _TrackingIndicatorWidgetState extends State<TrackingIndicatorWidget>
       builder: (context, child) {
         return Container(
           padding: EdgeInsets.symmetric(
-            horizontal: widget.showLabel ? 12.w : 8.w,
-            vertical: 6.h,
+            horizontal: widget.showLabel ? 14.w : 10.w,
+            vertical: widget.showLabel ? 8.h : 6.h,
           ),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(20.r),
-            border: Border.all(
-              color: color.withOpacity(0.3),
-              width: 1,
+            gradient: LinearGradient(
+              colors: [
+                color.withOpacity(0.15),
+                color.withOpacity(0.08),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
+            borderRadius: BorderRadius.circular(24.r),
+            border: Border.all(
+              color: color.withOpacity(0.25),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: color.withOpacity(0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Pulsing dot
-              Container(
-                width: widget.size.w,
-                height: widget.size.w,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: color,
-                  boxShadow: [
-                    BoxShadow(
-                      color: color.withOpacity(_animationController.value),
-                      blurRadius: 8 * _animationController.value,
-                      spreadRadius: 2 * _animationController.value,
+              // Pulsing dot with enhanced animation
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Outer pulse ring
+                  Container(
+                    width: (widget.size * 2).w,
+                    height: (widget.size * 2).w,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: color.withOpacity(_animationController.value * 0.2),
                     ),
-                  ],
-                ),
+                  ),
+                  // Inner dot
+                  Container(
+                    width: widget.size.w,
+                    height: widget.size.w,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: color,
+                      boxShadow: [
+                        BoxShadow(
+                          color: color.withOpacity(_animationController.value * 0.6),
+                          blurRadius: 8 * _animationController.value,
+                          spreadRadius: 2 * _animationController.value,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
 
               if (widget.showLabel) ...[
-                SizedBox(width: 8.w),
+                SizedBox(width: 10.w),
                 Text(
                   label,
                   style: TextStyle(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w700,
                     color: color,
+                    letterSpacing: 0.3,
                   ),
                 ),
               ],

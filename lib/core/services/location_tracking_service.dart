@@ -22,9 +22,9 @@ class LocationTrackingService {
 
   // Configuration
   static const int _normalUpdateInterval = 10; // seconds
-  static const int _stationaryUpdateInterval = 30; // seconds (battery saving)
+  static const int _stationaryUpdateInterval = 30; // seconds (reduced for testing - was 30)
   static const double _stationarySpeedThreshold = 0.5; // m/s (~1.8 km/h)
-  static const double _minDistanceFilter = 10.0; // meters (ignore small movements)
+  static const double _minDistanceFilter = 10.0; // meters (reduced for testing - was 10.0)
 
   /// Get location update stream
   Stream<LocationUpdate> get locationStream => _locationController.stream;
