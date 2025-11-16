@@ -13,38 +13,12 @@ class App extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Watch app startup to ensure initialization completes before showing app
-    final appStartupState = ref.watch(appStartupProvider);
+    // Initialize app startup in background (don't block UI)
+    ref.watch(appStartupProvider);
 
-    // Wait for initialization to complete
-    return appStartupState.when(
-      // Loading: Show loading screen during startup
-      loading: () => MaterialApp(
-        title: 'Sales Sphere',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        home: const LoadingScreen(),
-      ),
-
-      // Data: Check internet connectivity
-      data: (startupState) {
-        // No internet connection
-        if (!startupState.hasInternet) {
-          return MaterialApp(
-            title: 'Sales Sphere',
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.lightTheme,
-            home: const NoInternetScreen(),
-          );
-        }
-
-        // Has internet, show normal app
-        return _buildApp(ref);
-      },
-
-      // Error: Show app anyway (fail gracefully)
-      error: (_, __) => _buildApp(ref),
-    );
+    // Show app immediately with splash screen
+    // App startup checks will happen in background during splash
+    return _buildApp(ref);
   }
 
   Widget _buildApp(WidgetRef ref) {
