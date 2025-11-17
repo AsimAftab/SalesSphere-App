@@ -3,6 +3,7 @@
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sales_sphere/core/network_layer/dio_client.dart';
+import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
 import 'package:sales_sphere/features/prospects/models/prospects.model.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 
@@ -28,7 +29,7 @@ class AddProspectViewModel extends _$AddProspectViewModel {
 
       // Make POST request to create prospect
       final response = await dio.post(
-        '/prospects',
+        ApiEndpoints.createProspects,
         data: newProspectRequest.toJson(),
       );
 

@@ -5,8 +5,20 @@ import 'core/theme/theme.dart';
 import 'core/providers/app_startup.dart';
 import 'core/providers/provider_registry.dart';
 import 'core/utils/connectivity_utils.dart';
-import 'widget/no_internet_screen.dart';
-import 'widget/loading_screen.dart';
+import 'core/network_layer/dio_client.dart';
+import 'core/services/tracking_coordinator.dart';
+import 'core/utils/logger.dart';
+
+/// Provider to initialize TrackingCoordinator with Dio client
+final trackingCoordinatorInitProvider = FutureProvider<void>((ref) async {
+  try {
+    final dio = ref.watch(dioClientProvider);
+    await TrackingCoordinator.instance.initialize(dioClient: dio);
+    AppLogger.i('✅ Tracking coordinator initialized via provider');
+  } catch (e) {
+    AppLogger.e('❌ Failed to initialize tracking coordinator', e);
+  }
+});
 
 class App extends ConsumerWidget {
   const App({super.key});
@@ -15,6 +27,9 @@ class App extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Initialize app startup in background (don't block UI)
     ref.watch(appStartupProvider);
+
+    // Initialize tracking coordinator with Dio client
+    ref.watch(trackingCoordinatorInitProvider);
 
     // Show app immediately with splash screen
     // App startup checks will happen in background during splash

@@ -1,49 +1,44 @@
 import 'dart:convert';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/storage_keys.dart';
 import '../utils/logger.dart';
+import '../providers/shared_prefs_provider.dart';
+
+part 'token_storage_service.g.dart';
 
 /// Token Storage Service Provider
-final tokenStorageServiceProvider = Provider<TokenStorageService>((ref) {
-  return TokenStorageService();
-});
+/// This provider is automatically generated and uses SharedPreferences
+@Riverpod(keepAlive: true)
+TokenStorageService tokenStorageService(Ref ref) {
+  final sharedPrefs = ref.watch(sharedPrefsProvider);
+  return TokenStorageService(sharedPrefs);
+}
 
 /// Token Storage Service
 /// Handles JWT token storage and retrieval using SharedPreferences
 class TokenStorageService {
-  static SharedPreferences? _prefs;
+  final SharedPreferences _prefs;
 
-  /// Initialize SharedPreferences
-  Future<void> init() async {
-    _prefs ??= await SharedPreferences.getInstance();
-    AppLogger.d('TokenStorageService initialized');
-  }
-
-  /// Get SharedPreferences instance
-  Future<SharedPreferences> get _preferences async {
-    if (_prefs == null) {
-      await init();
-    }
-    return _prefs!;
+  /// Constructor that accepts SharedPreferences instance
+  TokenStorageService(this._prefs) {
+    AppLogger.d('TokenStorageService initialized with SharedPreferences');
   }
 
   /// Save Access Token
   Future<void> saveToken(String token) async {
     try {
-      final prefs = await _preferences;
-      await prefs.setString(StorageKeys.accessToken, token);
+      await _prefs.setString(StorageKeys.accessToken, token);
       AppLogger.i('✅ Access token saved successfully');
     } catch (e, stack) {
       AppLogger.e('❌ Error saving access token', e, stack);
     }
   }
 
-  /// Get Access Token
-  Future<String?> getToken() async {
+  /// Get Access Token (synchronous)
+  String? getToken() {
     try {
-      final prefs = await _preferences;
-      final token = prefs.getString(StorageKeys.accessToken);
+      final token = _prefs.getString(StorageKeys.accessToken);
       if (token != null) {
         AppLogger.d('✅ Access token retrieved');
       } else {
@@ -59,38 +54,35 @@ class TokenStorageService {
   /// Delete Access Token
   Future<void> deleteToken() async {
     try {
-      final prefs = await _preferences;
-      await prefs.remove(StorageKeys.accessToken);
+      await _prefs.remove(StorageKeys.accessToken);
       AppLogger.i('✅ Access token deleted successfully');
     } catch (e, stack) {
       AppLogger.e('❌ Error deleting access token', e, stack);
     }
   }
 
-  /// Check if token exists
-  Future<bool> hasToken() async {
-    final token = await getToken();
+  /// Check if token exists (synchronous)
+  bool hasToken() {
+    final token = getToken();
     return token != null && token.isNotEmpty;
   }
 
   /// Save User Data as JSON
   Future<void> saveUserData(Map<String, dynamic> userData) async {
     try {
-      final prefs = await _preferences;
       // Convert to JSON string properly
       final jsonString = jsonEncode(userData);
-      await prefs.setString(StorageKeys.userData, jsonString);
+      await _prefs.setString(StorageKeys.userData, jsonString);
       AppLogger.i('✅ User data saved');
     } catch (e, stack) {
       AppLogger.e('❌ Error saving user data', e, stack);
     }
   }
 
-  /// Get User Data from storage
-  Future<Map<String, dynamic>?> getUserData() async {
+  /// Get User Data from storage (synchronous)
+  Map<String, dynamic>? getUserData() {
     try {
-      final prefs = await _preferences;
-      final userDataString = prefs.getString(StorageKeys.userData);
+      final userDataString = _prefs.getString(StorageKeys.userData);
       if (userDataString != null && userDataString.isNotEmpty) {
         return jsonDecode(userDataString) as Map<String, dynamic>;
       }
@@ -104,11 +96,10 @@ class TokenStorageService {
   /// Clear all auth data
   Future<void> clearAuthData() async {
     try {
-      final prefs = await _preferences;
-      await prefs.remove(StorageKeys.accessToken);
-      await prefs.remove(StorageKeys.refreshToken);
-      await prefs.remove(StorageKeys.userData);
-      await prefs.remove('session_expires_at');
+      await _prefs.remove(StorageKeys.accessToken);
+      await _prefs.remove(StorageKeys.refreshToken);
+      await _prefs.remove(StorageKeys.userData);
+      await _prefs.remove('session_expires_at');
       AppLogger.i('✅ All auth data cleared');
     } catch (e, stack) {
       AppLogger.e('❌ Error clearing auth data', e, stack);
@@ -118,19 +109,17 @@ class TokenStorageService {
   /// Save Refresh Token (if using refresh token strategy)
   Future<void> saveRefreshToken(String refreshToken) async {
     try {
-      final prefs = await _preferences;
-      await prefs.setString(StorageKeys.refreshToken, refreshToken);
+      await _prefs.setString(StorageKeys.refreshToken, refreshToken);
       AppLogger.i('✅ Refresh token saved');
     } catch (e, stack) {
       AppLogger.e('❌ Error saving refresh token', e, stack);
     }
   }
 
-  /// Get Refresh Token
-  Future<String?> getRefreshToken() async {
+  /// Get Refresh Token (synchronous)
+  String? getRefreshToken() {
     try {
-      final prefs = await _preferences;
-      return prefs.getString(StorageKeys.refreshToken);
+      return _prefs.getString(StorageKeys.refreshToken);
     } catch (e, stack) {
       AppLogger.e('❌ Error getting refresh token', e, stack);
       return null;
@@ -140,29 +129,27 @@ class TokenStorageService {
   /// Save Session Expiry Date
   Future<void> saveSessionExpiresAt(String expiryDate) async {
     try {
-      final prefs = await _preferences;
-      await prefs.setString('session_expires_at', expiryDate);
+      await _prefs.setString('session_expires_at', expiryDate);
       AppLogger.i('✅ Session expiry date saved');
     } catch (e, stack) {
       AppLogger.e('❌ Error saving session expiry date', e, stack);
     }
   }
 
-  /// Get Session Expiry Date
-  Future<String?> getSessionExpiresAt() async {
+  /// Get Session Expiry Date (synchronous)
+  String? getSessionExpiresAt() {
     try {
-      final prefs = await _preferences;
-      return prefs.getString('session_expires_at');
+      return _prefs.getString('session_expires_at');
     } catch (e, stack) {
       AppLogger.e('❌ Error getting session expiry date', e, stack);
       return null;
     }
   }
 
-  /// Check if session has expired
-  Future<bool> isSessionExpired() async {
+  /// Check if session has expired (synchronous)
+  bool isSessionExpired() {
     try {
-      final expiryDateStr = await getSessionExpiresAt();
+      final expiryDateStr = getSessionExpiresAt();
       if (expiryDateStr == null) {
         return false; // No expiry set, assume valid
       }

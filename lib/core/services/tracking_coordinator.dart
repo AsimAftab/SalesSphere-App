@@ -3,9 +3,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
-import 'package:sales_sphere/core/network_layer/token_storage_service.dart';
 import 'package:sales_sphere/core/services/location_tracking_service.dart';
 import 'package:sales_sphere/core/services/tracking_socket_service.dart';
 import 'package:sales_sphere/core/services/offline_queue_service.dart';
@@ -47,7 +45,7 @@ class TrackingCoordinator {
   int _totalDirectories = 0;
   int _visitedDirectories = 0;
 
-  // Dio client for API calls (lazy initialization)
+  // Dio client for API calls
   Dio? _dio;
 
   // Sync state
@@ -77,9 +75,18 @@ class TrackingCoordinator {
   String? get currentBeatPlanId => _currentBeatPlanId;
 
   /// Initialize coordinator
-  Future<void> initialize() async {
+  /// Accepts an optional Dio client for API calls (should be provided from ProviderScope)
+  Future<void> initialize({Dio? dioClient}) async {
     try {
       AppLogger.i('🔧 Initializing TrackingCoordinator...');
+
+      // Store Dio client if provided
+      if (dioClient != null) {
+        _dio = dioClient;
+        AppLogger.d('✅ Dio client provided to TrackingCoordinator');
+      } else {
+        AppLogger.w('⚠️ No Dio client provided, API calls will fail');
+      }
 
       // Initialize all services
       await _queueService.initialize();
@@ -103,15 +110,10 @@ class TrackingCoordinator {
     }
   }
 
-  /// Get Dio client instance (lazy initialization)
-  Future<Dio> _getDioClient() async {
+  /// Get Dio client instance
+  Dio _getDioClient() {
     if (_dio == null) {
-      // Create token storage and Dio client
-      final tokenStorage = TokenStorageService();
-      await tokenStorage.init();
-
-      final dioClient = DioClient(tokenStorage);
-      _dio = dioClient.dio;
+      throw Exception('Dio client not initialized. Call initialize() with a Dio instance first.');
     }
     return _dio!;
   }
@@ -121,7 +123,7 @@ class TrackingCoordinator {
     try {
       AppLogger.i('🔍 Checking for active tracking sessions on server...');
 
-      final dio = await _getDioClient();
+      final dio = _getDioClient();
       final response = await dio.get(ApiEndpoints.activeTrackingSessions).timeout(
         const Duration(seconds: 10),
         onTimeout: () {

@@ -270,7 +270,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
               child: ElevatedButton(
                 onPressed: isLoading ? null : _handleChangePassword,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: AppColors.secondary,
                   foregroundColor: Colors.white,
                   disabledBackgroundColor: AppColors.textSecondary.withValues(alpha: 0.3),
                   elevation: 0,

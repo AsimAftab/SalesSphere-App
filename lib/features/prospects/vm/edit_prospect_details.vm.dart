@@ -3,6 +3,7 @@
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sales_sphere/core/network_layer/dio_client.dart';
+import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
 import 'package:sales_sphere/features/prospects/models/prospects.model.dart';
 import 'package:sales_sphere/features/prospects/vm/prospects.vm.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
@@ -27,7 +28,7 @@ class EditProspectViewModel extends _$EditProspectViewModel {
       final dio = ref.read(dioClientProvider);
       AppLogger.i('Fetching prospect details for ID: $id');
 
-      final response = await dio.get('/prospects/$id');
+      final response = await dio.get(ApiEndpoints.prospectsById(id));
 
       if (response.statusCode == 200) {
         // Parse the full API response
@@ -76,7 +77,7 @@ class EditProspectViewModel extends _$EditProspectViewModel {
 
       // Send PUT request
       final response = await dio.put(
-        '/prospects/${updatedProspect.id}',
+        ApiEndpoints.updateProspects(updatedProspect.id),
         data: requestData,
       );
 
@@ -111,7 +112,7 @@ class EditProspectViewModel extends _$EditProspectViewModel {
 
       // Send POST request with no body
       final response = await dio.post(
-        '/prospects/$prospectId/transfer',
+        ApiEndpoints.transferToProspect(prospectId),
       );
 
       if (response.statusCode != null && response.statusCode! >= 200 && response.statusCode! < 300)  {

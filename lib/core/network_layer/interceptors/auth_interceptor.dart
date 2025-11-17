@@ -10,12 +10,12 @@ class AuthInterceptor extends Interceptor {
   AuthInterceptor(this.tokenStorage);
 
   @override
-  Future<void> onRequest(
+  void onRequest(
     RequestOptions options,
     RequestInterceptorHandler handler,
-  ) async {
-    // Get token from storage
-    final token = await tokenStorage.getToken();
+  ) {
+    // Get token from storage (now synchronous)
+    final token = tokenStorage.getToken();
 
     if (token != null && token.isNotEmpty) {
       // Add Authorization header
@@ -148,7 +148,7 @@ class AuthInterceptor extends Interceptor {
   /// ✅ FIXED: Removed premature session expiry check - let backend decide!
   Future<bool> _attemptTokenRefresh(RequestOptions requestOptions) async {
     try {
-      final refreshToken = await tokenStorage.getRefreshToken();
+      final refreshToken = tokenStorage.getRefreshToken();
 
       if (refreshToken == null || refreshToken.isEmpty) {
         AppLogger.w('⚠️ No refresh token available. Cannot refresh access token.');
@@ -257,7 +257,7 @@ class AuthInterceptor extends Interceptor {
 
   /// Retry the failed request with new token
   Future<Response> _retry(RequestOptions requestOptions) async {
-    final token = await tokenStorage.getToken();
+    final token = tokenStorage.getToken();
 
     // Update the authorization header with new token
     requestOptions.headers['Authorization'] = 'Bearer $token';

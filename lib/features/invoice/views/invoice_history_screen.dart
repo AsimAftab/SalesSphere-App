@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -7,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:open_file/open_file.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
+import 'package:sales_sphere/core/utils/snackbar_utils.dart';
 import '../models/invoice.models.dart';
 import '../vm/invoice.vm.dart';
 import '../services/invoice_pdf_service.dart';
@@ -353,7 +353,7 @@ class InvoiceHistoryScreen extends ConsumerWidget {
                     child: Container(
                       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
                       decoration: BoxDecoration(
-                        color: AppColors.primary,
+                        color: AppColors.secondary,
                         borderRadius: BorderRadius.circular(6.r),
                       ),
                       child: Row(
@@ -412,7 +412,7 @@ class InvoiceHistoryScreen extends ConsumerWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  CircularProgressIndicator(color: AppColors.primary),
+                  const CircularProgressIndicator(color: AppColors.primary),
                   SizedBox(height: 16.h),
                   Text(
                     'Generating PDF...',
@@ -470,47 +470,34 @@ class InvoiceHistoryScreen extends ConsumerWidget {
           displayPath = file.path;
         }
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Invoice saved to $displayPath'),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 5),
-            action: SnackBarAction(
-              label: 'Open',
-              textColor: Colors.white,
-              onPressed: () async {
-                try {
-                  final result = await OpenFile.open(file.path);
-
-                  // If opening failed, show the full file path
-                  if (result.type != ResultType.done && context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Could not open PDF. Location: ${file.path}'),
-                        backgroundColor: Colors.orange,
-                        behavior: SnackBarBehavior.floating,
-                        duration: const Duration(seconds: 6),
-                      ),
-                    );
-                  }
-                } catch (e) {
-                  AppLogger.e('Error opening PDF: $e');
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Could not open PDF. Location: ${file.path}'),
-                        backgroundColor: Colors.orange,
-                        behavior: SnackBarBehavior.floating,
-                        duration: const Duration(seconds: 6),
-                      ),
-                    );
-                  }
-                }
-              },
-            ),
-          ),
+        SnackbarUtils.showSuccess(
+          context,
+          'Invoice saved to $displayPath',
+          duration: const Duration(seconds: 5),
         );
+
+        // Automatically attempt to open the PDF
+        try {
+          final result = await OpenFile.open(file.path);
+
+          // If opening failed, show the full file path
+          if (result.type != ResultType.done && context.mounted) {
+            SnackbarUtils.showWarning(
+              context,
+              'Could not open PDF. Location: ${file.path}',
+              duration: const Duration(seconds: 6),
+            );
+          }
+        } catch (e) {
+          AppLogger.e('Error opening PDF: $e');
+          if (context.mounted) {
+            SnackbarUtils.showWarning(
+              context,
+              'Could not open PDF. Location: ${file.path}',
+              duration: const Duration(seconds: 6),
+            );
+          }
+        }
       }
     } catch (e, stackTrace) {
       AppLogger.e('Error in _downloadInvoicePdf: $e\n$stackTrace');
@@ -527,13 +514,10 @@ class InvoiceHistoryScreen extends ConsumerWidget {
 
       // Show error message
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to generate PDF: ${e.toString()}'),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 4),
-          ),
+        SnackbarUtils.showError(
+          context,
+          'Failed to generate PDF: ${e.toString()}',
+          duration: const Duration(seconds: 4),
         );
       }
     }
@@ -760,28 +744,30 @@ class InvoicePreviewSheet extends ConsumerWidget {
                                   ),
                                 ),
                                 SizedBox(width: 12.w),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Expected Delivery',
-                                      style: TextStyle(
-                                        fontSize: 12.sp,
-                                        color: Colors.grey.shade600,
-                                        fontFamily: 'Poppins',
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Expected Delivery',
+                                        style: TextStyle(
+                                          fontSize: 12.sp,
+                                          color: Colors.grey.shade600,
+                                          fontFamily: 'Poppins',
+                                        ),
                                       ),
-                                    ),
-                                    SizedBox(height: 2.h),
-                                    Text(
-                                      DateFormat('EEEE, MMMM dd, yyyy').format(deliveryDate),
-                                      style: TextStyle(
-                                        fontSize: 14.sp,
-                                        fontWeight: FontWeight.w700,
-                                        color: Colors.orange.shade700,
-                                        fontFamily: 'Poppins',
+                                      SizedBox(height: 2.h),
+                                      Text(
+                                        DateFormat('EEEE, MMMM dd, yyyy').format(deliveryDate),
+                                        style: TextStyle(
+                                          fontSize: 14.sp,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.orange.shade700,
+                                          fontFamily: 'Poppins',
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),
@@ -851,7 +837,7 @@ class InvoicePreviewSheet extends ConsumerWidget {
                                 ),
                               ),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary,
+                                backgroundColor: AppColors.secondary,
                                 foregroundColor: Colors.white,
                                 padding: EdgeInsets.symmetric(vertical: 16.h),
                                 shape: RoundedRectangleBorder(
@@ -920,7 +906,7 @@ class InvoicePreviewSheet extends ConsumerWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  CircularProgressIndicator(color: AppColors.primary),
+                  const CircularProgressIndicator(color: AppColors.primary),
                   SizedBox(height: 16.h),
                   Text(
                     'Generating PDF...',
@@ -976,47 +962,34 @@ class InvoicePreviewSheet extends ConsumerWidget {
           displayPath = file.path;
         }
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Invoice saved to $displayPath'),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 5),
-            action: SnackBarAction(
-              label: 'Open',
-              textColor: Colors.white,
-              onPressed: () async {
-                try {
-                  final result = await OpenFile.open(file.path);
-
-                  // If opening failed, show the full file path
-                  if (result.type != ResultType.done && context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Could not open PDF. Location: ${file.path}'),
-                        backgroundColor: Colors.orange,
-                        behavior: SnackBarBehavior.floating,
-                        duration: const Duration(seconds: 6),
-                      ),
-                    );
-                  }
-                } catch (e) {
-                  AppLogger.e('Error opening PDF: $e');
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Could not open PDF. Location: ${file.path}'),
-                        backgroundColor: Colors.orange,
-                        behavior: SnackBarBehavior.floating,
-                        duration: const Duration(seconds: 6),
-                      ),
-                    );
-                  }
-                }
-              },
-            ),
-          ),
+        SnackbarUtils.showSuccess(
+          context,
+          'Invoice saved to $displayPath',
+          duration: const Duration(seconds: 5),
         );
+
+        // Automatically attempt to open the PDF
+        try {
+          final result = await OpenFile.open(file.path);
+
+          // If opening failed, show the full file path
+          if (result.type != ResultType.done && context.mounted) {
+            SnackbarUtils.showWarning(
+              context,
+              'Could not open PDF. Location: ${file.path}',
+              duration: const Duration(seconds: 6),
+            );
+          }
+        } catch (e) {
+          AppLogger.e('Error opening PDF: $e');
+          if (context.mounted) {
+            SnackbarUtils.showWarning(
+              context,
+              'Could not open PDF. Location: ${file.path}',
+              duration: const Duration(seconds: 6),
+            );
+          }
+        }
       }
     } catch (e, stackTrace) {
       AppLogger.e('Error in _downloadPdf: $e\n$stackTrace');
@@ -1033,13 +1006,10 @@ class InvoicePreviewSheet extends ConsumerWidget {
 
       // Show error message
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to generate PDF: ${e.toString()}'),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 4),
-          ),
+        SnackbarUtils.showError(
+          context,
+          'Failed to generate PDF: ${e.toString()}',
+          duration: const Duration(seconds: 4),
         );
       }
     }
@@ -1167,8 +1137,14 @@ class InvoicePreviewSheet extends ConsumerWidget {
 
   Widget _buildPricingSection(InvoiceDetailsData details) {
     final subtotal = details.items.fold<double>(0.0, (sum, item) => sum + item.total);
+
+    // Backend now sends discount as a percentage (0-100)
     final discountPercent = details.discount ?? 0.0;
+
+    // Use discountAmount from backend if available, otherwise calculate it
+    // Backend calculates: discountAmount = (subtotal * discount) / 100
     final discountAmount = details.discountAmount ?? (subtotal * discountPercent / 100);
+
     final total = details.totalAmount ?? (subtotal - discountAmount);
 
     return Container(
@@ -1207,7 +1183,7 @@ class InvoicePreviewSheet extends ConsumerWidget {
           if (discountPercent > 0) ...[
             SizedBox(height: 12.h),
             _buildPriceRow(
-              'Discount ($discountPercent%)',
+              'Discount (${discountPercent.toStringAsFixed(1)}%)',
               -discountAmount,
               isDiscount: true,
             ),

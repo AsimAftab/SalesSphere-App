@@ -41,7 +41,7 @@ class ApiEndpoints {
   static String prospectsById(String id) => '/api/v1/prospects/$id';
   static const String createProspects = '/api/v1/prospects';
   static String updateProspects(String id) => '/api/v1/prospects/$id';
-  static String deleteProspects(String id) => '/api/v1/parties/$id';
+  static String deleteProspects(String id) => '/api/v1/prospects/$id';
   static String transferToProspect(String id) => '/api/v1/prospects/$id/transfer';
 
   // Sites Endpoints (Final)

@@ -32,11 +32,11 @@ class AppStartup extends _$AppStartup {
     // OPTIMIZED: Skip expensive network calls during startup
     // Just check if token exists locally (super fast)
     final tokenStorage = ref.read(tokenStorageServiceProvider);
-    final hasToken = await tokenStorage.hasToken();
+    final hasToken = tokenStorage.hasToken();
 
     if (hasToken) {
       // Token exists - try to load cached user data
-      final user = await _loadCachedUser();
+      final user = _loadCachedUser();
       AppLogger.i('✅ Loaded cached user data: ${user?.name ?? "none"}');
 
       return AppStartupState(
@@ -51,10 +51,10 @@ class AppStartup extends _$AppStartup {
   }
 
   // Load user from cached storage (no network call)
-  Future<User?> _loadCachedUser() async {
+  User? _loadCachedUser() {
     try {
       final tokenStorage = ref.read(tokenStorageServiceProvider);
-      final userDataMap = await tokenStorage.getUserData();
+      final userDataMap = tokenStorage.getUserData();
 
       if (userDataMap != null) {
         final user = User.fromJson(userDataMap);
@@ -73,11 +73,11 @@ class AppStartup extends _$AppStartup {
   // Token validation with network call (used later, not on startup)
   Future<User?> _validateToken() async {
     final tokenStorage = ref.read(tokenStorageServiceProvider);
-    final token = await tokenStorage.getToken();
+    final token = tokenStorage.getToken();
 
     if (token != null) {
       // Check if session has expired
-      final isExpired = await tokenStorage.isSessionExpired();
+      final isExpired = tokenStorage.isSessionExpired();
       if (isExpired) {
         AppLogger.w('⚠️ Session has expired. Forcing logout...');
         await tokenStorage.clearAuthData();
