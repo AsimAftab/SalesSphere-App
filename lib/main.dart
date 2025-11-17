@@ -11,7 +11,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app.dart';
 import 'core/utils/logger.dart';
-import 'core/network_layer/token_storage_service.dart';
 import 'core/services/offline_queue_service.dart';
 import 'core/services/tracking_coordinator.dart';
 import 'core/services/notification_permission_service.dart';
@@ -131,22 +130,11 @@ Future<void> main() async {
     AppLogger.e('❌ Failed to initialize offline queue service', e);
   }
 
-  // Initialize tracking coordinator
-  try {
-    await TrackingCoordinator.instance.initialize();
-    AppLogger.i('✅ Tracking coordinator initialized');
-  } catch (e) {
-    AppLogger.e('❌ Failed to initialize tracking coordinator', e);
-  }
+  // Note: TokenStorageService is now automatically initialized via provider
+  // It uses the sharedPrefsProvider which is overridden below
 
-  // Initialize token storage service
-  try {
-    final tokenStorage = TokenStorageService();
-    await tokenStorage.init();
-    AppLogger.i('✅ Token storage initialized');
-  } catch (e) {
-    AppLogger.e('❌ Failed to initialize token storage', e);
-  }
+  // Note: TrackingCoordinator will be initialized after ProviderScope is created
+  // so it can access the Dio client from the provider
 
   // Note: Sentry automatically handles FlutterError.onError
   // We only need to log locally in debug mode

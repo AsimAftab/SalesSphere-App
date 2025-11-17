@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
+import 'package:sales_sphere/core/utils/snackbar_utils.dart';
 import 'package:sales_sphere/features/parties/models/parties.model.dart';
 import 'package:sales_sphere/features/parties/vm/parties.vm.dart';
 import 'package:sales_sphere/widget/custom_text_field.dart';
@@ -463,30 +464,22 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                               }).toList();
 
                               // Call API to create invoice
+                              // Backend now expects discount as a percentage (0-100)
+                              // Backend will calculate: discountAmount = (subtotal * discount) / 100
                               final response = await ref.read(createInvoiceProvider.notifier).createInvoice(
                                 partyId: selectedParty!.id,
                                 expectedDeliveryDate: deliveryDate,
-                                discount: _discountPercentage,
+                                discount: _discountPercentage,  // Send the percentage value directly
                                 items: requestItems,
                               );
 
                               if (!context.mounted) return;
 
                               // Show success message
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Invoice ${response.data?.invoiceNumber ?? 'created'} generated for ${selectedParty!.name}!',
-                                  ),
-                                  backgroundColor: Colors.green,
-                                  action: SnackBarAction(
-                                    label: 'View',
-                                    textColor: Colors.white,
-                                    onPressed: () {
-                                      context.push('/invoice/history');
-                                    },
-                                  ),
-                                ),
+                              SnackbarUtils.showSuccess(
+                                context,
+                                'Invoice ${response.data?.invoiceNumber ?? 'created'} generated for ${selectedParty!.name}!',
+                                duration: const Duration(seconds: 4),
                               );
 
                               // Clear the order after invoice generation
@@ -516,11 +509,9 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                               if (!context.mounted) return;
 
                               // Show error message
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Error generating invoice: ${e.toString()}'),
-                                  backgroundColor: Colors.red,
-                                ),
+                              SnackbarUtils.showError(
+                                context,
+                                'Error generating invoice: ${e.toString()}',
                               );
                             }
                           }
@@ -931,12 +922,10 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                     _quantityControllers[product.id]?.dispose();
                     _quantityControllers.remove(product.id);
 
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('${product.name} removed'),
-                        backgroundColor: Colors.red.shade400,
-                        duration: const Duration(seconds: 2),
-                      ),
+                    SnackbarUtils.showWarning(
+                      context,
+                      '${product.name} removed',
+                      duration: const Duration(seconds: 2),
                     );
                   },
                   padding: EdgeInsets.zero,
@@ -1014,12 +1003,10 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                                     quantityController.selection = TextSelection.fromPosition(
                                       TextPosition(offset: quantityController.text.length),
                                     );
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text('Only $stockQty units available in stock'),
-                                        backgroundColor: Colors.orange,
-                                        duration: const Duration(seconds: 2),
-                                      ),
+                                    SnackbarUtils.showWarning(
+                                      context,
+                                      'Only $stockQty units available in stock',
+                                      duration: const Duration(seconds: 2),
                                     );
                                   }
                                 } else if (value.isEmpty || newQty == 0) {
