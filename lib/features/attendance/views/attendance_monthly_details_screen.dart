@@ -70,7 +70,7 @@ class _AttendanceMonthlyDetailsScreenState
     if (_scrollController.position.maxScrollExtent <= 0) return;
 
     // Guard 4: Check if current provider data has next page
-    // This prevents scroll detection when there's no more data to load
+    // This prevents scroll detection when there's no utilities data to load
     if (_currentProvider != null) {
       final currentState = ref.read(_currentProvider!);
       final hasNextPage = currentState.maybeWhen(

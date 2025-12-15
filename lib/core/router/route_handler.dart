@@ -92,6 +92,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final isGoingToChangePassword =
           requestedPath == '/settings/change-password';
       final isGoingToBeatPlan = requestedPath.startsWith('/beat-plan');
+      // final isGoingToMiscWork = requestedPath == '/miscellaneous-work';
+      // final isGoingToUtilities = requestedPath == '/utilities';
 
       // If user is not logged in AND not going to one of the allowed pages...
       if (!isLoggedIn &&
@@ -177,6 +179,18 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         name: 'profile',
         builder: (context, state) => const ProfileScreen(),
       ),
+      // GoRoute(
+      //   path: '/miscellaneous-work',
+      //   name: 'miscellaneous-work',
+      //   builder: (context, state) =>
+      //   const MiscellaneousWorkScreen(),
+      // ),
+      // GoRoute(
+      //   path: '/utilities',
+      //   name: 'utilities',
+      //   builder: (context, state) =>
+      //   const UtilitiesScreen(),
+      // ),
 
       // ========================================
       // ATTENDANCE ROUTES (No Bottom Navigation)
