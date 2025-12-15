@@ -57,7 +57,7 @@ class PartiesViewModel extends _$PartiesViewModel {
             ownerName: apiData.ownerName,
             panVatNumber: '', // Not available in list API
             phoneNumber: '', // Not available in list API
-            fullAddress: apiData.location.address,
+            fullAddress: apiData.location?.address ?? '',
             isActive: true,
           );
         }).toList();

@@ -50,6 +50,41 @@ class _AppBottomNavState extends State<AppBottomNav>
     });
   }
 
+  // Responsive sizing based on screen height
+  double get _verticalPadding {
+    final screenHeight = MediaQuery.of(context).size.height;
+    if (screenHeight < 700) return 3.h;  // Small screens (POCO X3 Pro, etc.)
+    if (screenHeight < 850) return 5.h;  // Medium screens
+    return 8.h;  // Large screens (OnePlus 12, etc.)
+  }
+
+  double get _iconPadding {
+    final screenHeight = MediaQuery.of(context).size.height;
+    if (screenHeight < 700) return 5.sp;
+    if (screenHeight < 850) return 6.sp;
+    return 8.sp;
+  }
+
+  double get _iconSize {
+    final screenHeight = MediaQuery.of(context).size.height;
+    if (screenHeight < 700) return 20.sp;
+    if (screenHeight < 850) return 22.sp;
+    return 24.sp;
+  }
+
+  double get _spacing {
+    final screenHeight = MediaQuery.of(context).size.height;
+    if (screenHeight < 700) return 2.h;
+    if (screenHeight < 850) return 3.h;
+    return 4.h;
+  }
+
+  double get _fontSize {
+    final screenHeight = MediaQuery.of(context).size.height;
+    if (screenHeight < 700) return 9.sp;
+    return 10.sp;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -139,7 +174,7 @@ class _AppBottomNavState extends State<AppBottomNav>
           highlightColor: AppColors.secondary.withValues(alpha: 0.05),
           child: Container(
             height: double.infinity,
-            padding: EdgeInsets.symmetric(vertical: 8.h),
+            padding: EdgeInsets.symmetric(vertical: _verticalPadding),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
@@ -147,7 +182,7 @@ class _AppBottomNavState extends State<AppBottomNav>
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   curve: Curves.easeInOut,
-                  padding: EdgeInsets.all(isActive ? 8.sp : 0),
+                  padding: EdgeInsets.all(isActive ? _iconPadding : 0),
                   decoration: BoxDecoration(
                     color: isActive
                         ? AppColors.secondary.withValues(alpha: 0.12)
@@ -159,23 +194,25 @@ class _AppBottomNavState extends State<AppBottomNav>
                     color: isActive
                         ? AppColors.secondary
                         : AppColors.textSecondary,
-                    size: 24.sp,
+                    size: _iconSize,
                   ),
                 ),
-                SizedBox(height: 4.h),
+                SizedBox(height: _spacing),
                 Text(
                   label,
                   style: TextStyle(
-                    fontSize: 10.sp,
+                    fontSize: _fontSize,
                     fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
                     color: isActive
                         ? AppColors.secondary
                         : AppColors.textSecondary,
                     fontFamily: 'Poppins',
                     letterSpacing: 0.2,
+                    height: 1.0,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
+                  textScaleFactor: 1.0,
                 ),
               ],
             ),

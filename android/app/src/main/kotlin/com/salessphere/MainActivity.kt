@@ -1,4 +1,4 @@
-package com.example.sales_sphere
+package com.salessphere
 
 import io.flutter.embedding.android.FlutterActivity
 

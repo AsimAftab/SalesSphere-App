@@ -39,6 +39,9 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
   // Map to store TextEditingControllers for each product's quantity
   final Map<String, TextEditingController> _quantityControllers = {};
 
+  // Map to store TextEditingControllers for each product's item discount
+  final Map<String, TextEditingController> _itemDiscountControllers = {};
+
   @override
   void initState() {
     super.initState();
@@ -71,6 +74,10 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
     for (var controller in _quantityControllers.values) {
       controller.dispose();
     }
+    // Dispose all item discount controllers
+    for (var controller in _itemDiscountControllers.values) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
@@ -92,6 +99,16 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
       );
     }
     return _quantityControllers[productId]!;
+  }
+
+  // Get or create a TextEditingController for a product's item discount
+  TextEditingController _getItemDiscountController(String productId) {
+    if (!_itemDiscountControllers.containsKey(productId)) {
+      _itemDiscountControllers[productId] = TextEditingController(
+        text: '0',
+      );
+    }
+    return _itemDiscountControllers[productId]!;
   }
 
   void _selectParty(PartyDetails party) {
@@ -456,10 +473,14 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
 
                               // Create invoice items for API request
                               final requestItems = orderItems.map((orderItem) {
+                                final itemDiscountController = _itemDiscountControllers[orderItem.product.id];
+                                final itemDiscount = double.tryParse(itemDiscountController?.text ?? '0') ?? 0.0;
+                                
                                 return CreateInvoiceItemRequest(
                                   productId: orderItem.product.id,
                                   quantity: orderItem.quantity,
-                                  price: orderItem.setPrice,
+                                  price: orderItem.defaultPrice, // Use default price, backend calculates discount
+                                  discount: itemDiscount,
                                 );
                               }).toList();
 
@@ -504,6 +525,11 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                                   controller.dispose();
                                 }
                                 _quantityControllers.clear();
+                                // Clear item discount controllers
+                                for (var controller in _itemDiscountControllers.values) {
+                                  controller.dispose();
+                                }
+                                _itemDiscountControllers.clear();
                               });
                             } catch (e) {
                               if (!context.mounted) return;
@@ -512,6 +538,94 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                               SnackbarUtils.showError(
                                 context,
                                 'Error generating invoice: ${e.toString()}',
+                              );
+                            }
+                          }
+                              : null,
+                          size: ButtonSize.large,
+                        );
+                      },
+                    ),
+
+                    SizedBox(height: 16.h),
+
+                    // Generate Estimates Button
+                    Builder(
+                      builder: (context) {
+                        final canGenerate = selectedParty != null &&
+                            orderItems.isNotEmpty;
+                        final createEstimateState = ref.watch(createEstimateProvider);
+                        final isLoading = createEstimateState.isLoading;
+
+                        return PrimaryButton(
+                          label: isLoading ? 'Creating Estimate...' : 'Generate Estimates',
+                          onPressed: (canGenerate && !isLoading)
+                              ? () async {
+                            try {
+                              // Create estimate items for API request
+                              final requestItems = orderItems.map((orderItem) {
+                                final itemDiscountController = _itemDiscountControllers[orderItem.product.id];
+                                final itemDiscount = double.tryParse(itemDiscountController?.text ?? '0') ?? 0.0;
+                                
+                                return CreateEstimateItemRequest(
+                                  productId: orderItem.product.id,
+                                  quantity: orderItem.quantity,
+                                  price: orderItem.defaultPrice, // Use default price, backend calculates discount
+                                  discount: itemDiscount,
+                                );
+                              }).toList();
+
+                              // Call API to create estimate
+                              final response = await ref.read(createEstimateProvider.notifier).createEstimate(
+                                partyId: selectedParty!.id,
+                                discount: _discountPercentage,
+                                items: requestItems,
+                              );
+
+                              if (!context.mounted) return;
+
+                              // Show success message
+                              SnackbarUtils.showSuccess(
+                                context,
+                                'Estimate ${response.data?.estimateNumber ?? 'created'} generated for ${selectedParty!.name}!',
+                                duration: const Duration(seconds: 4),
+                              );
+
+                              // Clear the order after estimate generation
+                              ref.read(orderControllerProvider.notifier).clearOrder();
+
+                              // Clear form fields
+                              setState(() {
+                                selectedParty = null;
+                                _partySearchController.clear();
+                                _ownerNameController.clear();
+                                _deliveryDateController.clear();
+                                _discountController.clear();
+                                _discountPercentage = 0.0;
+                                _searchQuery = '';
+                                // Clear price controllers
+                                for (var controller in _priceControllers.values) {
+                                  controller.dispose();
+                                }
+                                _priceControllers.clear();
+                                // Clear quantity controllers
+                                for (var controller in _quantityControllers.values) {
+                                  controller.dispose();
+                                }
+                                _quantityControllers.clear();
+                                // Clear item discount controllers
+                                for (var controller in _itemDiscountControllers.values) {
+                                  controller.dispose();
+                                }
+                                _itemDiscountControllers.clear();
+                              });
+                            } catch (e) {
+                              if (!context.mounted) return;
+
+                              // Show error message
+                              SnackbarUtils.showError(
+                                context,
+                                'Error generating estimate: ${e.toString()}',
                               );
                             }
                           }
@@ -921,6 +1035,8 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                     _priceControllers.remove(product.id);
                     _quantityControllers[product.id]?.dispose();
                     _quantityControllers.remove(product.id);
+                    _itemDiscountControllers[product.id]?.dispose();
+                    _itemDiscountControllers.remove(product.id);
 
                     SnackbarUtils.showWarning(
                       context,
@@ -1015,6 +1131,8 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                                   _quantityControllers.remove(product.id);
                                   _priceControllers[product.id]?.dispose();
                                   _priceControllers.remove(product.id);
+                                  _itemDiscountControllers[product.id]?.dispose();
+                                  _itemDiscountControllers.remove(product.id);
                                 }
                               },
                             ),
@@ -1085,6 +1203,150 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                                   ref.read(orderControllerProvider.notifier).updateSetPrice(product.id, newPrice);
                                 }
                               },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                SizedBox(height: 12.h),
+
+                // Item Discount Row
+                Row(
+                  children: [
+                    // Discount Percentage
+                    Expanded(
+                      flex: 2,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Item Discount (%)',
+                            style: TextStyle(
+                              fontSize: 11.sp,
+                              color: Colors.grey.shade600,
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          SizedBox(height: 6.h),
+                          SizedBox(
+                            height: 40.h,
+                            child: TextFormField(
+                              controller: _getItemDiscountController(product.id),
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                              ],
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.green.shade700,
+                                fontFamily: 'Poppins',
+                              ),
+                              decoration: InputDecoration(
+                                suffixText: '%',
+                                suffixStyle: TextStyle(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.green.shade700,
+                                  fontFamily: 'Poppins',
+                                ),
+                                filled: true,
+                                fillColor: Colors.green.shade50,
+                                contentPadding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  borderSide: BorderSide(color: Colors.green.shade300, width: 1),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  borderSide: BorderSide(color: Colors.green.shade300, width: 1),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  borderSide: BorderSide(color: Colors.green.shade700, width: 2),
+                                ),
+                              ),
+                              onChanged: (value) {
+                                setState(() {
+                                  final discount = double.tryParse(value) ?? 0.0;
+                                  final clampedDiscount = discount.clamp(0.0, 100.0);
+                                  
+                                  // Calculate discounted price
+                                  final originalPrice = orderItemData.defaultPrice;
+                                  final discountedPrice = originalPrice * (1 - clampedDiscount / 100);
+                                  
+                                  // Update price controller
+                                  _getPriceController(product.id, discountedPrice).text = 
+                                      discountedPrice.toStringAsFixed(2);
+                                  
+                                  // Update order
+                                  ref.read(orderControllerProvider.notifier).updateSetPrice(product.id, discountedPrice);
+                                  
+                                  // Clamp the input if needed
+                                  if (discount != clampedDiscount) {
+                                    _getItemDiscountController(product.id).text = clampedDiscount.toStringAsFixed(2);
+                                  }
+                                });
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    SizedBox(width: 12.w),
+
+                    // Final Price after discount
+                    Expanded(
+                      flex: 3,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Final Price (per unit)',
+                            style: TextStyle(
+                              fontSize: 11.sp,
+                              color: Colors.grey.shade600,
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          SizedBox(height: 6.h),
+                          Container(
+                            height: 40.h,
+                            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(10.r),
+                              border: Border.all(color: Colors.grey.shade300, width: 1),
+                            ),
+                            child: Row(
+                              children: [
+                                Text(
+                                  '₹ ',
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.grey.shade700,
+                                    fontFamily: 'Poppins',
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    orderItemData.setPrice.toStringAsFixed(2),
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.grey.shade700,
+                                      fontFamily: 'Poppins',
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],

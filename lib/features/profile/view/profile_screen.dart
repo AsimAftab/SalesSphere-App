@@ -132,28 +132,37 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       children: [
         Stack(
           children: [
-            // Avatar Circle
-            Container(
-              width: 120.w,
-              height: 120.h,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: Colors.white,
-                  width: 4.w,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
+            // Avatar Circle - Tappable for preview
+            GestureDetector(
+              onTap: () => _showAvatarPreview(context, profile),
+              child: Container(
+                padding: EdgeInsets.all(4.w),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.textOrange,
+                    width: 3.w,
                   ),
-                ],
-              ),
-              child: ClipOval(
-                child: profile.avatarUrl != null
-                    ? _buildProfileImage(profile.avatarUrl!, profile.name)
-                    : _buildAvatarFallback(profile.name),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Container(
+                  width: 112.w,
+                  height: 112.h,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                  ),
+                  child: ClipOval(
+                    child: profile.avatarUrl != null
+                        ? _buildProfileImage(profile.avatarUrl!, profile.name)
+                        : _buildAvatarFallback(profile.name),
+                  ),
+                ),
               ),
             ),
 
@@ -517,6 +526,98 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  /// Show Avatar Preview Dialog
+  void _showAvatarPreview(BuildContext context, Profile profile) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.all(16.w),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Close button
+            Align(
+              alignment: Alignment.topRight,
+              child: GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  padding: EdgeInsets.all(8.w),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.close,
+                    color: Colors.white,
+                    size: 24.sp,
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: 16.h),
+            // Avatar preview
+            Hero(
+              tag: 'profile_avatar',
+              child: Container(
+                padding: EdgeInsets.all(6.w),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.textOrange,
+                    width: 4.w,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: Container(
+                  width: 268.w,
+                  height: 268.w,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                  ),
+                  child: ClipOval(
+                    child: profile.avatarUrl != null
+                        ? _buildProfileImage(profile.avatarUrl!, profile.name)
+                        : _buildAvatarFallback(profile.name),
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: 24.h),
+            // Name
+            Text(
+              profile.name,
+              style: TextStyle(
+                fontSize: 22.sp,
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+            SizedBox(height: 8.h),
+            // Role
+            Text(
+              profile.role,
+              style: TextStyle(
+                fontSize: 14.sp,
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w400,
+                color: Colors.white70,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
