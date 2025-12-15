@@ -11,7 +11,7 @@ echo.
 pause
 
 echo Uninstalling app...
-adb uninstall com.example.sales_sphere
+adb uninstall com.salessphere
 
 echo Cleaning Flutter build...
 flutter clean

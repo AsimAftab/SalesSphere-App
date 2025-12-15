@@ -8,18 +8,28 @@ import '../models/invoice.models.dart';
 import '../../../core/utils/logger.dart';
 
 class InvoicePdfService {
-  /// Generate a beautiful commercial invoice PDF
+  /// Generate a beautiful commercial invoice or estimate PDF
   static Future<File> generateInvoicePdf(InvoiceDetailsData invoice) async {
     final pdf = pw.Document();
-    final deliveryDate = DateTime.parse(invoice.expectedDeliveryDate);
+    final deliveryDate = invoice.expectedDeliveryDate != null 
+        ? DateTime.parse(invoice.expectedDeliveryDate!)
+        : null;
     final createdDate = DateTime.parse(invoice.createdAt);
     final dateFormat = DateFormat('dd MMM yyyy');
+    
+    // Determine if this is an estimate
+    final isEstimate = invoice.isEstimate ?? false;
 
     // Calculate totals
-    final subtotal = invoice.items.fold<double>(0.0, (sum, item) => sum + item.total);
+    final subtotal = invoice.subtotal ?? invoice.items.fold<double>(0.0, (sum, item) => sum + item.total);
     final discountPercent = invoice.discount ?? 0.0;
     final discountAmount = invoice.discountAmount ?? (subtotal * discountPercent / 100);
     final total = invoice.totalAmount ?? (subtotal - discountAmount);
+    
+    // Define colors based on type
+    final primaryColor = isEstimate ? PdfColor.fromHex('#F57C00') : PdfColor.fromHex('#1976D2');
+    final lightColor = isEstimate ? PdfColor.fromHex('#FFF3E0') : PdfColor.fromHex('#E3F2FD');
+    final borderColor = isEstimate ? PdfColor.fromHex('#FFB74D') : PdfColor.fromHex('#90CAF9');
 
     pdf.addPage(
       pw.MultiPage(
@@ -27,7 +37,7 @@ class InvoicePdfService {
         margin: const pw.EdgeInsets.all(32),
         build: (context) => [
           // Header
-          _buildHeader(invoice, createdDate, dateFormat),
+          _buildHeader(invoice, createdDate, dateFormat, primaryColor, isEstimate),
           pw.SizedBox(height: 30),
 
           // Organization and Party Details
@@ -45,16 +55,16 @@ class InvoicePdfService {
           ),
           pw.SizedBox(height: 30),
 
-          // Invoice Details
-          _buildInvoiceInfo(invoice, deliveryDate, dateFormat),
+          // Invoice/Estimate Details
+          _buildInvoiceInfo(invoice, deliveryDate, dateFormat, lightColor, borderColor, isEstimate),
           pw.SizedBox(height: 30),
 
           // Items Table
-          _buildItemsTable(invoice.items),
+          _buildItemsTable(invoice.items, primaryColor),
           pw.SizedBox(height: 30),
 
           // Pricing Summary
-          _buildPricingSummary(subtotal, discountPercent, discountAmount, total),
+          _buildPricingSummary(subtotal, discountPercent, discountAmount, total, primaryColor),
           pw.SizedBox(height: 40),
 
           // Footer
@@ -64,7 +74,10 @@ class InvoicePdfService {
     );
 
     // Save PDF to SalesSphere folder
-    final file = await _savePdfToSalesSpherFolder(invoice.invoiceNumber, await pdf.save());
+    final file = await _savePdfToSalesSpherFolder(
+        invoice.invoiceNumber ?? 'Invoice', 
+        await pdf.save()
+    );
     return file;
   }
 
@@ -230,11 +243,13 @@ class InvoicePdfService {
     InvoiceDetailsData invoice,
     DateTime createdDate,
     DateFormat dateFormat,
+    PdfColor primaryColor,
+    bool isEstimate,
   ) {
     return pw.Container(
       padding: const pw.EdgeInsets.all(20),
       decoration: pw.BoxDecoration(
-        color: PdfColor.fromHex('#1976D2'),
+        color: primaryColor,
         borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
       ),
       child: pw.Row(
@@ -244,7 +259,7 @@ class InvoicePdfService {
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Text(
-                'INVOICE',
+                isEstimate ? 'ESTIMATE' : 'INVOICE',
                 style: pw.TextStyle(
                   fontSize: 32,
                   fontWeight: pw.FontWeight.bold,
@@ -253,7 +268,9 @@ class InvoicePdfService {
               ),
               pw.SizedBox(height: 4),
               pw.Text(
-                invoice.invoiceNumber,
+                isEstimate 
+                    ? (invoice.estimateNumber ?? 'N/A')
+                    : (invoice.invoiceNumber ?? 'N/A'),
                 style: const pw.TextStyle(
                   fontSize: 18,
                   color: PdfColors.white,
@@ -388,15 +405,18 @@ class InvoicePdfService {
 
   static pw.Widget _buildInvoiceInfo(
     InvoiceDetailsData invoice,
-    DateTime deliveryDate,
+    DateTime? deliveryDate,
     DateFormat dateFormat,
+    PdfColor lightColor,
+    PdfColor borderColor,
+    bool isEstimate,
   ) {
     return pw.Container(
       padding: const pw.EdgeInsets.all(16),
       decoration: pw.BoxDecoration(
-        color: PdfColor.fromHex('#FFF3E0'),
+        color: lightColor,
         borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
-        border: pw.Border.all(color: PdfColor.fromHex('#FFB74D')),
+        border: pw.Border.all(color: borderColor),
       ),
       child: pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -411,7 +431,9 @@ class InvoicePdfService {
           ),
           pw.SizedBox(height: 6),
           pw.Text(
-            DateFormat('EEEE, MMMM dd, yyyy').format(deliveryDate),
+            deliveryDate != null 
+                ? DateFormat('EEEE, MMMM dd, yyyy').format(deliveryDate)
+                : 'Not set',
             style: pw.TextStyle(
               fontSize: 14,
               fontWeight: pw.FontWeight.bold,
@@ -423,20 +445,21 @@ class InvoicePdfService {
     );
   }
 
-  static pw.Widget _buildItemsTable(List<InvoiceItemData> items) {
+  static pw.Widget _buildItemsTable(List<InvoiceItemData> items, PdfColor primaryColor) {
     return pw.Table(
       border: pw.TableBorder.all(color: PdfColors.grey300),
       children: [
         // Header
         pw.TableRow(
           decoration: pw.BoxDecoration(
-            color: PdfColor.fromHex('#1976D2'),
+            color: primaryColor,
           ),
           children: [
             _buildTableHeader('#'),
             _buildTableHeader('Item Description'),
             _buildTableHeader('Qty'),
             _buildTableHeader('Unit Price'),
+            _buildTableHeader('Discount'),
             _buildTableHeader('Amount'),
           ],
         ),
@@ -453,6 +476,7 @@ class InvoicePdfService {
               _buildTableCell(item.productName),
               _buildTableCell(item.quantity.toString(), isCenter: true),
               _buildTableCell('Rs. ${item.price.toStringAsFixed(2)}', isRight: true),
+              _buildTableCell(item.discount > 0 ? '${item.discount.toStringAsFixed(1)}%' : '-', isCenter: true),
               _buildTableCell('Rs. ${item.total.toStringAsFixed(2)}', isRight: true),
             ],
           );
@@ -500,16 +524,21 @@ class InvoicePdfService {
     double discountPercent,
     double discountAmount,
     double total,
+    PdfColor primaryColor,
   ) {
+    final lightColor = primaryColor == PdfColor.fromHex('#F57C00') 
+        ? PdfColor.fromHex('#FFF3E0') 
+        : PdfColor.fromHex('#E3F2FD');
+        
     return pw.Container(
       alignment: pw.Alignment.centerRight,
       child: pw.Container(
         width: 280,
         padding: const pw.EdgeInsets.all(16),
         decoration: pw.BoxDecoration(
-          color: PdfColor.fromHex('#E3F2FD'),
+          color: lightColor,
           borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
-          border: pw.Border.all(color: PdfColor.fromHex('#1976D2')),
+          border: pw.Border.all(color: primaryColor),
         ),
         child: pw.Column(
           children: [
@@ -523,7 +552,7 @@ class InvoicePdfService {
               ),
             ],
             pw.SizedBox(height: 12),
-            pw.Divider(color: PdfColor.fromHex('#1976D2'), thickness: 2),
+            pw.Divider(color: primaryColor, thickness: 2),
             pw.SizedBox(height: 12),
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -533,7 +562,7 @@ class InvoicePdfService {
                   style: pw.TextStyle(
                     fontSize: 16,
                     fontWeight: pw.FontWeight.bold,
-                    color: PdfColor.fromHex('#1976D2'),
+                    color: primaryColor,
                   ),
                 ),
                 pw.Text(
@@ -541,7 +570,7 @@ class InvoicePdfService {
                   style: pw.TextStyle(
                     fontSize: 18,
                     fontWeight: pw.FontWeight.bold,
-                    color: PdfColor.fromHex('#1976D2'),
+                    color: primaryColor,
                   ),
                 ),
               ],

@@ -29,7 +29,9 @@ import 'package:sales_sphere/features/beat_plan/views/beat_plan_details_screen.d
 import 'package:sales_sphere/features/auth/models/login.models.dart';
 import 'package:sales_sphere/features/splash/views/splash_screen.dart';
 import 'package:sales_sphere/features/onboarding/views/onboarding_screen.dart';
-import '../../features/invoice/views/invoice_history_screen.dart';
+import '../../features/invoice/views/history_screen.dart';
+import '../../features/invoice/views/invoice_details_screen.dart';
+import '../../features/invoice/views/estimate_details_screen.dart';
 import '../providers/user_controller.dart';
 import '../providers/app_startup.dart';
 
@@ -398,7 +400,23 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/invoice/history',
             name: 'invoice_history',
-            builder: (context, state) => const InvoiceHistoryScreen(),
+            builder: (context, state) => const HistoryScreen(),
+          ),
+          GoRoute(
+            path: '/invoice/details/:id',
+            name: 'invoice_details',
+            builder: (context, state) {
+              final id = state.pathParameters['id']!;
+              return InvoiceDetailsScreen(invoiceId: id);
+            },
+          ),
+          GoRoute(
+            path: '/estimate/details/:id',
+            name: 'estimate_details',
+            builder: (context, state) {
+              final id = state.pathParameters['id']!;
+              return EstimateDetailsScreen(estimateId: id);
+            },
           ),
 
           // Parties Tab (Keep for backwards compatibility)

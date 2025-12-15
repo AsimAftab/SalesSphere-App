@@ -52,22 +52,51 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
   @override
   void initState() {
     super.initState();
-    _selectedLocation = widget.initialLocation ?? _defaultLocation;
+    _initializeLocation(widget.initialLocation, updateControllers: false);
+  }
 
-    // Set initial marker if location exists
-    if (_selectedLocation != null) {
-      _markers.add(
-        Marker(
-          markerId: const MarkerId('selected_location'),
-          position: _selectedLocation!,
-          infoWindow: const InfoWindow(title: 'Selected Location'),
-        ),
-      );
+  @override
+  void didUpdateWidget(covariant LocationPickerWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Check if initialLocation changed from null to a valid value
+    // This handles the case when parent widget loads data asynchronously
+    if (widget.initialLocation != null && oldWidget.initialLocation == null) {
+      // Defer updates to after the current build frame to avoid setState during build
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _initializeLocation(widget.initialLocation, updateControllers: false);
+        // Move camera to the new location
+        _mapController?.animateCamera(
+          CameraUpdate.newCameraPosition(
+            CameraPosition(target: widget.initialLocation!, zoom: 15.0),
+          ),
+        );
+      });
     }
+  }
 
-    // Set initial lat/long if provided
-    if (widget.latitudeController != null &&
-        widget.longitudeController != null) {
+  void _initializeLocation(LatLng? location, {bool updateControllers = false}) {
+    setState(() {
+      _selectedLocation = location ?? _defaultLocation;
+
+      // Set initial marker if location exists
+      _markers.clear();
+      if (_selectedLocation != null) {
+        _markers.add(
+          Marker(
+            markerId: const MarkerId('selected_location'),
+            position: _selectedLocation!,
+            infoWindow: const InfoWindow(title: 'Selected Location'),
+          ),
+        );
+      }
+    });
+
+    // Only update controllers if explicitly requested (avoids triggering Form rebuild during build)
+    if (updateControllers &&
+        widget.latitudeController != null &&
+        widget.longitudeController != null &&
+        location != null) {
       widget.latitudeController!.text = _selectedLocation!.latitude
           .toStringAsFixed(6);
       widget.longitudeController!.text = _selectedLocation!.longitude

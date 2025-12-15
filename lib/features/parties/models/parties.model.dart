@@ -27,7 +27,7 @@ abstract class PartyApiData with _$PartyApiData {
     @JsonKey(name: '_id') required String id,
     required String partyName,
     required String ownerName,
-    required PartyLocation location,
+    PartyLocation? location,
   }) = _PartyApiData;
 
   factory PartyApiData.fromJson(Map<String, dynamic> json) =>
@@ -251,7 +251,7 @@ abstract class PartyListItem with _$PartyListItem {
       id: apiData.id,
       name: apiData.partyName,
       ownerName: apiData.ownerName,
-      fullAddress: apiData.location.address,
+      fullAddress: apiData.location?.address ?? '',
       phoneNumber: null,
       isActive: true,
     );

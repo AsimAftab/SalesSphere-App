@@ -291,7 +291,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                             return PrimaryButton(
                               label: 'Send Reset Link',
                               onPressed: isLoading ? null : _handleSubmit,
-                              size: ButtonSize.large,
+                              size: ButtonSize.medium,
                               isLoading: isLoading,
                             );
                           },
@@ -307,7 +307,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                               'Remember your password? ',
                               style: TextStyle(
                                 color: Colors.grey.shade600,
-                                fontSize: 15.sp,
+                                fontSize: 14.sp,
                                 fontFamily: 'Poppins',
                               ),
                             ),
@@ -322,7 +322,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                                 'Login',
                                 style: TextStyle(
                                   color: AppColors.secondary,
-                                  fontSize: 15.sp,
+                                  fontSize: 14.sp,
                                   fontFamily: 'Poppins',
                                   fontWeight: FontWeight.w600,
                                   decoration: TextDecoration.underline,

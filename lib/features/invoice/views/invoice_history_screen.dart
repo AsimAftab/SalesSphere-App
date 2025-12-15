@@ -134,7 +134,9 @@ class InvoiceHistoryScreen extends ConsumerWidget {
   Widget _buildInvoiceCard(BuildContext context, WidgetRef ref, InvoiceHistoryItem invoice) {
     final dateFormat = DateFormat('MMM dd, yyyy');
     final timeFormat = DateFormat('hh:mm a');
-    final deliveryDate = DateTime.parse(invoice.expectedDeliveryDate);
+    final deliveryDate = invoice.expectedDeliveryDate != null 
+        ? DateTime.parse(invoice.expectedDeliveryDate!)
+        : null;
     final createdDate = DateTime.parse(invoice.createdAt);
 
     return GestureDetector(
@@ -171,7 +173,7 @@ class InvoiceHistoryScreen extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(8.r),
                     ),
                     child: Text(
-                      invoice.invoiceNumber,
+                      invoice.invoiceNumber ?? 'N/A',
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w700,
@@ -335,7 +337,9 @@ class InvoiceHistoryScreen extends ConsumerWidget {
                         SizedBox(width: 6.w),
                         Flexible(
                           child: Text(
-                            'Delivery: ${dateFormat.format(deliveryDate)}',
+                            deliveryDate != null 
+                                ? 'Delivery: ${dateFormat.format(deliveryDate)}'
+                                : 'Delivery: Not set',
                             style: TextStyle(
                               fontSize: 12.sp,
                               color: Colors.grey.shade600,
@@ -349,7 +353,7 @@ class InvoiceHistoryScreen extends ConsumerWidget {
                   ),
                   // PDF Download Button
                   GestureDetector(
-                    onTap: () => _downloadInvoicePdf(context, ref, invoice.id, invoice.invoiceNumber),
+                    onTap: () => _downloadInvoicePdf(context, ref, invoice.id, invoice.invoiceNumber ?? 'Invoice'),
                     child: Container(
                       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
                       decoration: BoxDecoration(
@@ -551,7 +555,9 @@ class InvoicePreviewSheet extends ConsumerWidget {
     final dateFormat = DateFormat('MMM dd, yyyy');
     final timeFormat = DateFormat('hh:mm a');
     final invoiceDetailsAsync = ref.watch(fetchInvoiceDetailsProvider(invoiceId));
-    final deliveryDate = DateTime.parse(invoice.expectedDeliveryDate);
+    final deliveryDate = invoice.expectedDeliveryDate != null 
+        ? DateTime.parse(invoice.expectedDeliveryDate!)
+        : null;
     final createdDate = DateTime.parse(invoice.createdAt);
 
     return Container(
@@ -616,7 +622,7 @@ class InvoicePreviewSheet extends ConsumerWidget {
                             child: Column(
                               children: [
                                 Text(
-                                  invoice.invoiceNumber,
+                                  invoice.invoiceNumber ?? 'Invoice',
                                   style: TextStyle(
                                     fontSize: 24.sp,
                                     fontWeight: FontWeight.w700,
@@ -758,7 +764,9 @@ class InvoicePreviewSheet extends ConsumerWidget {
                                       ),
                                       SizedBox(height: 2.h),
                                       Text(
-                                        DateFormat('EEEE, MMMM dd, yyyy').format(deliveryDate),
+                                        deliveryDate != null
+                                            ? DateFormat('EEEE, MMMM dd, yyyy').format(deliveryDate)
+                                            : 'Not set',
                                         style: TextStyle(
                                           fontSize: 14.sp,
                                           fontWeight: FontWeight.w700,
@@ -825,7 +833,7 @@ class InvoicePreviewSheet extends ConsumerWidget {
                             width: double.infinity,
                             child: ElevatedButton.icon(
                               onPressed: () async {
-                                await _downloadPdf(context, details, invoice.invoiceNumber);
+                                await _downloadPdf(context, details, invoice.invoiceNumber ?? 'Invoice');
                               },
                               icon: Icon(Icons.download_rounded, size: 20.sp),
                               label: Text(

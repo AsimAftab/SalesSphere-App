@@ -238,3 +238,258 @@ class CreateInvoice extends _$CreateInvoice {
     return state.value!;
   }
 }
+
+// ========================================
+// CREATE ESTIMATE PROVIDER
+// ========================================
+@riverpod
+class CreateEstimate extends _$CreateEstimate {
+  @override
+  FutureOr<CreateEstimateResponse?> build() {
+    return null;
+  }
+
+  /// Create a new estimate via API
+  Future<CreateEstimateResponse> createEstimate({
+    required String partyId,
+    required double discount,
+    required List<CreateEstimateItemRequest> items,
+  }) async {
+    state = const AsyncValue.loading();
+
+    state = await AsyncValue.guard(() async {
+      final dio = ref.read(dioClientProvider);
+
+      final request = CreateEstimateRequest(
+        partyId: partyId,
+        discount: discount,
+        items: items,
+      );
+
+      AppLogger.d('Creating estimate with request: ${request.toJson()}');
+
+      final response = await dio.post(
+        ApiEndpoints.createEstimate,
+        data: request.toJson(),
+      );
+
+      AppLogger.d('Estimate created successfully: ${response.data}');
+      AppLogger.d('Response data type: ${response.data.runtimeType}');
+
+      // Parse response data - handle both String and Map
+      final Map<String, dynamic> responseData;
+      if (response.data is String) {
+        responseData = jsonDecode(response.data as String) as Map<String, dynamic>;
+      } else if (response.data is Map<String, dynamic>) {
+        responseData = response.data as Map<String, dynamic>;
+      } else {
+        throw Exception('Unexpected response type: ${response.data.runtimeType}');
+      }
+
+      final estimateResponse = CreateEstimateResponse.fromJson(responseData);
+
+      // Check if response indicates an error
+      if (estimateResponse.status == 'error' || estimateResponse.success == false) {
+        final errorMessage = estimateResponse.message ?? 'Failed to create estimate';
+        AppLogger.e('Estimate creation failed: $errorMessage');
+        throw Exception(errorMessage);
+      }
+
+      // Check if data is null
+      if (estimateResponse.data == null) {
+        AppLogger.e('Estimate creation failed: No data in response');
+        throw Exception('No data in response');
+      }
+
+      return estimateResponse;
+    });
+
+    // If there's an error, rethrow it
+    if (state.hasError) {
+      throw state.error!;
+    }
+
+    return state.value!;
+  }
+}
+
+// ========================================
+// ESTIMATE HISTORY PROVIDER (Fetch from API)
+// ========================================
+@riverpod
+class EstimateHistory extends _$EstimateHistory {
+  bool _isFetching = false;
+
+  @override
+  Future<List<EstimateHistoryItem>> build() async {
+    // Keep alive for 60 seconds (prevents disposal on tab switch)
+    final link = ref.keepAlive();
+    Timer(const Duration(seconds: 60), () {
+      link.close();
+    });
+
+    // Fetch estimate history - Global wrapper handles connectivity
+    return fetchEstimateHistory();
+  }
+
+  /// Fetch estimate history from API
+  Future<List<EstimateHistoryItem>> fetchEstimateHistory() async {
+    // Guard: prevent concurrent fetches
+    if (_isFetching) {
+      AppLogger.w('⚠️ Already fetching estimates, skipping duplicate request');
+      throw Exception('Fetch already in progress');
+    }
+
+    _isFetching = true;
+    try {
+      final dio = ref.read(dioClientProvider);
+
+      AppLogger.d('Fetching estimate history...');
+
+      final response = await dio.get(ApiEndpoints.estimatesHistory);
+
+      AppLogger.d('Estimate history response: ${response.data}');
+
+      // Parse response data - handle both String and Map
+      final Map<String, dynamic> responseData;
+      if (response.data is String) {
+        responseData = jsonDecode(response.data as String) as Map<String, dynamic>;
+      } else if (response.data is Map<String, dynamic>) {
+        responseData = response.data as Map<String, dynamic>;
+      } else {
+        throw Exception('Unexpected response type: ${response.data.runtimeType}');
+      }
+
+      final historyResponse = EstimateHistoryResponse.fromJson(responseData);
+
+      AppLogger.d('Fetched ${historyResponse.count} estimates');
+
+      return historyResponse.data;
+    } catch (e, stackTrace) {
+      AppLogger.e('Error fetching estimate history: $e\n$stackTrace');
+      rethrow;
+    } finally {
+      _isFetching = false;
+    }
+  }
+
+  /// Refresh estimate history
+  Future<void> refresh() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() => fetchEstimateHistory());
+  }
+
+  /// Add estimate to history (optimistic update)
+  void addEstimateOptimistic(EstimateHistoryItem item) {
+    state.whenData((estimates) {
+      state = AsyncValue.data([item, ...estimates]);
+    });
+  }
+}
+
+// ========================================
+// FETCH ESTIMATE DETAILS PROVIDER
+// ========================================
+@riverpod
+Future<InvoiceDetailsData?> fetchEstimateDetails(
+  Ref ref,
+  String estimateId,
+) async {
+  final dio = ref.read(dioClientProvider);
+
+  try {
+    AppLogger.d('Fetching estimate details for ID: $estimateId');
+
+    final response = await dio.get(ApiEndpoints.estimateDetails(estimateId));
+
+    AppLogger.d('Estimate details response: ${response.data}');
+
+    // Parse response data - handle both String and Map
+    final Map<String, dynamic> responseData;
+    if (response.data is String) {
+      responseData = jsonDecode(response.data as String) as Map<String, dynamic>;
+    } else if (response.data is Map<String, dynamic>) {
+      responseData = response.data as Map<String, dynamic>;
+    } else {
+      throw Exception('Unexpected response type: ${response.data.runtimeType}');
+    }
+
+    final detailsResponse = FetchInvoiceDetailsResponse.fromJson(responseData);
+
+    AppLogger.d('Estimate details fetched successfully');
+
+    return detailsResponse.data;
+  } catch (e, stackTrace) {
+    AppLogger.e('Error fetching estimate details: $e\n$stackTrace');
+    rethrow;
+  }
+}
+
+// ========================================
+// CONVERT ESTIMATE TO INVOICE PROVIDER
+// ========================================
+@riverpod
+class ConvertEstimate extends _$ConvertEstimate {
+  @override
+  FutureOr<ConvertEstimateResponse?> build() => null;
+
+  Future<ConvertEstimateResponse> convertToInvoice(
+    String estimateId,
+    String expectedDeliveryDate,
+  ) async {
+    state = const AsyncValue.loading();
+
+    try {
+      final dio = ref.read(dioClientProvider);
+
+      AppLogger.d('Converting estimate $estimateId to invoice...');
+
+      final requestBody = ConvertEstimateRequest(
+        expectedDeliveryDate: expectedDeliveryDate,
+      ).toJson();
+
+      final response = await dio.post(
+        ApiEndpoints.convertEstimateToInvoice(estimateId),
+        data: requestBody,
+      );
+
+      AppLogger.d('Convert estimate response: ${response.data}');
+
+      // Parse response data
+      final Map<String, dynamic> responseData;
+      if (response.data is String) {
+        responseData = jsonDecode(response.data as String) as Map<String, dynamic>;
+      } else if (response.data is Map<String, dynamic>) {
+        responseData = response.data as Map<String, dynamic>;
+      } else {
+        throw Exception('Unexpected response type: ${response.data.runtimeType}');
+      }
+
+      final convertResponse = ConvertEstimateResponse.fromJson(responseData);
+
+      // Check if conversion was successful
+      if (!convertResponse.success) {
+        throw Exception(convertResponse.message);
+      }
+
+      // Only update state if still mounted
+      if (ref.mounted) {
+        state = AsyncValue.data(convertResponse);
+      }
+
+      AppLogger.d('✅ Estimate converted successfully');
+
+      return convertResponse;
+    } catch (e, stackTrace) {
+      AppLogger.e('❌ Error converting estimate: $e');
+      
+      // Only update state if still mounted
+      if (ref.mounted) {
+        state = AsyncValue.error(e, stackTrace);
+      }
+      
+      rethrow;
+    }
+  }
+}
+

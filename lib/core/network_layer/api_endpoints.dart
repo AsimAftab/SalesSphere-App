@@ -71,6 +71,12 @@ class ApiEndpoints {
   static String updateInvoice(String id) => '/api/v1/invoices/$id';
   static String deleteInvoice(String id) => '/api/v1/invoices/$id';
 
+  // Estimate Endpoints
+  static const String createEstimate = '/api/v1/invoices/estimates';
+  static const String estimatesHistory = '/api/v1/invoices/estimates';
+  static String estimateDetails(String id) => '/api/v1/invoices/estimates/$id';
+  static String convertEstimateToInvoice(String id) => '/api/v1/invoices/estimates/$id/convert';
+
   // Attendance Endpoints (Final)
   static const String attendanceTodayStatus = '/api/v1/attendance/status/today';
   static const String attendanceCheckIn = '/api/v1/attendance/check-in';

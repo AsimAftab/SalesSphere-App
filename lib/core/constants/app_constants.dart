@@ -5,7 +5,7 @@ class AppConstants {
   // App Info
   static const String appName = 'Sales Sphere';
   static const String appVersion = '1.0.0';
-  static const String packageName = 'com.example.sales_sphere';
+  static const String packageName = 'com.salessphere';
 
   // Timeouts
   static const Duration apiTimeout = Duration(seconds: 30);
