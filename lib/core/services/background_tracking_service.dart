@@ -521,7 +521,7 @@ class BackgroundTrackingService {
         ? '📍 $currentAddress\n$distanceKm km • $durationStr'
         : '📍 Tracking your location\n$distanceKm km • $durationStr';
 
-    // Build expanded content with more details
+    // Build expanded content with utilities details
     final bigText = '''
 📍 Current Location: ${currentAddress ?? 'Getting location...'}
 

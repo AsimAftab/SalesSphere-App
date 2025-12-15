@@ -671,18 +671,18 @@ class AttendanceSearchViewModel extends _$AttendanceSearchViewModel {
     }
   }
 
-  /// Load more results (pagination)
+  /// Load utilities results (pagination)
   Future<void> loadMore() async {
     final current = state.value;
 
     // Guard: Don't load if no current data or no next page
     if (current == null) {
-      AppLogger.w('⚠️ Cannot load more: No current state');
+      AppLogger.w('⚠️ Cannot load utilities: No current state');
       return;
     }
 
     if (!current.pagination.hasNextPage) {
-      AppLogger.i('ℹ️ No more pages to load (total: ${current.pagination.total})');
+      AppLogger.i('ℹ️ No utilities pages to load (total: ${current.pagination.total})');
       return;
     }
 
@@ -693,7 +693,7 @@ class AttendanceSearchViewModel extends _$AttendanceSearchViewModel {
     }
 
     try {
-      AppLogger.i('📄 Loading more attendance records (page ${current.pagination.page + 1})');
+      AppLogger.i('📄 Loading utilities attendance records (page ${current.pagination.page + 1})');
 
       state = const AsyncLoading();
 
@@ -714,9 +714,9 @@ class AttendanceSearchViewModel extends _$AttendanceSearchViewModel {
       final updatedResponse = nextPage.copyWith(data: combinedData);
 
       state = AsyncData(updatedResponse);
-      AppLogger.i('✅ Loaded ${nextPage.data.length} more records (total: ${combinedData.length})');
+      AppLogger.i('✅ Loaded ${nextPage.data.length} utilities records (total: ${combinedData.length})');
     } catch (e) {
-      AppLogger.e('❌ Failed to load more: $e');
+      AppLogger.e('❌ Failed to load utilities: $e');
       state = AsyncError(e, StackTrace.current);
     }
   }
