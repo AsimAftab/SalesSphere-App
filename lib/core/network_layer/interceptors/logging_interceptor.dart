@@ -83,7 +83,7 @@ class LoggingInterceptor extends Interceptor {
       }
 
       if (lines.length > maxLines) {
-        buffer.writeln('$_yellow║   ... (${lines.length - maxLines} more lines)$_reset');
+        buffer.writeln('$_yellow║   ... (${lines.length - maxLines} utilities lines)$_reset');
       }
     }
 

@@ -150,7 +150,7 @@ class AboutScreen extends StatelessWidget {
             ),
             SizedBox(height: 8.h),
             _buildParagraph(
-              'Our roadmap includes advanced AI capabilities, predictive analytics, IoT integrations, and deeper automation to make field sales operations even more efficient and effective.',
+              'Our roadmap includes advanced AI capabilities, predictive analytics, IoT integrations, and deeper automation to make field sales operations even utilities efficient and effective.',
             ),
             SizedBox(height: 24.h),
 
@@ -158,7 +158,7 @@ class AboutScreen extends StatelessWidget {
             _buildSectionTitle('Contact Us', fontSize: 20),
             SizedBox(height: 12.h),
             _buildParagraph(
-              'Have questions? Want to learn more? Our team is here to help.',
+              'Have questions? Want to learn utilities? Our team is here to help.',
             ),
             SizedBox(height: 12.h),
             _buildContactItem(
