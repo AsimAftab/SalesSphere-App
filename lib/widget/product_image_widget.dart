@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:sales_sphere/features/catalog/models/catalog.models.dart';
 
 /// Widget to display product images with initials fallback
@@ -67,47 +68,60 @@ class ProductImageWidget extends StatelessWidget {
 
     // Priority 1: Show Cloudinary image if available
     if (item.image?.url != null && item.image!.url!.isNotEmpty) {
+      AppLogger.d('📷 Loading image for ${item.name}: ${item.image!.url}');
       return ClipRRect(
         borderRadius: effectiveBorderRadius,
-        child: Image.network(
-          item.image!.url!,
-          fit: fit,
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return Center(
-              child: CircularProgressIndicator(
-                value: loadingProgress.expectedTotalBytes != null
-                    ? loadingProgress.cumulativeBytesLoaded /
-                        loadingProgress.expectedTotalBytes!
-                    : null,
-                strokeWidth: 2.5,
-              ),
-            );
-          },
-          errorBuilder: (context, error, stackTrace) {
-            // On network error, show initials fallback
-            return _buildInitialsWidget();
-          },
+        child: SizedBox(
+          width: double.infinity,
+          child: Image.network(
+            item.image!.url!,
+            fit: fit,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return Container(
+                color: Colors.grey.shade100,
+                child: Center(
+                  child: CircularProgressIndicator(
+                    value: loadingProgress.expectedTotalBytes != null
+                        ? loadingProgress.cumulativeBytesLoaded /
+                            loadingProgress.expectedTotalBytes!
+                        : null,
+                    strokeWidth: 2.5,
+                  ),
+                ),
+              );
+            },
+            errorBuilder: (context, error, stackTrace) {
+              AppLogger.e('❌ Error loading image for ${item.name}: $error');
+              return _buildInitialsWidget();
+            },
+          ),
         ),
       );
     }
+
+    // Log when no image URL found
+    AppLogger.d('⚠️ No image URL for ${item.name}, image object: ${item.image}');
 
     // Priority 2: Show local asset image if available
     if (item.imageAssetPath != null && item.imageAssetPath!.isNotEmpty) {
       return ClipRRect(
         borderRadius: effectiveBorderRadius,
-        child: item.imageAssetPath!.endsWith('.svg')
-            ? SvgPicture.asset(
-                item.imageAssetPath!,
-                fit: fit,
-                placeholderBuilder: (context) => _buildInitialsWidget(),
-              )
-            : Image.asset(
-                item.imageAssetPath!,
-                fit: fit,
-                errorBuilder: (context, error, stackTrace) =>
-                    _buildInitialsWidget(),
-              ),
+        child: SizedBox(
+          width: double.infinity,
+          child: item.imageAssetPath!.endsWith('.svg')
+              ? SvgPicture.asset(
+                  item.imageAssetPath!,
+                  fit: fit,
+                  placeholderBuilder: (context) => _buildInitialsWidget(),
+                )
+              : Image.asset(
+                  item.imageAssetPath!,
+                  fit: fit,
+                  errorBuilder: (context, error, stackTrace) =>
+                      _buildInitialsWidget(),
+                ),
+        ),
       );
     }
 
