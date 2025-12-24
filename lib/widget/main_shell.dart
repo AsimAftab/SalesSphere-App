@@ -27,7 +27,7 @@ class MainShell extends StatelessWidget {
 
         break;
       case 4:
-        context.go('/settings');
+        context.go('/utilities');
         break;
     }
   }

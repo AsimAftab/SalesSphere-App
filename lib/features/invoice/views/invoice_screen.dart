@@ -1200,7 +1200,21 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                               onChanged: (value) {
                                 final newPrice = double.tryParse(value);
                                 if (newPrice != null && newPrice >= 0) {
-                                  ref.read(orderControllerProvider.notifier).updateSetPrice(product.id, newPrice);
+                                  setState(() {
+                                    // Update the set price
+                                    ref.read(orderControllerProvider.notifier).updateSetPrice(product.id, newPrice);
+                                    
+                                    // Calculate discount percentage based on new sale price
+                                    final originalPrice = orderItemData.defaultPrice;
+                                    if (originalPrice > 0) {
+                                      final discountPercentage = ((originalPrice - newPrice) / originalPrice) * 100;
+                                      final clampedDiscount = discountPercentage.clamp(0.0, 100.0);
+                                      
+                                      // Update discount controller
+                                      _getItemDiscountController(product.id).text = 
+                                          clampedDiscount.toStringAsFixed(2);
+                                    }
+                                  });
                                 }
                               },
                             ),
@@ -1292,61 +1306,6 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                                   }
                                 });
                               },
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    SizedBox(width: 12.w),
-
-                    // Final Price after discount
-                    Expanded(
-                      flex: 3,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Final Price (per unit)',
-                            style: TextStyle(
-                              fontSize: 11.sp,
-                              color: Colors.grey.shade600,
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          SizedBox(height: 6.h),
-                          Container(
-                            height: 40.h,
-                            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade100,
-                              borderRadius: BorderRadius.circular(10.r),
-                              border: Border.all(color: Colors.grey.shade300, width: 1),
-                            ),
-                            child: Row(
-                              children: [
-                                Text(
-                                  '₹ ',
-                                  style: TextStyle(
-                                    fontSize: 14.sp,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.grey.shade700,
-                                    fontFamily: 'Poppins',
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Text(
-                                    orderItemData.setPrice.toStringAsFixed(2),
-                                    style: TextStyle(
-                                      fontSize: 14.sp,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.grey.shade700,
-                                      fontFamily: 'Poppins',
-                                    ),
-                                  ),
-                                ),
-                              ],
                             ),
                           ),
                         ],

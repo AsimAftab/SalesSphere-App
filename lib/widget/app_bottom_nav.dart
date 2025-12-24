@@ -130,9 +130,9 @@ class _AppBottomNavState extends State<AppBottomNav>
                   ),
                   _buildNavItem(
                     4,
-                    Icons.settings_outlined,
-                    Icons.settings,
-                    'Setting',
+                    Icons.read_more_outlined,
+                    Icons.read_more,
+                    'Utilities',
                   ),
                 ],
               ),
@@ -159,62 +159,68 @@ class _AppBottomNavState extends State<AppBottomNav>
     final isActive = widget.currentIndex == index;
 
     return Expanded(
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            if (index == 3) {
-              showDirectoryOptions(widget.parentContext);
-            } else {
-              widget.onTap(index);
-            }
-          },
-          borderRadius: BorderRadius.circular(16.r),
-          splashColor: AppColors.secondary.withValues(alpha: 0.1),
-          highlightColor: AppColors.secondary.withValues(alpha: 0.05),
-          child: Container(
-            height: double.infinity,
-            padding: EdgeInsets.symmetric(vertical: _verticalPadding),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeInOut,
-                  padding: EdgeInsets.all(isActive ? _iconPadding : 0),
-                  decoration: BoxDecoration(
-                    color: isActive
-                        ? AppColors.secondary.withValues(alpha: 0.12)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(12.r),
+      child: RepaintBoundary(
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              if (index == 3) {
+                showDirectoryOptions(widget.parentContext);
+              } else {
+                widget.onTap(index);
+              }
+            },
+            borderRadius: BorderRadius.circular(16.r),
+            splashColor: AppColors.secondary.withValues(alpha: 0.1),
+            highlightColor: AppColors.secondary.withValues(alpha: 0.05),
+            child: Container(
+              height: double.infinity,
+              padding: EdgeInsets.symmetric(vertical: _verticalPadding),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeInOut,
+                    padding: EdgeInsets.all(isActive ? _iconPadding : 0),
+                    decoration: BoxDecoration(
+                      color: isActive
+                          ? AppColors.secondary.withValues(alpha: 0.12)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: Icon(
+                      isActive ? activeIcon : icon,
+                      color: isActive
+                          ? AppColors.secondary
+                          : AppColors.textSecondary,
+                      size: _iconSize,
+                    ),
                   ),
-                  child: Icon(
-                    isActive ? activeIcon : icon,
-                    color: isActive
-                        ? AppColors.secondary
-                        : AppColors.textSecondary,
-                    size: _iconSize,
+                  SizedBox(height: _spacing),
+                  AnimatedDefaultTextStyle(
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeInOut,
+                    style: TextStyle(
+                      fontSize: _fontSize,
+                      fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                      color: isActive
+                          ? AppColors.secondary
+                          : AppColors.textSecondary,
+                      fontFamily: 'Poppins',
+                      letterSpacing: 0.2,
+                      height: 1.0,
+                    ),
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textScaler: const TextScaler.linear(1.0),
+                    ),
                   ),
-                ),
-                SizedBox(height: _spacing),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: _fontSize,
-                    fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                    color: isActive
-                        ? AppColors.secondary
-                        : AppColors.textSecondary,
-                    fontFamily: 'Poppins',
-                    letterSpacing: 0.2,
-                    height: 1.0,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textScaleFactor: 1.0,
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -223,58 +229,61 @@ class _AppBottomNavState extends State<AppBottomNav>
   }
 
   Widget _buildFloatingInvoiceButton() {
-    return GestureDetector(
-      onTap: _onInvoiceTap,
-      child: AnimatedBuilder(
-        animation: _scaleAnimation,
-        builder: (context, child) {
-          return Transform.scale(
-            scale: _scaleAnimation.value,
-            child: Container(
-              width: 70.w,
-              height: 70.h,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [AppColors.secondary, AppColors.primary],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+    return RepaintBoundary(
+      child: GestureDetector(
+        onTap: _onInvoiceTap,
+        child: AnimatedBuilder(
+          animation: _scaleAnimation,
+          builder: (context, child) {
+            return Transform.scale(
+              scale: _scaleAnimation.value,
+              child: child,
+            );
+          },
+          child: Container(
+            width: 70.w,
+            height: 70.h,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: [AppColors.secondary, AppColors.primary],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.secondary.withValues(alpha: 0.35),
+                  blurRadius: 24,
+                  spreadRadius: 0,
+                  offset: const Offset(0, 8),
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.secondary.withValues(alpha: 0.35),
-                    blurRadius: 24,
-                    spreadRadius: 0,
-                    offset: const Offset(0, 8),
-                  ),
-                  BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.25),
-                    blurRadius: 16,
-                    spreadRadius: -4,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.description, color: Colors.white, size: 30.sp),
-                  SizedBox(height: 2.h),
-                  Text(
-                    'Invoice',
-                    style: TextStyle(
-                      fontSize: 8.sp,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                      fontFamily: 'Poppins',
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-                ],
-              ),
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.25),
+                  blurRadius: 16,
+                  spreadRadius: -4,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-          );
-        },
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.description, color: Colors.white, size: 30.sp),
+                SizedBox(height: 2.h),
+                Text(
+                  'Invoice',
+                  style: TextStyle(
+                    fontSize: 8.sp,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                    fontFamily: 'Poppins',
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

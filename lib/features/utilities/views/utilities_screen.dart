@@ -2,27 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:sales_sphere/features/utilities/models/utilities.model.dart';
-import 'package:sales_sphere/features/utilities/vm/utilities.vm.dart';
+import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/providers/user_controller.dart';
+import 'package:sales_sphere/widget/utility_card.dart';
 
 class UtilitiesScreen extends ConsumerWidget {
   const UtilitiesScreen({super.key});
 
+  String _getInitials(String name) {
+    final trimmedName = name.trim();
+    if (trimmedName.isNotEmpty) {
+      return trimmedName[0].toUpperCase();
+    }
+    return 'U';
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final utilities = ref.watch(utilitiesViewModelProvider);
     final user = ref.watch(userControllerProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -50,27 +55,32 @@ class UtilitiesScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  // Avatar
-                  Container(
-                    height: 48.w,
-                    width: 48.w,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.grey.shade200, width: 2),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
+                  GestureDetector(
+                    onTap: () => context.pushNamed('profile'),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppColors.textOrange,
+                          width: 2.5,
                         ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Icon(
-                        Icons.person,
-                        color: Colors.grey.shade400,
-                        size: 24.sp,
+                      ),
+                      child: CircleAvatar(
+                        radius: 26.r,
+                        backgroundColor: AppColors.primary,
+                        backgroundImage: user?.avatarUrl != null
+                            ? NetworkImage(user!.avatarUrl!)
+                            : null,
+                        child: user?.avatarUrl == null
+                            ? Text(
+                                _getInitials(user?.name ?? 'User'),
+                                style: TextStyle(
+                                  fontSize: 18.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textWhite,
+                                ),
+                              )
+                            : null,
                       ),
                     ),
                   ),
@@ -79,105 +89,62 @@ class UtilitiesScreen extends ConsumerWidget {
 
               SizedBox(height: 32.h),
 
-              // Grid
-              GridView.builder(
+              GridView.count(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: utilities.length,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 16.w,
-                  mainAxisSpacing: 16.h,
-                  // Adjusted aspect ratio for card sizing
-                  childAspectRatio: 0.99,
-                ),
-                itemBuilder: (context, index) {
-                  final item = utilities[index];
-                  return _buildUtilityCard(context, item);
-                },
-              ),
-
-              SizedBox(height: 80.h), // Bottom padding
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildUtilityCard(BuildContext context, UtilityItem item) {
-    return GestureDetector(
-      onTap: () => context.push(item.routePath),
-      child: Container(
-        padding: EdgeInsets.all(12.w),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16.r),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-          // Border color matches the icon color with opacity
-          border: Border.all(color: item.color.withValues(alpha: 0.2)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Icon
-            Container(
-              padding: EdgeInsets.all(10.w),
-              decoration: BoxDecoration(
-                color: item.backgroundColor,
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-              child: Icon(
-                item.icon,
-                color: item.color,
-                size: 22.sp,
-              ),
-            ),
-            SizedBox(height: 10.h),
-
-            // Text
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Text(
-                    item.title,
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF1A1C1E),
-                      fontFamily: 'Poppins',
-                      height: 1.2,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                crossAxisCount: 2,
+                crossAxisSpacing: 16.w,
+                mainAxisSpacing: 16.h,
+                childAspectRatio: 0.99,
+                children: const [
+                  UtilityCard(
+                    title: 'Odometer',
+                    subtitle: 'Track travel distance during field visits',
+                    icon: Icons.speed_rounded,
+                    iconColor: Color(0xFF448AFF),
+                    routePath: '/odometer',
                   ),
-                  SizedBox(height: 4.h),
-                  Flexible(
-                    child: Text(
-                      item.subtitle,
-                      style: TextStyle(
-                        fontSize: 10.sp,
-                        color: Colors.grey.shade600,
-                        height: 1.2,
-                        fontFamily: 'Poppins',
-                      ),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                  UtilityCard(
+                    title: 'Expense Claims',
+                    subtitle: 'Submit and manage expense claims',
+                    icon: Icons.currency_rupee_rounded,
+                    iconColor: Color(0xFF00C853),
+                    routePath: '/reimbursement',
+                  ),
+                  UtilityCard(
+                    title: 'Notes & Complaints',
+                    subtitle: 'Log discussions, feedback & issues',
+                    icon: Icons.chat_bubble_outline_rounded,
+                    iconColor: Color(0xFFFF5252),
+                    routePath: '/notes-complaints',
+                  ),
+                  UtilityCard(
+                    title: 'Miscellaneous Work',
+                    subtitle: 'Log unplanned field tasks and assignments',
+                    icon: Icons.work_outline_rounded,
+                    iconColor: Color(0xFF7C4DFF),
+                    routePath: '/miscellaneous-work',
+                  ),
+                  UtilityCard(
+                    title: 'Tour Plan',
+                    subtitle: 'Plan and manage daily field visits',
+                    icon: Icons.navigation_outlined,
+                    iconColor: Color(0xFFFF9100),
+                    routePath: '/tour-plan',
+                  ),
+                  UtilityCard(
+                    title: 'Attendance',
+                    subtitle: 'Mark and track daily attendance',
+                    icon: Icons.calendar_month_rounded,
+                    iconColor: Color(0xFF00ACC1),
+                    routePath: '/attendance',
                   ),
                 ],
               ),
-            ),
-          ],
+
+              SizedBox(height: 80.h),
+            ],
+          ),
         ),
       ),
     );

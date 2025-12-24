@@ -94,13 +94,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 },
               ),
               SettingsTile(
-                icon: Icons.calendar_today_outlined,
-                title: 'Attendance',
-                onTap: () {
-                  context.push('/attendance');
-                },
-              ),
-              SettingsTile(
                 icon: Icons.lock_outline,
                 title: 'Change Password',
                 onTap: () {
