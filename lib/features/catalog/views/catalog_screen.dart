@@ -271,68 +271,131 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                   }
 
                   if (filteredItems.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.inventory_2_outlined,
-                            size: 64.sp,
-                            color: const Color(0xFF7D848D),
-                          ),
-                          SizedBox(height: 16.h),
-                          Text(
-                            'No products found',
-                            style: TextStyle(
-                              fontSize: 18.sp,
-                              color: const Color(0xFF7D848D),
-                              fontFamily: 'Poppins',
+                    return RefreshIndicator(
+                      onRefresh: () async {
+                        ref.invalidate(allCatalogItemsProvider);
+                        ref.invalidate(catalogViewModelProvider);
+                        await Future.delayed(const Duration(milliseconds: 300));
+                      },
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.6,
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.inventory_2_outlined,
+                                  size: 64.sp,
+                                  color: const Color(0xFF7D848D),
+                                ),
+                                SizedBox(height: 16.h),
+                                Text(
+                                  'No products found',
+                                  style: TextStyle(
+                                    fontSize: 18.sp,
+                                    color: const Color(0xFF7D848D),
+                                    fontFamily: 'Poppins',
+                                  ),
+                                ),
+                                if (searchQuery.isNotEmpty) ...[
+                                  SizedBox(height: 8.h),
+                                  Text(
+                                    'Try a different search',
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      color: const Color(0xFFA0A0A0),
+                                      fontFamily: 'Poppins',
+                                    ),
+                                  ),
+                                ],
+                                SizedBox(height: 16.h),
+                                Icon(
+                                  Icons.arrow_downward_rounded,
+                                  size: 20.sp,
+                                  color: const Color(0xFFA0A0A0),
+                                ),
+                                SizedBox(height: 4.h),
+                                Text(
+                                  'Pull down to refresh',
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    color: const Color(0xFFA0A0A0),
+                                    fontFamily: 'Poppins',
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          if (searchQuery.isNotEmpty) ...[
-                            SizedBox(height: 8.h),
-                            Text(
-                              'Try a different search',
-                              style: TextStyle(
-                                fontSize: 14.sp,
-                                color: const Color(0xFFA0A0A0),
-                                fontFamily: 'Poppins',
-                              ),
-                            ),
-                          ],
-                        ],
+                        ),
                       ),
                     );
                   }
 
-                  // Build grid
-                  return GridView.builder(
-                    padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 20.h),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 0.62,
-                      crossAxisSpacing: 12.w,
-                      mainAxisSpacing: 12.h,
-                    ),
-                    itemCount: filteredItems.length,
-                    itemBuilder: (context, index) {
-                      final item = filteredItems[index];
-                      return _ProductCard(item: item);
+                  // Build grid with RefreshIndicator
+                  return RefreshIndicator(
+                    onRefresh: () async {
+                      ref.invalidate(allCatalogItemsProvider);
+                      ref.invalidate(catalogViewModelProvider);
+                      await Future.delayed(const Duration(milliseconds: 300));
                     },
+                    child: GridView.builder(
+                      padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 20.h),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        childAspectRatio: 0.62,
+                        crossAxisSpacing: 12.w,
+                        mainAxisSpacing: 12.h,
+                      ),
+                      itemCount: filteredItems.length,
+                      itemBuilder: (context, index) {
+                        final item = filteredItems[index];
+                        return _ProductCard(item: item);
+                      },
+                    ),
                   );
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, stack) => Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.error_outline, size: 64.sp, color: Colors.red),
-                      SizedBox(height: 16.h),
-                      Text(
-                        'Failed to load items',
-                        style: TextStyle(fontSize: 16.sp, color: Colors.red),
+                error: (error, stack) => RefreshIndicator(
+                  onRefresh: () async {
+                    ref.invalidate(allCatalogItemsProvider);
+                    ref.invalidate(catalogViewModelProvider);
+                    await Future.delayed(const Duration(milliseconds: 300));
+                  },
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.6,
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.error_outline, size: 64.sp, color: Colors.red),
+                            SizedBox(height: 16.h),
+                            Text(
+                              'Failed to load items',
+                              style: TextStyle(fontSize: 16.sp, color: Colors.red),
+                            ),
+                            SizedBox(height: 16.h),
+                            Icon(
+                              Icons.arrow_downward_rounded,
+                              size: 20.sp,
+                              color: Colors.red.shade300,
+                            ),
+                            SizedBox(height: 4.h),
+                            Text(
+                              'Pull down to retry',
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                color: Colors.red.shade300,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -438,13 +501,16 @@ class _ProductCard extends ConsumerWidget {
           // Product Image
           Expanded(
             flex: 5,
-            child: ProductImageWidget(
-              item: item,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(12.r),
-                topRight: Radius.circular(12.r),
+            child: SizedBox(
+              width: double.infinity,
+              child: ProductImageWidget(
+                item: item,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(12.r),
+                  topRight: Radius.circular(12.r),
+                ),
+                fit: BoxFit.cover,
               ),
-              fit: BoxFit.cover,
             ),
           ),
 

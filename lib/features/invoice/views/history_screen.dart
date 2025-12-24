@@ -361,19 +361,47 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            estimate.partyName,
-                            style: TextStyle(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.grey.shade900,
-                              fontFamily: 'Poppins',
-                            ),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  estimate.partyName,
+                                  style: TextStyle(
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.grey.shade900,
+                                    fontFamily: 'Poppins',
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 8.w),
+                              InkWell(
+                                onTap: () => _showDeleteEstimateDialog(context, ref, estimate),
+                                borderRadius: BorderRadius.circular(8.r),
+                                child: Container(
+                                  padding: EdgeInsets.all(6.w),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red.shade50,
+                                    borderRadius: BorderRadius.circular(8.r),
+                                    border: Border.all(
+                                      color: Colors.red.shade100,
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Icon(
+                                    Icons.delete_outline_rounded,
+                                    color: Colors.red.shade600,
+                                    size: 18.sp,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                           SizedBox(height: 4.h),
                           Text(
@@ -388,6 +416,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
                         ],
                       ),
                     ),
+                    SizedBox(width: 12.w),
                     Container(
                       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
                       decoration: BoxDecoration(
@@ -665,6 +694,296 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
       AppLogger.e('Error generating PDF: $e');
       if (!mounted) return;
       SnackbarUtils.showError(context, 'Failed to generate PDF: ${e.toString()}');
+    }
+  }
+
+  Future<void> _showDeleteEstimateDialog(
+    BuildContext context,
+    WidgetRef ref,
+    EstimateHistoryItem estimate,
+  ) async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.r),
+        ),
+        elevation: 8,
+        child: Container(
+          constraints: BoxConstraints(maxWidth: 340.w),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20.r),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: EdgeInsets.all(24.w),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.red.shade400,
+                      Colors.red.shade600,
+                    ],
+                  ),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(20.r),
+                    topRight: Radius.circular(20.r),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(16.w),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.delete_forever_rounded,
+                        color: Colors.white,
+                        size: 40.sp,
+                      ),
+                    ),
+                    SizedBox(height: 16.h),
+                    Text(
+                      'Delete Estimate?',
+                      style: TextStyle(
+                        fontSize: 22.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                    SizedBox(height: 8.h),
+                    Text(
+                      'This action cannot be undone',
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        color: Colors.white.withValues(alpha: 0.9),
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.all(24.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'You are about to permanently delete:',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        color: Colors.grey.shade700,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    SizedBox(height: 16.h),
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(16.w),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.orange.shade50,
+                            Colors.orange.shade100,
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12.r),
+                        border: Border.all(
+                          color: Colors.orange.shade300,
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.orange.withValues(alpha: 0.1),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: EdgeInsets.all(8.w),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.shade700,
+                                  borderRadius: BorderRadius.circular(8.r),
+                                ),
+                                child: Icon(
+                                  Icons.receipt_long_rounded,
+                                  size: 18.sp,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              SizedBox(width: 12.w),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Estimate Number',
+                                      style: TextStyle(
+                                        fontSize: 11.sp,
+                                        color: Colors.grey.shade600,
+                                        fontFamily: 'Poppins',
+                                      ),
+                                    ),
+                                    SizedBox(height: 2.h),
+                                    Text(
+                                      estimate.estimateNumber,
+                                      style: TextStyle(
+                                        fontSize: 15.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.orange.shade900,
+                                        fontFamily: 'Poppins',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 12.h),
+                          Divider(
+                            height: 1,
+                            color: Colors.orange.shade200,
+                          ),
+                          SizedBox(height: 12.h),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.person_outline_rounded,
+                                size: 16.sp,
+                                color: Colors.grey.shade600,
+                              ),
+                              SizedBox(width: 8.w),
+                              Expanded(
+                                child: Text(
+                                  estimate.partyName,
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.grey.shade800,
+                                    fontFamily: 'Poppins',
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 8.h),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.currency_rupee_rounded,
+                                size: 16.sp,
+                                color: Colors.grey.shade600,
+                              ),
+                              SizedBox(width: 8.w),
+                              Text(
+                                estimate.totalAmount.toStringAsFixed(2),
+                                style: TextStyle(
+                                  fontSize: 20.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.orange.shade900,
+                                  fontFamily: 'Poppins',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 20.h),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.of(context).pop(false),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.grey.shade700,
+                              side: BorderSide(
+                                color: Colors.grey.shade300,
+                                width: 1.5,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12.r),
+                              ),
+                              padding: EdgeInsets.symmetric(vertical: 14.h),
+                            ),
+                            child: Text(
+                              'Cancel',
+                              style: TextStyle(
+                                fontSize: 15.sp,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () => Navigator.of(context).pop(true),
+                            icon: Icon(Icons.delete_rounded, size: 20.sp),
+                            label: Text(
+                              'Delete',
+                              style: TextStyle(
+                                fontSize: 15.sp,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red.shade600,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12.r),
+                              ),
+                              padding: EdgeInsets.symmetric(vertical: 14.h),
+                              elevation: 2,
+                              shadowColor: Colors.red.withValues(alpha: 0.3),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (shouldDelete != true) return;
+    if (!mounted) return;
+
+    try {
+      SnackbarUtils.showInfo(context, 'Deleting estimate...');
+
+      await ref.read(estimateHistoryProvider.notifier).deleteEstimate(estimate.id);
+
+      if (!mounted) return;
+
+      SnackbarUtils.showSuccess(context, 'Estimate deleted successfully');
+    } catch (e) {
+      AppLogger.e('Error deleting estimate: $e');
+      if (!mounted) return;
+      SnackbarUtils.showError(context, 'Failed to delete estimate: ${e.toString()}');
     }
   }
 }

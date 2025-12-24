@@ -379,6 +379,30 @@ class EstimateHistory extends _$EstimateHistory {
     state = await AsyncValue.guard(() => fetchEstimateHistory());
   }
 
+  /// Delete estimate by ID
+  Future<void> deleteEstimate(String estimateId) async {
+    try {
+      final dio = ref.read(dioClientProvider);
+
+      AppLogger.d('Deleting estimate with ID: $estimateId');
+
+      final response = await dio.delete(ApiEndpoints.deleteEstimate(estimateId));
+
+      AppLogger.d('Delete estimate response: ${response.data}');
+
+      // Optimistically remove from state
+      state.whenData((estimates) {
+        final updatedEstimates = estimates.where((e) => e.id != estimateId).toList();
+        state = AsyncValue.data(updatedEstimates);
+      });
+
+      AppLogger.i('✅ Estimate deleted successfully');
+    } catch (e, stackTrace) {
+      AppLogger.e('❌ Error deleting estimate: $e\n$stackTrace');
+      rethrow;
+    }
+  }
+
   /// Add estimate to history (optimistic update)
   void addEstimateOptimistic(EstimateHistoryItem item) {
     state.whenData((estimates) {
