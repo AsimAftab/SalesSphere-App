@@ -1,5 +1,5 @@
 import 'package:hive/hive.dart';
-import 'package:sales_sphere/core/models/location_address.dart';
+
 
 /// Queued Location Model
 /// Stores location data in Hive when offline for later synchronization

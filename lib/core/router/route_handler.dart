@@ -25,6 +25,7 @@ import 'package:sales_sphere/features/settings/views/settings_screen.dart';
 import 'package:sales_sphere/features/settings/views/about_screen.dart';
 import 'package:sales_sphere/features/settings/views/terms_and_conditions_screen.dart';
 import 'package:sales_sphere/features/settings/views/change_password_screen.dart';
+import 'package:sales_sphere/features/utilities/views/utilities_screen.dart';
 import 'package:sales_sphere/features/beat_plan/views/beat_plan_details_screen.dart';
 import 'package:sales_sphere/features/auth/models/login.models.dart';
 import 'package:sales_sphere/features/splash/views/splash_screen.dart';
@@ -92,8 +93,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final isGoingToChangePassword =
           requestedPath == '/settings/change-password';
       final isGoingToBeatPlan = requestedPath.startsWith('/beat-plan');
-      // final isGoingToMiscWork = requestedPath == '/miscellaneous-work';
-      // final isGoingToUtilities = requestedPath == '/utilities';
+      final isGoingToUtilities = requestedPath.startsWith('/utilities');
+      final isGoingToSettings = requestedPath.startsWith('/settings');
 
       // If user is not logged in AND not going to one of the allowed pages...
       if (!isLoggedIn &&
@@ -113,7 +114,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           !isGoingToAbout &&
           !isGoingToTerms &&
           !isGoingToChangePassword &&
-          !isGoingToBeatPlan) {
+          !isGoingToBeatPlan &&
+          !isGoingToUtilities &&
+          !isGoingToSettings) {
         return '/';
       }
 
@@ -179,18 +182,15 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         name: 'profile',
         builder: (context, state) => const ProfileScreen(),
       ),
-      // GoRoute(
-      //   path: '/miscellaneous-work',
-      //   name: 'miscellaneous-work',
-      //   builder: (context, state) =>
-      //   const MiscellaneousWorkScreen(),
-      // ),
-      // GoRoute(
-      //   path: '/utilities',
-      //   name: 'utilities',
-      //   builder: (context, state) =>
-      //   const UtilitiesScreen(),
-      // ),
+
+      // ========================================
+      // SETTINGS ROUTES (No Bottom Navigation)
+      // ========================================
+      GoRoute(
+        path: '/settings',
+        name: 'settings',
+        builder: (context, state) => const SettingsScreen(),
+      ),
 
       // ========================================
       // ATTENDANCE ROUTES (No Bottom Navigation)
@@ -374,7 +374,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           } else if (location.startsWith('/parties') ||
               location.startsWith('/directory')) {
             currentIndex = 3;
-          } else if (location.startsWith('/settings')) {
+          } else if (location.startsWith('/utilities')) {
             currentIndex = 4;
           }
 
@@ -441,12 +441,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                 const NoTransitionPage(child: PartiesScreen()),
           ),
 
-          // Settings Tab
+          // Utilities Tab
           GoRoute(
-            path: '/settings',
-            name: 'settings',
+            path: '/utilities',
+            name: 'utilities',
             pageBuilder: (context, state) =>
-                const NoTransitionPage(child: SettingsScreen()),
+                const NoTransitionPage(child: UtilitiesScreen()),
           ),
         ],
       ),
