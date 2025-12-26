@@ -147,4 +147,27 @@ class ApiEndpoints {
   /// Mark party visit as pending
   static String markVisitPending(String beatPlanId, String visitId) =>
       '/api/v1/beat-plans/$beatPlanId/visits/$visitId/pending';
+
+  // Miscellaneous Work Endpoints (Final)
+  /// Get all miscellaneous works for current user
+  static const String myMiscellaneousWorks = '/api/v1/miscellaneous-work/my-work';
+  
+  /// Create new miscellaneous work
+  static const String createMiscellaneousWork = '/api/v1/miscellaneous-work';
+  
+  /// Get miscellaneous work by ID
+  static String miscellaneousWorkById(String id) => '/api/v1/miscellaneous-work/$id';
+  
+  /// Update miscellaneous work
+  static String updateMiscellaneousWork(String id) => '/api/v1/miscellaneous-work/$id';
+  
+  /// Delete miscellaneous work
+  static String deleteMiscellaneousWork(String id) => '/api/v1/miscellaneous-work/$id';
+  
+  /// Upload image to miscellaneous work
+  static String uploadMiscellaneousWorkImage(String workId) => '/api/v1/miscellaneous-work/$workId/images';
+  
+  /// Delete image from miscellaneous work
+  static String deleteMiscellaneousWorkImage(String workId, int imageNumber) => 
+      '/api/v1/miscellaneous-work/$workId/images/$imageNumber';
 }

@@ -18,6 +18,9 @@ class UniversalListCard extends StatelessWidget {
   final String? subtitle;
   final String? secondarySubtitle; // For additional info like SKU
 
+  // Trailing
+  final Widget? trailingWidget; // Custom trailing widget (overrides arrow if provided)
+
   // Styling
   final Color? backgroundColor;
   final Color? arrowColor;
@@ -40,6 +43,8 @@ class UniversalListCard extends StatelessWidget {
     required this.title,
     this.subtitle,
     this.secondarySubtitle,
+    // Trailing
+    this.trailingWidget,
     // Styling
     this.backgroundColor,
     this.arrowColor,
@@ -131,8 +136,11 @@ class UniversalListCard extends StatelessWidget {
                   ),
                 ),
 
-                // Arrow Button
-                if (showArrow) ...[
+                // Trailing Widget (Custom or Arrow)
+                if (trailingWidget != null) ...[
+                  SizedBox(width: 12.w),
+                  trailingWidget!,
+                ] else if (showArrow) ...[
                   SizedBox(width: 12.w),
                   Container(
                     width: 36.w,
