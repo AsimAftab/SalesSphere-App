@@ -27,6 +27,10 @@ import 'package:sales_sphere/features/settings/views/terms_and_conditions_screen
 import 'package:sales_sphere/features/settings/views/change_password_screen.dart';
 import 'package:sales_sphere/features/utilities/views/utilities_screen.dart';
 import 'package:sales_sphere/features/beat_plan/views/beat_plan_details_screen.dart';
+import 'package:sales_sphere/features/miscellaneous/views/miscellaneous_list_screen.dart';
+import 'package:sales_sphere/features/miscellaneous/views/add_miscellaneous_work_screen.dart';
+import 'package:sales_sphere/features/miscellaneous/views/edit_miscellaneous_work_screen.dart';
+import 'package:sales_sphere/features/miscellaneous/models/miscellaneous.model.dart';
 import 'package:sales_sphere/features/auth/models/login.models.dart';
 import 'package:sales_sphere/features/splash/views/splash_screen.dart';
 import 'package:sales_sphere/features/onboarding/views/onboarding_screen.dart';
@@ -95,6 +99,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final isGoingToBeatPlan = requestedPath.startsWith('/beat-plan');
       final isGoingToUtilities = requestedPath.startsWith('/utilities');
       final isGoingToSettings = requestedPath.startsWith('/settings');
+      final isGoingToMiscellaneous =
+          requestedPath.startsWith('/miscellaneous-work');
 
       // If user is not logged in AND not going to one of the allowed pages...
       if (!isLoggedIn &&
@@ -116,7 +122,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           !isGoingToChangePassword &&
           !isGoingToBeatPlan &&
           !isGoingToUtilities &&
-          !isGoingToSettings) {
+          !isGoingToSettings &&
+          !isGoingToMiscellaneous) {
         return '/';
       }
 
@@ -354,6 +361,28 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/directory/sites-list',
         name: 'sites-list',
         builder: (context, state) => const SitesScreen(),
+      ),
+
+      // ========================================
+      // MISCELLANEOUS ROUTES (No Bottom Navigation)
+      // ========================================
+      GoRoute(
+        path: '/miscellaneous-work',
+        name: 'miscellaneous-work',
+        builder: (context, state) => const MiscellaneousListScreen(),
+      ),
+      GoRoute(
+        path: '/add-miscellaneous-work',
+        name: 'add-miscellaneous-work',
+        builder: (context, state) => const AddMiscellaneousWorkScreen(),
+      ),
+      GoRoute(
+        path: '/edit-miscellaneous-work',
+        name: 'edit-miscellaneous-work',
+        builder: (context, state) {
+          final workData = state.extra as MiscWorkData;
+          return EditMiscellaneousWorkScreen(workData: workData);
+        },
       ),
 
       // ========================================

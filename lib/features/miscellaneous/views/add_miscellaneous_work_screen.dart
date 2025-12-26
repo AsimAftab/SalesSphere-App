@@ -13,7 +13,8 @@ import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
 import 'package:sales_sphere/widget/location_picker_widget.dart';
 import 'package:sales_sphere/features/miscellaneous/models/miscellaneous.model.dart';
-import 'package:sales_sphere/features/miscellaneous/vm/miscellaneous.vm.dart';
+import 'package:sales_sphere/features/miscellaneous/vm/miscellaneous_add.vm.dart';
+import 'package:sales_sphere/features/miscellaneous/vm/miscellaneous_list.vm.dart';
 
 final googlePlacesServiceProvider = Provider<GooglePlacesService>((ref) {
   final apiKey = dotenv.env['GOOGLE_MAPS_API_KEY'] ?? '';
@@ -24,16 +25,16 @@ final locationServiceProvider = Provider<LocationService>((ref) {
   return LocationService();
 });
 
-class MiscellaneousWorkScreen extends ConsumerStatefulWidget {
-  const MiscellaneousWorkScreen({super.key});
+class AddMiscellaneousWorkScreen extends ConsumerStatefulWidget {
+  const AddMiscellaneousWorkScreen({super.key});
 
   @override
-  ConsumerState<MiscellaneousWorkScreen> createState() =>
-      _MiscellaneousWorkScreenState();
+  ConsumerState<AddMiscellaneousWorkScreen> createState() =>
+      _AddMiscellaneousWorkScreenState();
 }
 
-class _MiscellaneousWorkScreenState
-    extends ConsumerState<MiscellaneousWorkScreen> {
+class _AddMiscellaneousWorkScreenState
+    extends ConsumerState<AddMiscellaneousWorkScreen> {
   final _formKey = GlobalKey<FormState>();
 
   // Controllers
@@ -42,6 +43,9 @@ class _MiscellaneousWorkScreenState
   late TextEditingController _addressController;
   late TextEditingController _latitudeController;
   late TextEditingController _longitudeController;
+  
+  // Date
+  DateTime _selectedDate = DateTime.now();
 
   // Image Picking
   final ImagePicker _picker = ImagePicker();
@@ -141,10 +145,16 @@ class _MiscellaneousWorkScreenState
   // ---------------------------------------------------------------------------
   Future<void> _handleSubmit() async {
     if (_formKey.currentState?.validate() ?? false) {
-      if (_latitudeController.text.isEmpty ||
-          _longitudeController.text.isEmpty) {
+      if (_addressController.text.trim().isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select a location')),
+          const SnackBar(content: Text('Please enter an address')),
+        );
+        return;
+      }
+
+      if (_latitudeController.text.isEmpty || _longitudeController.text.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select a location on map')),
         );
         return;
       }
@@ -161,18 +171,48 @@ class _MiscellaneousWorkScreenState
           );
         }
 
+        // Format date as YYYY-MM-DD
+        final formattedDate = '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}';
+
         final request = CreateMiscellaneousWorkRequest(
           natureOfWork: _natureOfWorkController.text.trim(),
           assignedBy: _assignedByController.text.trim(),
-          location: MiscLocation(
-            address: _addressController.text.trim(),
-            latitude: double.parse(_latitudeController.text),
-            longitude: double.parse(_longitudeController.text),
-          ),
+          address: _addressController.text.trim(),
+          latitude: double.parse(_latitudeController.text),
+          longitude: double.parse(_longitudeController.text),
+          workDate: formattedDate,
         );
 
-        final vm = ref.read(miscellaneousViewModelProvider.notifier);
-        await vm.createWork(request: request, images: _selectedImages);
+        final vm = ref.read(miscellaneousAddViewModelProvider.notifier);
+        final workId = await vm.createWork(request: request);
+
+        // Upload images if any
+        if (_selectedImages.isNotEmpty) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Uploading ${_selectedImages.length} image(s)...'),
+                backgroundColor: AppColors.primary,
+                duration: const Duration(seconds: 30),
+              ),
+            );
+          }
+
+          for (int i = 0; i < _selectedImages.length; i++) {
+            final isLastImage = (i == _selectedImages.length - 1);
+            await vm.uploadImage(
+              workId: workId,
+              imageFile: File(_selectedImages[i].path),
+              imageNumber: i + 1,
+              isLastImage: isLastImage,
+            );
+          }
+        } else {
+          // No images to upload, release the provider manually
+          // Just invalidate to trigger cleanup
+          ref.invalidate(miscellaneousAddViewModelProvider);
+        }
 
         if (mounted) {
           ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -182,6 +222,8 @@ class _MiscellaneousWorkScreenState
               backgroundColor: AppColors.success,
             ),
           );
+          // Refresh the list screen
+          ref.invalidate(miscellaneousListViewModelProvider);
           context.pop(); // Go back
         }
       } catch (e) {
@@ -198,6 +240,36 @@ class _MiscellaneousWorkScreenState
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // DATE PICKER
+  // ---------------------------------------------------------------------------
+  Future<void> _selectDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: AppColors.primary,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: AppColors.textdark,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -207,7 +279,7 @@ class _MiscellaneousWorkScreenState
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(
-          "Miscellaneous Work",
+          "Add Miscellaneous Work",
           style: TextStyle(
             color: Colors.white,
             fontSize: 20.sp,
@@ -293,36 +365,46 @@ class _MiscellaneousWorkScreenState
                           }
                         },
                       ),
-                      SizedBox(height: 24.h),
-
-                      Text(
-                        "Location Details (Auto-generated from map)",
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.grey.shade600,
-                          fontFamily: 'Poppins',
-                        ),
-                      ),
-                      SizedBox(height: 12.h),
-
-                      // Latitude (Non-editable)
-                      PrimaryTextField(
-                        hintText: "Latitude (Auto-generated)",
-                        controller: _latitudeController,
-                        prefixIcon: Icons.explore_outlined,
-                        hasFocusBorder: true,
-                        enabled: false, // Read-only
-                      ),
                       SizedBox(height: 16.h),
 
-                      // Longitude (Non-editable)
-                      PrimaryTextField(
-                        hintText: "Longitude (Auto-generated)",
-                        controller: _longitudeController,
-                        prefixIcon: Icons.explore_outlined,
-                        hasFocusBorder: true,
-                        enabled: false, // Read-only
+                      // Work Date Picker
+                      GestureDetector(
+                        onTap: _selectDate,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 16.w,
+                            vertical: 14.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF5F6FA),
+                            borderRadius: BorderRadius.circular(12.r),
+                            border: Border.all(color: const Color(0xFFE0E0E0)),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.calendar_today_outlined,
+                                color: Colors.grey.shade600,
+                                size: 20.sp,
+                              ),
+                              SizedBox(width: 12.w),
+                              Text(
+                                'Work Date: ${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  color: AppColors.textdark,
+                                  fontFamily: 'Poppins',
+                                ),
+                              ),
+                              const Spacer(),
+                              Icon(
+                                Icons.arrow_drop_down,
+                                color: Colors.grey.shade600,
+                                size: 24.sp,
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                       SizedBox(height: 24.h),
 
