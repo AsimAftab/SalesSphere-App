@@ -13,13 +13,14 @@ import 'package:sales_sphere/features/parties/vm/parties.vm.dart';
 import 'package:sales_sphere/features/expense-claim/models/expense_claim.model.dart';
 import 'package:sales_sphere/features/expense-claim/vm/expense_claim_edit.vm.dart';
 import 'package:sales_sphere/features/expense-claim/vm/expense_claims.vm.dart';
+import 'package:sales_sphere/features/expense-claim/vm/expense_categories.vm.dart';
 
 class EditExpenseClaimScreen extends ConsumerStatefulWidget {
-  final ExpenseClaimDetailApiData claimData;
+  final String claimId;
 
   const EditExpenseClaimScreen({
     super.key,
-    required this.claimData,
+    required this.claimId,
   });
 
   @override
@@ -38,32 +39,26 @@ class _EditExpenseClaimScreenState
   late TextEditingController _dateController;
 
   // Dropdowns
-  String? _selectedCategory;
+  String? _selectedCategoryId;
   String? _selectedPartyId;
+  bool _isAddingNewCategory = false;
+  late TextEditingController _newCategoryController;
 
   // Date
-  late DateTime _selectedDate;
+  DateTime _selectedDate = DateTime.now();
 
   // Image Picking
   final ImagePicker _picker = ImagePicker();
-  XFile? _newImage; // New image picked by user
-  bool _hasExistingImage = false; // Track if claim has existing image
-  bool _deleteExistingImage = false; // Track if user wants to delete existing image
+  XFile? _newImage;
+  bool _hasExistingImage = false;
 
-  // Category options
-  final List<String> _categories = [
-    'Travel',
-    'Food',
-    'Accommodation',
-    'Fuel',
-    'Miscellaneous',
-  ];
+  // Track if data has been loaded
+  bool _isDataLoaded = false;
 
   @override
   void initState() {
     super.initState();
     _initializeControllers();
-    _loadExistingData();
   }
 
   void _initializeControllers() {
@@ -71,27 +66,32 @@ class _EditExpenseClaimScreenState
     _amountController = TextEditingController();
     _descriptionController = TextEditingController();
     _dateController = TextEditingController();
+    _newCategoryController = TextEditingController();
   }
 
-  void _loadExistingData() {
-    // Note: Model doesn't have title field, we'll use claimType for now
-    _titleController.text = widget.claimData.claimType;
-    _amountController.text = widget.claimData.amount.toString();
-    _selectedCategory = widget.claimData.claimType;
-    _selectedPartyId = null; // Model doesn't have partyId field
-    _descriptionController.text = widget.claimData.description ?? '';
-    
-    // Parse date
+  void _loadExistingData(ExpenseClaimDetailApiData claimData) {
+    _titleController.text = claimData.title;
+    _amountController.text = claimData.amount.toString();
+
+    _selectedCategoryId = claimData.category?.id;
+
+    if (claimData.party != null && claimData.party is Map) {
+      _selectedPartyId = (claimData.party as Map)['_id'] as String?;
+    }
+
+    _descriptionController.text = claimData.description ?? '';
+
     try {
-      _selectedDate = DateTime.parse(widget.claimData.date);
+      _selectedDate = DateTime.parse(claimData.date);
       _dateController.text = _formatDateForDisplay(_selectedDate);
     } catch (e) {
       _selectedDate = DateTime.now();
+      _dateController.text = _formatDateForDisplay(_selectedDate);
     }
 
-    // Check if has existing image
-    _hasExistingImage = widget.claimData.receiptUrl != null && 
-                        widget.claimData.receiptUrl!.isNotEmpty;
+    if (claimData.receiptUrl != null && claimData.receiptUrl!.isNotEmpty) {
+      _hasExistingImage = true;
+    }
   }
 
   String _formatDateForDisplay(DateTime date) {
@@ -104,6 +104,7 @@ class _EditExpenseClaimScreenState
     _amountController.dispose();
     _descriptionController.dispose();
     _dateController.dispose();
+    _newCategoryController.dispose();
     super.dispose();
   }
 
@@ -122,13 +123,13 @@ class _EditExpenseClaimScreenState
                   leading: const Icon(Icons.photo_library),
                   title: const Text('Gallery'),
                   onTap: () async {
-                    Navigator.pop(context);
+                    context.pop();
                     final XFile? image = await _picker.pickImage(
                         source: ImageSource.gallery, imageQuality: 70);
                     if (image != null) {
                       setState(() {
                         _newImage = image;
-                        _deleteExistingImage = false;
+                        _hasExistingImage = false;
                       });
                     }
                   },
@@ -137,13 +138,13 @@ class _EditExpenseClaimScreenState
                   leading: const Icon(Icons.photo_camera),
                   title: const Text('Camera'),
                   onTap: () async {
-                    Navigator.pop(context);
+                    context.pop();
                     final XFile? image = await _picker.pickImage(
                         source: ImageSource.camera, imageQuality: 70);
                     if (image != null) {
                       setState(() {
                         _newImage = image;
-                        _deleteExistingImage = false;
+                        _hasExistingImage = false;
                       });
                     }
                   },
@@ -164,27 +165,35 @@ class _EditExpenseClaimScreenState
     });
   }
 
-  void _deleteExistingImageAction() {
-    setState(() {
-      _deleteExistingImage = true;
-      _hasExistingImage = false;
-    });
-  }
-
   // ---------------------------------------------------------------------------
   // SUBMIT LOGIC
   // ---------------------------------------------------------------------------
   Future<void> _handleSubmit() async {
-    if (_formKey.currentState?.validate() ?? false) {
-      if (_selectedCategory == null) {
+    final claimAsync = ref.read(expenseClaimByIdProvider(widget.claimId));
+    final claim = claimAsync.value;
+
+    if (claim != null && claim.status != 'pending') {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select a category')),
+          SnackBar(
+            content: Text('Cannot edit ${claim.status} expense claims'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    if (_formKey.currentState?.validate() ?? false) {
+      if (_selectedCategoryId == null &&
+          (!_isAddingNewCategory || _newCategoryController.text.trim().isEmpty)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select or add a category')),
         );
         return;
       }
 
       try {
-        // Show Loading
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -195,44 +204,50 @@ class _EditExpenseClaimScreenState
           );
         }
 
-        // Format date as YYYY-MM-DD
-        final formattedDate =
-            '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}';
+        final formattedDate = _selectedDate.toIso8601String().split('T')[0];
 
-        // Update expense claim
+        String categoryToSend;
+        if (_isAddingNewCategory && _newCategoryController.text.trim().isNotEmpty) {
+          categoryToSend = _newCategoryController.text.trim();
+        } else if (_selectedCategoryId != null) {
+          final categoriesAsync = ref.read(expenseCategoriesViewModelProvider);
+          final categories = categoriesAsync.value ?? [];
+          final selectedCategory = categories.firstWhere(
+                (c) => c.id == _selectedCategoryId,
+            orElse: () => categories.first,
+          );
+          categoryToSend = selectedCategory.name;
+        } else {
+          throw Exception('Please select or add a category');
+        }
+
         final vm = ref.read(expenseClaimEditViewModelProvider.notifier);
         await vm.updateExpenseClaim(
-          claimId: widget.claimData.id,
+          claimId: widget.claimId,
           title: _titleController.text.trim(),
           amount: double.parse(_amountController.text.trim()),
-          category: _selectedCategory!,
-          date: formattedDate,
-          partyId: _selectedPartyId,
+          category: categoryToSend,
+          incurredDate: formattedDate,
+          party: _selectedPartyId,
           description: _descriptionController.text.trim().isEmpty
               ? null
               : _descriptionController.text.trim(),
         );
 
-        // Handle image operations
-        if (_deleteExistingImage && widget.claimData.receiptUrl != null) {
-          // Delete existing image
-          await vm.deleteImage(claimId: widget.claimData.id);
-        }
-
         if (_newImage != null) {
-          // Upload new image
           if (mounted) {
             ScaffoldMessenger.of(context).hideCurrentSnackBar();
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Uploading receipt image...'),
+                content: Text('Uploading receipt...'),
                 backgroundColor: AppColors.primary,
                 duration: Duration(seconds: 30),
               ),
             );
           }
-          await vm.uploadImage(
-            claimId: widget.claimData.id,
+
+          await vm.uploadReceipt(
+            claimId: widget.claimId,
             imageFile: File(_newImage!.path),
           );
         }
@@ -245,9 +260,8 @@ class _EditExpenseClaimScreenState
               backgroundColor: AppColors.success,
             ),
           );
-          // Refresh the list
           ref.invalidate(expenseClaimsViewModelProvider);
-          context.pop(); // Go back
+          context.pop();
         }
       } catch (e) {
         if (mounted) {
@@ -285,7 +299,6 @@ class _EditExpenseClaimScreenState
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Search Field
                     TextField(
                       controller: searchController,
                       decoration: InputDecoration(
@@ -306,20 +319,16 @@ class _EditExpenseClaimScreenState
                           } else {
                             filteredParties = parties
                                 .where((party) => party.name
-                                    .toLowerCase()
-                                    .contains(value.toLowerCase()))
+                                .toLowerCase()
+                                .contains(value.toLowerCase()))
                                 .toList();
                           }
                         });
                       },
                     ),
                     SizedBox(height: 16.h),
-                    // None Option
                     ListTile(
-                      leading: const Icon(
-                        Icons.clear,
-                        color: AppColors.textSecondary,
-                      ),
+                      leading: const Icon(Icons.clear, color: AppColors.textSecondary),
                       title: Text(
                         'None',
                         style: TextStyle(
@@ -331,64 +340,63 @@ class _EditExpenseClaimScreenState
                         this.setState(() {
                           _selectedPartyId = null;
                         });
-                        Navigator.pop(context);
+                        context.pop();
                       },
                     ),
                     const Divider(height: 1),
-                    // Party List
                     Expanded(
                       child: filteredParties.isEmpty
                           ? Center(
-                              child: Text(
-                                'No parties found',
-                                style: TextStyle(
-                                  color: AppColors.textSecondary,
-                                  fontSize: 14.sp,
-                                ),
-                              ),
-                            )
+                        child: Text(
+                          'No parties found',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 14.sp,
+                          ),
+                        ),
+                      )
                           : ListView.builder(
-                              shrinkWrap: true,
-                              itemCount: filteredParties.length,
-                              itemBuilder: (context, index) {
-                                final party = filteredParties[index];
-                                return ListTile(
-                                  leading: const Icon(
-                                    Icons.person_outline,
-                                    color: AppColors.primary,
-                                  ),
-                                  title: Text(
-                                    party.name,
-                                    style: TextStyle(fontSize: 14.sp),
-                                  ),
-                                  subtitle: Text(
-                                    party.fullAddress,
-                                    style: TextStyle(
-                                      fontSize: 12.sp,
-                                      color: AppColors.textSecondary,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  selected: _selectedPartyId == party.id,
-                                  selectedTileColor:
-                                      AppColors.primary.withValues(alpha: 0.1),
-                                  onTap: () {
-                                    this.setState(() {
-                                      _selectedPartyId = party.id;
-                                    });
-                                    Navigator.pop(context);
-                                  },
-                                );
-                              },
+                        shrinkWrap: true,
+                        itemCount: filteredParties.length,
+                        itemBuilder: (context, index) {
+                          final party = filteredParties[index];
+                          return ListTile(
+                            leading: const Icon(
+                              Icons.person_outline,
+                              color: AppColors.primary,
                             ),
+                            title: Text(
+                              party.name,
+                              style: TextStyle(fontSize: 14.sp),
+                            ),
+                            subtitle: Text(
+                              party.fullAddress,
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                color: AppColors.textSecondary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            selected: _selectedPartyId == party.id,
+                            selectedTileColor:
+                            AppColors.primary.withValues(alpha: 0.1),
+                            onTap: () {
+                              this.setState(() {
+                                _selectedPartyId = party.id;
+                              });
+                              context.pop();
+                            },
+                          );
+                        },
+                      ),
                     ),
                   ],
                 ),
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () => context.pop(),
                   child: const Text('Cancel'),
                 ),
               ],
@@ -402,6 +410,48 @@ class _EditExpenseClaimScreenState
   @override
   Widget build(BuildContext context) {
     final partiesAsync = ref.watch(partiesViewModelProvider);
+    final categoriesAsync = ref.watch(expenseCategoriesViewModelProvider);
+    final claimAsync = ref.watch(expenseClaimByIdProvider(widget.claimId));
+
+    ref.listen(expenseClaimByIdProvider(widget.claimId), (previous, next) {
+      if (next is AsyncData<ExpenseClaimDetailApiData> && !_isDataLoaded) {
+        _loadExistingData(next.value);
+        setState(() {
+          _isDataLoaded = true;
+        });
+      }
+    });
+
+    return claimAsync.when(
+      data: (claimData) {
+        return _buildScreen(context, claimData, partiesAsync, categoriesAsync);
+      },
+      loading: () => Scaffold(
+        backgroundColor: AppColors.primary,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () => context.pop(),
+          ),
+        ),
+        body: const Center(child: CircularProgressIndicator(color: Colors.white)),
+      ),
+      error: (error, stack) => Scaffold(
+        appBar: AppBar(title: const Text('Error')),
+        body: Center(child: Text('Error loading claim: $error')),
+      ),
+    );
+  }
+
+  Widget _buildScreen(
+      BuildContext context,
+      ExpenseClaimDetailApiData claimData,
+      AsyncValue partiesAsync,
+      AsyncValue categoriesAsync,
+      ) {
+    final bool isEditable = claimData.status == 'pending';
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
@@ -445,16 +495,21 @@ class _EditExpenseClaimScreenState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // --- NEW STATUS CARD ---
+                      _buildStatusCard(claimData.status),
+                      SizedBox(height: 24.h),
+
                       // Title
                       PrimaryTextField(
                         hintText: "Title",
                         controller: _titleController,
                         prefixIcon: Icons.title_outlined,
                         hasFocusBorder: true,
+                        enabled: isEditable,
                         validator: (value) =>
-                            (value == null || value.trim().isEmpty)
-                                ? 'Required'
-                                : null,
+                        (value == null || value.trim().isEmpty)
+                            ? 'Required'
+                            : null,
                       ),
                       SizedBox(height: 16.h),
 
@@ -464,6 +519,7 @@ class _EditExpenseClaimScreenState
                         controller: _amountController,
                         prefixIcon: Icons.currency_rupee,
                         hasFocusBorder: true,
+                        enabled: isEditable,
                         keyboardType: TextInputType.number,
                         inputFormatters: [
                           FilteringTextInputFormatter.allow(
@@ -483,62 +539,128 @@ class _EditExpenseClaimScreenState
                       SizedBox(height: 16.h),
 
                       // Category Dropdown
-                      GestureDetector(
-                        onTap: () => _showCategoryDialog(),
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 16.w,
-                            vertical: 14.h,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF5F6FA),
-                            borderRadius: BorderRadius.circular(12.r),
-                            border: Border.all(color: const Color(0xFFE0E0E0)),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.category_outlined,
-                                color: Colors.grey.shade600,
-                                size: 20.sp,
-                              ),
-                              SizedBox(width: 12.w),
-                              Text(
-                                _selectedCategory ?? 'Category',
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  color: _selectedCategory == null
-                                      ? Colors.grey.shade600
-                                      : AppColors.textdark,
-                                  fontFamily: 'Poppins',
-                                ),
-                              ),
-                              const Spacer(),
-                              Icon(
-                                Icons.arrow_drop_down,
-                                color: Colors.grey.shade600,
-                                size: 24.sp,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 16.h),
-
-                      // Party Dropdown (Optional)
-                      partiesAsync.when(
-                        data: (parties) => GestureDetector(
-                          onTap: () => _showPartySearchDialog(parties),
+                      categoriesAsync.when(
+                        data: (categories) => GestureDetector(
+                          onTap: isEditable ? () => _showCategoryDialog(categories) : null,
                           child: Container(
                             padding: EdgeInsets.symmetric(
                               horizontal: 16.w,
                               vertical: 14.h,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF5F6FA),
+                              color: isEditable ? Colors.white : Colors.grey.shade100,
                               borderRadius: BorderRadius.circular(12.r),
-                              border:
-                                  Border.all(color: const Color(0xFFE0E0E0)),
+                              border: Border.all(color: const Color(0xFFE0E0E0)),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.category_outlined,
+                                  color: Colors.grey.shade600,
+                                  size: 20.sp,
+                                ),
+                                SizedBox(width: 12.w),
+                                Expanded(
+                                  child: Text(
+                                    _isAddingNewCategory
+                                        ? 'Add New Category'
+                                        : (_selectedCategoryId == null
+                                        ? 'Category'
+                                        : categories
+                                        .firstWhere((c) => c.id == _selectedCategoryId,
+                                        orElse: () => ExpenseCategory(id: '', name: 'Category'))
+                                        .name),
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      color: _isAddingNewCategory
+                                          ? AppColors.primary
+                                          : (_selectedCategoryId == null
+                                          ? Colors.grey.shade600
+                                          : AppColors.textdark),
+                                      fontFamily: 'Poppins',
+                                    ),
+                                  ),
+                                ),
+                                const Spacer(),
+                                Icon(
+                                  Icons.arrow_drop_down,
+                                  color: Colors.grey.shade600,
+                                  size: 24.sp,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        loading: () => const SizedBox.shrink(),
+                        error: (_, __) => const SizedBox.shrink(),
+                      ),
+                      SizedBox(height: 16.h),
+
+                      if (_isAddingNewCategory) ...[
+                        TextField(
+                          controller: _newCategoryController,
+                          decoration: InputDecoration(
+                            hintText: 'Enter new category name',
+                            hintStyle: TextStyle(
+                              color: Colors.grey.shade400,
+                              fontSize: 14.sp,
+                              fontFamily: 'Poppins',
+                            ),
+                            prefixIcon: Icon(
+                              Icons.label_outline,
+                              color: AppColors.primary,
+                              size: 20.sp,
+                            ),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                Icons.close,
+                                color: Colors.grey.shade600,
+                                size: 20.sp,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _isAddingNewCategory = false;
+                                  _newCategoryController.clear();
+                                });
+                              },
+                            ),
+                            filled: true,
+                            fillColor: const Color(0xFFF5F6FA),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12.r),
+                              borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12.r),
+                              borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12.r),
+                              borderSide: BorderSide(color: AppColors.primary),
+                            ),
+                          ),
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            color: AppColors.textdark,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                        SizedBox(height: 16.h),
+                      ],
+
+                      // Party Dropdown
+                      partiesAsync.when(
+                        data: (parties) => GestureDetector(
+                          onTap: isEditable ? () => _showPartySearchDialog(parties) : null,
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16.w,
+                              vertical: 14.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isEditable ? Colors.white : Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(12.r),
+                              border: Border.all(color: const Color(0xFFE0E0E0)),
                             ),
                             child: Row(
                               children: [
@@ -553,9 +675,8 @@ class _EditExpenseClaimScreenState
                                     _selectedPartyId == null
                                         ? 'Party (Optional)'
                                         : parties
-                                            .firstWhere(
-                                                (p) => p.id == _selectedPartyId)
-                                            .name,
+                                        .firstWhere((p) => p.id == _selectedPartyId)
+                                        .name,
                                     style: TextStyle(
                                       fontSize: 14.sp,
                                       color: _selectedPartyId == null
@@ -565,73 +686,13 @@ class _EditExpenseClaimScreenState
                                     ),
                                   ),
                                 ),
-                                Icon(
-                                  Icons.search,
-                                  color: Colors.grey.shade600,
-                                  size: 20.sp,
-                                ),
+                                Icon(Icons.search, color: Colors.grey.shade600, size: 20.sp),
                               ],
                             ),
                           ),
                         ),
-                        loading: () => Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 16.w,
-                            vertical: 14.h,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF5F6FA),
-                            borderRadius: BorderRadius.circular(12.r),
-                            border: Border.all(color: const Color(0xFFE0E0E0)),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.people_outline,
-                                color: Colors.grey.shade600,
-                                size: 20.sp,
-                              ),
-                              SizedBox(width: 12.w),
-                              const Expanded(
-                                child: SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                      strokeWidth: 2),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        error: (error, stack) => Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 16.w,
-                            vertical: 14.h,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF5F6FA),
-                            borderRadius: BorderRadius.circular(12.r),
-                            border: Border.all(color: AppColors.error),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.error_outline,
-                                color: AppColors.error,
-                                size: 20.sp,
-                              ),
-                              SizedBox(width: 12.w),
-                              Text(
-                                'Failed to load parties',
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  color: AppColors.error,
-                                  fontFamily: 'Poppins',
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                        loading: () => const SizedBox.shrink(),
+                        error: (_, __) => const SizedBox.shrink(),
                       ),
                       SizedBox(height: 16.h),
 
@@ -640,10 +701,10 @@ class _EditExpenseClaimScreenState
                         hintText: "Date",
                         controller: _dateController,
                         prefixIcon: Icons.calendar_today_outlined,
-                        enabled: true,
+                        enabled: isEditable,
                         initialDate: _selectedDate,
                         firstDate: DateTime(2020),
-                        lastDate: DateTime.now(),
+                        lastDate: DateTime(2030),
                       ),
                       SizedBox(height: 16.h),
 
@@ -653,6 +714,7 @@ class _EditExpenseClaimScreenState
                         controller: _descriptionController,
                         prefixIcon: Icons.description_outlined,
                         hasFocusBorder: true,
+                        enabled: isEditable,
                         minLines: 1,
                         maxLines: 5,
                         textInputAction: TextInputAction.newline,
@@ -670,9 +732,9 @@ class _EditExpenseClaimScreenState
                         ),
                       ),
                       SizedBox(height: 8.h),
-                      _buildImageSection(),
+                      _buildImageSection(claimData),
 
-                      SizedBox(height: 80.h), // Space for bottom button
+                      SizedBox(height: 80.h),
                     ],
                   ),
                 ),
@@ -681,30 +743,138 @@ class _EditExpenseClaimScreenState
           ),
 
           // Bottom Button
-          Container(
-            padding: EdgeInsets.fromLTRB(
-              16.w,
-              16.h,
-              16.w,
-              MediaQuery.of(context).padding.bottom + 16.h,
+          if (isEditable)
+            Container(
+              padding: EdgeInsets.fromLTRB(
+                16.w,
+                16.h,
+                16.w,
+                MediaQuery.of(context).padding.bottom + 16.h,
+              ),
+              color: Colors.white,
+              child: PrimaryButton(
+                label: 'Update',
+                onPressed: _handleSubmit,
+                size: ButtonSize.medium,
+              ),
             ),
-            color: Colors.white,
-            child: PrimaryButton(
-              label: 'Update',
-              onPressed: _handleSubmit,
-              size: ButtonSize.medium,
-            ),
-          ),
         ],
       ),
     );
   }
 
-  void _showCategoryDialog() {
+  // ---------------------------------------------------------------------------
+  // STATUS CARD WIDGET
+  // ---------------------------------------------------------------------------
+  Widget _buildStatusCard(String status) {
+    // Define styles based on status
+    Color bgColor;
+    Color borderColor;
+    Color textColor;
+    String displayStatus;
+
+    switch (status.toLowerCase()) {
+      case 'approved':
+        bgColor = const Color(0xFFE8F5E9); // Light Green
+        borderColor = const Color(0xFFC8E6C9);
+        textColor = const Color(0xFF2E7D32); // Dark Green
+        displayStatus = 'Approved';
+        break;
+      case 'rejected':
+        bgColor = const Color(0xFFFFEBEE); // Light Red
+        borderColor = const Color(0xFFFFCDD2);
+        textColor = const Color(0xFFC62828); // Dark Red
+        displayStatus = 'Rejected';
+        break;
+      case 'pending':
+      default:
+        bgColor = const Color(0xFFFFF9E6); // Light Yellow (Cream)
+        borderColor = const Color(0xFFFFECB3);
+        textColor = const Color(0xFFB78628); // Gold/Brown
+        displayStatus = 'Pending';
+        break;
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(20.r), // Highly rounded
+        border: Border.all(color: borderColor, width: 1),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // The Dot
+          Container(
+            height: 10.w,
+            width: 10.w,
+            decoration: BoxDecoration(
+              color: textColor,
+              shape: BoxShape.circle,
+            ),
+          ),
+          SizedBox(width: 16.w),
+
+          // The Text Column
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "Expense Status",
+                  style: TextStyle(
+                    fontSize: 11.sp,
+                    color: Colors.grey.shade600,
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                SizedBox(height: 2.h),
+                Text(
+                  displayStatus,
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    color: textColor,
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Read Only / Web Only Tag
+          if (status.toLowerCase() != 'pending')
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+              child: Text(
+                "Read Only",
+                style: TextStyle(
+                  fontSize: 10.sp,
+                  color: textColor.withValues(alpha: 0.7),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _showCategoryDialog(List<ExpenseCategory> categories) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.transparent,
           title: Text(
             'Select Category',
             style: TextStyle(
@@ -714,26 +884,51 @@ class _EditExpenseClaimScreenState
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
-            children: _categories.map((category) {
-              return ListTile(
+            children: [
+              ...categories.map((category) {
+                return ListTile(
+                  leading: Icon(
+                    _getCategoryIcon(category.name),
+                    color: AppColors.primary,
+                  ),
+                  title: Text(
+                    category.name,
+                    style: TextStyle(fontSize: 14.sp),
+                  ),
+                  selected: _selectedCategoryId == category.id,
+                  selectedTileColor: AppColors.primary.withValues(alpha: 0.1),
+                  onTap: () {
+                    setState(() {
+                      _selectedCategoryId = category.id;
+                      _isAddingNewCategory = false;
+                    });
+                    context.pop();
+                  },
+                );
+              }),
+              Divider(height: 1.h, color: Colors.grey.shade300),
+              ListTile(
                 leading: Icon(
-                  _getCategoryIcon(category),
+                  Icons.add_circle_outline,
                   color: AppColors.primary,
                 ),
                 title: Text(
-                  category,
-                  style: TextStyle(fontSize: 14.sp),
+                  'Add New Category',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-                selected: _selectedCategory == category,
-                selectedTileColor: AppColors.primary.withValues(alpha: 0.1),
                 onTap: () {
                   setState(() {
-                    _selectedCategory = category;
+                    _isAddingNewCategory = true;
+                    _selectedCategoryId = null;
                   });
-                  Navigator.pop(context);
+                  context.pop();
                 },
-              );
-            }).toList(),
+              ),
+            ],
           ),
         );
       },
@@ -742,37 +937,34 @@ class _EditExpenseClaimScreenState
 
   IconData _getCategoryIcon(String category) {
     switch (category.toLowerCase()) {
-      case 'travel':
-        return Icons.directions_car;
-      case 'food':
-        return Icons.restaurant;
-      case 'accommodation':
-        return Icons.hotel;
-      case 'fuel':
-        return Icons.local_gas_station;
-      case 'miscellaneous':
-        return Icons.more_horiz;
-      default:
-        return Icons.category;
+      case 'travel': return Icons.directions_car;
+      case 'food': return Icons.restaurant;
+      case 'accommodation': return Icons.hotel;
+      case 'fuel': return Icons.local_gas_station;
+      case 'miscellaneous': return Icons.more_horiz;
+      default: return Icons.category;
     }
   }
 
-  Widget _buildImageSection() {
-    // Show new image if picked
+  Widget _buildImageSection(ExpenseClaimDetailApiData claimData) {
+    final bool isEditable = claimData.status == 'pending';
+
     if (_newImage != null) {
-      return _buildNewImagePreview();
+      return _buildNewImagePreview(isEditable);
     }
-    
-    // Show existing image if available and not deleted
-    if (_hasExistingImage && !_deleteExistingImage) {
-      return _buildExistingImagePreview();
+
+    if (_hasExistingImage && claimData.receiptUrl != null) {
+      return _buildExistingImagePreview(claimData.receiptUrl!, isEditable);
     }
-    
-    // Show upload area
-    return _buildImageUploadArea();
+
+    if (isEditable) {
+      return _buildImageUploadArea();
+    }
+
+    return const SizedBox.shrink();
   }
 
-  Widget _buildNewImagePreview() {
+  Widget _buildNewImagePreview(bool isEditable) {
     return GestureDetector(
       onTap: () => _showNewImagePreview(),
       child: Container(
@@ -797,15 +989,11 @@ class _EditExpenseClaimScreenState
                 fit: BoxFit.cover,
               ),
             ),
-            // Preview overlay
             Positioned(
               bottom: 8.h,
               right: 8.w,
               child: Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 12.w,
-                  vertical: 6.h,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                 decoration: BoxDecoration(
                   color: Colors.black.withValues(alpha: 0.6),
                   borderRadius: BorderRadius.circular(20.r),
@@ -813,11 +1001,7 @@ class _EditExpenseClaimScreenState
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      Icons.zoom_in,
-                      color: Colors.white,
-                      size: 16.sp,
-                    ),
+                    Icon(Icons.zoom_in, color: Colors.white, size: 16.sp),
                     SizedBox(width: 4.w),
                     Text(
                       'Tap to preview',
@@ -831,94 +1015,99 @@ class _EditExpenseClaimScreenState
                 ),
               ),
             ),
-            // Close button
-            Positioned(
-              top: 8.h,
-              right: 8.w,
-              child: GestureDetector(
-                onTap: _removeNewImage,
-                child: Container(
-                  padding: EdgeInsets.all(6.w),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.6),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.close,
-                    color: Colors.white,
-                    size: 20.sp,
+            if (isEditable)
+              Positioned(
+                top: 8.h,
+                right: 8.w,
+                child: GestureDetector(
+                  onTap: _removeNewImage,
+                  child: Container(
+                    padding: EdgeInsets.all(6.w),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.6),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.close, color: Colors.white, size: 20.sp),
                   ),
                 ),
               ),
-            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildExistingImagePreview() {
+  Widget _buildExistingImagePreview(String imageUrl, bool isEditable) {
     return GestureDetector(
-      onTap: () {
-        // TODO: Show existing image preview from URL
-      },
-      child: Container(
-        height: 200.h,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: const Color(0xFFF5F6FA),
-          borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(
-            color: const Color(0xFFE0E0E0),
-            style: BorderStyle.solid,
-          ),
-        ),
-        child: Stack(
-          children: [
-            // TODO: Load image from URL using Image.network or CachedNetworkImage
-            Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.image,
-                    size: 40.sp,
-                    color: AppColors.primary,
+      onTap: () => _showNetworkImagePreview(imageUrl),
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12.r),
+            child: Image.network(
+              imageUrl,
+              height: 200.h,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  height: 200.h,
+                  color: Colors.grey[300],
+                  child: Center(
+                    child: Icon(Icons.error_outline, size: 48.sp, color: Colors.red),
                   ),
-                  SizedBox(height: 8.h),
+                );
+              },
+            ),
+          ),
+          Positioned(
+            bottom: 8.h,
+            left: 8.w,
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(20.r),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.touch_app, color: Colors.white, size: 14.sp),
+                  SizedBox(width: 4.w),
                   Text(
-                    "Existing Receipt Image",
+                    'Tap to preview',
                     style: TextStyle(
-                      fontSize: 12.sp,
-                      color: AppColors.textdark,
+                      color: Colors.white,
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w500,
                       fontFamily: 'Poppins',
                     ),
                   ),
                 ],
               ),
             ),
-            // Delete button
+          ),
+          if (isEditable)
             Positioned(
               top: 8.h,
               right: 8.w,
               child: GestureDetector(
-                onTap: _deleteExistingImageAction,
+                onTap: () {
+                  setState(() {
+                    _hasExistingImage = false;
+                  });
+                },
                 child: Container(
                   padding: EdgeInsets.all(6.w),
                   decoration: BoxDecoration(
                     color: Colors.black.withValues(alpha: 0.6),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
-                    Icons.delete,
-                    color: Colors.white,
-                    size: 20.sp,
-                  ),
+                  child: Icon(Icons.delete, color: Colors.white, size: 20.sp),
                 ),
               ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -963,92 +1152,30 @@ class _EditExpenseClaimScreenState
   void _showNewImagePreview() {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: EdgeInsets.all(16.w),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Title at top
-              Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 16.w,
-                  vertical: 12.h,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.7),
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Receipt Image Preview',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'Poppins',
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        padding: EdgeInsets.all(4.w),
-                        child: Icon(
-                          Icons.close,
-                          color: Colors.white,
-                          size: 24.sp,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 16.h),
-              // Image container
-              Container(
-                constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height * 0.7,
-                  maxWidth: MediaQuery.of(context).size.width,
-                ),
-                child: InteractiveViewer(
-                  minScale: 0.5,
-                  maxScale: 4.0,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12.r),
-                    child: Image.file(
-                      File(_newImage!.path),
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(height: 16.h),
-              // Info text at bottom
-              Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 16.w,
-                  vertical: 8.h,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.7),
-                  borderRadius: BorderRadius.circular(20.r),
-                ),
-                child: Text(
-                  'Pinch to zoom • Drag to pan',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12.sp,
-                    fontFamily: 'Poppins',
-                  ),
-                ),
-              ),
-            ],
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: InteractiveViewer(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12.r),
+            child: Image.file(File(_newImage!.path)),
           ),
-        );
-      },
+        ),
+      ),
+    );
+  }
+
+  void _showNetworkImagePreview(String imageUrl) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: InteractiveViewer(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12.r),
+            child: Image.network(imageUrl),
+          ),
+        ),
+      ),
     );
   }
 }

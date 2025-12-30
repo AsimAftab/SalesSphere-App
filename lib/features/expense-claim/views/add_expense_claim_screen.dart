@@ -10,6 +10,9 @@ import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
 import 'package:sales_sphere/widget/custom_date_picker.dart';
 import 'package:sales_sphere/features/parties/vm/parties.vm.dart';
+import 'package:sales_sphere/features/expense-claim/vm/expense_claim_add.vm.dart';
+import 'package:sales_sphere/features/expense-claim/vm/expense_categories.vm.dart';
+import 'package:sales_sphere/features/expense-claim/models/expense_claim.model.dart';
 
 class AddExpenseClaimScreen extends ConsumerStatefulWidget {
   const AddExpenseClaimScreen({super.key});
@@ -29,8 +32,12 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
   late TextEditingController _dateController;
 
   // Dropdowns
-  String? _selectedCategory;
+  String? _selectedCategoryId;
   String? _selectedPartyId;
+
+  // New Category
+  bool _isAddingNewCategory = false;
+  late TextEditingController _newCategoryController;
 
   // Date
   DateTime _selectedDate = DateTime.now();
@@ -39,14 +46,7 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
   final ImagePicker _picker = ImagePicker();
   XFile? _selectedImage;
 
-  // Category options
-  final List<String> _categories = [
-    'Travel',
-    'Food',
-    'Accommodation',
-    'Fuel',
-    'Miscellaneous',
-  ];
+  // Category options (now loaded from API)
 
   @override
   void initState() {
@@ -59,6 +59,7 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
     _amountController = TextEditingController();
     _descriptionController = TextEditingController();
     _dateController = TextEditingController();
+    _newCategoryController = TextEditingController();
   }
 
   @override
@@ -67,6 +68,7 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
     _amountController.dispose();
     _descriptionController.dispose();
     _dateController.dispose();
+    _newCategoryController.dispose();
     super.dispose();
   }
 
@@ -85,7 +87,7 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                   leading: const Icon(Icons.photo_library),
                   title: const Text('Gallery'),
                   onTap: () async {
-                    Navigator.pop(context);
+                    context.pop();
                     final XFile? image = await _picker.pickImage(
                         source: ImageSource.gallery, imageQuality: 70);
                     if (image != null) {
@@ -99,7 +101,7 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                   leading: const Icon(Icons.photo_camera),
                   title: const Text('Camera'),
                   onTap: () async {
-                    Navigator.pop(context);
+                    context.pop();
                     final XFile? image = await _picker.pickImage(
                         source: ImageSource.camera, imageQuality: 70);
                     if (image != null) {
@@ -130,9 +132,17 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
   // ---------------------------------------------------------------------------
   Future<void> _handleSubmit() async {
     if (_formKey.currentState?.validate() ?? false) {
-      if (_selectedCategory == null) {
+      // Validate Category
+      if (!_isAddingNewCategory && _selectedCategoryId == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Please select a category')),
+        );
+        return;
+      }
+
+      if (_isAddingNewCategory && _newCategoryController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter new category name')),
         );
         return;
       }
@@ -149,9 +159,44 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
           );
         }
 
-        // TODO: Implement API call to create expense claim
-        // Simulate API call
-        await Future.delayed(const Duration(seconds: 2));
+        // Get ViewModel
+        final viewModel = ref.read(expenseClaimAddViewModelProvider.notifier);
+
+        // Format date to ISO 8601 (yyyy-MM-dd)
+        final formattedDate = _selectedDate.toIso8601String().split('T')[0];
+
+        // Step 1: Create expense claim
+        final claimId = await viewModel.createExpenseClaim(
+          title: _titleController.text.trim(),
+          amount: double.parse(_amountController.text.trim()),
+          category: _isAddingNewCategory
+              ? _newCategoryController.text.trim()
+              : _selectedCategoryId!,
+          incurredDate: formattedDate,
+          partyId: _selectedPartyId,
+          description: _descriptionController.text.trim().isEmpty
+              ? null
+              : _descriptionController.text.trim(),
+        );
+
+        // Step 2: Upload receipt image if selected
+        if (_selectedImage != null) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('Uploading receipt...'),
+                backgroundColor: AppColors.primary,
+                duration: const Duration(seconds: 30),
+              ),
+            );
+          }
+
+          await viewModel.uploadReceipt(
+            claimId: claimId,
+            imageFile: File(_selectedImage!.path),
+          );
+        }
 
         if (mounted) {
           ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -260,7 +305,7 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                         this.setState(() {
                           _selectedPartyId = null;
                         });
-                        Navigator.pop(context);
+                        context.pop();
                       },
                     ),
                     const Divider(height: 1),
@@ -306,7 +351,7 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                               this.setState(() {
                                 _selectedPartyId = party.id;
                               });
-                              Navigator.pop(context);
+                              context.pop();
                             },
                           );
                         },
@@ -317,7 +362,7 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () => context.pop(),
                   child: const Text('Cancel'),
                 ),
               ],
@@ -331,6 +376,7 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
   @override
   Widget build(BuildContext context) {
     final partiesAsync = ref.watch(partiesViewModelProvider);
+    final categoriesAsync = ref.watch(expenseCategoriesViewModelProvider);
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
@@ -419,14 +465,78 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                         enabled: true,
                         initialDate: _selectedDate,
                         firstDate: DateTime(2020),
-                        lastDate: DateTime.now(),
+                        lastDate: DateTime(2030),
                       ),
                       SizedBox(height: 16.h),
 
                       // 4. Category Dropdown
-                      GestureDetector(
-                        onTap: () => _showCategoryDialog(),
-                        child: Container(
+                      categoriesAsync.when(
+                        data: (categories) => Column(
+                          children: [
+                            GestureDetector(
+                              onTap: () => _showCategoryDialog(categories),
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 16.w,
+                                  vertical: 14.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12.r),
+                                  border: Border.all(color: const Color(0xFFE0E0E0)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.local_offer_outlined,
+                                      color: Colors.grey.shade600,
+                                      size: 20.sp,
+                                    ),
+                                    SizedBox(width: 12.w),
+                                    Expanded(
+                                      child: Text(
+                                        _isAddingNewCategory
+                                            ? 'Add new category'
+                                            : (_selectedCategoryId == null
+                                                ? 'Select Category'
+                                                : categories
+                                                    .firstWhere(
+                                                      (c) => c.id == _selectedCategoryId,
+                                                      orElse: () => ExpenseCategory(id: '', name: 'Category'),
+                                                    )
+                                                    .name),
+                                        style: TextStyle(
+                                          fontSize: 14.sp,
+                                          color: _isAddingNewCategory
+                                              ? AppColors.primary
+                                              : (_selectedCategoryId == null
+                                                  ? Colors.grey.shade600
+                                                  : AppColors.textdark),
+                                          fontFamily: 'Poppins',
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            if (_isAddingNewCategory) ...[
+                              SizedBox(height: 12.h),
+                              PrimaryTextField(
+                                controller: _newCategoryController,
+                                hintText: 'Enter new category name',
+                                prefixIcon: Icons.label_outline,
+                                validator: (value) {
+                                  if (_isAddingNewCategory && (value == null || value.trim().isEmpty)) {
+                                    return 'Please enter category name';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ],
+                          ],
+                        ),
+                        loading: () => Container(
                           padding: EdgeInsets.symmetric(
                             horizontal: 16.w,
                             vertical: 14.h,
@@ -444,13 +554,39 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                                 size: 20.sp,
                               ),
                               SizedBox(width: 12.w),
+                              const Expanded(
+                                child: SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        error: (error, stack) => Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 16.w,
+                            vertical: 14.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12.r),
+                            border: Border.all(color: AppColors.error),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                color: AppColors.error,
+                                size: 20.sp,
+                              ),
+                              SizedBox(width: 12.w),
                               Text(
-                                _selectedCategory ?? 'Select Category',
+                                'Failed to load categories',
                                 style: TextStyle(
                                   fontSize: 14.sp,
-                                  color: _selectedCategory == null
-                                      ? Colors.grey.shade600
-                                      : AppColors.textdark,
+                                  color: AppColors.error,
                                   fontFamily: 'Poppins',
                                 ),
                               ),
@@ -630,7 +766,7 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
     );
   }
 
-  void _showCategoryDialog() {
+  void _showCategoryDialog(List<ExpenseCategory> categories) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -644,28 +780,56 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
               fontWeight: FontWeight.w600,
             ),
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: _categories.map((category) {
-              return ListTile(
-                leading: Icon(
-                  _getCategoryIcon(category),
-                  color: AppColors.primary,
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ...categories.map((category) {
+                  return ListTile(
+                    leading: Icon(
+                      _getCategoryIcon(category.name),
+                      color: AppColors.primary,
+                    ),
+                    title: Text(
+                      category.name,
+                      style: TextStyle(fontSize: 14.sp),
+                    ),
+                    selected: _selectedCategoryId == category.id,
+                    selectedTileColor: AppColors.primary.withValues(alpha: 0.1),
+                    onTap: () {
+                      setState(() {
+                        _selectedCategoryId = category.id;
+                        _isAddingNewCategory = false;
+                        _newCategoryController.clear();
+                      });
+                      context.pop();
+                    },
+                  );
+                }),
+                Divider(height: 1.h),
+                ListTile(
+                  leading: Icon(
+                    Icons.add_circle_outline,
+                    color: AppColors.primary,
+                  ),
+                  title: Text(
+                    'Add new category',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  onTap: () {
+                    context.pop();
+                    setState(() {
+                      _isAddingNewCategory = true;
+                      _selectedCategoryId = null;
+                    });
+                  },
                 ),
-                title: Text(
-                  category,
-                  style: TextStyle(fontSize: 14.sp),
-                ),
-                selected: _selectedCategory == category,
-                selectedTileColor: AppColors.primary.withValues(alpha: 0.1),
-                onTap: () {
-                  setState(() {
-                    _selectedCategory = category;
-                  });
-                  Navigator.pop(context);
-                },
-              );
-            }).toList(),
+              ],
+            ),
           ),
         );
       },
@@ -828,7 +992,7 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                 top: 0,
                 right: 0,
                 child: GestureDetector(
-                  onTap: () => Navigator.pop(context),
+                  onTap: () => context.pop(),
                   child: Container(
                     padding: EdgeInsets.all(8.w),
                     decoration: BoxDecoration(

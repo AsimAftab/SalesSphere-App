@@ -33,6 +33,7 @@ import 'package:sales_sphere/features/miscellaneous/views/edit_miscellaneous_wor
 import 'package:sales_sphere/features/miscellaneous/models/miscellaneous.model.dart';
 import 'package:sales_sphere/features/expense-claim/views/expense_claims_screen.dart';
 import 'package:sales_sphere/features/expense-claim/views/add_expense_claim_screen.dart';
+import 'package:sales_sphere/features/expense-claim/views/edit_expense_claim_screen.dart';
 import 'package:sales_sphere/features/auth/models/login.models.dart';
 import 'package:sales_sphere/features/splash/views/splash_screen.dart';
 import 'package:sales_sphere/features/onboarding/views/onboarding_screen.dart';
@@ -402,6 +403,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/add-expense-claim',
         name: 'add-expense-claim',
         builder: (context, state) => const AddExpenseClaimScreen(),
+      ),
+      GoRoute(
+        path: '/expense-claim/:claimId',
+        name: 'expense_claim_details',
+        builder: (context, state) {
+          final claimId = state.pathParameters['claimId'] ?? '';
+          return EditExpenseClaimScreen(claimId: claimId);
+        },
       ),
 
       // ========================================

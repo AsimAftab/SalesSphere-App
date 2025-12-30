@@ -1,3 +1,4 @@
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'dart:async';
 import 'package:sales_sphere/features/expense-claim/models/expense_claim.model.dart';
@@ -36,109 +37,37 @@ class ExpenseClaimsViewModel extends _$ExpenseClaimsViewModel {
 
     _isFetching = true;
     try {
-      AppLogger.i('📝 Returning mock expense claims data');
-
-      // Simulate network delay
-      await Future.delayed(const Duration(seconds: 1));
-
-      // Return mock data
-      final mockClaims = [
-        ExpenseClaimDetails(
-          id: '1',
-          claimType: 'Travel',
-          amount: 1500.00,
-          date: '2024-01-15',
-          status: 'Pending',
-          description: 'Client meeting in Mumbai - Train tickets',
-          receiptUrl: null,
-        ),
-        ExpenseClaimDetails(
-          id: '2',
-          claimType: 'Food',
-          amount: 850.50,
-          date: '2024-01-16',
-          status: 'Approved',
-          description: 'Business lunch with client',
-          receiptUrl: 'https://example.com/receipt2.jpg',
-        ),
-        ExpenseClaimDetails(
-          id: '3',
-          claimType: 'Fuel',
-          amount: 2500.00,
-          date: '2024-01-17',
-          status: 'Pending',
-          description: 'Field visit to 5 locations',
-          receiptUrl: null,
-        ),
-        ExpenseClaimDetails(
-          id: '4',
-          claimType: 'Accommodation',
-          amount: 3500.00,
-          date: '2024-01-18',
-          status: 'Approved',
-          description: 'Overnight stay for client presentation',
-          receiptUrl: 'https://example.com/receipt4.jpg',
-        ),
-        ExpenseClaimDetails(
-          id: '5',
-          claimType: 'Miscellaneous',
-          amount: 450.00,
-          date: '2024-01-19',
-          status: 'Rejected',
-          description: 'Office supplies for presentation',
-          receiptUrl: null,
-        ),
-        ExpenseClaimDetails(
-          id: '6',
-          claimType: 'Travel',
-          amount: 5200.00,
-          date: '2024-01-20',
-          status: 'Pending',
-          description: 'Flight tickets to Delhi for conference',
-          receiptUrl: 'https://example.com/receipt6.jpg',
-        ),
-        ExpenseClaimDetails(
-          id: '7',
-          claimType: 'Food',
-          amount: 1200.00,
-          date: '2024-01-21',
-          status: 'Approved',
-          description: 'Team dinner after successful deal closure',
-          receiptUrl: null,
-        ),
-        ExpenseClaimDetails(
-          id: '8',
-          claimType: 'Fuel',
-          amount: 1800.00,
-          date: '2024-01-22',
-          status: 'Pending',
-          description: 'Weekly field visits - full tank refill',
-          receiptUrl: 'https://example.com/receipt8.jpg',
-        ),
-      ];
-
-      AppLogger.i('✅ Returned ${mockClaims.length} mock expense claims');
-      return mockClaims;
-
-      // TODO: Replace with real API call when backend is ready
-      // final dio = ref.read(dioClientProvider);
-      // final response = await dio.get(ApiEndpoints.expenseClaims);
-      // if (response.statusCode == 200) {
-      //   final apiResponse = ExpenseClaimsApiResponse.fromJson(response.data);
-      //   return apiResponse.data.map((apiData) {
-      //     return ExpenseClaimDetails(
-      //       id: apiData.id,
-      //       claimType: apiData.claimType,
-      //       amount: apiData.amount,
-      //       date: apiData.date,
-      //       status: apiData.status,
-      //       description: apiData.description,
-      //       receiptUrl: apiData.receiptUrl,
-      //     );
-      //   }).toList();
-      // } else {
-      //   throw Exception('Failed to fetch expense claims: ${response.statusMessage}');
-      // }
+      AppLogger.i('📝 Fetching expense claims from API');
+      
+      final dio = ref.read(dioClientProvider);
+      final response = await dio.get(ApiEndpoints.expenseClaims);
+      
+      if (response.statusCode == 200) {
+        final apiResponse = ExpenseClaimsApiResponse.fromJson(response.data);
+        final claims = apiResponse.data.map((apiData) {
+          return ExpenseClaimDetails(
+            id: apiData.id,
+            title: apiData.title,
+            claimType: apiData.category.name,
+            amount: apiData.amount,
+            date: apiData.incurredDate,
+            status: apiData.status,
+            description: apiData.description,
+            receiptUrl: null,
+            createdAt: apiData.createdAt != null 
+                ? DateTime.tryParse(apiData.createdAt!)
+                : null,
+          );
+        }).toList();
+        
+        AppLogger.i('✅ Fetched ${claims.length} expense claims');
+        return claims;
+      } else {
+        throw Exception('Failed to fetch expense claims: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      AppLogger.e('❌ Dio error fetching expense claims: ${e.message}');
+      rethrow;
     } catch (e) {
       AppLogger.e('❌ Error fetching expense claims: $e');
       rethrow;
@@ -273,4 +202,33 @@ int approvedExpenseClaimCount(Ref ref) {
     loading: () => 0,
     error: (_, __) => 0,
   );
+}
+
+// ============================================================================
+// EXPENSE CLAIM BY ID PROVIDER
+// Fetches a single expense claim by ID
+// ============================================================================
+
+@riverpod
+Future<ExpenseClaimDetailApiData> expenseClaimById(
+  Ref ref,
+  String claimId,
+) async {
+  try {
+    AppLogger.i('📝 Fetching expense claim by ID: $claimId');
+    
+    final dio = ref.read(dioClientProvider);
+    final response = await dio.get(ApiEndpoints.expenseClaimById(claimId));
+    
+    if (response.statusCode == 200) {
+      final apiResponse = ExpenseClaimDetailApiResponse.fromJson(response.data);
+      AppLogger.i('✅ Fetched expense claim: ${apiResponse.data.title}');
+      return apiResponse.data;
+    } else {
+      throw Exception('Failed to fetch expense claim');
+    }
+  } catch (e) {
+    AppLogger.e('❌ Error fetching expense claim by ID: $e');
+    rethrow;
+  }
 }
