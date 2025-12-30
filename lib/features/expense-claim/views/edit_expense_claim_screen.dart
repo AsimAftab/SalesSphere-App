@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
@@ -54,11 +55,18 @@ class _EditExpenseClaimScreenState
 
   // Track if data has been loaded
   bool _isDataLoaded = false;
+  bool _isEditMode = false;
 
   @override
   void initState() {
     super.initState();
     _initializeControllers();
+  }
+
+  void _toggleEditMode() {
+    setState(() {
+      _isEditMode = !_isEditMode;
+    });
   }
 
   void _initializeControllers() {
@@ -451,299 +459,338 @@ class _EditExpenseClaimScreenState
       AsyncValue partiesAsync,
       AsyncValue categoriesAsync,
       ) {
-    final bool isEditable = claimData.status == 'pending';
+    final bool isPending = claimData.status == 'pending';
+    final bool isEditable = isPending && _isEditMode;
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      backgroundColor: AppColors.primary,
+      extendBodyBehindAppBar: true,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(
-          "Edit Expense Claim",
+          "Details",
           style: TextStyle(
-            color: Colors.white,
-            fontSize: 20.sp,
+            color: AppColors.textdark,
+            fontSize: 18.sp,
             fontFamily: 'Poppins',
             fontWeight: FontWeight.w600,
           ),
         ),
-        centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: AppColors.textdark),
           onPressed: () => context.pop(),
         ),
-      ),
-      body: Column(
-        children: [
-          SizedBox(height: 16.h),
-          // White Card Container
-          Expanded(
-            child: Container(
-              width: double.infinity,
-              padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 32.h),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(32.r),
-                  topRight: Radius.circular(32.r),
-                ),
-              ),
-              child: Form(
-                key: _formKey,
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // --- NEW STATUS CARD ---
-                      _buildStatusCard(claimData.status),
-                      SizedBox(height: 24.h),
-
-                      // Title
-                      PrimaryTextField(
-                        hintText: "Title",
-                        controller: _titleController,
-                        prefixIcon: Icons.title_outlined,
-                        hasFocusBorder: true,
-                        enabled: isEditable,
-                        validator: (value) =>
-                        (value == null || value.trim().isEmpty)
-                            ? 'Required'
-                            : null,
-                      ),
-                      SizedBox(height: 16.h),
-
-                      // Amount
-                      PrimaryTextField(
-                        hintText: "Amount (INR)",
-                        controller: _amountController,
-                        prefixIcon: Icons.currency_rupee,
-                        hasFocusBorder: true,
-                        enabled: isEditable,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(
-                              RegExp(r'^\d+\.?\d{0,2}')),
-                        ],
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Required';
-                          }
-                          final amount = double.tryParse(value);
-                          if (amount == null || amount <= 0) {
-                            return 'Invalid amount';
-                          }
-                          return null;
-                        },
-                      ),
-                      SizedBox(height: 16.h),
-
-                      // Category Dropdown
-                      categoriesAsync.when(
-                        data: (categories) => GestureDetector(
-                          onTap: isEditable ? () => _showCategoryDialog(categories) : null,
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 16.w,
-                              vertical: 14.h,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isEditable ? Colors.white : Colors.grey.shade100,
-                              borderRadius: BorderRadius.circular(12.r),
-                              border: Border.all(color: const Color(0xFFE0E0E0)),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.category_outlined,
-                                  color: Colors.grey.shade600,
-                                  size: 20.sp,
-                                ),
-                                SizedBox(width: 12.w),
-                                Expanded(
-                                  child: Text(
-                                    _isAddingNewCategory
-                                        ? 'Add New Category'
-                                        : (_selectedCategoryId == null
-                                        ? 'Category'
-                                        : categories
-                                        .firstWhere((c) => c.id == _selectedCategoryId,
-                                        orElse: () => ExpenseCategory(id: '', name: 'Category'))
-                                        .name),
-                                    style: TextStyle(
-                                      fontSize: 14.sp,
-                                      color: _isAddingNewCategory
-                                          ? AppColors.primary
-                                          : (_selectedCategoryId == null
-                                          ? Colors.grey.shade600
-                                          : AppColors.textdark),
-                                      fontFamily: 'Poppins',
-                                    ),
-                                  ),
-                                ),
-                                const Spacer(),
-                                Icon(
-                                  Icons.arrow_drop_down,
-                                  color: Colors.grey.shade600,
-                                  size: 24.sp,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        loading: () => const SizedBox.shrink(),
-                        error: (_, __) => const SizedBox.shrink(),
-                      ),
-                      SizedBox(height: 16.h),
-
-                      if (_isAddingNewCategory) ...[
-                        TextField(
-                          controller: _newCategoryController,
-                          decoration: InputDecoration(
-                            hintText: 'Enter new category name',
-                            hintStyle: TextStyle(
-                              color: Colors.grey.shade400,
-                              fontSize: 14.sp,
-                              fontFamily: 'Poppins',
-                            ),
-                            prefixIcon: Icon(
-                              Icons.label_outline,
-                              color: AppColors.primary,
-                              size: 20.sp,
-                            ),
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                Icons.close,
-                                color: Colors.grey.shade600,
-                                size: 20.sp,
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  _isAddingNewCategory = false;
-                                  _newCategoryController.clear();
-                                });
-                              },
-                            ),
-                            filled: true,
-                            fillColor: const Color(0xFFF5F6FA),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12.r),
-                              borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12.r),
-                              borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12.r),
-                              borderSide: BorderSide(color: AppColors.primary),
-                            ),
-                          ),
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            color: AppColors.textdark,
-                            fontFamily: 'Poppins',
-                          ),
-                        ),
-                        SizedBox(height: 16.h),
-                      ],
-
-                      // Party Dropdown
-                      partiesAsync.when(
-                        data: (parties) => GestureDetector(
-                          onTap: isEditable ? () => _showPartySearchDialog(parties) : null,
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 16.w,
-                              vertical: 14.h,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isEditable ? Colors.white : Colors.grey.shade100,
-                              borderRadius: BorderRadius.circular(12.r),
-                              border: Border.all(color: const Color(0xFFE0E0E0)),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.people_outline,
-                                  color: Colors.grey.shade600,
-                                  size: 20.sp,
-                                ),
-                                SizedBox(width: 12.w),
-                                Expanded(
-                                  child: Text(
-                                    _selectedPartyId == null
-                                        ? 'Party (Optional)'
-                                        : parties
-                                        .firstWhere((p) => p.id == _selectedPartyId)
-                                        .name,
-                                    style: TextStyle(
-                                      fontSize: 14.sp,
-                                      color: _selectedPartyId == null
-                                          ? Colors.grey.shade600
-                                          : AppColors.textdark,
-                                      fontFamily: 'Poppins',
-                                    ),
-                                  ),
-                                ),
-                                Icon(Icons.search, color: Colors.grey.shade600, size: 20.sp),
-                              ],
-                            ),
-                          ),
-                        ),
-                        loading: () => const SizedBox.shrink(),
-                        error: (_, __) => const SizedBox.shrink(),
-                      ),
-                      SizedBox(height: 16.h),
-
-                      // Date Picker
-                      CustomDatePicker(
-                        hintText: "Date",
-                        controller: _dateController,
-                        prefixIcon: Icons.calendar_today_outlined,
-                        enabled: isEditable,
-                        initialDate: _selectedDate,
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime(2030),
-                      ),
-                      SizedBox(height: 16.h),
-
-                      // Description
-                      PrimaryTextField(
-                        hintText: "Description (Optional)",
-                        controller: _descriptionController,
-                        prefixIcon: Icons.description_outlined,
-                        hasFocusBorder: true,
-                        enabled: isEditable,
-                        minLines: 1,
-                        maxLines: 5,
-                        textInputAction: TextInputAction.newline,
-                      ),
-                      SizedBox(height: 24.h),
-
-                      // Image Picker Section
-                      Text(
-                        "Receipt Image (Optional)",
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.grey.shade600,
-                          fontFamily: 'Poppins',
-                        ),
-                      ),
-                      SizedBox(height: 8.h),
-                      _buildImageSection(claimData),
-
-                      SizedBox(height: 80.h),
-                    ],
-                  ),
+        actions: [
+          if (_isEditMode)
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _isEditMode = false;
+                  _newImage = null;
+                  _isAddingNewCategory = false;
+                  _hasExistingImage = false; // Will be set true in _loadExistingData if url exists
+                  _loadExistingData(claimData); // Reset data
+                });
+              },
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  color: AppColors.error,
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),
+        ],
+      ),
+      body: Stack(
+        children: [
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SvgPicture.asset(
+              'assets/images/corner_bubble.svg',
+              fit: BoxFit.cover,
+              height: 180.h,
+            ),
           ),
+          Column(
+            children: [
+              // White Card Container
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  child: Padding(
+                    padding: EdgeInsets.only(top: 100.h, bottom: 16.h),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // --- NEW STATUS CARD ---
+                          _buildStatusCard(claimData.status),
+                          SizedBox(height: 24.h),
 
-          // Bottom Button
-          if (isEditable)
+                          Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.all(14.w),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16.r),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.04),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              children: [
+                                // Title
+                                PrimaryTextField(
+                                  hintText: "Title",
+                                  controller: _titleController,
+                                  prefixIcon: Icons.title_outlined,
+                                  hasFocusBorder: true,
+                                  enabled: isEditable,
+                                  validator: (value) =>
+                                  (value == null || value.trim().isEmpty)
+                                      ? 'Required'
+                                      : null,
+                                ),
+                                SizedBox(height: 16.h),
+
+                                // Amount
+                                PrimaryTextField(
+                                  hintText: "Amount (INR)",
+                                  controller: _amountController,
+                                  prefixIcon: Icons.currency_rupee,
+                                  hasFocusBorder: true,
+                                  enabled: isEditable,
+                                  keyboardType: TextInputType.number,
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.allow(
+                                        RegExp(r'^\d+\.?\d{0,2}')),
+                                  ],
+                                  validator: (value) {
+                                    if (value == null || value.trim().isEmpty) {
+                                      return 'Required';
+                                    }
+                                    final amount = double.tryParse(value);
+                                    if (amount == null || amount <= 0) {
+                                      return 'Invalid amount';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                SizedBox(height: 16.h),
+
+                                // Category Dropdown
+                                categoriesAsync.when(
+                                  data: (categories) => GestureDetector(
+                                    onTap: isEditable ? () => _showCategoryDialog(categories) : null,
+                                    child: Container(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 16.w,
+                                        vertical: 14.h,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: isEditable ? Colors.white : Colors.grey.shade100,
+                                        borderRadius: BorderRadius.circular(12.r),
+                                        border: Border.all(
+                                          color: isEditable
+                                              ? AppColors.border
+                                              : AppColors.border.withValues(alpha: 0.2),
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.category_outlined,
+                                            color: Colors.grey.shade600,
+                                            size: 20.sp,
+                                          ),
+                                          SizedBox(width: 12.w),
+                                          Expanded(
+                                            child: Text(
+                                              _isAddingNewCategory
+                                                  ? 'Add New Category'
+                                                  : (_selectedCategoryId == null
+                                                  ? 'Category'
+                                                  : categories
+                                                  .firstWhere((c) => c.id == _selectedCategoryId,
+                                                  orElse: () => const ExpenseCategory(id: '', name: 'Category'))
+                                                  .name),
+                                              style: TextStyle(
+                                                fontSize: 15.sp,
+                                                color: _isAddingNewCategory
+                                                    ? AppColors.primary
+                                                    : (_selectedCategoryId == null
+                                                    ? AppColors.textHint
+                                                    : (isEditable
+                                                        ? AppColors.textPrimary
+                                                        : AppColors.textSecondary.withValues(alpha: 0.6))),
+                                                fontFamily: 'Poppins',
+                                                fontWeight: FontWeight.w400,
+                                              ),
+                                            ),
+                                          ),
+                                          const Spacer(),
+                                          Icon(
+                                            Icons.arrow_drop_down,
+                                            color: Colors.grey.shade600,
+                                            size: 24.sp,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  loading: () => const SizedBox.shrink(),
+                                  error: (error, stack) => const SizedBox.shrink(),
+                                ),
+                                SizedBox(height: 16.h),
+
+                                if (_isAddingNewCategory) ...[
+                                  PrimaryTextField(
+                                    controller: _newCategoryController,
+                                    hintText: 'Enter new category name',
+                                    prefixIcon: Icons.label_outline,
+                                    enabled: isEditable,
+                                    suffixWidget: IconButton(
+                                      icon: Icon(
+                                        Icons.close,
+                                        color: Colors.grey.shade600,
+                                        size: 20.sp,
+                                      ),
+                                      onPressed: () {
+                                        setState(() {
+                                          _isAddingNewCategory = false;
+                                          _newCategoryController.clear();
+                                        });
+                                      },
+                                    ),
+                                    validator: (value) {
+                                      if (_isAddingNewCategory && (value == null || value.trim().isEmpty)) {
+                                        return 'Please enter category name';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                  SizedBox(height: 16.h),
+                                ],
+
+                                // Party Dropdown
+                                partiesAsync.when(
+                                  data: (parties) => GestureDetector(
+                                    onTap: isEditable ? () => _showPartySearchDialog(parties) : null,
+                                    child: Container(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 16.w,
+                                        vertical: 14.h,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: isEditable ? Colors.white : Colors.grey.shade100,
+                                        borderRadius: BorderRadius.circular(12.r),
+                                        border: Border.all(
+                                          color: isEditable
+                                              ? AppColors.border
+                                              : AppColors.border.withValues(alpha: 0.2),
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.people_outline,
+                                            color: Colors.grey.shade600,
+                                            size: 20.sp,
+                                          ),
+                                          SizedBox(width: 12.w),
+                                          Expanded(
+                                            child: Text(
+                                              _selectedPartyId == null
+                                                  ? 'Party (Optional)'
+                                                  : parties
+                                                  .firstWhere((p) => p.id == _selectedPartyId)
+                                                  .name,
+                                              style: TextStyle(
+                                                fontSize: 15.sp,
+                                                color: _selectedPartyId == null
+                                                    ? AppColors.textHint
+                                                    : (isEditable
+                                                        ? AppColors.textPrimary
+                                                        : AppColors.textSecondary.withValues(alpha: 0.6)),
+                                                fontFamily: 'Poppins',
+                                                fontWeight: FontWeight.w400,
+                                              ),
+                                            ),
+                                          ),
+                                          Icon(Icons.search, color: Colors.grey.shade600, size: 20.sp),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  loading: () => const SizedBox.shrink(),
+                                  error: (error, stack) => const SizedBox.shrink(),
+                                ),
+                                SizedBox(height: 16.h),
+
+                                // Date Picker
+                                CustomDatePicker(
+                                  hintText: "Date",
+                                  controller: _dateController,
+                                  prefixIcon: Icons.calendar_today_outlined,
+                                  enabled: isEditable,
+                                  initialDate: _selectedDate,
+                                  firstDate: DateTime(2020),
+                                  lastDate: DateTime(2030),
+                                ),
+                                SizedBox(height: 16.h),
+
+                                // Description
+                                PrimaryTextField(
+                                  hintText: "Description (Optional)",
+                                  controller: _descriptionController,
+                                  prefixIcon: Icons.description_outlined,
+                                  hasFocusBorder: true,
+                                  enabled: isEditable,
+                                  minLines: 1,
+                                  maxLines: 5,
+                                  textInputAction: TextInputAction.newline,
+                                ),
+                                SizedBox(height: 24.h),
+
+                                // Image Picker Section
+                                Text(
+                                  "Receipt Image (Optional)",
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.grey.shade600,
+                                    fontFamily: 'Poppins',
+                                  ),
+                                ),
+                                SizedBox(height: 8.h),
+                                _buildImageSection(claimData),
+                              ],
+                            ),
+                          ),
+
+                          SizedBox(height: 80.h),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              // Bottom Button
+          if (isPending)
             Container(
               padding: EdgeInsets.fromLTRB(
                 16.w,
@@ -751,18 +798,36 @@ class _EditExpenseClaimScreenState
                 16.w,
                 MediaQuery.of(context).padding.bottom + 16.h,
               ),
-              color: Colors.white,
-              child: PrimaryButton(
-                label: 'Update',
-                onPressed: _handleSubmit,
-                size: ButtonSize.medium,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 10,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
               ),
-            ),
-        ],
-      ),
-    );
-  }
-
+              child: _isEditMode
+                  ? PrimaryButton(
+                      label: 'Save Changes',
+                      onPressed: _handleSubmit,
+                      leadingIcon: Icons.check_rounded,
+                      size: ButtonSize.medium,
+                    )
+                  : PrimaryButton(
+                      label: 'Edit Detail',
+                      onPressed: _toggleEditMode,
+                      leadingIcon: Icons.edit_outlined,
+                                            size: ButtonSize.medium,
+                                          ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      }
   // ---------------------------------------------------------------------------
   // STATUS CARD WIDGET
   // ---------------------------------------------------------------------------
@@ -908,7 +973,7 @@ class _EditExpenseClaimScreenState
               }),
               Divider(height: 1.h, color: Colors.grey.shade300),
               ListTile(
-                leading: Icon(
+                leading: const Icon(
                   Icons.add_circle_outline,
                   color: AppColors.primary,
                 ),
@@ -947,7 +1012,7 @@ class _EditExpenseClaimScreenState
   }
 
   Widget _buildImageSection(ExpenseClaimDetailApiData claimData) {
-    final bool isEditable = claimData.status == 'pending';
+    final bool isEditable = claimData.status == 'pending' && _isEditMode;
 
     if (_newImage != null) {
       return _buildNewImagePreview(isEditable);

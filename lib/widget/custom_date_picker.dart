@@ -35,7 +35,7 @@ class CustomDatePicker extends StatelessWidget {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
+            colorScheme: const ColorScheme.light(
               primary: AppColors.primary,
               onPrimary: Colors.white,
               surface: Colors.white,
@@ -44,12 +44,12 @@ class CustomDatePicker extends StatelessWidget {
             textButtonTheme: TextButtonThemeData(
               style: TextButton.styleFrom(
                 foregroundColor: AppColors.primary,
-                textStyle: TextStyle(
+                textStyle: const TextStyle(
                   fontFamily: 'Poppins',
                   fontWeight: FontWeight.w400,
                 ),
               ),
-            ), dialogTheme: DialogThemeData(backgroundColor: Colors.white),
+            ), dialogTheme: const DialogThemeData(backgroundColor: Colors.white),
           ),
           child: child!,
         );
@@ -68,16 +68,17 @@ class CustomDatePicker extends StatelessWidget {
       readOnly: true,
       enabled: enabled,
       style: TextStyle(
-        fontSize: 14.sp,
+        fontSize: 15.sp,
         fontFamily: 'Poppins',
-        color: enabled ? AppColors.textdark : Colors.grey.shade500,
+        fontWeight: FontWeight.w400,
+        color: enabled ? AppColors.textPrimary : AppColors.textSecondary.withValues(alpha: 0.6),
       ),
       decoration: InputDecoration(
         hintText: hintText,
         hintStyle: TextStyle(
           fontSize: 14.sp,
           fontFamily: 'Poppins',
-          color: Colors.grey.shade500,
+          color: enabled ? AppColors.textHint : AppColors.textHint.withValues(alpha: 0.5),
           fontWeight: FontWeight.w400,
         ),
         prefixIcon: prefixIcon != null
@@ -95,38 +96,38 @@ class CustomDatePicker extends StatelessWidget {
               )
             : null,
         filled: true,
-        fillColor: Colors.white,
+        fillColor: enabled ? Colors.white : Colors.grey.shade100,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.r),
-          borderSide: BorderSide(
-            color: Colors.grey.shade300,
+          borderSide: const BorderSide(
+            color: Color(0xFFE0E0E0), // Colors.grey.shade300
             width: 1.5,
           ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.r),
-          borderSide: BorderSide(
-            color: Colors.grey.shade300,
+          borderSide: const BorderSide(
+            color: Color(0xFFE0E0E0), // Colors.grey.shade300
             width: 2,
           ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.r),
-          borderSide: BorderSide(
+          borderSide: const BorderSide(
             color: AppColors.secondary,
             width: 2,
           ),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.r),
-          borderSide: BorderSide(
+          borderSide: const BorderSide(
             color: AppColors.error,
             width: 1.5,
           ),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.r),
-          borderSide: BorderSide(
+          borderSide: const BorderSide(
             color: AppColors.error,
             width: 2,
           ),
@@ -134,7 +135,7 @@ class CustomDatePicker extends StatelessWidget {
         disabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.r),
           borderSide: BorderSide(
-            color: Colors.grey.shade300,
+            color: AppColors.border.withValues(alpha: 0.2),
             width: 1.5,
           ),
         ),
