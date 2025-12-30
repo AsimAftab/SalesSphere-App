@@ -109,7 +109,7 @@ class UtilitiesScreen extends ConsumerWidget {
                     subtitle: 'Submit and manage expense claims',
                     icon: Icons.currency_rupee_rounded,
                     iconColor: Color(0xFF00C853),
-                    routePath: '/reimbursement',
+                    routePath: '/expense-claims',
                   ),
                   UtilityCard(
                     title: 'Notes & Complaints',

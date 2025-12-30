@@ -230,31 +230,53 @@ class _EditMiscellaneousWorkScreenState
         final vm = ref.read(miscellaneousEditViewModelProvider.notifier);
         final dio = ref.read(dioClientProvider);
 
-        // Step 1: Delete marked images
+        // Step 1: Delete marked images IN PARALLEL - continue even if some fail
         if (_deletedImageNumbers.isNotEmpty) {
-          for (final imageNumber in _deletedImageNumbers) {
-            await vm.deleteImage(
-              dio,
-              workId: widget.workData.id,
-              imageNumber: imageNumber,
-            );
-          }
+          await Future.wait(
+            _deletedImageNumbers.map((imageNumber) async {
+              try {
+                await vm.deleteImage(
+                  dio,
+                  workId: widget.workData.id,
+                  imageNumber: imageNumber,
+                );
+              } catch (e) {
+                // Log but continue with other operations
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Failed to delete image $imageNumber')),
+                  );
+                }
+              }
+            }),
+            eagerError: false,
+          );
         }
 
-        // Step 2: Upload new images with correct imageNumbers
+        // Step 2: Upload new images IN PARALLEL - continue even if some fail
         if (_selectedImages.isNotEmpty) {
           final availableNumbers = _getAvailableImageNumbers();
 
-          for (int i = 0; i < _selectedImages.length; i++) {
-            final imageNumber = availableNumbers[i];
-            
-            await vm.uploadImage(
-              dio,
-              workId: widget.workData.id,
-              imageFile: File(_selectedImages[i].path),
-              imageNumber: imageNumber,
-            );
-          }
+          await Future.wait(
+            List.generate(_selectedImages.length, (i) async {
+              try {
+                await vm.uploadImage(
+                  dio,
+                  workId: widget.workData.id,
+                  imageFile: File(_selectedImages[i].path),
+                  imageNumber: availableNumbers[i],
+                );
+              } catch (e) {
+                // Log but continue with other operations
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Failed to upload image ${availableNumbers[i]}')),
+                  );
+                }
+              }
+            }),
+            eagerError: false,
+          );
         }
 
         // Step 3: Update work data
