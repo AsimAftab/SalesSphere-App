@@ -506,13 +506,14 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                                                     )
                                                     .name),
                                         style: TextStyle(
-                                          fontSize: 14.sp,
+                                          fontSize: 15.sp,
                                           color: _isAddingNewCategory
                                               ? AppColors.primary
                                               : (_selectedCategoryId == null
-                                                  ? Colors.grey.shade600
-                                                  : AppColors.textdark),
+                                                  ? AppColors.textHint
+                                                  : AppColors.textPrimary),
                                           fontFamily: 'Poppins',
+                                          fontWeight: FontWeight.w400,
                                         ),
                                       ),
                                     ),
@@ -640,11 +641,12 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                                             (p) => p.id == _selectedPartyId)
                                         .name,
                                     style: TextStyle(
-                                      fontSize: 14.sp,
+                                      fontSize: 15.sp,
                                       color: _selectedPartyId == null
-                                          ? Colors.grey.shade600
-                                          : AppColors.textdark,
+                                          ? AppColors.textHint
+                                          : AppColors.textPrimary,
                                       fontFamily: 'Poppins',
+                                      fontWeight: FontWeight.w400,
                                     ),
                                   ),
                                 ),
