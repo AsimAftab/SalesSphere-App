@@ -7,69 +7,55 @@ import 'package:sales_sphere/core/utils/logger.dart';
 
 part 'expense_claim_add.vm.g.dart';
 
-// ============================================================================
-// EXPENSE CLAIM ADD VIEW MODEL
-// Handles: Create expense claim with optional image
-// Uses Riverpod 3.0 best practices with auto-dispose and ref.mounted checks
-// ============================================================================
-
 @riverpod
 class ExpenseClaimAddViewModel extends _$ExpenseClaimAddViewModel {
-  Object? _link; // Use Object? for flexibility with keepAlive link
+  // Use Object? to hold the keepAlive link
+  Object? _link;
 
   @override
   void build() {
-    // Auto-dispose is default in Riverpod 3.0
-    // Cleanup happens automatically when widget is unmounted
     ref.onDispose(() {
-      if (_link != null) {
-        (_link as dynamic).close();
-      }
+      _closeLink();
       AppLogger.d('🧹 ExpenseClaimAddViewModel disposed');
     });
   }
 
-  /// Keep provider alive for multi-step operations
   void _keepAlive() {
     _link ??= ref.keepAlive();
   }
 
-  /// Release the keep alive after operations complete
-  void _release() {
+  void _closeLink() {
     if (_link != null) {
       (_link as dynamic).close();
       _link = null;
     }
   }
 
-  /// Create Expense Claim (without image)
+  /// Create Expense Claim
   Future<String> createExpenseClaim({
     required String title,
     required double amount,
     required String category,
-    required String date,
+    required String incurredDate,
     String? partyId,
     String? description,
   }) async {
-    // Keep provider alive for subsequent image upload
     _keepAlive();
 
     try {
       final dio = ref.read(dioClientProvider);
       AppLogger.i('📝 Creating expense claim: $title');
 
-      // Build request body
       final requestBody = {
         'title': title,
         'amount': amount,
-        'claimType': category,
-        'date': date,
-        if (partyId != null) 'partyId': partyId,
-        if (description != null && description.isNotEmpty)
-          'description': description,
+        'incurredDate': incurredDate,
+        'category': category,
+        if (description != null && description.trim().isNotEmpty)
+          'description': description.trim(),
+        if (partyId != null) 'party': partyId,
       };
 
-      // Send JSON request
       final response = await dio.post(
         ApiEndpoints.createExpenseClaim,
         data: requestBody,
@@ -77,89 +63,92 @@ class ExpenseClaimAddViewModel extends _$ExpenseClaimAddViewModel {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         AppLogger.i('✅ Expense claim created successfully');
-        // Mock response structure - adjust based on actual API
-        final claimId = response.data['data']['_id'] ?? 
-                       response.data['data']['id'] ?? 
-                       'mock-claim-id';
-        return claimId as String; // Return claim ID
+        // Handle variations in API response structure
+        final data = response.data;
+        if (data is Map && data.containsKey('data')) {
+          return data['data']['_id'] as String;
+        }
+        throw Exception('Invalid API response format');
       } else {
-        _release();
         throw Exception('Failed to submit claim: ${response.statusMessage}');
       }
     } on DioException catch (e) {
-      _release();
       AppLogger.e('❌ Dio error creating expense claim: ${e.message}');
       throw Exception(_handleDioError(e));
     } catch (e, stackTrace) {
-      _release();
       AppLogger.e('❌ Error creating expense claim: $e');
       AppLogger.e('Stack trace: $stackTrace');
       rethrow;
+    } finally {
+      // If we are NOT uploading an image next (logic handled in UI),
+      // strict clean up happens on dispose, but we can't close link here
+      // because the UI might call uploadReceipt immediately after.
     }
   }
 
   /// Upload receipt image to expense claim
-  Future<void> uploadImage({
+  Future<String> uploadReceipt({
     required String claimId,
     required File imageFile,
   }) async {
+    // Ensure link is alive (in case this is called independently)
+    _keepAlive();
+
     try {
       AppLogger.i('📸 Uploading receipt image for claim: $claimId');
 
       final dio = ref.read(dioClientProvider);
 
-      // Create multipart form data
+      // Fix: robust filename extraction
+      String fileName = imageFile.path.split('/').last;
+
       final formData = FormData.fromMap({
-        'image': await MultipartFile.fromFile(
+        'receipt': await MultipartFile.fromFile(
           imageFile.path,
-          filename: imageFile.path.split('/').last,
+          filename: fileName,
         ),
       });
 
-      // Upload to endpoint (adjust endpoint based on API)
       final response = await dio.post(
-        '${ApiEndpoints.expenseClaimById(claimId)}/upload-image',
+        ApiEndpoints.uploadExpenseClaimReceipt(claimId),
         data: formData,
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         AppLogger.i('✅ Receipt image uploaded successfully');
+        final data = response.data;
+        if (data is Map && data.containsKey('data')) {
+          return data['data']['receipt'] ?? '';
+        }
+        return '';
       } else {
-        throw Exception('Failed to upload image: ${response.statusMessage}');
+        throw Exception('Failed to upload receipt: ${response.statusMessage}');
       }
     } on DioException catch (e) {
-      AppLogger.e('❌ Dio error uploading image: ${e.message}');
+      AppLogger.e('❌ Dio error uploading receipt: ${e.message}');
       throw Exception(_handleDioError(e));
     } catch (e) {
-      AppLogger.e('❌ Error uploading image: $e');
+      AppLogger.e('❌ Error uploading receipt: $e');
       rethrow;
     } finally {
-      // Release keep alive after final operation
-      _release();
+      // Release the link now that the entire flow is done
+      _closeLink();
     }
   }
 
-  /// Handle Dio errors with user-friendly messages
   String _handleDioError(DioException e) {
     switch (e.type) {
       case DioExceptionType.connectionTimeout:
       case DioExceptionType.sendTimeout:
       case DioExceptionType.receiveTimeout:
-        return 'Connection timeout. Please check your internet connection.';
+        return 'Connection timeout. Check internet connection.';
       case DioExceptionType.badResponse:
-        final statusCode = e.response?.statusCode;
-        if (statusCode == 400) {
-          return e.response?.data['message'] ?? 'Invalid request data';
-        } else if (statusCode == 401) {
-          return 'Session expired. Please login again.';
-        } else if (statusCode == 404) {
-          return 'Service not found';
-        } else if (statusCode == 500) {
-          return 'Server error. Please try again later.';
+      // Optimization: Safe parsing of response data
+        final data = e.response?.data;
+        if (data != null && data is Map && data.containsKey('message')) {
+          return data['message'];
         }
-        return e.response?.data['message'] ?? 'Request failed';
-      case DioExceptionType.cancel:
-        return 'Request cancelled';
+        return e.response?.statusMessage ?? 'Request failed';
       case DioExceptionType.unknown:
         if (e.error is SocketException) {
           return 'No internet connection';

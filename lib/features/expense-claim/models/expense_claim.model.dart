@@ -20,17 +20,71 @@ abstract class ExpenseClaimsApiResponse with _$ExpenseClaimsApiResponse {
       _$ExpenseClaimsApiResponseFromJson(json);
 }
 
+/// Category model for expense claim
+@freezed
+abstract class ExpenseCategory with _$ExpenseCategory {
+  const factory ExpenseCategory({
+    @JsonKey(name: '_id') required String id,
+    required String name,
+  }) = _ExpenseCategory;
+
+  factory ExpenseCategory.fromJson(Map<String, dynamic> json) =>
+      _$ExpenseCategoryFromJson(json);
+}
+
+/// API Response wrapper for expense categories endpoint
+@freezed
+abstract class ExpenseCategoriesApiResponse with _$ExpenseCategoriesApiResponse {
+  const factory ExpenseCategoriesApiResponse({
+    required bool success,
+    required int count,
+    required List<ExpenseCategory> data,
+  }) = _ExpenseCategoriesApiResponse;
+
+  factory ExpenseCategoriesApiResponse.fromJson(Map<String, dynamic> json) =>
+      _$ExpenseCategoriesApiResponseFromJson(json);
+}
+
+/// Created by user model
+@freezed
+abstract class ExpenseCreatedBy with _$ExpenseCreatedBy {
+  const factory ExpenseCreatedBy({
+    @JsonKey(name: '_id') required String id,
+    required String name,
+    required String email,
+  }) = _ExpenseCreatedBy;
+
+  factory ExpenseCreatedBy.fromJson(Map<String, dynamic> json) =>
+      _$ExpenseCreatedByFromJson(json);
+}
+
+/// Party model for expense claim
+@freezed
+abstract class ExpenseParty with _$ExpenseParty {
+  const factory ExpenseParty({
+    @JsonKey(name: '_id') required String id,
+    required String partyName,
+    required String ownerName,
+  }) = _ExpenseParty;
+
+  factory ExpenseParty.fromJson(Map<String, dynamic> json) =>
+      _$ExpensePartyFromJson(json);
+}
+
 /// Individual expense claim data from API (list view)
 @freezed
 abstract class ExpenseClaimApiData with _$ExpenseClaimApiData {
   const factory ExpenseClaimApiData({
     @JsonKey(name: '_id') required String id,
-    required String claimType,
+    required String title,
     required double amount,
-    required String date,
+    required String incurredDate,
+    required ExpenseCategory category,
     required String status,
     String? description,
-    String? receiptUrl,
+    ExpenseCreatedBy? createdBy,
+    ExpenseParty? party,
+    String? createdAt,
   }) = _ExpenseClaimApiData;
 
   factory ExpenseClaimApiData.fromJson(Map<String, dynamic> json) =>
@@ -55,17 +109,19 @@ abstract class ExpenseClaimDetailApiResponse
 abstract class ExpenseClaimDetailApiData with _$ExpenseClaimDetailApiData {
   const factory ExpenseClaimDetailApiData({
     @JsonKey(name: '_id') required String id,
-    required String claimType,
+    required String title,
+    @JsonKey(name: 'incurredDate') required String date,
     required double amount,
-    required String date,
+    ExpenseCategory? category, // Category object from API
     required String status,
     String? description,
-    String? receiptUrl,
+    @JsonKey(name: 'receipt') String? receiptUrl,
     String? organizationId,
-    String? createdBy,
+    dynamic createdBy, // Can be string or object
     String? createdAt,
     String? updatedAt,
-    String? approvedBy,
+    dynamic party, // Can be null, string, or object
+    dynamic approvedBy, // Can be string or object
     String? approvedAt,
     String? rejectedReason,
   }) = _ExpenseClaimDetailApiData;
@@ -82,11 +138,12 @@ abstract class ExpenseClaimDetailApiData with _$ExpenseClaimDetailApiData {
 @freezed
 abstract class CreateExpenseClaimRequest with _$CreateExpenseClaimRequest {
   const factory CreateExpenseClaimRequest({
-    required String claimType,
+    required String title,
     required double amount,
-    required String date,
+    required String incurredDate,
+    required String category,
     String? description,
-    String? receiptUrl,
+    String? party,
   }) = _CreateExpenseClaimRequest;
 
   factory CreateExpenseClaimRequest.fromJson(Map<String, dynamic> json) =>
@@ -99,11 +156,34 @@ abstract class CreateExpenseClaimApiResponse
     with _$CreateExpenseClaimApiResponse {
   const factory CreateExpenseClaimApiResponse({
     required bool success,
-    required ExpenseClaimDetailApiData data,
+    required CreateExpenseClaimData data,
   }) = _CreateExpenseClaimApiResponse;
 
   factory CreateExpenseClaimApiResponse.fromJson(Map<String, dynamic> json) =>
       _$CreateExpenseClaimApiResponseFromJson(json);
+}
+
+/// Create expense claim response data
+@freezed
+abstract class CreateExpenseClaimData with _$CreateExpenseClaimData {
+  const factory CreateExpenseClaimData({
+    @JsonKey(name: '_id') required String id,
+    required String title,
+    required double amount,
+    required String incurredDate,
+    required ExpenseCategory category,
+    required String status,
+    String? description,
+    ExpenseParty? party,
+    String? organizationId,
+    String? createdBy,
+    String? createdAt,
+    String? updatedAt,
+    @JsonKey(name: '__v') int? v,
+  }) = _CreateExpenseClaimData;
+
+  factory CreateExpenseClaimData.fromJson(Map<String, dynamic> json) =>
+      _$CreateExpenseClaimDataFromJson(json);
 }
 
 // ============================================================================
@@ -145,6 +225,7 @@ abstract class UpdateExpenseClaimRequest with _$UpdateExpenseClaimRequest {
 abstract class ExpenseClaimListItem with _$ExpenseClaimListItem {
   const factory ExpenseClaimListItem({
     required String id,
+    required String title,
     required String claimType,
     required double amount,
     required String date,
@@ -158,9 +239,10 @@ abstract class ExpenseClaimListItem with _$ExpenseClaimListItem {
   factory ExpenseClaimListItem.fromApiData(ExpenseClaimApiData apiData) {
     return ExpenseClaimListItem(
       id: apiData.id,
-      claimType: apiData.claimType,
+      title: apiData.title,
+      claimType: apiData.category.name,
       amount: apiData.amount,
-      date: apiData.date,
+      date: apiData.incurredDate,
       status: apiData.status,
       description: apiData.description,
     );
@@ -170,6 +252,7 @@ abstract class ExpenseClaimListItem with _$ExpenseClaimListItem {
       ExpenseClaimDetails claim) {
     return ExpenseClaimListItem(
       id: claim.id,
+      title: claim.title,
       claimType: claim.claimType,
       amount: claim.amount,
       date: claim.date,
@@ -186,6 +269,7 @@ abstract class ExpenseClaimDetails with _$ExpenseClaimDetails {
 
   const factory ExpenseClaimDetails({
     required String id,
+    required String title,
     required String claimType,
     required double amount,
     required String date,
@@ -206,7 +290,8 @@ abstract class ExpenseClaimDetails with _$ExpenseClaimDetails {
       ExpenseClaimDetailApiData apiData) {
     return ExpenseClaimDetails(
       id: apiData.id,
-      claimType: apiData.claimType,
+      title: apiData.title,
+      claimType: apiData.category?.name ?? '', // Extract category name
       amount: apiData.amount,
       date: apiData.date,
       status: apiData.status,

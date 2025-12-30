@@ -43,11 +43,11 @@ class ExpenseClaimEditViewModel extends _$ExpenseClaimEditViewModel {
   /// Update Expense Claim
   Future<void> updateExpenseClaim({
     required String claimId,
-    required String title,
-    required double amount,
-    required String category,
-    required String date,
-    String? partyId,
+    String? title,
+    double? amount,
+    String? category,
+    String? incurredDate,
+    String? party,
     String? description,
   }) async {
     _keepAlive();
@@ -56,16 +56,19 @@ class ExpenseClaimEditViewModel extends _$ExpenseClaimEditViewModel {
       final dio = ref.read(dioClientProvider);
       AppLogger.i('📝 Updating expense claim: $claimId');
 
-      // Build request body
-      final requestBody = {
-        'title': title,
-        'amount': amount,
-        'claimType': category,
-        'date': date,
-        if (partyId != null) 'partyId': partyId,
-        if (description != null && description.isNotEmpty)
-          'description': description,
-      };
+      // Build request body (any field can be updated)
+      final requestBody = <String, dynamic>{};
+      
+      if (title != null) requestBody['title'] = title;
+      if (amount != null) requestBody['amount'] = amount;
+      if (category != null) requestBody['category'] = category;
+      if (incurredDate != null) requestBody['incurredDate'] = incurredDate;
+      if (party != null) requestBody['party'] = party;
+      if (description != null && description.isNotEmpty) {
+        requestBody['description'] = description;
+      }
+
+      AppLogger.d('Request body: $requestBody');
 
       // Send PUT request
       final response = await dio.put(
@@ -93,7 +96,7 @@ class ExpenseClaimEditViewModel extends _$ExpenseClaimEditViewModel {
   }
 
   /// Upload or replace receipt image
-  Future<void> uploadImage({
+  Future<String> uploadReceipt({
     required String claimId,
     required File imageFile,
   }) async {
@@ -102,62 +105,39 @@ class ExpenseClaimEditViewModel extends _$ExpenseClaimEditViewModel {
 
       final dio = ref.read(dioClientProvider);
 
-      // Create multipart form data
+      // Create multipart form data with key 'receipt'
       final formData = FormData.fromMap({
-        'image': await MultipartFile.fromFile(
+        'receipt': await MultipartFile.fromFile(
           imageFile.path,
-          filename: imageFile.path.split('/').last,
+          filename: imageFile.path.split(Platform.pathSeparator).last,
         ),
       });
 
-      // Upload to endpoint
+      // Upload to receipt endpoint (POST updates existing receipt)
       final response = await dio.post(
-        '${ApiEndpoints.expenseClaimById(claimId)}/upload-image',
+        ApiEndpoints.uploadExpenseClaimReceipt(claimId),
         data: formData,
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         AppLogger.i('✅ Receipt image uploaded successfully');
+        final receiptUrl = response.data['data']['receipt'] as String;
+        return receiptUrl;
       } else {
-        throw Exception('Failed to upload image: ${response.statusMessage}');
+        throw Exception('Failed to upload receipt: ${response.statusMessage}');
       }
     } on DioException catch (e) {
-      AppLogger.e('❌ Dio error uploading image: ${e.message}');
+      AppLogger.e('❌ Dio error uploading receipt: ${e.message}');
       throw Exception(_handleDioError(e));
     } catch (e) {
-      AppLogger.e('❌ Error uploading image: $e');
+      AppLogger.e('❌ Error uploading receipt: $e');
       rethrow;
     } finally {
       _release();
     }
   }
 
-  /// Delete receipt image
-  Future<void> deleteImage({
-    required String claimId,
-  }) async {
-    try {
-      AppLogger.i('🗑️ Deleting receipt image for claim: $claimId');
 
-      final dio = ref.read(dioClientProvider);
-
-      final response = await dio.delete(
-        '${ApiEndpoints.expenseClaimById(claimId)}/delete-image',
-      );
-
-      if (response.statusCode == 200) {
-        AppLogger.i('✅ Receipt image deleted successfully');
-      } else {
-        throw Exception('Failed to delete image: ${response.statusMessage}');
-      }
-    } on DioException catch (e) {
-      AppLogger.e('❌ Dio error deleting image: ${e.message}');
-      throw Exception(_handleDioError(e));
-    } catch (e) {
-      AppLogger.e('❌ Error deleting image: $e');
-      rethrow;
-    }
-  }
 
   /// Handle Dio errors with user-friendly messages
   String _handleDioError(DioException e) {

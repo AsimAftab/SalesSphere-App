@@ -186,4 +186,10 @@ class ApiEndpoints {
   
   /// Delete expense claim
   static String deleteExpenseClaim(String id) => '/api/v1/expense-claims/$id';
+
+  /// Upload receipt image to expense claim
+  static String uploadExpenseClaimReceipt(String id) => '/api/v1/expense-claims/$id/receipt';
+
+  /// Get expense claim categories
+  static const String expenseClaimCategories = '/api/v1/expense-claims/categories';
 }
