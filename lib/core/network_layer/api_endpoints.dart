@@ -170,4 +170,20 @@ class ApiEndpoints {
   /// Delete image from miscellaneous work
   static String deleteMiscellaneousWorkImage(String workId, int imageNumber) => 
       '/api/v1/miscellaneous-work/$workId/images/$imageNumber';
+
+  // Expense Claim Endpoints
+  /// Get all expense claims for current user
+  static const String expenseClaims = '/api/v1/expense-claims';
+  
+  /// Get expense claim by ID
+  static String expenseClaimById(String id) => '/api/v1/expense-claims/$id';
+  
+  /// Create new expense claim
+  static const String createExpenseClaim = '/api/v1/expense-claims';
+  
+  /// Update expense claim
+  static String updateExpenseClaim(String id) => '/api/v1/expense-claims/$id';
+  
+  /// Delete expense claim
+  static String deleteExpenseClaim(String id) => '/api/v1/expense-claims/$id';
 }

@@ -31,6 +31,8 @@ import 'package:sales_sphere/features/miscellaneous/views/miscellaneous_list_scr
 import 'package:sales_sphere/features/miscellaneous/views/add_miscellaneous_work_screen.dart';
 import 'package:sales_sphere/features/miscellaneous/views/edit_miscellaneous_work_screen.dart';
 import 'package:sales_sphere/features/miscellaneous/models/miscellaneous.model.dart';
+import 'package:sales_sphere/features/expense-claim/views/expense_claims_screen.dart';
+import 'package:sales_sphere/features/expense-claim/views/add_expense_claim_screen.dart';
 import 'package:sales_sphere/features/auth/models/login.models.dart';
 import 'package:sales_sphere/features/splash/views/splash_screen.dart';
 import 'package:sales_sphere/features/onboarding/views/onboarding_screen.dart';
@@ -101,6 +103,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final isGoingToSettings = requestedPath.startsWith('/settings');
       final isGoingToMiscellaneous =
           requestedPath.startsWith('/miscellaneous-work');
+      final isGoingToExpenseClaims =
+          requestedPath.startsWith('/expense-claims');
 
       // If user is not logged in AND not going to one of the allowed pages...
       if (!isLoggedIn &&
@@ -123,7 +127,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           !isGoingToBeatPlan &&
           !isGoingToUtilities &&
           !isGoingToSettings &&
-          !isGoingToMiscellaneous) {
+          !isGoingToMiscellaneous &&
+          !isGoingToExpenseClaims) {
         return '/';
       }
 
@@ -383,6 +388,20 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           final workData = state.extra as MiscWorkData;
           return EditMiscellaneousWorkScreen(workData: workData);
         },
+      ),
+
+      // ========================================
+      // EXPENSE CLAIMS ROUTES (No Bottom Navigation)
+      // ========================================
+      GoRoute(
+        path: '/expense-claims',
+        name: 'expense-claims',
+        builder: (context, state) => const ExpenseClaimsScreen(),
+      ),
+      GoRoute(
+        path: '/add-expense-claim',
+        name: 'add-expense-claim',
+        builder: (context, state) => const AddExpenseClaimScreen(),
       ),
 
       // ========================================
