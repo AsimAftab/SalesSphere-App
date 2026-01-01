@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sales_sphere/features/tour_plan/views/add_tour_screen.dart';
+import 'package:sales_sphere/features/tour_plan/views/edit_tour_details_screen.dart';
+import 'package:sales_sphere/features/tour_plan/views/tour_plan_screen.dart';
 import 'package:sales_sphere/widget/main_shell.dart';
 import 'package:sales_sphere/features/auth/views/login_screen.dart';
 import 'package:sales_sphere/features/auth/views/forgot_password_screen.dart';
@@ -106,6 +109,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           requestedPath.startsWith('/miscellaneous-work');
       final isGoingToExpenseClaims =
           requestedPath.startsWith('/expense-claims');
+      final isGoingToTourPlans = requestedPath == '/tour-plans';
+      final isGoingToAddTour = requestedPath == '/add-tour';
+      final isGoingToEditTour = requestedPath.startsWith('/edit-tour');
 
       // If user is not logged in AND not going to one of the allowed pages...
       if (!isLoggedIn &&
@@ -129,7 +135,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           !isGoingToUtilities &&
           !isGoingToSettings &&
           !isGoingToMiscellaneous &&
-          !isGoingToExpenseClaims) {
+          !isGoingToExpenseClaims &&
+          !isGoingToTourPlans &&
+          !isGoingToAddTour &&
+          !isGoingToEditTour) {
         return '/';
       }
 
@@ -328,6 +337,28 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             siteName = extras['siteName'] as String? ?? 'Site';
           }
           return SitesImagesScreen(siteId: siteId, siteName: siteName);
+        },
+      ),
+
+      // ========================================
+      // TOUR PLAN ROUTES
+      // ========================================
+      GoRoute(
+        path: '/tour-plans',
+        name: 'tour-plans',
+        builder: (context, state) => const TourPlanScreen(),
+      ),
+      GoRoute(
+        path: '/add-tour',
+        name: 'add-tour',
+        builder: (context, state) => const AddTourPlanScreen(),
+      ),
+      GoRoute(
+        path: '/edit-tour/:tourId',
+        name: 'edit-tour',
+        builder: (context, state) {
+          final tourId = state.pathParameters['tourId'] ?? '';
+          return EditTourDetailsScreen(tourId: tourId);
         },
       ),
 
