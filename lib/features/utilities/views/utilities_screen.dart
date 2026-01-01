@@ -130,7 +130,7 @@ class UtilitiesScreen extends ConsumerWidget {
                     subtitle: 'Plan and manage daily field visits',
                     icon: Icons.navigation_outlined,
                     iconColor: Color(0xFFFF9100),
-                    routePath: '/tour-plan',
+                    routePath: '/tour-plans',
                   ),
                   UtilityCard(
                     title: 'Attendance',
