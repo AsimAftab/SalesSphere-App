@@ -7,6 +7,7 @@ import 'package:sales_sphere/features/catalog/models/catalog.models.dart';
 import 'package:sales_sphere/features/catalog/vm/catalog.vm.dart';
 import 'package:sales_sphere/features/catalog/vm/catalog_item.vm.dart';
 import 'package:sales_sphere/core/providers/order_controller.dart';
+import 'package:sales_sphere/features/invoice/vm/invoice_draft_vm.dart';
 import 'package:sales_sphere/widget/product_image_widget.dart';
 
 class CatalogScreen extends ConsumerStatefulWidget {
@@ -584,6 +585,7 @@ class _ProductCard extends ConsumerWidget {
                           GestureDetector(
                             onTap: () {
                               ref.read(orderControllerProvider.notifier).updateQuantity(item.id, quantity - 1);
+                              ref.read(invoiceDraftControllerProvider.notifier).refreshSession();
                             },
                             child: Container(
                               width: 26.w,
@@ -613,6 +615,7 @@ class _ProductCard extends ConsumerWidget {
                             onTap: remainingQty > 0
                                 ? () {
                                     ref.read(orderControllerProvider.notifier).addItem(item, 1);
+                                    ref.read(invoiceDraftControllerProvider.notifier).refreshSession();
                                   }
                                 : null,
                             child: Container(
@@ -640,6 +643,7 @@ class _ProductCard extends ConsumerWidget {
                       onTap: remainingQty > 0
                           ? () {
                               ref.read(orderControllerProvider.notifier).addItem(item, 1);
+                              ref.read(invoiceDraftControllerProvider.notifier).refreshSession();
                             }
                           : null,
                       child: Container(
