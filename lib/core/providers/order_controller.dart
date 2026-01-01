@@ -85,6 +85,19 @@ class OrderController extends _$OrderController {
     }
   }
 
+  /// Set quantity for a specific item (allows 0, used for editing)
+  void setQuantity(String productId, int newQuantity) {
+    if (newQuantity < 0) return;
+
+    final currentOrder = Map<String, OrderItemData>.from(state);
+    if (currentOrder.containsKey(productId)) {
+      currentOrder[productId] = currentOrder[productId]!.copyWith(
+        quantity: newQuantity,
+      );
+      state = currentOrder;
+    }
+  }
+
   /// Update set price for a specific item (user override)
   void updateSetPrice(String productId, double newPrice) {
     if (newPrice < 0) return;

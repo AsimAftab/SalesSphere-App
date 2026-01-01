@@ -11,9 +11,9 @@ class AuthInterceptor extends Interceptor {
 
   @override
   void onRequest(
-    RequestOptions options,
-    RequestInterceptorHandler handler,
-  ) {
+      RequestOptions options,
+      RequestInterceptorHandler handler,
+      ) {
     // Get token from storage (now synchronous)
     final token = tokenStorage.getToken();
 
@@ -31,9 +31,9 @@ class AuthInterceptor extends Interceptor {
 
   @override
   void onResponse(
-    Response response,
-    ResponseInterceptorHandler handler,
-  ) {
+      Response response,
+      ResponseInterceptorHandler handler,
+      ) {
     // Check if response contains a new token
     final newToken = _extractTokenFromResponse(response);
     if (newToken != null) {
@@ -46,9 +46,9 @@ class AuthInterceptor extends Interceptor {
 
   @override
   void onError(
-    DioException err,
-    ErrorInterceptorHandler handler,
-  ) async {
+      DioException err,
+      ErrorInterceptorHandler handler,
+      ) async {
     // Handle 401 Unauthorized (token expired or invalid)
     if (err.response?.statusCode == 401) {
       AppLogger.w('⚠️ Unauthorized (401) on ${err.requestOptions.path}');
