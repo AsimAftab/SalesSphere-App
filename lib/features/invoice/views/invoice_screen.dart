@@ -13,6 +13,7 @@ import 'package:sales_sphere/widget/custom_button.dart';
 import 'package:sales_sphere/core/providers/order_controller.dart';
 import 'package:sales_sphere/features/invoice/models/invoice.models.dart';
 import 'package:sales_sphere/features/invoice/vm/invoice.vm.dart';
+import 'package:sales_sphere/features/invoice/vm/invoice_draft_vm.dart';
 import 'package:intl/intl.dart';
 
 class InvoiceScreen extends ConsumerStatefulWidget {
@@ -45,14 +46,41 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
   @override
   void initState() {
     super.initState();
+    
+    // Restore state from draft provider
+    final draftState = ref.read(invoiceDraftControllerProvider);
+    selectedParty = draftState.selectedParty;
+    if (selectedParty != null) {
+      _partySearchController.text = selectedParty!.name;
+      _ownerNameController.text = selectedParty!.ownerName;
+      _searchQuery = selectedParty!.name;
+    }
+    
+    if (draftState.expectedDeliveryDate != null) {
+      _deliveryDateController.text = DateFormat('dd MMM yyyy').format(draftState.expectedDeliveryDate!);
+    }
+    
+    _discountPercentage = draftState.discountPercentage;
+    if (_discountPercentage > 0) {
+      _discountController.text = _discountPercentage.toString();
+    }
+
     _partySearchFocusNode.addListener(() {
       setState(() {
         _showPartyDropdown = _partySearchFocusNode.hasFocus;
       });
     });
 
-    // Listen to delivery date changes to update button state
+    // Listen to delivery date changes to update button state and draft
     _deliveryDateController.addListener(() {
+      if (_deliveryDateController.text.isNotEmpty) {
+        try {
+          final date = DateFormat('dd MMM yyyy').parse(_deliveryDateController.text);
+          ref.read(invoiceDraftControllerProvider.notifier).updateDate(date);
+        } catch (_) {}
+      } else {
+        ref.read(invoiceDraftControllerProvider.notifier).updateDate(null);
+      }
       setState(() {
         // Just trigger rebuild when date changes
       });
@@ -119,6 +147,7 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
       _searchQuery = party.name;
       _showPartyDropdown = false;
     });
+    ref.read(invoiceDraftControllerProvider.notifier).updateParty(party);
     _partySearchFocusNode.unfocus();
   }
 
@@ -129,6 +158,7 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
       _ownerNameController.clear();
       _searchQuery = '';
     });
+    ref.read(invoiceDraftControllerProvider.notifier).updateParty(null);
   }
 
   @override
@@ -341,6 +371,7 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                                           final parsedValue = double.tryParse(value) ?? 0.0;
                                           _discountPercentage = parsedValue.clamp(0.0, 100.0);
                                         });
+                                        ref.read(invoiceDraftControllerProvider.notifier).updateDiscount(_discountPercentage);
                                       },
                                     ),
                                   ),
@@ -472,7 +503,9 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                               final deliveryDate = DateFormat('dd MMM yyyy').parse(_deliveryDateController.text);
 
                               // Create invoice items for API request
-                              final requestItems = orderItems.map((orderItem) {
+                              final requestItems = orderItems
+                                  .where((item) => item.quantity > 0)
+                                  .map((orderItem) {
                                 final itemDiscountController = _itemDiscountControllers[orderItem.product.id];
                                 final itemDiscount = double.tryParse(itemDiscountController?.text ?? '0') ?? 0.0;
                                 
@@ -483,6 +516,11 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                                   discount: itemDiscount,
                                 );
                               }).toList();
+
+                              if (requestItems.isEmpty) {
+                                SnackbarUtils.showWarning(context, 'Please add items with quantity > 0');
+                                return;
+                              }
 
                               // Call API to create invoice
                               // Backend now expects discount as a percentage (0-100)
@@ -505,6 +543,7 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
 
                               // Clear the order after invoice generation
                               ref.read(orderControllerProvider.notifier).clearOrder();
+                              ref.read(invoiceDraftControllerProvider.notifier).clear();
 
                               // Clear form fields
                               setState(() {
@@ -563,7 +602,9 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                               ? () async {
                             try {
                               // Create estimate items for API request
-                              final requestItems = orderItems.map((orderItem) {
+                              final requestItems = orderItems
+                                  .where((item) => item.quantity > 0)
+                                  .map((orderItem) {
                                 final itemDiscountController = _itemDiscountControllers[orderItem.product.id];
                                 final itemDiscount = double.tryParse(itemDiscountController?.text ?? '0') ?? 0.0;
                                 
@@ -574,6 +615,11 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                                   discount: itemDiscount,
                                 );
                               }).toList();
+
+                              if (requestItems.isEmpty) {
+                                SnackbarUtils.showWarning(context, 'Please add items with quantity > 0');
+                                return;
+                              }
 
                               // Call API to create estimate
                               final response = await ref.read(createEstimateProvider.notifier).createEstimate(
@@ -593,6 +639,7 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
 
                               // Clear the order after estimate generation
                               ref.read(orderControllerProvider.notifier).clearOrder();
+                              ref.read(invoiceDraftControllerProvider.notifier).clear();
 
                               // Clear form fields
                               setState(() {
@@ -1030,6 +1077,7 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                     size: 22.sp,
                   ),
                   onPressed: () {
+                    ref.read(invoiceDraftControllerProvider.notifier).refreshSession();
                     ref.read(orderControllerProvider.notifier).removeItem(product.id);
                     _priceControllers[product.id]?.dispose();
                     _priceControllers.remove(product.id);
@@ -1108,12 +1156,23 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                                   borderSide: const BorderSide(color: AppColors.primary, width: 2),
                                 ),
                               ),
+                              onTapOutside: (event) {
+                                final currentQty = int.tryParse(quantityController.text) ?? 0;
+                                if (currentQty <= 0) {
+                                  setState(() {
+                                    quantityController.text = '1';
+                                    ref.read(orderControllerProvider.notifier).setQuantity(product.id, 1);
+                                  });
+                                }
+                                FocusScope.of(context).unfocus();
+                              },
                               onChanged: (value) {
-                                final newQty = int.tryParse(value);
-                                if (newQty != null && newQty > 0) {
+                                ref.read(invoiceDraftControllerProvider.notifier).refreshSession();
+                                final newQty = int.tryParse(value) ?? 0;
+                                if (newQty >= 0) {
                                   final stockQty = product.quantity ?? 0;
                                   if (newQty <= stockQty) {
-                                    ref.read(orderControllerProvider.notifier).updateQuantity(product.id, newQty);
+                                    ref.read(orderControllerProvider.notifier).setQuantity(product.id, newQty);
                                   } else {
                                     quantityController.text = stockQty.toString();
                                     quantityController.selection = TextSelection.fromPosition(
@@ -1124,15 +1183,8 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                                       'Only $stockQty units available in stock',
                                       duration: const Duration(seconds: 2),
                                     );
+                                    ref.read(orderControllerProvider.notifier).setQuantity(product.id, stockQty);
                                   }
-                                } else if (value.isEmpty || newQty == 0) {
-                                  ref.read(orderControllerProvider.notifier).removeItem(product.id);
-                                  _quantityControllers[product.id]?.dispose();
-                                  _quantityControllers.remove(product.id);
-                                  _priceControllers[product.id]?.dispose();
-                                  _priceControllers.remove(product.id);
-                                  _itemDiscountControllers[product.id]?.dispose();
-                                  _itemDiscountControllers.remove(product.id);
                                 }
                               },
                             ),
@@ -1198,6 +1250,7 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                                 ),
                               ),
                               onChanged: (value) {
+                                ref.read(invoiceDraftControllerProvider.notifier).refreshSession();
                                 final newPrice = double.tryParse(value);
                                 if (newPrice != null && newPrice >= 0) {
                                   setState(() {
@@ -1285,6 +1338,7 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                                 ),
                               ),
                               onChanged: (value) {
+                                ref.read(invoiceDraftControllerProvider.notifier).refreshSession();
                                 setState(() {
                                   final discount = double.tryParse(value) ?? 0.0;
                                   final clampedDiscount = discount.clamp(0.0, 100.0);
