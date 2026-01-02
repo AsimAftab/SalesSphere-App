@@ -40,7 +40,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
 
   String _formatDate(String date) {
     try {
-      final dateTime = DateTime.parse(date);
+      final dateTime = DateTime.parse(date).toLocal();
       return DateFormat('MMM dd, yyyy').format(dateTime);
     } catch (e) {
       return date;
@@ -53,17 +53,16 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
           note.name.toLowerCase().contains(query.toLowerCase());
 
       bool matchesCategory = true;
-      final nameLower = note.name.toLowerCase();
 
       switch (_activeFilter) {
         case NoteFilter.party:
-          matchesCategory = nameLower.contains('party');
+          matchesCategory = note.entityType == 'party';
           break;
         case NoteFilter.prospect:
-          matchesCategory = nameLower.contains('prospect');
+          matchesCategory = note.entityType == 'prospect';
           break;
         case NoteFilter.site:
-          matchesCategory = nameLower.contains('office') || nameLower.contains('site');
+          matchesCategory = note.entityType == 'site';
           break;
         case NoteFilter.all:
           matchesCategory = true;

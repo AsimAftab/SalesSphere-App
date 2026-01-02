@@ -1,28 +1,18 @@
 import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
+import 'package:sales_sphere/core/network_layer/dio_client.dart';
+import 'package:sales_sphere/core/network_layer/network_exceptions.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:sales_sphere/features/notes/models/notes.model.dart';
-import 'package:sales_sphere/features/notes/vm/notes.vm.dart';
 
 part 'add_notes.vm.g.dart';
 
 @riverpod
 class AddNoteViewModel extends _$AddNoteViewModel {
-  Object? _link;
-
   @override
-  void build() {
-    ref.onDispose(() => _release());
-  }
-
-  void _keepAlive() => _link ??= ref.keepAlive();
-
-  void _release() {
-    if (_link != null) {
-      (_link as dynamic).close();
-      _link = null;
-    }
-  }
+  FutureOr<void> build() => null;
 
   Future<String> createNote({
     required String title,
@@ -31,53 +21,83 @@ class AddNoteViewModel extends _$AddNoteViewModel {
     String? prospectId,
     String? siteId,
   }) async {
-    _keepAlive();
+    state = const AsyncLoading();
+
     try {
-      AppLogger.i('🚀 Creating Mock Note');
+      final dio = ref.read(dioClientProvider);
 
-      await Future.delayed(const Duration(seconds: 1));
-
-      // ERROR FIX: Check if provider is still active after async gap
-      if (!ref.mounted) {
-        AppLogger.w('⚠️ Provider disposed. Aborting state update.');
-        return '';
-      }
-
-      final String mockId = DateTime.now().millisecondsSinceEpoch.toString();
-
-      final newNote = NoteListItem(
-        id: mockId,
+      final request = AddNoteRequest(
         title: title,
-        name: partyId ?? prospectId ?? siteId ?? 'General Note',
-        date: DateTime.now().toIso8601String(),
-        content: description,
+        description: description,
+        party: partyId,
+        prospect: prospectId,
+        site: siteId,
       );
 
-      // Successfully update the local persistent list
-      ref.read(notesViewModelProvider.notifier).addNoteLocally(newNote);
+      final response = await dio.post(
+        ApiEndpoints.createNote,
+        data: request.toJson(),
+      );
 
-      return mockId;
-    } catch (e) {
-      AppLogger.e('⛔ Error creating mock note: $e');
+      final apiResponse = AddNoteApiResponse.fromJson(response.data);
+
+      if (apiResponse.success) {
+        AppLogger.i('Note created successfully: ${apiResponse.data.id}');
+        state = const AsyncData(null);
+        return apiResponse.data.id;
+      } else {
+        state = AsyncError(apiResponse.message, StackTrace.current);
+        throw Exception(apiResponse.message);
+      }
+    } on DioException catch (e, stack) {
+      AppLogger.e('Failed to create note', e, stack);
+
+      String errorMessage = 'Failed to create note';
+      if (e.error is NetworkException) {
+        final error = e.error as NetworkException;
+        errorMessage = error.userFriendlyMessage;
+      }
+
+      state = AsyncError(errorMessage, stack);
+      throw Exception(errorMessage);
+    } catch (e, stack) {
+      AppLogger.e('Unexpected error creating note', e, stack);
+      state = AsyncError(e.toString(), stack);
       rethrow;
-    } finally {
-      if (ref.mounted) _release();
     }
   }
 
   Future<void> uploadNoteImages(String noteId, List<File> images) async {
-    _keepAlive();
-    try {
-      AppLogger.i('📸 Mock uploading ${images.length} images');
-      await Future.delayed(const Duration(seconds: 1));
+    if (images.isEmpty) return;
 
-      if (!ref.mounted) return;
-      AppLogger.i('✅ Mock image upload complete');
-    } catch (e) {
-      AppLogger.e('Error uploading images: $e');
-      rethrow;
-    } finally {
-      if (ref.mounted) _release();
+    try {
+      final dio = ref.read(dioClientProvider);
+
+      for (int i = 0; i < images.length; i++) {
+        final file = images[i];
+        final imageNumber = i + 1; // 1-based index
+
+        final formData = FormData.fromMap({
+          'imageNumber': imageNumber,
+          'image': await MultipartFile.fromFile(
+            file.path,
+            filename: 'note_image_$imageNumber.jpg',
+          ),
+        });
+
+        await dio.post(
+          ApiEndpoints.uploadNoteImages(noteId),
+          data: formData,
+        );
+
+        AppLogger.i('Uploaded image $imageNumber/${images.length} for note $noteId');
+      }
+    } on DioException catch (e) {
+      AppLogger.e('Failed to upload note images', e);
+      if (e.error is NetworkException) {
+        throw Exception((e.error as NetworkException).userFriendlyMessage);
+      }
+      throw Exception('Failed to upload images');
     }
   }
 }

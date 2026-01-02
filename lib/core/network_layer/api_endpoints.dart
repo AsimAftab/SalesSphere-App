@@ -171,6 +171,26 @@ class ApiEndpoints {
   
   /// Upload image to miscellaneous work
   static String uploadMiscellaneousWorkImage(String workId) => '/api/v1/miscellaneous-work/$workId/images';
+
+  // Notes Endpoints
+  /// Get all notes for current user
+  static const String myNotes = '/api/v1/notes/my-notes';
+
+  /// Create a new note
+  static const String createNote = '/api/v1/notes';
+
+  /// Get note by ID
+  static String noteById(String id) => '/api/v1/notes/$id';
+
+  /// Update note
+  static String updateNote(String id) => '/api/v1/notes/$id';
+
+  /// Upload images to note
+  static String uploadNoteImages(String noteId) => '/api/v1/notes/$noteId/images';
+
+  /// Delete image from note
+  static String deleteNoteImage(String noteId, int imageNumber) =>
+      '/api/v1/notes/$noteId/images/$imageNumber';
   
   /// Delete image from miscellaneous work
   static String deleteMiscellaneousWorkImage(String workId, int imageNumber) => 
