@@ -167,8 +167,44 @@ class _TourPlanScreenState extends ConsumerState<TourPlanScreen> {
                 child: tourPlansAsync.when(
                   data: (plans) {
                     final filtered = _applyStatusFilter(plans);
+                    final searchQuery = ref.watch(tourSearchQueryProvider);
                     if (filtered.isEmpty) {
-                      return Center(child: Text("No tour plans found"));
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.navigation_outlined,
+                              size: 64.sp,
+                              color: Colors.grey.shade400,
+                            ),
+                            SizedBox(height: 16.h),
+                            Text(
+                              searchQuery.isEmpty
+                                  ? 'No tour plans found'
+                                  : 'No results for "$searchQuery"',
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                color: Colors.grey.shade600,
+                                fontFamily: 'Poppins',
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            SizedBox(height: 8.h),
+                            Text(
+                              searchQuery.isEmpty
+                                  ? 'Tap the button below to add your first tour plan'
+                                  : 'Try a different search term',
+                              style: TextStyle(
+                                fontSize: 13.sp,
+                                color: Colors.grey.shade400,
+                                fontFamily: 'Poppins',
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      );
                     }
                     return RefreshIndicator(
                       onRefresh: () => ref.read(tourPlanViewModelProvider.notifier).refresh(),

@@ -27,11 +27,24 @@ class CustomDatePicker extends StatelessWidget {
   });
 
   Future<void> _selectDate(BuildContext context) async {
+    final now = DateTime.now();
+    final effectiveFirstDate = firstDate ?? DateTime(1900);
+    final effectiveLastDate = lastDate ?? DateTime(2100);
+
+    // Ensure initialDate is not before firstDate
+    DateTime effectiveInitialDate = initialDate ?? now;
+    if (effectiveInitialDate.isBefore(effectiveFirstDate)) {
+      effectiveInitialDate = effectiveFirstDate;
+    }
+    if (effectiveInitialDate.isAfter(effectiveLastDate)) {
+      effectiveInitialDate = effectiveLastDate;
+    }
+
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: initialDate ?? DateTime.now(),
-      firstDate: firstDate ?? DateTime(1900),
-      lastDate: lastDate ?? DateTime(2100),
+      initialDate: effectiveInitialDate,
+      firstDate: effectiveFirstDate,
+      lastDate: effectiveLastDate,
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
