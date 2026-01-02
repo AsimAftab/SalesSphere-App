@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sales_sphere/features/notes/views/add_notes_screen.dart';
+import 'package:sales_sphere/features/notes/views/edit_notes_screen.dart';
+import 'package:sales_sphere/features/notes/views/notes_screen.dart';
 import 'package:sales_sphere/features/tour_plan/views/add_tour_screen.dart';
 import 'package:sales_sphere/features/tour_plan/views/edit_tour_details_screen.dart';
 import 'package:sales_sphere/features/tour_plan/views/tour_plan_screen.dart';
@@ -112,6 +115,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final isGoingToTourPlans = requestedPath == '/tour-plans';
       final isGoingToAddTour = requestedPath == '/add-tour';
       final isGoingToEditTour = requestedPath.startsWith('/edit-tour');
+      final isGoingToNotes = requestedPath.startsWith('/notes');
+      final isGoingToAddNotes = requestedPath == '/add-notes';
+      final isGoingToEditNotes = requestedPath.startsWith('/edit-notes');
+
 
       // If user is not logged in AND not going to one of the allowed pages...
       if (!isLoggedIn &&
@@ -138,7 +145,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           !isGoingToExpenseClaims &&
           !isGoingToTourPlans &&
           !isGoingToAddTour &&
-          !isGoingToEditTour) {
+          !isGoingToEditTour &&
+          !isGoingToNotes &&
+          !isGoingToAddNotes &&
+          !isGoingToEditNotes) {
         return '/';
       }
 
@@ -359,6 +369,27 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final tourId = state.pathParameters['tourId'] ?? '';
           return EditTourDetailsScreen(tourId: tourId);
+        },
+      ),
+      // ========================================
+      // NOTES ROUTES (No Bottom Navigation)
+      // ========================================
+      GoRoute(
+        path: '/notes',
+        name: 'notes',
+        builder: (context, state) => const NotesScreen(),
+      ),
+      GoRoute(
+        path: '/add-notes',
+        name: 'add-notes',
+        builder: (context, state) => const AddNotesScreen(),
+      ),
+      GoRoute(
+        path: '/edit-notes/:noteId',
+        name: 'edit-notes',
+        builder: (context, state) {
+          final noteId = state.pathParameters['noteId'] ?? '';
+          return EditNoteScreen(noteId: noteId);
         },
       ),
 
