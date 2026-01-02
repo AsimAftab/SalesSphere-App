@@ -123,6 +123,11 @@ class ApiEndpoints {
     return '/api/v1/attendance/search?${queryParams.join('&')}';
   }
 
+  // Tour Plans Endpoints
+  static const String myTourPlans = '/api/v1/tour-plans/my-tour-plans';
+  static const String createTourPlan = '/api/v1/tour-plans';
+  static String updateTourPlan(String id) => '/api/v1/tour-plans/$id';
+
   // Beat Plan Endpoints
   /// Get beat plans assigned to current user (minimal data for cards)
   static const String myBeatPlans = '/api/v1/beat-plans/my-beatplans';

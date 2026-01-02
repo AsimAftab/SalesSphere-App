@@ -1,4 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
+import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 import '../models/tour_plan.model.dart';
 
@@ -12,50 +14,26 @@ class TourPlanViewModel extends _$TourPlanViewModel {
   }
 
   Future<List<TourPlanListItem>> _fetchTourPlans() async {
-    AppLogger.i('📝 Fetching Mock Tour Plans');
-    await Future.delayed(const Duration(seconds: 1));
+    try {
+      AppLogger.i('📝 Fetching Tour Plans from API');
+      final dio = ref.read(dioClientProvider);
+      
+      final response = await dio.get(ApiEndpoints.myTourPlans);
+      
+      // Parse response
+      final apiResponse = TourPlanApiResponse.fromJson(response.data);
+      
+      if (!apiResponse.success) {
+         throw Exception('Failed to fetch tour plans: Success flag is false');
+      }
 
-    // Helper to calculate duration for mocks to match business logic (Inclusive)
-    int calc(String s, String e) {
-      final startDate = DateTime.parse(s);
-      final endDate = DateTime.parse(e);
-      return endDate.difference(startDate).inDays + 1;
+      // Map to list items
+      return apiResponse.data.map((e) => TourPlanListItem.fromApiData(e)).toList();
+
+    } catch (e, st) {
+      AppLogger.e('Error fetching tour plans', e, st);
+      rethrow; 
     }
-
-    return [
-      TourPlanListItem(
-        id: '1',
-        placeOfVisit: 'Singapore',
-        startDate: '2024-12-15',
-        endDate: '2024-12-22',
-        status: 'Approved',
-        durationDays: calc('2024-12-15', '2024-12-22'),
-      ),
-      TourPlanListItem(
-        id: '2',
-        placeOfVisit: 'New York, USA',
-        startDate: '2024-11-18',
-        endDate: '2024-11-20',
-        status: 'Pending',
-        durationDays: calc('2024-11-18', '2024-11-20'),
-      ),
-      TourPlanListItem(
-        id: '3',
-        placeOfVisit: 'London, UK',
-        startDate: '2024-11-15',
-        endDate: '2024-11-18',
-        status: 'Approved',
-        durationDays: calc('2024-11-15', '2024-11-18'),
-      ),
-      TourPlanListItem(
-        id: '4',
-        placeOfVisit: 'Bali, Indonesia',
-        startDate: '2024-11-12',
-        endDate: '2024-11-16',
-        status: 'Rejected',
-        durationDays: calc('2024-11-12', '2024-11-16'),
-      ),
-    ];
   }
 
   Future<void> refresh() async {
