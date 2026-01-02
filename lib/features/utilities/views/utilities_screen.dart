@@ -139,6 +139,13 @@ class UtilitiesScreen extends ConsumerWidget {
                     iconColor: Color(0xFF00ACC1),
                     routePath: '/attendance',
                   ),
+                  UtilityCard(
+                    title: 'Collection',
+                    subtitle: 'Record payments collected from parties',
+                    icon: Icons.account_balance_wallet_rounded,
+                    iconColor: Color(0xFF26A69A),
+                    routePath: '/collection',
+                  ),
                 ],
               ),
 
