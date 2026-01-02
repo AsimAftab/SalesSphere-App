@@ -5,12 +5,19 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
+import 'package:sales_sphere/core/utils/snackbar_utils.dart';
 import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
 import 'package:sales_sphere/features/notes/vm/notes.vm.dart';
 import 'package:sales_sphere/features/notes/vm/edit_notes.vm.dart';
 import 'package:sales_sphere/features/notes/models/notes.model.dart';
+import 'package:sales_sphere/features/parties/vm/parties.vm.dart';
+import 'package:sales_sphere/features/prospects/vm/prospects.vm.dart';
+import 'package:sales_sphere/features/sites/vm/sites.vm.dart';
+
+enum EntityType { party, prospect, site }
 
 class EditNoteScreen extends ConsumerStatefulWidget {
   final String noteId;
@@ -27,51 +34,70 @@ class EditNoteScreen extends ConsumerStatefulWidget {
 class _EditNoteScreenState extends ConsumerState<EditNoteScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // Controllers
   late TextEditingController _titleController;
   late TextEditingController _descriptionController;
 
-  // Selection state
-  String? _selectedPartyId;
-  String? _selectedProspectId;
-  String? _selectedSiteId;
+  EntityType? _selectedEntityType;
+  String? _selectedEntityId;
+  String? _selectedEntityName;
 
-  // Image Picking
   final ImagePicker _picker = ImagePicker();
   final List<File> _newImages = [];
-  bool _isDataLoaded = false;
+  List<NoteImage> _existingImages = [];
+  final List<int> _imagesToDelete = []; // Track image numbers to delete
+
+  bool _isLoading = true;
+  bool _isSubmitting = false;
   bool _isEditMode = false;
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
-    _initializeControllers();
-  }
-
-  void _initializeControllers() {
     _titleController = TextEditingController();
     _descriptionController = TextEditingController();
+    // Defer the fetch to after the first frame when ref is ready
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchNoteDetails();
+    });
   }
 
-  /// Prefills data from the Mock List in NotesViewModel
-  void _prefillMockData(List<NoteListItem> allNotes) {
-    if (_isDataLoaded) return;
+  Future<void> _fetchNoteDetails() async {
+    try {
+      final vm = ref.read(editNoteViewModelProvider.notifier);
+      final noteData = await vm.fetchNoteDetails(widget.noteId);
 
-    final note = allNotes.firstWhere(
-          (n) => n.id == widget.noteId,
-      orElse: () => const NoteListItem(id: '', title: '', name: '', date: ''),
-    );
+      if (mounted) {
+        setState(() {
+          _titleController.text = noteData.title;
+          _descriptionController.text = noteData.description;
+          _existingImages = noteData.images;
 
-    if (note.id.isNotEmpty) {
-      _titleController.text = note.title;
-      _descriptionController.text = note.content ?? "";
+          // Set entity type based on which is present
+          if (noteData.party != null) {
+            _selectedEntityType = EntityType.party;
+            _selectedEntityId = noteData.party!.id;
+            _selectedEntityName = noteData.party!.partyName;
+          } else if (noteData.prospect != null) {
+            _selectedEntityType = EntityType.prospect;
+            _selectedEntityId = noteData.prospect!.id;
+            _selectedEntityName = noteData.prospect!.name;
+          } else if (noteData.site != null) {
+            _selectedEntityType = EntityType.site;
+            _selectedEntityId = noteData.site!.id;
+            _selectedEntityName = noteData.site!.name;
+          }
 
-      // logic to pre-select based on note.name from mock data
-      if (note.name.contains('Party')) _selectedPartyId = note.name;
-      if (note.name.contains('Prospect')) _selectedProspectId = note.name;
-      if (note.name.contains('Office') || note.name.contains('Site')) _selectedSiteId = note.name;
-
-      _isDataLoaded = true;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = e.toString().replaceAll('Exception: ', '');
+        });
+      }
     }
   }
 
@@ -84,8 +110,43 @@ class _EditNoteScreenState extends ConsumerState<EditNoteScreen> {
 
   void _toggleEditMode() => setState(() => _isEditMode = !_isEditMode);
 
+  void _selectEntity(EntityType type, String id, String name) {
+    setState(() {
+      _selectedEntityType = type;
+      _selectedEntityId = id;
+      _selectedEntityName = name;
+    });
+  }
+
+  void _clearSelection() {
+    setState(() {
+      _selectedEntityType = null;
+      _selectedEntityId = null;
+      _selectedEntityName = null;
+    });
+  }
+
+  bool get _hasEntitySelected => _selectedEntityId != null;
+
+  String? get _partyId =>
+      _selectedEntityType == EntityType.party ? _selectedEntityId : null;
+  String? get _prospectId =>
+      _selectedEntityType == EntityType.prospect ? _selectedEntityId : null;
+  String? get _siteId =>
+      _selectedEntityType == EntityType.site ? _selectedEntityId : null;
+
   Future<void> _handleSubmit() async {
+    if (!_hasEntitySelected) {
+      SnackbarUtils.showError(
+        context,
+        'Please select a Party, Prospect, or Site',
+      );
+      return;
+    }
+
     if (_formKey.currentState?.validate() ?? false) {
+      setState(() => _isSubmitting = true);
+
       try {
         final vm = ref.read(editNoteViewModelProvider.notifier);
 
@@ -93,39 +154,356 @@ class _EditNoteScreenState extends ConsumerState<EditNoteScreen> {
           noteId: widget.noteId,
           title: _titleController.text.trim(),
           description: _descriptionController.text.trim(),
-          partyId: _selectedPartyId,
-          prospectId: _selectedProspectId,
-          siteId: _selectedSiteId,
+          partyId: _partyId,
+          prospectId: _prospectId,
+          siteId: _siteId,
         );
 
+        // Delete marked images
+        for (final imageNumber in _imagesToDelete) {
+          await vm.deleteNoteImage(widget.noteId, imageNumber);
+        }
+
         if (_newImages.isNotEmpty) {
-          await vm.uploadNoteImages(widget.noteId, _newImages);
+          final Map<int, File> imagesToUpload = {};
+          final usedIndices = _existingImages
+              .where((img) => !_imagesToDelete.contains(img.imageNumber))
+              .map((e) => e.imageNumber)
+              .toSet();
+
+          int currentImageIndex = 0;
+          // Check slots 1-5 (UI limits to 2, but this is safer for future)
+          for (int i = 1; i <= 5; i++) {
+            if (currentImageIndex >= _newImages.length) break;
+            if (!usedIndices.contains(i)) {
+              imagesToUpload[i] = _newImages[currentImageIndex];
+              currentImageIndex++;
+            }
+          }
+
+          if (imagesToUpload.isNotEmpty) {
+            await vm.uploadNoteImages(widget.noteId, imagesToUpload);
+          }
         }
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Note updated successfully!'),
-              backgroundColor: AppColors.success,
-            ),
-          );
+          SnackbarUtils.showSuccess(context, 'Note updated successfully!');
           ref.invalidate(notesViewModelProvider);
-          context.pop();
+          context.pop(true);
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error),
+          SnackbarUtils.showError(
+            context,
+            e.toString().replaceAll('Exception: ', ''),
           );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isSubmitting = false);
         }
       }
     }
   }
 
+  void _showEntitySelector(EntityType type) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+      ),
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.6,
+          minChildSize: 0.3,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (context, scrollController) {
+            return Column(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(16.w),
+                  child: Row(
+                    children: [
+                      Text(
+                        'Select ${_getEntityTypeName(type)}',
+                        style: TextStyle(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                Expanded(
+                  child: _buildEntityList(type, scrollController),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  String _getEntityTypeName(EntityType type) {
+    switch (type) {
+      case EntityType.party:
+        return 'Party';
+      case EntityType.prospect:
+        return 'Prospect';
+      case EntityType.site:
+        return 'Site';
+    }
+  }
+
+  IconData _getEntityIcon(EntityType type) {
+    switch (type) {
+      case EntityType.party:
+        return Icons.store;
+      case EntityType.prospect:
+        return Icons.person_search;
+      case EntityType.site:
+        return Icons.location_city;
+    }
+  }
+
+  Widget _buildEntityList(EntityType type, ScrollController scrollController) {
+    switch (type) {
+      case EntityType.party:
+        return Consumer(
+          builder: (context, ref, _) {
+            final partiesAsync = ref.watch(partiesViewModelProvider);
+            return partiesAsync.when(
+              data: (parties) {
+                if (parties.isEmpty) {
+                  return _buildEmptyState('No parties found');
+                }
+                return ListView.separated(
+                  controller: scrollController,
+                  padding: EdgeInsets.symmetric(vertical: 8.h),
+                  itemCount: parties.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (context, index) {
+                    final party = parties[index];
+                    final isSelected = _selectedEntityId == party.id &&
+                        _selectedEntityType == EntityType.party;
+                    return _buildListTile(
+                      name: party.name,
+                      subtitle: party.ownerName,
+                      icon: Icons.store,
+                      isSelected: isSelected,
+                      onTap: () {
+                        _selectEntity(EntityType.party, party.id, party.name);
+                        Navigator.pop(context);
+                      },
+                    );
+                  },
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, _) => Center(child: Text('Error: $e')),
+            );
+          },
+        );
+
+      case EntityType.prospect:
+        return Consumer(
+          builder: (context, ref, _) {
+            final prospectsAsync = ref.watch(prospectViewModelProvider);
+            return prospectsAsync.when(
+              data: (prospects) {
+                if (prospects.isEmpty) {
+                  return _buildEmptyState('No prospects found');
+                }
+                return ListView.separated(
+                  controller: scrollController,
+                  padding: EdgeInsets.symmetric(vertical: 8.h),
+                  itemCount: prospects.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (context, index) {
+                    final prospect = prospects[index];
+                    final isSelected = _selectedEntityId == prospect.id &&
+                        _selectedEntityType == EntityType.prospect;
+                    return _buildListTile(
+                      name: prospect.name,
+                      subtitle: prospect.ownerName,
+                      icon: Icons.person_search,
+                      isSelected: isSelected,
+                      onTap: () {
+                        _selectEntity(
+                            EntityType.prospect, prospect.id, prospect.name);
+                        Navigator.pop(context);
+                      },
+                    );
+                  },
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, _) => Center(child: Text('Error: $e')),
+            );
+          },
+        );
+
+      case EntityType.site:
+        return Consumer(
+          builder: (context, ref, _) {
+            final sitesAsync = ref.watch(siteViewModelProvider);
+            return sitesAsync.when(
+              data: (sites) {
+                if (sites.isEmpty) {
+                  return _buildEmptyState('No sites found');
+                }
+                return ListView.separated(
+                  controller: scrollController,
+                  padding: EdgeInsets.symmetric(vertical: 8.h),
+                  itemCount: sites.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (context, index) {
+                    final site = sites[index];
+                    final isSelected = _selectedEntityId == site.id &&
+                        _selectedEntityType == EntityType.site;
+                    return _buildListTile(
+                      name: site.name,
+                      subtitle: site.location,
+                      icon: Icons.location_city,
+                      isSelected: isSelected,
+                      onTap: () {
+                        _selectEntity(EntityType.site, site.id, site.name);
+                        Navigator.pop(context);
+                      },
+                    );
+                  },
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, _) => Center(child: Text('Error: $e')),
+            );
+          },
+        );
+    }
+  }
+
+  Widget _buildEmptyState(String message) {
+    return Center(
+      child: Text(
+        message,
+        style: TextStyle(
+          fontSize: 14.sp,
+          color: Colors.grey,
+          fontFamily: 'Poppins',
+        ),
+      ),
+    );
+  }
+
+  Widget _buildListTile({
+    required String name,
+    required String subtitle,
+    required IconData icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      leading: CircleAvatar(
+        backgroundColor: isSelected ? AppColors.primary : Colors.grey.shade200,
+        child: Icon(
+          icon,
+          color: isSelected ? Colors.white : Colors.grey,
+          size: 20.sp,
+        ),
+      ),
+      title: Text(
+        name,
+        style: TextStyle(
+          fontSize: 14.sp,
+          fontWeight: FontWeight.w500,
+          fontFamily: 'Poppins',
+        ),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: TextStyle(
+          fontSize: 12.sp,
+          color: Colors.grey,
+          fontFamily: 'Poppins',
+        ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+      trailing:
+          isSelected ? Icon(Icons.check_circle, color: AppColors.primary) : null,
+      onTap: onTap,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final notesAsync = ref.watch(notesViewModelProvider);
-    notesAsync.whenData((notes) => _prefillMockData(notes));
+    // Watch the provider to keep it alive (prevent auto-dispose)
+    ref.watch(editNoteViewModelProvider);
+
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: AppColors.textdark),
+            onPressed: () => context.pop(),
+          ),
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: AppColors.textdark),
+            onPressed: () => context.pop(),
+          ),
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 64.sp, color: Colors.grey),
+              SizedBox(height: 16.h),
+              Text(
+                _errorMessage!,
+                style: TextStyle(fontSize: 14.sp, color: Colors.grey),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 16.h),
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    _isLoading = true;
+                    _errorMessage = null;
+                  });
+                  _fetchNoteDetails();
+                },
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
@@ -135,7 +513,7 @@ class _EditNoteScreenState extends ConsumerState<EditNoteScreen> {
         elevation: 0,
         centerTitle: false,
         title: Text(
-          "Details",
+          _isEditMode ? "Edit Note" : "Note Details",
           style: TextStyle(
             color: AppColors.textdark,
             fontSize: 18.sp,
@@ -145,15 +523,18 @@ class _EditNoteScreenState extends ConsumerState<EditNoteScreen> {
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.textdark),
-          onPressed: () => context.pop(),
+          onPressed: _isSubmitting ? null : () => context.pop(),
         ),
         actions: [
-          if (_isEditMode)
+          if (_isEditMode && !_isSubmitting)
             TextButton(
               onPressed: () {
-                setState(() => _isEditMode = false);
-                _isDataLoaded = false;
-                notesAsync.whenData((notes) => _prefillMockData(notes));
+                setState(() {
+                  _isEditMode = false;
+                  _newImages.clear();
+                  _imagesToDelete.clear();
+                });
+                _fetchNoteDetails();
               },
               child: Text(
                 'Cancel',
@@ -165,7 +546,9 @@ class _EditNoteScreenState extends ConsumerState<EditNoteScreen> {
       body: Stack(
         children: [
           Positioned(
-            top: 0, left: 0, right: 0,
+            top: 0,
+            left: 0,
+            right: 0,
             child: SvgPicture.asset(
               'assets/images/corner_bubble.svg',
               fit: BoxFit.cover,
@@ -190,7 +573,7 @@ class _EditNoteScreenState extends ConsumerState<EditNoteScreen> {
                               borderRadius: BorderRadius.circular(16.r),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.04),
+                                  color: Colors.black.withValues(alpha: 0.04),
                                   blurRadius: 10,
                                   offset: const Offset(0, 2),
                                 ),
@@ -203,42 +586,52 @@ class _EditNoteScreenState extends ConsumerState<EditNoteScreen> {
                                   controller: _titleController,
                                   hintText: "Title",
                                   prefixIcon: Icons.title,
-                                  enabled: _isEditMode,
-                                  validator: (v) => v!.isEmpty ? 'Required' : null,
+                                  enabled: _isEditMode && !_isSubmitting,
+                                  validator: (v) =>
+                                      v!.isEmpty ? 'Required' : null,
                                 ),
                                 SizedBox(height: 16.h),
-                                _buildDropdown(
-                                  "Party Name",
-                                  _selectedPartyId,
-                                  Icons.people_outline,
-                                      () => setState(() => _selectedPartyId = "Mock Party A"),
+
+                                // Entity selection
+                                Text(
+                                  "Linked to *",
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.grey.shade600,
+                                    fontFamily: 'Poppins',
+                                  ),
                                 ),
-                                SizedBox(height: 16.h),
-                                _buildDropdown(
-                                  "Prospect Name",
-                                  _selectedProspectId,
-                                  Icons.person_search,
-                                      () => setState(() => _selectedProspectId = "Mock Prospect B"),
+                                SizedBox(height: 8.h),
+                                IgnorePointer(
+                                  ignoring: !_isEditMode || _isSubmitting,
+                                  child: Opacity(
+                                    opacity:
+                                        (!_isEditMode || _isSubmitting) ? 0.7 : 1.0,
+                                    child: _buildEntityTypeSelector(),
+                                  ),
                                 ),
-                                SizedBox(height: 16.h),
-                                _buildDropdown(
-                                  "Sites Name",
-                                  _selectedSiteId,
-                                  Icons.location_city,
-                                      () => setState(() => _selectedSiteId = "Mock Site C"),
-                                ),
+
                                 SizedBox(height: 16.h),
                                 PrimaryTextField(
                                   controller: _descriptionController,
                                   hintText: "Description",
                                   prefixIcon: Icons.description_outlined,
-                                  enabled: _isEditMode,
+                                  enabled: _isEditMode && !_isSubmitting,
                                   minLines: 1,
                                   maxLines: 5,
-                                  validator: (v) => v!.isEmpty ? 'Required' : null,
+                                  validator: (v) =>
+                                      v!.isEmpty ? 'Required' : null,
                                 ),
                                 SizedBox(height: 24.h),
-                                _buildImageSection(),
+                                IgnorePointer(
+                                  ignoring: !_isEditMode || _isSubmitting,
+                                  child: Opacity(
+                                    opacity:
+                                        (!_isEditMode || _isSubmitting) ? 0.7 : 1.0,
+                                    child: _buildImageSection(),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -266,10 +659,16 @@ class _EditNoteScreenState extends ConsumerState<EditNoteScreen> {
                   ],
                 ),
                 child: PrimaryButton(
-                  label: _isEditMode ? "Save Changes" : "Edit Detail",
-                  onPressed: _isEditMode ? _handleSubmit : _toggleEditMode,
-                  leadingIcon: _isEditMode ? Icons.check_rounded : Icons.edit_outlined,
+                  label: _isSubmitting
+                      ? "Saving..."
+                      : (_isEditMode ? "Save Changes" : "Edit Note"),
+                  onPressed: _isSubmitting
+                      ? null
+                      : (_isEditMode ? _handleSubmit : _toggleEditMode),
+                  leadingIcon:
+                      _isEditMode ? Icons.check_rounded : Icons.edit_outlined,
                   size: ButtonSize.medium,
+                  isLoading: _isSubmitting,
                 ),
               ),
             ],
@@ -279,35 +678,205 @@ class _EditNoteScreenState extends ConsumerState<EditNoteScreen> {
     );
   }
 
-  Widget _buildDropdown(String label, String? value, IconData icon, VoidCallback onTap) {
+  Widget _buildEntityTypeSelector() {
+    return Container(
+      padding: EdgeInsets.all(12.w),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: _buildEntityTypeChip(
+                  type: EntityType.party,
+                  label: 'Party',
+                  icon: Icons.store_outlined,
+                ),
+              ),
+              SizedBox(width: 8.w),
+              Expanded(
+                child: _buildEntityTypeChip(
+                  type: EntityType.prospect,
+                  label: 'Prospect',
+                  icon: Icons.person_search_outlined,
+                ),
+              ),
+              SizedBox(width: 8.w),
+              Expanded(
+                child: _buildEntityTypeChip(
+                  type: EntityType.site,
+                  label: 'Site',
+                  icon: Icons.location_city_outlined,
+                ),
+              ),
+            ],
+          ),
+          if (_hasEntitySelected) ...[
+            SizedBox(height: 12.h),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12.r),
+                border:
+                    Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    _getEntityIcon(_selectedEntityType!),
+                    color: AppColors.primary,
+                    size: 20.sp,
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _selectedEntityName!,
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textdark,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                        Text(
+                          _getEntityTypeName(_selectedEntityType!),
+                          style: TextStyle(
+                            fontSize: 11.sp,
+                            color: Colors.grey.shade600,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (_isEditMode)
+                    GestureDetector(
+                      onTap: _clearSelection,
+                      child: Container(
+                        padding: EdgeInsets.all(6.w),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade200,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.close,
+                          color: Colors.grey.shade600,
+                          size: 16.sp,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEntityTypeChip({
+    required EntityType type,
+    required String label,
+    required IconData icon,
+  }) {
+    final isSelected = _selectedEntityType == type;
+
     return GestureDetector(
-      onTap: _isEditMode ? onTap : null,
+      onTap: _isEditMode ? () => _showEntitySelector(type) : null,
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+        padding: EdgeInsets.symmetric(vertical: 12.h),
         decoration: BoxDecoration(
-          color: _isEditMode ? Colors.white : Colors.grey.shade100,
+          color: isSelected ? AppColors.primary : Colors.white,
           borderRadius: BorderRadius.circular(12.r),
           border: Border.all(
-            color: _isEditMode ? AppColors.border : AppColors.border.withOpacity(0.2),
-            width: 1.5,
+            color: isSelected ? AppColors.primary : Colors.grey.shade300,
           ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: Colors.grey.shade600, size: 20.sp),
-            SizedBox(width: 12.w),
-            Expanded(
-              child: Text(
-                value ?? label,
-                style: TextStyle(
-                  fontSize: 15.sp,
-                  color: value == null ? AppColors.textHint : AppColors.textPrimary,
-                  fontFamily: 'Poppins',
+            Icon(
+              icon,
+              color: isSelected ? Colors.white : Colors.grey.shade600,
+              size: 22.sp,
+            ),
+            SizedBox(height: 4.h),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12.sp,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                color: isSelected ? Colors.white : Colors.grey.shade700,
+                fontFamily: 'Poppins',
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showImagePreview(String imageUrl, {File? file}) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.all(16.w),
+        child: Stack(
+          children: [
+            Center(
+              child: InteractiveViewer(
+                minScale: 0.5,
+                maxScale: 4.0,
+                child: file != null
+                    ? Image.file(file, fit: BoxFit.contain)
+                    : CachedNetworkImage(
+                        imageUrl: imageUrl,
+                        fit: BoxFit.contain,
+                        placeholder: (_, __) => const Center(
+                          child: CircularProgressIndicator(color: Colors.white),
+                        ),
+                        errorWidget: (_, __, ___) => const Icon(
+                          Icons.error,
+                          color: Colors.white,
+                          size: 48,
+                        ),
+                      ),
+              ),
+            ),
+            Positioned(
+              top: 0,
+              right: 0,
+              child: IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: Container(
+                  padding: EdgeInsets.all(8.w),
+                  decoration: const BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.close, color: Colors.white, size: 20.sp),
                 ),
               ),
             ),
-            if (_isEditMode)
-              Icon(Icons.arrow_drop_down, color: Colors.grey.shade600, size: 24.sp),
           ],
         ),
       ),
@@ -315,6 +884,13 @@ class _EditNoteScreenState extends ConsumerState<EditNoteScreen> {
   }
 
   Widget _buildImageSection() {
+    // Filter out images marked for deletion
+    final visibleExistingImages = _existingImages
+        .where((img) => !_imagesToDelete.contains(img.imageNumber))
+        .toList();
+    final totalImages = visibleExistingImages.length + _newImages.length;
+    final canAddMore = totalImages < 2;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -328,58 +904,170 @@ class _EditNoteScreenState extends ConsumerState<EditNoteScreen> {
           ),
         ),
         SizedBox(height: 8.h),
-        if (_newImages.isEmpty)
-          GestureDetector(
-            onTap: _isEditMode ? () async {
-              final XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
-              if (image != null) setState(() => _newImages.add(File(image.path)));
-            } : null,
-            child: Container(
-              height: 120.h,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF5F6FA),
-                borderRadius: BorderRadius.circular(12.r),
-                border: Border.all(color: Colors.grey.shade300, style: BorderStyle.solid),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.add_photo_alternate_outlined, size: 40.sp, color: Colors.grey.shade400),
-                  SizedBox(height: 8.h),
-                  Text(
-                    "Tap to add images",
-                    style: TextStyle(fontSize: 12.sp, color: Colors.grey.shade600, fontFamily: 'Poppins'),
-                  ),
-                ],
-              ),
-            ),
-          )
-        else
+
+        // Existing images from server
+        if (visibleExistingImages.isNotEmpty)
           Wrap(
             spacing: 10.w,
             runSpacing: 10.h,
-            children: _newImages.map((file) => Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8.r),
-                  child: Image.file(file, width: 100.w, height: 100.h, fit: BoxFit.cover),
-                ),
-                if (_isEditMode)
-                  Positioned(
-                    top: 4,
-                    right: 4,
-                    child: GestureDetector(
-                      onTap: () => setState(() => _newImages.remove(file)),
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-                        child: const Icon(Icons.close, size: 12, color: Colors.white),
+            children: visibleExistingImages.map((image) {
+              return Stack(
+                children: [
+                  GestureDetector(
+                    onTap: () => _showImagePreview(image.imageUrl),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8.r),
+                      child: CachedNetworkImage(
+                        imageUrl: image.imageUrl,
+                        width: 100.w,
+                        height: 100.h,
+                        fit: BoxFit.cover,
+                        placeholder: (_, __) => Container(
+                          width: 100.w,
+                          height: 100.h,
+                          color: Colors.grey.shade200,
+                          child: const Center(
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                        errorWidget: (_, __, ___) => Container(
+                          width: 100.w,
+                          height: 100.h,
+                          color: Colors.grey.shade200,
+                          child: const Icon(Icons.error),
+                        ),
                       ),
                     ),
                   ),
-              ],
-            )).toList(),
+                  if (_isEditMode)
+                    Positioned(
+                      top: 4,
+                      right: 4,
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _imagesToDelete.add(image.imageNumber);
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Colors.black54,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.close,
+                            size: 12,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            }).toList(),
+          ),
+
+        // New images to upload
+        if (_newImages.isNotEmpty)
+          Padding(
+            padding: EdgeInsets.only(top: visibleExistingImages.isNotEmpty ? 10.h : 0),
+            child: Wrap(
+              spacing: 10.w,
+              runSpacing: 10.h,
+              children: _newImages.map((file) {
+                return Stack(
+                  children: [
+                    GestureDetector(
+                      onTap: () => _showImagePreview('', file: file),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8.r),
+                        child: Image.file(file,
+                            width: 100.w, height: 100.h, fit: BoxFit.cover),
+                      ),
+                    ),
+                    if (_isEditMode)
+                      Positioned(
+                        top: 4,
+                        right: 4,
+                        child: GestureDetector(
+                          onTap: () => setState(() => _newImages.remove(file)),
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                                color: Colors.black54, shape: BoxShape.circle),
+                            child: const Icon(Icons.close,
+                                size: 12, color: Colors.white),
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              }).toList(),
+            ),
+          ),
+
+        // Add image button
+        if (canAddMore && _isEditMode)
+          Padding(
+            padding: EdgeInsets.only(
+                top: (visibleExistingImages.isNotEmpty || _newImages.isNotEmpty)
+                    ? 10.h
+                    : 0),
+            child: GestureDetector(
+              onTap: () async {
+                final XFile? image = await _picker.pickImage(
+                    source: ImageSource.gallery, imageQuality: 70);
+                if (image != null) {
+                  setState(() => _newImages.add(File(image.path)));
+                }
+              },
+              child: Container(
+                height: 100.h,
+                width: 100.w,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5F6FA),
+                  borderRadius: BorderRadius.circular(8.r),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.add_photo_alternate_outlined,
+                        size: 24.sp, color: Colors.grey.shade400),
+                    SizedBox(height: 4.h),
+                    Text(
+                      "Add",
+                      style: TextStyle(
+                          fontSize: 10.sp,
+                          color: Colors.grey.shade600,
+                          fontFamily: 'Poppins'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+        // Empty state
+        if (visibleExistingImages.isEmpty && _newImages.isEmpty && !_isEditMode)
+          Container(
+            height: 80.h,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF5F6FA),
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+            child: Center(
+              child: Text(
+                "No images attached",
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  color: Colors.grey.shade500,
+                  fontFamily: 'Poppins',
+                ),
+              ),
+            ),
           ),
       ],
     );
