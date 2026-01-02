@@ -76,20 +76,20 @@ class _TrackingIndicatorWidgetState extends State<TrackingIndicatorWidget>
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                color.withOpacity(0.15),
-                color.withOpacity(0.08),
+                color.withValues(alpha: 0.15),
+                color.withValues(alpha: 0.08),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(24.r),
             border: Border.all(
-              color: color.withOpacity(0.25),
+              color: color.withValues(alpha: 0.25),
               width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -108,7 +108,7 @@ class _TrackingIndicatorWidgetState extends State<TrackingIndicatorWidget>
                     height: (widget.size * 2).w,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: color.withOpacity(_animationController.value * 0.2),
+                      color: color.withValues(alpha:_animationController.value * 0.2),
                     ),
                   ),
                   // Inner dot
@@ -120,7 +120,7 @@ class _TrackingIndicatorWidgetState extends State<TrackingIndicatorWidget>
                       color: color,
                       boxShadow: [
                         BoxShadow(
-                          color: color.withOpacity(_animationController.value * 0.6),
+                          color: color.withValues(alpha:_animationController.value * 0.6),
                           blurRadius: 8 * _animationController.value,
                           spreadRadius: 2 * _animationController.value,
                         ),

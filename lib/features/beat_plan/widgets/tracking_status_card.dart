@@ -59,20 +59,20 @@ class _TrackingStatusCardState extends State<TrackingStatusCard> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            _getStateColor().withOpacity(0.08),
-            _getStateColor().withOpacity(0.03),
+            _getStateColor().withValues(alpha: 0.08),
+            _getStateColor().withValues(alpha: 0.03),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20.r),
         border: Border.all(
-          color: _getStateColor().withOpacity(0.3),
+          color: _getStateColor().withValues(alpha: 0.3),
           width: 2,
         ),
         boxShadow: [
           BoxShadow(
-            color: _getStateColor().withOpacity(0.15),
+            color: _getStateColor().withValues(alpha: 0.15),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -96,7 +96,7 @@ class _TrackingStatusCardState extends State<TrackingStatusCard> {
                 Container(
                   padding: EdgeInsets.all(12.w),
                   decoration: BoxDecoration(
-                    color: _getStateColor().withOpacity(0.1),
+                    color: _getStateColor().withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: _buildPulsingIndicator(),
@@ -188,7 +188,7 @@ class _TrackingStatusCardState extends State<TrackingStatusCard> {
             color: _getStateColor(),
             boxShadow: [
               BoxShadow(
-                color: _getStateColor().withOpacity(value),
+                color: _getStateColor().withValues(alpha: value),
                 blurRadius: 8 * value,
                 spreadRadius: 2 * value,
               ),
@@ -225,7 +225,7 @@ class _TrackingStatusCardState extends State<TrackingStatusCard> {
     return Container(
       padding: EdgeInsets.all(8.w),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8.r),
       ),
       child: Icon(
@@ -248,12 +248,12 @@ class _TrackingStatusCardState extends State<TrackingStatusCard> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(
-          color: color.withOpacity(0.15),
+          color: color.withValues(alpha: 0.15),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.08),
+            color: color.withValues(alpha: 0.08),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -265,7 +265,7 @@ class _TrackingStatusCardState extends State<TrackingStatusCard> {
           Container(
             padding: EdgeInsets.all(8.w),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10.r),
             ),
             child: Icon(icon, size: 18.sp, color: color),
@@ -324,12 +324,12 @@ class _TrackingStatusCardState extends State<TrackingStatusCard> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(
-          color: statusColor.withOpacity(0.15),
+          color: statusColor.withValues(alpha: 0.15),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: statusColor.withOpacity(0.08),
+            color: statusColor.withValues(alpha: 0.08),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -340,7 +340,7 @@ class _TrackingStatusCardState extends State<TrackingStatusCard> {
           Container(
             padding: EdgeInsets.all(8.w),
             decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.1),
+              color: statusColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10.r),
             ),
             child: Icon(
@@ -385,7 +385,7 @@ class _TrackingStatusCardState extends State<TrackingStatusCard> {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: statusColor.withOpacity(0.4),
+                  color: statusColor.withValues(alpha: 0.4),
                   blurRadius: 4,
                   spreadRadius: 1,
                 ),

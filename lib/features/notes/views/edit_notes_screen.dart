@@ -190,7 +190,7 @@ class _EditNoteScreenState extends ConsumerState<EditNoteScreen> {
                               borderRadius: BorderRadius.circular(16.r),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.04),
+                                  color: Colors.black.withValues(alpha: 0.04),
                                   blurRadius: 10,
                                   offset: const Offset(0, 2),
                                 ),
@@ -288,7 +288,7 @@ class _EditNoteScreenState extends ConsumerState<EditNoteScreen> {
           color: _isEditMode ? Colors.white : Colors.grey.shade100,
           borderRadius: BorderRadius.circular(12.r),
           border: Border.all(
-            color: _isEditMode ? AppColors.border : AppColors.border.withOpacity(0.2),
+            color: _isEditMode ? AppColors.border : AppColors.border.withValues(alpha: 0.2),
             width: 1.5,
           ),
         ),
