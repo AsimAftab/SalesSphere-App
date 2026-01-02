@@ -127,7 +127,7 @@ class _AddTourPlanScreenState extends ConsumerState<AddTourPlanScreen> {
                         hasFocusBorder: true,
                         minLines: 1,
                         maxLines: 5,
-                        textInputAction: TextInputAction.newline, 
+                        textInputAction: TextInputAction.newline,
                       ),
                       SizedBox(height: 60.h),
                       PrimaryButton(

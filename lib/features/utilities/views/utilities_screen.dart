@@ -116,7 +116,7 @@ class UtilitiesScreen extends ConsumerWidget {
                     subtitle: 'Log discussions, feedback & issues',
                     icon: Icons.chat_bubble_outline_rounded,
                     iconColor: Color(0xFFFF5252),
-                    routePath: '/notes-complaints',
+                    routePath: '/notes',
                   ),
                   UtilityCard(
                     title: 'Miscellaneous Work',
