@@ -146,6 +146,13 @@ class UtilitiesScreen extends ConsumerWidget {
                     iconColor: Color(0xFF26A69A),
                     routePath: '/collections',
                   ),
+                  UtilityCard(
+                    title: 'Leave Request',
+                    subtitle: 'Apply for leaves and track approval status',
+                    icon: Icons.time_to_leave_rounded,
+                    iconColor: Color(0xFF303F9F),
+                    routePath: '/leave-requests',
+                  ),
                 ],
               ),
 
