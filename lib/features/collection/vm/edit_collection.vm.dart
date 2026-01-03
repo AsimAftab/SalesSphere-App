@@ -28,6 +28,7 @@ class EditCollectionViewModel extends _$EditCollectionViewModel {
   Future<void> updateCollection({
     required String collectionId,
     required Map<String, dynamic> data,
+    List<String>? imagePaths, // ADDED: To support persistent mock images
   }) async {
     _keepAlive();
     try {
@@ -38,7 +39,7 @@ class EditCollectionViewModel extends _$EditCollectionViewModel {
 
       if (!ref.mounted) return;
 
-      // Create the updated object
+      // Create the updated object including image paths
       final updatedItem = CollectionListItem(
         id: collectionId,
         partyName: data['party'] ?? 'Updated Party',
@@ -46,12 +47,13 @@ class EditCollectionViewModel extends _$EditCollectionViewModel {
         date: data['date'] ?? DateTime.now().toString(),
         paymentMode: data['paymentMode'] ?? 'Cash',
         remarks: data['description'],
+        imagePaths: imagePaths, // Pass image paths to the model
       );
 
       // Push change to the main list provider
       ref.read(collectionViewModelProvider.notifier).updateCollectionLocally(updatedItem);
 
-      AppLogger.i('✅ MOCK: Update successful in local state');
+      AppLogger.i('✅ MOCK: Update successful with ${imagePaths?.length ?? 0} images');
     } catch (e) {
       AppLogger.e('❌ MOCK Update Error: $e');
       rethrow;
@@ -60,10 +62,10 @@ class EditCollectionViewModel extends _$EditCollectionViewModel {
     }
   }
 
-  /// MOCK IMPLEMENTATION: Simulates image update
+  /// MOCK IMPLEMENTATION: Simulates image update locally
   Future<void> uploadCollectionImages(String collectionId, List<File> images) async {
     try {
-      AppLogger.i('📸 MOCK: Simulating image replacement for: $collectionId');
+      AppLogger.i('📸 MOCK: Simulating image upload for: $collectionId');
       await Future.delayed(const Duration(milliseconds: 500));
       if (ref.mounted) AppLogger.i('✅ MOCK: Image upload complete');
     } catch (e) {
