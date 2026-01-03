@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sales_sphere/features/collection/views/add_collection_screen.dart';
+import 'package:sales_sphere/features/collection/views/collection_screen.dart';
+import 'package:sales_sphere/features/collection/views/edit_collection_screen.dart';
 import 'package:sales_sphere/features/notes/views/add_notes_screen.dart';
 import 'package:sales_sphere/features/notes/views/edit_notes_screen.dart';
 import 'package:sales_sphere/features/notes/views/notes_screen.dart';
@@ -118,6 +121,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final isGoingToNotes = requestedPath.startsWith('/notes');
       final isGoingToAddNotes = requestedPath == '/add-notes';
       final isGoingToEditNotes = requestedPath.startsWith('/edit-notes');
+      final isGoingToCollections = requestedPath.startsWith('/collections');
+      final isGoingToAddCollection = requestedPath == '/add-collection';
+      final isGoingToEditCollection = requestedPath.startsWith('/edit-collection');
 
 
       // If user is not logged in AND not going to one of the allowed pages...
@@ -148,7 +154,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           !isGoingToEditTour &&
           !isGoingToNotes &&
           !isGoingToAddNotes &&
-          !isGoingToEditNotes) {
+          !isGoingToEditNotes &&
+          !isGoingToCollections &&
+          !isGoingToAddCollection &&
+          !isGoingToEditCollection) {
         return '/';
       }
 
@@ -390,6 +399,28 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final noteId = state.pathParameters['noteId'] ?? '';
           return EditNoteScreen(noteId: noteId);
+        },
+      ),
+
+      // ========================================
+      // COLLECTION ROUTES (No Bottom Navigation)
+      // ========================================
+      GoRoute(
+        path: '/collections',
+        name: 'collections',
+        builder: (context, state) => const CollectionScreen(),
+      ),
+      GoRoute(
+        path: '/add-collection',
+        name: 'add-collection',
+        builder: (context, state) => const AddCollectionScreen(),
+      ),
+      GoRoute(
+        path: '/edit-collection/:collectionId',
+        name: 'edit-collection',
+        builder: (context, state) {
+          final collectionId = state.pathParameters['collectionId']!;
+          return EditCollectionScreen(collectionId: collectionId);
         },
       ),
 

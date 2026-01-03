@@ -144,7 +144,7 @@ class UtilitiesScreen extends ConsumerWidget {
                     subtitle: 'Record payments collected from parties',
                     icon: Icons.account_balance_wallet_rounded,
                     iconColor: Color(0xFF26A69A),
-                    routePath: '/collection',
+                    routePath: '/collections',
                   ),
                 ],
               ),
