@@ -109,21 +109,13 @@ class SnackbarUtils {
       ),
       backgroundColor: backgroundColor,
       duration: duration,
-      behavior: SnackBarBehavior.floating,
+      behavior: SnackBarBehavior.fixed,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
       ),
-      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
       elevation: 4,
       dismissDirection: DismissDirection.horizontal,
-      action: SnackBarAction(
-        label: 'Dismiss',
-        textColor: Colors.white.withValues(alpha: 0.9),
-        onPressed: () {
-          ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        },
-      ),
     );
 
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
