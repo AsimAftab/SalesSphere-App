@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:sales_sphere/features/collection/views/add_collection_screen.dart';
 import 'package:sales_sphere/features/collection/views/collection_screen.dart';
 import 'package:sales_sphere/features/collection/views/edit_collection_screen.dart';
+import 'package:sales_sphere/features/leave/views/apply_leave_screen.dart';
+import 'package:sales_sphere/features/leave/views/leave_screen.dart';
 import 'package:sales_sphere/features/notes/views/add_notes_screen.dart';
 import 'package:sales_sphere/features/notes/views/edit_notes_screen.dart';
 import 'package:sales_sphere/features/notes/views/notes_screen.dart';
@@ -124,6 +126,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final isGoingToCollections = requestedPath.startsWith('/collections');
       final isGoingToAddCollection = requestedPath == '/add-collection';
       final isGoingToEditCollection = requestedPath.startsWith('/edit-collection');
+      final isGoingToLeave = requestedPath.startsWith('/leave-requests');
+      final isGoingToApplyLeave = requestedPath == '/apply-leave';
 
 
       // If user is not logged in AND not going to one of the allowed pages...
@@ -157,7 +161,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           !isGoingToEditNotes &&
           !isGoingToCollections &&
           !isGoingToAddCollection &&
-          !isGoingToEditCollection) {
+          !isGoingToEditCollection &&
+          !isGoingToLeave &&
+          !isGoingToApplyLeave) {
         return '/';
       }
 
@@ -422,6 +428,20 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           final collectionId = state.pathParameters['collectionId']!;
           return EditCollectionScreen(collectionId: collectionId);
         },
+      ),
+
+      // ========================================
+      // LEAVE REQUEST ROUTES (No Bottom Navigation)
+      // ========================================
+      GoRoute(
+        path: '/leave-requests',
+        name: 'leave-requests',
+        builder: (context, state) => const LeaveScreen(),
+      ),
+      GoRoute(
+        path: '/apply-leave',
+        name: 'apply-leave',
+        builder: (context, state) => const ApplyLeaveRequestScreen(),
       ),
 
       // ========================================
