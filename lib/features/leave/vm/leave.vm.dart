@@ -1,72 +1,59 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
+import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/features/leave/models/leave.model.dart';
 import 'dart:async';
 import 'package:sales_sphere/core/utils/logger.dart';
 
 part 'leave.vm.g.dart';
 
-// Static storage to persist mock data during the app session
-List<LeaveApiData> _mockDatabase = [
-  const LeaveApiData(
-      id: '1',
-      leaveType: 'Sick Leave',
-      startDate: '2024-12-28',
-      endDate: '2024-12-30',
-      status: 'Approved',
-      reason: 'Medical checkup and recovery - Need time off for scheduled health appointment.'
-  ),
-  const LeaveApiData(
-      id: '2',
-      leaveType: 'Maternity Leave',
-      startDate: '2024-12-27',
-      endDate: '2025-03-27',
-      status: 'Pending',
-      reason: 'Personal errands - Family obligations require immediate attention.'
-  ),
-  const LeaveApiData(
-      id: '3',
-      leaveType: 'Family Responsibility Leave',
-      startDate: '2024-12-26',
-      endDate: '2025-01-02',
-      status: 'Approved',
-      reason: 'Year-end vacation - Planning a trip with family during holiday season.'
-  ),
-  const LeaveApiData(
-      id: '4',
-      leaveType: 'Miscellaneous/Others',
-      startDate: '2024-12-26',
-      endDate: '2024-12-26',
-      status: 'Rejected',
-      reason: 'Remote work request - Internet connectivity issues at home resolved.'
-  ),
-];
-
-@Riverpod(keepAlive: true)
+@riverpod
 class LeaveViewModel extends _$LeaveViewModel {
   @override
   FutureOr<List<LeaveListItem>> build() async {
+    AppLogger.d('🏗️ LeaveViewModel build()');
     return _fetchLeaves();
   }
 
-  // Fetches from the persistent mock database
   Future<List<LeaveListItem>> _fetchLeaves() async {
     try {
-      AppLogger.i('📝 Fetching leave requests from mock database');
-      await Future.delayed(const Duration(milliseconds: 800));
+      AppLogger.i('📡 Fetching leave requests: ${ApiEndpoints.myLeaveRequests}');
+      
+      final dio = ref.read(dioClientProvider);
+      final response = await dio.get(ApiEndpoints.myLeaveRequests);
 
-      return _mockDatabase.map((e) => LeaveListItem.fromApiData(e)).toList();
-    } catch (e) {
-      AppLogger.e('❌ Error fetching leaves: $e');
+      AppLogger.d('📡 Response Code: ${response.statusCode}');
+      
+      if (response.data == null) {
+        AppLogger.w('⚠️ Null response data from leave API');
+        return [];
+      }
+
+      final data = response.data;
+      if (data is! Map<String, dynamic>) {
+        AppLogger.e('❌ Invalid data type: ${data.runtimeType}. Expected Map.');
+        throw Exception('Invalid response format');
+      }
+
+      final apiResponse = LeaveApiResponse.fromJson(data);
+
+      if (!apiResponse.success) {
+        AppLogger.w('⚠️ API success=false');
+        throw Exception('API error occurred');
+      }
+
+      final list = apiResponse.data.map((e) => LeaveListItem.fromApiData(e)).toList();
+      AppLogger.i('✅ Fetched ${list.length} items');
+      return list;
+    } catch (e, stack) {
+      AppLogger.e('❌ Leave fetch failed: $e', e, stack);
       rethrow;
     }
   }
 
-  // Helper method for the ApplyLeaveViewModel to "save" data
-  void addMockLeave(LeaveApiData newLeave) {
-    _mockDatabase.insert(0, newLeave); // Add to top of list for immediate feedback
-  }
-
   Future<void> refresh() async {
+    AppLogger.i('🔄 Manual refresh requested');
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(_fetchLeaves);
   }
@@ -80,14 +67,36 @@ class LeaveSearchQuery extends _$LeaveSearchQuery {
 }
 
 @riverpod
-Future<List<LeaveListItem>> searchedLeaves(Ref ref) async {
+class LeaveFilterNotifier extends _$LeaveFilterNotifier {
+  @override
+  LeaveFilter build() => LeaveFilter.all;
+  void setFilter(LeaveFilter filter) => state = filter;
+}
+
+@riverpod
+AsyncValue<List<LeaveListItem>> filteredLeaves(Ref ref) {
+  final leavesAsync = ref.watch(leaveViewModelProvider);
   final query = ref.watch(leaveSearchQueryProvider).toLowerCase();
-  final allLeaves = await ref.watch(leaveViewModelProvider.future);
+  final filter = ref.watch(leaveFilterProvider);
 
-  if (query.isEmpty) return allLeaves;
+  return leavesAsync.whenData((leaves) {
+    // Apply search filter
+    var result = leaves;
+    if (query.isNotEmpty) {
+      result = result.where((l) =>
+        l.displayLeaveType.toLowerCase().contains(query) ||
+        l.leaveType.toLowerCase().contains(query) ||
+        (l.reason?.toLowerCase().contains(query) ?? false)
+      ).toList();
+    }
 
-  return allLeaves.where((l) =>
-  l.leaveType.toLowerCase().contains(query) ||
-      (l.reason?.toLowerCase().contains(query) ?? false)
-  ).toList();
+    // Apply status filter
+    if (filter != LeaveFilter.all) {
+      result = result.where((l) => 
+        l.status.toLowerCase() == filter.name.toLowerCase()
+      ).toList();
+    }
+
+    return result;
+  });
 }

@@ -6,6 +6,7 @@ import 'package:sales_sphere/features/collection/views/collection_screen.dart';
 import 'package:sales_sphere/features/collection/views/edit_collection_screen.dart';
 import 'package:sales_sphere/features/leave/views/apply_leave_screen.dart';
 import 'package:sales_sphere/features/leave/views/leave_screen.dart';
+import 'package:sales_sphere/features/leave/views/edit_leave_screen.dart';
 import 'package:sales_sphere/features/notes/views/add_notes_screen.dart';
 import 'package:sales_sphere/features/notes/views/edit_notes_screen.dart';
 import 'package:sales_sphere/features/notes/views/notes_screen.dart';
@@ -442,6 +443,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/apply-leave',
         name: 'apply-leave',
         builder: (context, state) => const ApplyLeaveRequestScreen(),
+      ),
+      GoRoute(
+        path: '/edit-leave/:leaveId',
+        name: 'edit-leave',
+        builder: (context, state) {
+          final leaveId = state.pathParameters['leaveId']!;
+          return EditLeaveScreen(leaveId: leaveId);
+        },
       ),
 
       // ========================================

@@ -11,7 +11,7 @@ part 'leave.model.g.dart';
 abstract class LeaveApiResponse with _$LeaveApiResponse {
   const factory LeaveApiResponse({
     required bool success,
-    required int count,
+    int? count,
     required List<LeaveApiData> data,
   }) = _LeaveApiResponse;
 
@@ -23,12 +23,13 @@ abstract class LeaveApiResponse with _$LeaveApiResponse {
 abstract class LeaveApiData with _$LeaveApiData {
   const factory LeaveApiData({
     @JsonKey(name: '_id') required String id,
-    required String leaveType,
+    @JsonKey(name: 'category') required String leaveType,
     required String startDate,
     required String endDate,
     required String status,
     String? reason,
     String? createdAt,
+    int? leaveDays,
   }) = _LeaveApiData;
 
   factory LeaveApiData.fromJson(Map<String, dynamic> json) =>
@@ -39,11 +40,23 @@ abstract class LeaveApiData with _$LeaveApiData {
 abstract class AddLeaveApiResponse with _$AddLeaveApiResponse {
   const factory AddLeaveApiResponse({
     required bool success,
-    required String message,
+    required LeaveApiData data,
+    int? leaveDays,
   }) = _AddLeaveApiResponse;
 
   factory AddLeaveApiResponse.fromJson(Map<String, dynamic> json) =>
       _$AddLeaveApiResponseFromJson(json);
+}
+
+@freezed
+abstract class LeaveDetailApiResponse with _$LeaveDetailApiResponse {
+  const factory LeaveDetailApiResponse({
+    required bool success,
+    required LeaveApiData data,
+  }) = _LeaveDetailApiResponse;
+
+  factory LeaveDetailApiResponse.fromJson(Map<String, dynamic> json) =>
+      _$LeaveDetailApiResponseFromJson(json);
 }
 
 // ============================================================================
@@ -53,9 +66,9 @@ abstract class AddLeaveApiResponse with _$AddLeaveApiResponse {
 @freezed
 abstract class AddLeaveRequest with _$AddLeaveRequest {
   const factory AddLeaveRequest({
-    required String leaveType,
+    @JsonKey(name: 'category') required String leaveType,
     required String startDate,
-    required String endDate,
+    @JsonKey(includeIfNull: false) String? endDate,
     required String reason,
   }) = _AddLeaveRequest;
 
@@ -69,6 +82,8 @@ abstract class AddLeaveRequest with _$AddLeaveRequest {
 
 @freezed
 abstract class LeaveListItem with _$LeaveListItem {
+  const LeaveListItem._();
+  
   const factory LeaveListItem({
     required String id,
     required String leaveType,
@@ -76,6 +91,7 @@ abstract class LeaveListItem with _$LeaveListItem {
     required String endDate,
     required String status,
     String? reason,
+    int? leaveDays,
   }) = _LeaveListItem;
 
   factory LeaveListItem.fromApiData(LeaveApiData apiData) {
@@ -86,6 +102,72 @@ abstract class LeaveListItem with _$LeaveListItem {
       endDate: apiData.endDate,
       status: apiData.status,
       reason: apiData.reason,
+      leaveDays: apiData.leaveDays,
     );
   }
+
+  LeaveCategory get category => LeaveCategory.fromValue(leaveType);
+  String get displayLeaveType => category.displayName;
+  String get leaveIcon => category.icon;
 }
+
+enum LeaveFilter { all, pending, approved, rejected }
+
+enum LeaveCategory {
+  sickLeave('sick_leave'),
+  maternityLeave('maternity_leave'),
+  paternityLeave('paternity_leave'),
+  compassionateLeave('compassionate_leave'),
+  religiousHolidays('religious_holidays'),
+  familyResponsibility('family_responsibility'),
+  miscellaneous('miscellaneous');
+
+  final String value;
+  const LeaveCategory(this.value);
+
+  static LeaveCategory fromValue(String value) {
+    return LeaveCategory.values.firstWhere(
+      (e) => e.value == value,
+      orElse: () => LeaveCategory.miscellaneous,
+    );
+  }
+
+  String get displayName {
+    switch (this) {
+      case LeaveCategory.sickLeave:
+        return 'Sick Leave';
+      case LeaveCategory.maternityLeave:
+        return 'Maternity Leave';
+      case LeaveCategory.paternityLeave:
+        return 'Paternity Leave';
+      case LeaveCategory.compassionateLeave:
+        return 'Compassionate Leave';
+      case LeaveCategory.religiousHolidays:
+        return 'Religious Holidays';
+      case LeaveCategory.familyResponsibility:
+        return 'Family Responsibility';
+      case LeaveCategory.miscellaneous:
+        return 'Miscellaneous';
+    }
+  }
+
+  String get icon {
+    switch (this) {
+      case LeaveCategory.sickLeave:
+        return '🏥';
+      case LeaveCategory.maternityLeave:
+        return '👶';
+      case LeaveCategory.paternityLeave:
+        return '👨‍👦';
+      case LeaveCategory.compassionateLeave:
+        return '💐';
+      case LeaveCategory.religiousHolidays:
+        return '🕌';
+      case LeaveCategory.familyResponsibility:
+        return '👨‍👩‍👧';
+      case LeaveCategory.miscellaneous:
+        return '📋';
+    }
+  }
+}
+
