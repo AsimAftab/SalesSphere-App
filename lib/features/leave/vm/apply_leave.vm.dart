@@ -1,6 +1,9 @@
 // lib/features/leave/vm/apply_leave.vm.dart
 
+import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
+import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/features/leave/models/leave.model.dart';
 import 'package:sales_sphere/features/leave/vm/leave.vm.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
@@ -12,37 +15,70 @@ class ApplyLeaveViewModel extends _$ApplyLeaveViewModel {
   @override
   AsyncValue<void> build() => const AsyncValue.data(null);
 
-  Future<void> submitLeave({required Map<String, dynamic> data}) async {
+  Future<void> submitLeave({
+    required String category,
+    required String startDate,
+    String? endDate,
+    required String reason,
+  }) async {
     state = const AsyncValue.loading();
     try {
-      AppLogger.i('🚀 Submitting Leave Request: $data');
+      AppLogger.i('🚀 Submitting Leave Request');
+      AppLogger.d('Category: $category, Start: $startDate, End: $endDate');
 
-      // Simulating API latency
-      await Future.delayed(const Duration(seconds: 1));
-
-      // CRITICAL: Check if provider is still mounted after async delay
-      if (!ref.mounted) return;
-
-      final newLeave = LeaveApiData(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        leaveType: data['leaveType'] ?? 'General Leave',
-        startDate: data['startDate'] ?? '',
-        endDate: data['endDate'] ?? '',
-        status: 'Pending',
-        reason: data['reason'],
-        createdAt: DateTime.now().toIso8601String(),
+      final dio = ref.read(dioClientProvider);
+      
+      final request = AddLeaveRequest(
+        leaveType: category,
+        startDate: startDate,
+        endDate: endDate,
+        reason: reason,
       );
 
-      // Save to mock database and trigger refresh
-      ref.read(leaveViewModelProvider.notifier).addMockLeave(newLeave);
-      ref.invalidate(leaveViewModelProvider);
+      final response = await dio.post(
+        ApiEndpoints.createLeave,
+        data: request.toJson(),
+      );
 
-      state = const AsyncValue.data(null);
-    } catch (e, stack) {
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final apiResponse = AddLeaveApiResponse.fromJson(response.data);
+        
+        if (apiResponse.success) {
+          AppLogger.i('✅ Leave submission successful - ${apiResponse.leaveDays} day(s)');
+          
+          if (ref.mounted) {
+            ref.invalidate(leaveViewModelProvider);
+            state = const AsyncValue.data(null);
+          }
+        } else {
+          throw Exception('Leave submission failed');
+        }
+      } else {
+        final errorMessage = response.data?['message'] ?? 'Failed to submit leave';
+        AppLogger.e('❌ Leave submission failed: $errorMessage');
+        if (ref.mounted) {
+          state = AsyncValue.error(Exception(errorMessage), StackTrace.current);
+        }
+        throw Exception(errorMessage);
+      }
+    } on DioException catch (e, stack) {
+      String errorMessage = 'Failed to submit leave';
+      
+      if (e.response?.statusCode == 400) {
+        errorMessage = e.response?.data?['message'] ?? errorMessage;
+      }
+      
+      AppLogger.e('❌ Leave submission failed: $errorMessage', e, stack);
       if (ref.mounted) {
-        AppLogger.e('❌ Leave submission failed: $e');
+        state = AsyncValue.error(Exception(errorMessage), stack);
+      }
+      throw Exception(errorMessage);
+    } catch (e, stack) {
+      AppLogger.e('❌ Leave submission failed: $e', e, stack);
+      if (ref.mounted) {
         state = AsyncValue.error(e, stack);
       }
+      rethrow;
     }
   }
 }
