@@ -405,14 +405,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           _buildInfoRow(
             icon: Icons.wc_outlined,
             label: 'Gender',
-            value: profile.gender,
+            value: profile.gender ?? 'Not specified',
           ),
           SizedBox(height: 16.h),
 
           _buildInfoRow(
             icon: Icons.phone_outlined,
             label: 'Phone Number',
-            value: profile.phone,
+            value: profile.phone ?? 'Not specified',
           ),
           SizedBox(height: 16.h),
 
@@ -426,42 +426,46 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           _buildInfoRow(
             icon: Icons.badge_outlined,
             label: 'Age',
-            value: '${profile.age} years',
+            value: profile.age != null ? '${profile.age} years' : 'Not specified',
           ),
           SizedBox(height: 16.h),
 
           _buildInfoRow(
             icon: Icons.flag_outlined,
             label: 'Citizenship Number',
-            value: profile.citizenshipNumber,
+            value: profile.citizenshipNumber ?? 'Not specified',
           ),
           SizedBox(height: 16.h),
 
           _buildInfoRow(
             icon: Icons.receipt_long_outlined,
             label: 'PAN Number',
-            value: profile.panNumber,
+            value: profile.panNumber ?? 'Not specified',
           ),
           SizedBox(height: 16.h),
 
           _buildInfoRow(
             icon: Icons.location_on_outlined,
             label: 'Address',
-            value: profile.address,
+            value: profile.address ?? 'Not specified',
           ),
           SizedBox(height: 16.h),
 
           _buildInfoRow(
             icon: Icons.cake_outlined,
             label: 'Date of Birth',
-            value: DateFormat('MMM dd, yyyy').format(profile.dateOfBirth),
+            value: profile.dateOfBirth != null
+                ? DateFormat('MMM dd, yyyy').format(profile.dateOfBirth!)
+                : 'Not specified',
           ),
           SizedBox(height: 16.h),
 
           _buildInfoRow(
             icon: Icons.calendar_today_outlined,
             label: 'Date Joined',
-            value: DateFormat('MMM dd, yyyy').format(profile.dateJoined),
+            value: profile.dateJoined != null
+                ? DateFormat('MMM dd, yyyy').format(profile.dateJoined!)
+                : 'Not specified',
           ),
           SizedBox(height: 16.h),
 
@@ -514,12 +518,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ),
               SizedBox(height: 4.h),
               Text(
-                value,
+                value.isNotEmpty ? value : 'Not specified',
                 style: TextStyle(
                   fontSize: 14.sp,
                   fontFamily: 'Poppins',
                   fontWeight: FontWeight.w500,
-                  color: AppColors.textPrimary,
+                  color: value.isNotEmpty ? AppColors.textPrimary : AppColors.textSecondary,
                 ),
               ),
             ],

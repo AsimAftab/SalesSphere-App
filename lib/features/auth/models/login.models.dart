@@ -68,6 +68,10 @@ abstract class LoginResponse with _$LoginResponse {
 abstract class LoginData with _$LoginData {
   const factory LoginData({
     required User user,
+    Map<String, dynamic>? permissions,
+    bool? mobileAppAccess,
+    bool? webPortalAccess,
+    Subscription? subscription,
   }) = _LoginData;
 
   factory LoginData.fromJson(Map<String, dynamic> json) =>
@@ -105,6 +109,78 @@ abstract class RefreshTokenData with _$RefreshTokenData {
 }
 
 // ========================================
+// ORGANIZATION MODEL
+// ========================================
+@freezed
+abstract class Organization with _$Organization {
+  const factory Organization({
+    @JsonKey(name: '_id') required String id,
+    String? name,
+    String? panVatNumber,
+    String? phone,
+    String? address,
+    String? country,
+    double? latitude,
+    double? longitude,
+    String? googleMapLink,
+    String? checkInTime,
+    String? checkOutTime,
+    String? halfDayCheckOutTime,
+    String? weeklyOffDay,
+    String? timezone,
+    String? subscriptionType,
+    bool? isActive,
+    String? subscriptionStartDate,
+    String? subscriptionEndDate,
+    bool? isSubscriptionActive,
+    String? owner,
+    @JsonKey(name: '__v') int? version,
+    List<dynamic>? subscriptionHistory,
+    String? createdAt,
+    String? updatedAt,
+  }) = _Organization;
+
+  factory Organization.fromJson(Map<String, dynamic> json) =>
+      _$OrganizationFromJson(json);
+}
+
+// Organization converter for handling String or Object in JSON
+class OrganizationConverter implements JsonConverter<Organization, dynamic> {
+  const OrganizationConverter();
+
+  @override
+  Organization fromJson(dynamic json) {
+    if (json is String) {
+      return Organization(id: json, name: 'Organization');
+    } else if (json is Map<String, dynamic>) {
+      return Organization.fromJson(json);
+    }
+    return Organization(id: '', name: 'Organization');
+  }
+
+  @override
+  dynamic toJson(Organization object) => object.toJson();
+}
+
+// ========================================
+// SUBSCRIPTION MODEL
+// ========================================
+@freezed
+abstract class Subscription with _$Subscription {
+  const factory Subscription({
+    required String planName,
+    @JsonKey(name: 'planTier') required String tier,
+    required int maxEmployees,
+    required List<String> enabledModules,
+    String? subscriptionEndDate,
+    required bool isActive,
+  }) = _Subscription;
+
+  factory Subscription.fromJson(Map<String, dynamic> json) =>
+      _$SubscriptionFromJson(json);
+}
+
+// ========================================
 // USER MODEL
 // ========================================
 @freezed
@@ -114,22 +190,26 @@ abstract class User with _$User {
     required String name,
     required String email,
     required String role,
-    required String organizationId,
+    @OrganizationConverter() required Organization organizationId,
     required bool isActive,
-    required String phone,
-    required String address,
-    required String gender,
-    required String dateOfBirth,
-    required int age,
-    required String panNumber,
-    required String citizenshipNumber,
+    String? phone,
+    String? address,
+    String? gender,
+    String? dateOfBirth,
+    int? age,
+    String? panNumber,
+    String? citizenshipNumber,
     required String dateJoined,
     @Default([]) List<Document> documents,
-    required String createdAt,
-    required String updatedAt,
-    @JsonKey(name: '__v') required int version,
+    String? createdAt,
+    String? updatedAt,
+    @JsonKey(name: '__v') int? version,
     String? avatarUrl,
     String? sessionExpiresAt,
+    String? customRoleId,
+    List<String>? reportsTo,
+    Map<String, dynamic>? permissions,
+    Subscription? subscription,
   }) = _User;
 
   factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);

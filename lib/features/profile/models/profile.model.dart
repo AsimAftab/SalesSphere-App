@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:sales_sphere/features/auth/models/login.models.dart';
 
 part 'profile.model.freezed.dart';
 part 'profile.model.g.dart';
@@ -16,19 +17,23 @@ abstract class Profile with _$Profile {
     required String name,
     required String email,
     required String role,
-    required String organizationId,
+    @OrganizationConverter() required Organization organizationId,
     @Default(true) bool isActive,
-    required String phone,
-    required String address,
-    required String gender,
-    required DateTime dateOfBirth,
-    required int age,
-    required String panNumber,
-    required String citizenshipNumber,
-    required DateTime dateJoined,
-    required DateTime createdAt,
-    required DateTime updatedAt,
+    String? phone,
+    String? address,
+    String? gender,
+    DateTime? dateOfBirth,
+    int? age,
+    String? panNumber,
+    String? citizenshipNumber,
+    DateTime? dateJoined,
+    DateTime? createdAt,
+    DateTime? updatedAt,
     String? avatarUrl,
+    String? customRoleId,
+    List<String>? reportsTo,
+    Map<String, dynamic>? permissions,
+    Subscription? subscription,
   }) = _Profile;
 
   factory Profile.fromJson(Map<String, dynamic> json) =>
