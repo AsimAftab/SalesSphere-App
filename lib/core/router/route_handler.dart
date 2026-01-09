@@ -10,6 +10,9 @@ import 'package:sales_sphere/features/leave/views/edit_leave_screen.dart';
 import 'package:sales_sphere/features/notes/views/add_notes_screen.dart';
 import 'package:sales_sphere/features/notes/views/edit_notes_screen.dart';
 import 'package:sales_sphere/features/notes/views/notes_screen.dart';
+import 'package:sales_sphere/features/odometer/views/odometer_details_screen.dart';
+import 'package:sales_sphere/features/odometer/views/odometer_list_screen.dart';
+import 'package:sales_sphere/features/odometer/views/odometer_screen.dart';
 import 'package:sales_sphere/features/tour_plan/views/add_tour_screen.dart';
 import 'package:sales_sphere/features/tour_plan/views/edit_tour_details_screen.dart';
 import 'package:sales_sphere/features/tour_plan/views/tour_plan_screen.dart';
@@ -129,6 +132,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final isGoingToEditCollection = requestedPath.startsWith('/edit-collection');
       final isGoingToLeave = requestedPath.startsWith('/leave-requests');
       final isGoingToApplyLeave = requestedPath == '/apply-leave';
+      final isGoingToOdometer = requestedPath.startsWith('/odometer');
+      final isGoingToOdometerList = requestedPath == '/odometer-list';
+      final isGoingToOdometerDetails = requestedPath.startsWith('/odometer-details');
 
 
       // If user is not logged in AND not going to one of the allowed pages...
@@ -164,7 +170,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           !isGoingToAddCollection &&
           !isGoingToEditCollection &&
           !isGoingToLeave &&
-          !isGoingToApplyLeave) {
+          !isGoingToApplyLeave &&
+          !isGoingToOdometer &&
+          !isGoingToOdometerList &&
+          !isGoingToOdometerDetails ) {
         return '/';
       }
 
@@ -452,6 +461,35 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           return EditLeaveScreen(leaveId: leaveId);
         },
       ),
+
+      // ========================================
+      // ODOMETER ROUTES (No Bottom Navigation)
+      // ========================================
+      GoRoute(
+        path: '/odometer',
+        name: 'odometer',
+        builder: (context, state) => const OdometerScreen(),
+      ),
+      GoRoute(
+        path: '/odometer-list',
+        name: 'odometer-list',
+        builder: (context, state) {
+          // Extract the extra map
+          final extras = state.extra as Map<String, dynamic>?;
+          final month = extras?['month'] as DateTime?;
+          return const OdometerListScreen();
+        },
+      ),
+      GoRoute(
+        path: '/odometer-details/:id', // Define the ID parameter
+        name: 'odometer-details',
+        builder: (context, state) {
+          // Extract the ID from path parameters
+          final id = state.pathParameters['id'] ?? '';
+          return OdometerDetailsScreen(id: id);
+        },
+      ),
+
 
       // ========================================
       // SETTINGS ROUTES (No Bottom Navigation)
