@@ -99,6 +99,8 @@ class TokenStorageService {
       await _prefs.remove(StorageKeys.accessToken);
       await _prefs.remove(StorageKeys.refreshToken);
       await _prefs.remove(StorageKeys.userData);
+      await _prefs.remove(StorageKeys.userPermissions);
+      await _prefs.remove(StorageKeys.userSubscription);
       await _prefs.remove('session_expires_at');
       AppLogger.i('✅ All auth data cleared');
     } catch (e, stack) {
@@ -168,6 +170,56 @@ class TokenStorageService {
     } catch (e, stack) {
       AppLogger.e('❌ Error checking session expiry', e, stack);
       return false;
+    }
+  }
+
+  /// Save Permissions data
+  Future<void> savePermissions(Map<String, dynamic> permissions) async {
+    try {
+      final jsonString = jsonEncode(permissions);
+      await _prefs.setString(StorageKeys.userPermissions, jsonString);
+      AppLogger.i('✅ Permissions saved');
+    } catch (e, stack) {
+      AppLogger.e('❌ Error saving permissions', e, stack);
+    }
+  }
+
+  /// Get Permissions from storage (synchronous)
+  Map<String, dynamic>? getPermissions() {
+    try {
+      final permissionsString = _prefs.getString(StorageKeys.userPermissions);
+      if (permissionsString != null && permissionsString.isNotEmpty) {
+        return jsonDecode(permissionsString) as Map<String, dynamic>;
+      }
+      return null;
+    } catch (e, stack) {
+      AppLogger.e('❌ Error getting permissions', e, stack);
+      return null;
+    }
+  }
+
+  /// Save Subscription data
+  Future<void> saveSubscription(Map<String, dynamic> subscription) async {
+    try {
+      final jsonString = jsonEncode(subscription);
+      await _prefs.setString(StorageKeys.userSubscription, jsonString);
+      AppLogger.i('✅ Subscription saved');
+    } catch (e, stack) {
+      AppLogger.e('❌ Error saving subscription', e, stack);
+    }
+  }
+
+  /// Get Subscription from storage (synchronous)
+  Map<String, dynamic>? getSubscription() {
+    try {
+      final subscriptionString = _prefs.getString(StorageKeys.userSubscription);
+      if (subscriptionString != null && subscriptionString.isNotEmpty) {
+        return jsonDecode(subscriptionString) as Map<String, dynamic>;
+      }
+      return null;
+    } catch (e, stack) {
+      AppLogger.e('❌ Error getting subscription', e, stack);
+      return null;
     }
   }
 }

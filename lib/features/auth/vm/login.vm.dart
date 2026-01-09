@@ -6,6 +6,7 @@ import 'package:sales_sphere/core/network_layer/token_storage_service.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:sales_sphere/core/providers/user_controller.dart';
+import 'package:sales_sphere/core/providers/permission_controller.dart';
 import '../models/login.models.dart';
 
 part 'login.vm.g.dart';
@@ -30,7 +31,7 @@ class LoginViewModel extends _$LoginViewModel {
   /// Local password validation
   String? validatePasswordLocally(String? value) {
     if (value == null || value.isEmpty) return 'Password cannot be empty';
-    if (value.length < 6) return 'Password must be at least 6 characters';
+    // if (value.length < 6) return 'Password must be at least 8 characters';
     return null;
   }
 
@@ -83,12 +84,32 @@ class LoginViewModel extends _$LoginViewModel {
         // Save user data to SharedPreferences
         await tokenStorage.saveUserData(loginResponse.data.user.toJson());
 
-        AppLogger.i('✅ Tokens and user data stored successfully');
+        // Save permissions if present (now inside user object)
+        if (loginResponse.data.user.permissions != null) {
+          await tokenStorage.savePermissions(loginResponse.data.user.permissions!);
+          AppLogger.i('✅ Permissions cached');
+        }
+
+        // Save subscription if present (now inside user object)
+        if (loginResponse.data.user.subscription != null) {
+          await tokenStorage.saveSubscription(loginResponse.data.user.subscription!.toJson());
+          AppLogger.i('✅ Subscription cached');
+        }
+
+        AppLogger.i('✅ Tokens, user data, permissions, and subscription stored successfully');
 
         // Update global user state 👇
         ref
             .read(userControllerProvider.notifier)
             .setUser(loginResponse.data.user);
+
+        // Update permission controller with cached data
+        ref.read(permissionControllerProvider.notifier).updateData(
+              permissions: loginResponse.data.user.permissions,
+              subscription: loginResponse.data.user.subscription,
+              mobileAppAccess: loginResponse.data.mobileAppAccess,
+              webPortalAccess: loginResponse.data.webPortalAccess,
+            );
 
         // Save successful login in state
         state = AsyncData(loginResponse);

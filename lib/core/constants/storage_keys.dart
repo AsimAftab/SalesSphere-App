@@ -11,6 +11,8 @@ class StorageKeys {
   static const String userEmail = 'user_email';
   static const String userName = 'user_name';
   static const String userData = 'user_data';
+  static const String userPermissions = 'user_permissions';
+  static const String userSubscription = 'user_subscription';
 
   // Settings
   static const String themeMode = 'theme_mode';
