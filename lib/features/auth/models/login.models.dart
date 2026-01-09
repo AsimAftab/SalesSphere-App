@@ -169,7 +169,7 @@ class OrganizationConverter implements JsonConverter<Organization, dynamic> {
 abstract class Subscription with _$Subscription {
   const factory Subscription({
     required String planName,
-    @JsonKey(name: 'planTier') required String tier,
+    required String tier,
     required int maxEmployees,
     required List<String> enabledModules,
     String? subscriptionEndDate,

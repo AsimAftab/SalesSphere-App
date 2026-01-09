@@ -84,15 +84,15 @@ class LoginViewModel extends _$LoginViewModel {
         // Save user data to SharedPreferences
         await tokenStorage.saveUserData(loginResponse.data.user.toJson());
 
-        // Save permissions if present (now inside user object)
-        if (loginResponse.data.user.permissions != null) {
-          await tokenStorage.savePermissions(loginResponse.data.user.permissions!);
+        // Save permissions if present (at data level, not inside user)
+        if (loginResponse.data.permissions != null) {
+          await tokenStorage.savePermissions(loginResponse.data.permissions!);
           AppLogger.i('✅ Permissions cached');
         }
 
-        // Save subscription if present (now inside user object)
-        if (loginResponse.data.user.subscription != null) {
-          await tokenStorage.saveSubscription(loginResponse.data.user.subscription!.toJson());
+        // Save subscription if present (at data level, not inside user)
+        if (loginResponse.data.subscription != null) {
+          await tokenStorage.saveSubscription(loginResponse.data.subscription!.toJson());
           AppLogger.i('✅ Subscription cached');
         }
 
@@ -105,8 +105,8 @@ class LoginViewModel extends _$LoginViewModel {
 
         // Update permission controller with cached data
         ref.read(permissionControllerProvider.notifier).updateData(
-              permissions: loginResponse.data.user.permissions,
-              subscription: loginResponse.data.user.subscription,
+              permissions: loginResponse.data.permissions,
+              subscription: loginResponse.data.subscription,
               mobileAppAccess: loginResponse.data.mobileAppAccess,
               webPortalAccess: loginResponse.data.webPortalAccess,
             );
