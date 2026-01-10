@@ -209,7 +209,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
         // Role
         Text(
-          profile.role,
+          profile.displayRole,
           style: TextStyle(
             fontSize: 14.sp,
             fontFamily: 'Poppins',
@@ -472,7 +472,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           _buildInfoRow(
             icon: Icons.work_outline,
             label: 'Role',
-            value: profile.role,
+            value: profile.displayRole,
           ),
 
         ],
@@ -611,7 +611,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             SizedBox(height: 8.h),
             // Role
             Text(
-              profile.role,
+              profile.displayRole,
               style: TextStyle(
                 fontSize: 14.sp,
                 fontFamily: 'Poppins',

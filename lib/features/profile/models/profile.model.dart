@@ -29,8 +29,11 @@ abstract class Profile with _$Profile {
     DateTime? dateJoined,
     DateTime? createdAt,
     DateTime? updatedAt,
+    @JsonKey(name: '__v') int? version,
+    String? sessionExpiresAt,
+    @Default([]) List<Document> documents,
     String? avatarUrl,
-    String? customRoleId,
+    CustomRole? customRoleId,
     List<String>? reportsTo,
     Map<String, dynamic>? permissions,
     Subscription? subscription,
@@ -38,6 +41,11 @@ abstract class Profile with _$Profile {
 
   factory Profile.fromJson(Map<String, dynamic> json) =>
       _$ProfileFromJson(json);
+
+  /// Returns the display role name.
+  /// Uses customRoleId.name if available (e.g., "SalesPerson"),
+  /// otherwise falls back to role field (e.g., "admin", "user").
+  String get displayRole => customRoleId?.name ?? role;
 }
 
 // ============================================================================

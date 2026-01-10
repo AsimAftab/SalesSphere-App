@@ -169,11 +169,11 @@ class OrganizationConverter implements JsonConverter<Organization, dynamic> {
 abstract class Subscription with _$Subscription {
   const factory Subscription({
     required String planName,
-    required String tier,
-    required int maxEmployees,
+    @JsonKey(name: 'planTier') String? tier,
+    int? maxEmployees,
     required List<String> enabledModules,
     String? subscriptionEndDate,
-    required bool isActive,
+    bool? isActive,
   }) = _Subscription;
 
   factory Subscription.fromJson(Map<String, dynamic> json) =>
@@ -181,10 +181,37 @@ abstract class Subscription with _$Subscription {
 }
 
 // ========================================
+// CUSTOM ROLE MODEL
+// ========================================
+@freezed
+abstract class CustomRole with _$CustomRole {
+  const factory CustomRole({
+    @JsonKey(name: '_id') required String id,
+    required String name,
+    String? description,
+    @JsonKey(name: 'organizationId') String? organizationId,
+    bool? mobileAppAccess,
+    bool? webPortalAccess,
+    bool? isActive,
+    bool? isDefault,
+    String? createdBy,
+    Map<String, dynamic>? permissions,
+    String? createdAt,
+    String? updatedAt,
+    @JsonKey(name: '__v') int? version,
+  }) = _CustomRole;
+
+  factory CustomRole.fromJson(Map<String, dynamic> json) =>
+      _$CustomRoleFromJson(json);
+}
+
+// ========================================
 // USER MODEL
 // ========================================
 @freezed
 abstract class User with _$User {
+  const User._(); // Private constructor for extensions/getters
+
   const factory User({
     @JsonKey(name: '_id') required String id,
     required String name,
@@ -206,13 +233,18 @@ abstract class User with _$User {
     @JsonKey(name: '__v') int? version,
     String? avatarUrl,
     String? sessionExpiresAt,
-    String? customRoleId,
+    CustomRole? customRoleId,
     List<String>? reportsTo,
     Map<String, dynamic>? permissions,
     Subscription? subscription,
   }) = _User;
 
   factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
+
+  /// Returns the display role name.
+  /// Uses customRoleId.name if available (e.g., "SalesPerson"),
+  /// otherwise falls back to role field (e.g., "admin", "user").
+  String get displayRole => customRoleId?.name ?? role;
 }
 
 // ========================================
