@@ -131,12 +131,18 @@ class _CustomDropdownTextFieldState<T>
                               padding: EdgeInsets.all(12.w),
                               child: TextField(
                                 controller: searchController,
+                                autofocus: true,
                                 style: TextStyle(
                                   fontFamily: 'Poppins',
                                   fontSize: 14.sp,
                                 ),
                                 decoration: InputDecoration(
                                   hintText: widget.searchHint,
+                                  hintStyle: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontSize: 14.sp,
+                                    color: Colors.grey.shade400,
+                                  ),
                                   prefixIcon: Icon(Icons.search, size: 20.sp),
                                   suffixIcon: searchQuery.isNotEmpty
                                       ? IconButton(

@@ -1,12 +1,15 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'dart:async';
 import 'package:sales_sphere/features/parties/models/parties.model.dart';
 import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
+import 'package:sales_sphere/core/network_layer/network_exceptions.dart';
 import 'package:dio/dio.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 
 part 'parties.vm.g.dart';
+part 'parties.vm.freezed.dart';
 
 // ============================================================================
 // MAIN PARTIES LIST VIEW MODEL
@@ -198,4 +201,75 @@ int activePartyCount(Ref ref) {
     loading: () => 0,
     error: (_, __) => 0,
   );
+}
+
+// ============================================================================
+// ASSIGNED PARTIES FOR COLLECTIONS
+// ============================================================================
+
+/// Simple party selection model for dropdown in collections
+@freezed
+abstract class PartySelectItem with _$PartySelectItem {
+  const factory PartySelectItem({
+    required String id,
+    required String displayName,
+    String? address,
+  }) = _PartySelectItem;
+
+  factory PartySelectItem.fromAssignedParty(AssignedPartyApiData data) {
+    return PartySelectItem(
+      id: data.id,
+      displayName: data.partyName,
+      address: data.location?.address,
+    );
+  }
+}
+
+/// Provider for fetching assigned parties (for collection dropdown)
+@riverpod
+class AssignedParties extends _$AssignedParties {
+  @override
+  FutureOr<List<PartySelectItem>> build() async {
+    // Keep alive for caching
+    final link = ref.keepAlive();
+    ref.onDispose(() {
+      link.close();
+    });
+
+    return _fetchAssignedParties();
+  }
+
+  Future<List<PartySelectItem>> _fetchAssignedParties() async {
+    try {
+      final dio = ref.read(dioClientProvider);
+      final response = await dio.get(ApiEndpoints.myAssignedParties);
+
+      final apiResponse = AssignedPartiesApiResponse.fromJson(response.data);
+
+      if (apiResponse.success) {
+        AppLogger.i('Fetched ${apiResponse.count} assigned parties');
+
+        final items = apiResponse.data
+            .map((data) => PartySelectItem.fromAssignedParty(data))
+            .toList();
+
+        return items;
+      } else {
+        throw Exception('Failed to fetch assigned parties');
+      }
+    } on DioException catch (e) {
+      AppLogger.e('Failed to fetch assigned parties', e);
+      if (e.error is NetworkException) {
+        throw Exception((e.error as NetworkException).userFriendlyMessage);
+      }
+      throw Exception('Failed to fetch assigned parties');
+    }
+  }
+
+  Future<void> refresh() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      return await _fetchAssignedParties();
+    });
+  }
 }

@@ -7,6 +7,47 @@ part 'parties.model.g.dart';
 // API Response Models
 // ============================================================================
 
+/// User info for assignedBy field
+@freezed
+abstract class AssignedBy with _$AssignedBy {
+  const factory AssignedBy({
+    @JsonKey(name: '_id') required String id,
+    required String name,
+  }) = _AssignedBy;
+
+  factory AssignedBy.fromJson(Map<String, dynamic> json) =>
+      _$AssignedByFromJson(json);
+}
+
+/// Assigned party data from /api/v1/parties/my-assigned
+@freezed
+abstract class AssignedPartyApiData with _$AssignedPartyApiData {
+  const factory AssignedPartyApiData({
+    @JsonKey(name: '_id') required String id,
+    required String partyName,
+    required String ownerName,
+    PartyLocation? location,
+    AssignedBy? assignedBy,
+    String? assignedAt,
+  }) = _AssignedPartyApiData;
+
+  factory AssignedPartyApiData.fromJson(Map<String, dynamic> json) =>
+      _$AssignedPartyApiDataFromJson(json);
+}
+
+/// API Response wrapper for assigned parties endpoint
+@freezed
+abstract class AssignedPartiesApiResponse with _$AssignedPartiesApiResponse {
+  const factory AssignedPartiesApiResponse({
+    required bool success,
+    required int count,
+    required List<AssignedPartyApiData> data,
+  }) = _AssignedPartiesApiResponse;
+
+  factory AssignedPartiesApiResponse.fromJson(Map<String, dynamic> json) =>
+      _$AssignedPartiesApiResponseFromJson(json);
+}
+
 /// API Response wrapper for parties list endpoint
 @freezed
 abstract class PartiesApiResponse with _$PartiesApiResponse {

@@ -14,6 +14,8 @@ import 'package:sales_sphere/widget/custom_dropdown_textfield.dart';
 import 'package:sales_sphere/features/collection/models/collection.model.dart';
 import 'package:sales_sphere/features/collection/vm/collection.vm.dart';
 import 'package:sales_sphere/features/collection/vm/edit_collection.vm.dart';
+import 'package:sales_sphere/features/collection/vm/bank_names.vm.dart';
+import 'package:sales_sphere/features/parties/vm/parties.vm.dart';
 
 class EditCollectionScreen extends ConsumerStatefulWidget {
   final String collectionId;
@@ -42,9 +44,11 @@ class _EditCollectionScreenState extends ConsumerState<EditCollectionScreen> {
   ChequeStatus? _selectedChequeStatus;
   String? _selectedBank;
   bool _isEditMode = false;
-  bool _isDataLoaded = false;
+  bool _isLoading = true;
+  String? _errorMessage;
 
   final List<XFile> _selectedImages = [];
+  final List<String> _existingImages = []; // URLs from API
   final ImagePicker _picker = ImagePicker();
 
   @override
@@ -56,27 +60,51 @@ class _EditCollectionScreenState extends ConsumerState<EditCollectionScreen> {
     _chequeNoController = TextEditingController();
     _chequeDateController = TextEditingController();
     _descriptionController = TextEditingController();
+    _fetchCollectionData();
   }
 
-  void _prefillData(CollectionListItem data) {
-    _amountController.text = data.amount.toString();
-
+  /// Fetch collection details from API
+  Future<void> _fetchCollectionData() async {
     try {
-      final dateTime = DateTime.parse(data.date);
+      final vm = ref.read(editCollectionViewModelProvider.notifier);
+      final data = await vm.fetchCollectionDetails(widget.collectionId);
+      if (mounted) {
+        _prefillDataFromApi(data);
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  /// Prefill form data from API response
+  void _prefillDataFromApi(CollectionDetailApiData data) {
+    _amountController.text = data.amountReceived.toString();
+
+    // Format received date
+    try {
+      final dateTime = DateTime.parse(data.receivedDate);
       _dateController.text = DateFormat('dd MMM yyyy').format(dateTime);
     } catch (e) {
-      _dateController.text = data.date;
+      _dateController.text = data.receivedDate;
     }
 
-    _selectedPaymentMode = PaymentMode.fromLabel(data.paymentMode);
-    _descriptionController.text = data.remarks ?? '';
-    _selectedPartyId = data.partyName;
-
+    _selectedPartyId = data.party.id;
+    _selectedPaymentMode = PaymentMode.fromApiValue(data.paymentMethod);
+    _descriptionController.text = data.description;
     _selectedBank = data.bankName;
     _bankNameController.text = data.bankName ?? '';
 
     _chequeNoController.text = data.chequeNumber ?? '';
 
+    // Format cheque date
     if (data.chequeDate != null && data.chequeDate!.isNotEmpty) {
       try {
         final dateTime = DateTime.parse(data.chequeDate!);
@@ -88,17 +116,14 @@ class _EditCollectionScreenState extends ConsumerState<EditCollectionScreen> {
 
     if (data.chequeStatus != null) {
       _selectedChequeStatus = ChequeStatus.values.firstWhere(
-            (e) => e.label == data.chequeStatus,
+        (e) => e.label.toLowerCase() == data.chequeStatus!.toLowerCase(),
         orElse: () => ChequeStatus.pending,
       );
     }
 
-    if (data.imagePaths != null && data.imagePaths!.isNotEmpty) {
-      _selectedImages.clear();
-      for (var path in data.imagePaths!) {
-        _selectedImages.add(XFile(path));
-      }
-    }
+    // Store existing image URLs
+    _existingImages.clear();
+    _existingImages.addAll(data.images);
   }
 
   @override
@@ -124,6 +149,73 @@ class _EditCollectionScreenState extends ConsumerState<EditCollectionScreen> {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12.r),
                 child: Image.file(File(imageFile.path)),
+              ),
+            ),
+            Positioned(
+              top: 0,
+              right: 0,
+              child: GestureDetector(
+                onTap: () => context.pop(),
+                child: Container(
+                  padding: EdgeInsets.all(8.w),
+                  decoration: const BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.close, color: Colors.white, size: 24.sp),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showNetworkImagePreview(String imageUrl) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.all(16.w),
+        child: Stack(
+          children: [
+            InteractiveViewer(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12.r),
+                child: Image.network(
+                  imageUrl,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Center(
+                      child: CircularProgressIndicator(
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded /
+                                loadingProgress.expectedTotalBytes!
+                            : null,
+                        color: Colors.white,
+                      ),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      width: 300.w,
+                      height: 300.h,
+                      color: Colors.grey.shade800,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.broken_image, size: 64.sp, color: Colors.white),
+                          SizedBox(height: 16.h),
+                          Text(
+                            'Failed to load image',
+                            style: TextStyle(color: Colors.white, fontSize: 14.sp),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
               ),
             ),
             Positioned(
@@ -188,60 +280,88 @@ class _EditCollectionScreenState extends ConsumerState<EditCollectionScreen> {
     }
   }
 
+  /// Parse date from controller text (handles both dd/MM/yyyy and other formats)
+  DateTime _parseDateFromController(String dateText) {
+    try {
+      // If already in ISO format, parse directly
+      if (dateText.contains('-')) {
+        return DateTime.parse(dateText);
+      }
+      // Try parsing "dd MMM yyyy" format
+      final dateTime = DateFormat('dd MMM yyyy').parse(dateText);
+      return dateTime;
+    } catch (e) {
+      return DateTime.now();
+    }
+  }
+
   Future<void> _handleUpdate() async {
     if (_formKey.currentState?.validate() ?? false) {
-      final bool imageRequired = [
-        PaymentMode.cheque,
-        PaymentMode.bankTransfer,
-        PaymentMode.qrPay,
-      ].contains(_selectedPaymentMode);
-
-      if (imageRequired && _selectedImages.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Please upload an image for ${_selectedPaymentMode?.label} payment',
-            ),
-            backgroundColor: AppColors.primary,
-          ),
-        );
-        return;
-      }
-
       try {
-        final vm = ref.read(editCollectionViewModelProvider.notifier);
-        final updateData = {
-          'party': _selectedPartyId,
-          'amount': double.parse(_amountController.text),
-          'date': _dateController.text,
-          'paymentMode': _selectedPaymentMode?.label,
-          'description': _descriptionController.text.trim(),
-          // ENSURE THESE KEYS MATCH YOUR VIEWMODEL EXPECTATIONS
-          'bankName': _selectedBank,
-          'chequeNumber': _chequeNoController.text,
-          'chequeDate': _chequeDateController.text,
-          'chequeStatus': _selectedChequeStatus?.label,
-        };
-
-        await vm.updateCollection(
-          collectionId: widget.collectionId,
-          data: updateData,
-          imagePaths: _selectedImages.map((e) => e.path).toList(),
-        );
-
+        // Show loading
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Collection Updated Successfully'),
-              backgroundColor: Colors.green,
+              content: Text('Updating collection...'),
+              backgroundColor: AppColors.primary,
+              duration: Duration(seconds: 30),
             ),
           );
-          ref.invalidate(collectionViewModelProvider);
-          context.pop();
         }
-      } catch (e) {
+
+        final vm = ref.read(editCollectionViewModelProvider.notifier);
+
+        // Convert dates to ISO format (yyyy-MM-dd)
+        final parsedReceivedDate = _parseDateFromController(_dateController.text);
+        final formattedReceivedDate = parsedReceivedDate.toIso8601String().split('T')[0];
+
+        // Only include cheque fields if payment mode is Cheque
+        String? formattedChequeDate;
+        String? chequeNumber;
+        String? chequeStatus;
+
+        if (_selectedPaymentMode == PaymentMode.cheque) {
+          if (_chequeDateController.text.isNotEmpty) {
+            final parsedChequeDate = _parseDateFromController(_chequeDateController.text);
+            formattedChequeDate = parsedChequeDate.toIso8601String().split('T')[0];
+          }
+          chequeNumber = _chequeNoController.text.trim().isEmpty 
+              ? null 
+              : _chequeNoController.text.trim();
+          chequeStatus = _selectedChequeStatus?.label.toLowerCase();
+        }
+
+        await vm.updateCollection(
+          collectionId: widget.collectionId,
+          amountReceived: double.parse(_amountController.text.trim()),
+          receivedDate: formattedReceivedDate,
+          paymentMethod: _selectedPaymentMode?.apiValue ?? 'cash',
+          bankName: _selectedBank,
+          chequeNumber: chequeNumber,
+          chequeDate: formattedChequeDate,
+          chequeStatus: chequeStatus,
+          description: _descriptionController.text.trim(),
+        );
+
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          const SnackBar(
+            content: Text('Collection Updated Successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        ref.invalidate(collectionViewModelProvider);
+        context.pop();
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -249,61 +369,91 @@ class _EditCollectionScreenState extends ConsumerState<EditCollectionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final collectionsAsync = ref.watch(collectionViewModelProvider);
+    final assignedPartiesAsync = ref.watch(assignedPartiesProvider);
+
+    // Show loading state while fetching data
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    // Show error state
+    if (_errorMessage != null) {
+      return Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: AppColors.textdark),
+            onPressed: () => context.pop(),
+          ),
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 64, color: Colors.red),
+              SizedBox(height: 16),
+              Text('Error: $_errorMessage'),
+              SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _fetchCollectionData,
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     final bool requiresImage = [
       PaymentMode.cheque,
       PaymentMode.bankTransfer,
       PaymentMode.qrPay,
     ].contains(_selectedPaymentMode);
 
-    return collectionsAsync.when(
-      data: (list) {
-        final item = list.firstWhere((e) => e.id == widget.collectionId);
-        if (!_isDataLoaded) {
-          _prefillData(item);
-          _isDataLoaded = true;
-        }
-
-        return Scaffold(
-          resizeToAvoidBottomInset: true,
-          backgroundColor: AppColors.background,
-          extendBodyBehindAppBar: true,
-          appBar: AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            title: Text(
-              "Collection Details",
-              style: TextStyle(
-                color: AppColors.textdark,
-                fontSize: 18.sp,
-                fontWeight: FontWeight.w600,
-                fontFamily: 'Poppins',
+    return Scaffold(
+      resizeToAvoidBottomInset: true,
+      backgroundColor: AppColors.background,
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Text(
+          "Collection Details",
+          style: TextStyle(
+            color: AppColors.textdark,
+            fontSize: 18.sp,
+            fontWeight: FontWeight.w600,
+            fontFamily: 'Poppins',
+          ),
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppColors.textdark),
+          onPressed: () => context.pop(),
+        ),
+        actions: [
+          if (_isEditMode)
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _isEditMode = false;
+                  // Re-fetch data to reset form
+                  _fetchCollectionData();
+                });
+              },
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  color: AppColors.error,
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: AppColors.textdark),
-              onPressed: () => context.pop(),
-            ),
-            actions: [
-              if (_isEditMode)
-                TextButton(
-                  onPressed: () {
-                    setState(() {
-                      _isEditMode = false;
-                      _prefillData(item);
-                    });
-                  },
-                  child: Text(
-                    'Cancel',
-                    style: TextStyle(
-                      color: AppColors.error,
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-            ],
-          ),
+        ],
+      ),
           body: GestureDetector(
             onTap: () => FocusScope.of(context).unfocus(),
             child: Stack(
@@ -322,7 +472,12 @@ class _EditCollectionScreenState extends ConsumerState<EditCollectionScreen> {
                   children: [
                     Expanded(
                       child: SingleChildScrollView(
-                        padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 24.h),
+                        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                        padding: EdgeInsets.only(
+                          left: 16.w,
+                          right: 16.w,
+                          bottom: 24.h + MediaQuery.of(context).viewInsets.bottom,
+                        ),
                         child: Column(
                           children: [
                             Padding(
@@ -350,23 +505,47 @@ class _EditCollectionScreenState extends ConsumerState<EditCollectionScreen> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      CustomDropdownTextField<String>(
-                                        hintText: "Party Name",
-                                        searchHint: "Search party...",
-                                        value: _selectedPartyId,
-                                        prefixIcon: Icons.people_outline,
-                                        enabled: _isEditMode,
-                                        items:
-                                            ["Party A", "Party B", "Mock Party"]
-                                                .map(
-                                                  (e) => DropdownItem(
-                                                    value: e,
-                                                    label: e,
-                                                  ),
-                                                )
-                                                .toList(),
-                                        onChanged: (val) => setState(
-                                          () => _selectedPartyId = val,
+                                      // Party Name - populated from API
+                                      assignedPartiesAsync.when(
+                                        data: (parties) {
+                                          final dropdownItems = parties
+                                              .map(
+                                                (p) => DropdownItem(
+                                                  value: p.id,
+                                                  label: p.displayName,
+                                                ),
+                                              )
+                                              .toList();
+
+                                          return CustomDropdownTextField<String>(
+                                            hintText: "Party Name",
+                                            searchHint: "Search party...",
+                                            value: _selectedPartyId,
+                                            prefixIcon: Icons.people_outline,
+                                            enabled: _isEditMode,
+                                            items: dropdownItems,
+                                            onChanged: (val) => setState(
+                                              () => _selectedPartyId = val,
+                                            ),
+                                          );
+                                        },
+                                        loading: () => PrimaryTextField(
+                                          controller: TextEditingController(text: 'Loading...'),
+                                          hintText: "Party Name",
+                                          prefixIcon: Icons.people_outline,
+                                          enabled: false,
+                                          suffixWidget: const SizedBox(
+                                            width: 20,
+                                            height: 20,
+                                            child: CircularProgressIndicator(strokeWidth: 2),
+                                          ),
+                                        ),
+                                        error: (e, _) => PrimaryTextField(
+                                          controller: TextEditingController(text: ''),
+                                          hintText: "Party Name",
+                                          prefixIcon: Icons.people_outline,
+                                          enabled: false,
+                                          errorText: "Failed to load parties",
                                         ),
                                       ),
                                       SizedBox(height: 16.h),
@@ -416,56 +595,47 @@ class _EditCollectionScreenState extends ConsumerState<EditCollectionScreen> {
                                           _selectedPaymentMode ==
                                               PaymentMode.bankTransfer) ...[
                                         SizedBox(height: 16.h),
-                                        CustomDropdownTextField<String>(
-                                          hintText: "Select Bank",
-                                          searchHint: "Search your bank...",
-                                          value: _selectedBank,
-                                          prefixIcon:
-                                              Icons.account_balance_outlined,
-                                          enabled: _isEditMode,
-                                          items:
-                                              [
-                                                    {
-                                                      'name': 'HDFC Bank',
-                                                      'icon':
-                                                          Icons.account_balance,
-                                                    },
-                                                    {
-                                                      'name': 'ICICI Bank',
-                                                      'icon':
-                                                          Icons.account_balance,
-                                                    },
-                                                    {
-                                                      'name': 'SBI',
-                                                      'icon':
-                                                          Icons.account_balance,
-                                                    },
-                                                    {
-                                                      'name': 'Axis Bank',
-                                                      'icon':
-                                                          Icons.account_balance,
-                                                    },
-                                                  ]
-                                                  .map(
-                                                    (bank) =>
-                                                        DropdownItem<String>(
-                                                          value:
-                                                              bank['name']
-                                                                  as String,
-                                                          label:
-                                                              bank['name']
-                                                                  as String,
-                                                          icon:
-                                                              bank['icon']
-                                                                  as IconData,
-                                                        ),
-                                                  )
-                                                  .toList(),
-                                          onChanged: (val) => setState(
-                                            () => _selectedBank = val,
+                                        // Bank Selector Dropdown from API
+                                        ref.watch(bankNamesViewModelProvider).when(
+                                          data: (banks) => CustomDropdownTextField<String>(
+                                            hintText: "Select Bank",
+                                            searchHint: "Search your bank...",
+                                            value: _selectedBank,
+                                            prefixIcon: Icons.account_balance_outlined,
+                                            enabled: _isEditMode,
+                                            items: banks
+                                                .map(
+                                                  (bank) => DropdownItem<String>(
+                                                    value: bank.name,
+                                                    label: bank.name,
+                                                    icon: Icons.account_balance,
+                                                  ),
+                                                )
+                                                .toList(),
+                                            onChanged: (val) => setState(
+                                              () => _selectedBank = val,
+                                            ),
+                                            validator: (v) =>
+                                                v == null ? 'Required' : null,
                                           ),
-                                          validator: (v) =>
-                                              v == null ? 'Required' : null,
+                                          loading: () => PrimaryTextField(
+                                            controller: TextEditingController(text: 'Loading banks...'),
+                                            hintText: "Select Bank",
+                                            prefixIcon: Icons.account_balance_outlined,
+                                            enabled: false,
+                                            suffixWidget: const SizedBox(
+                                              width: 20,
+                                              height: 20,
+                                              child: CircularProgressIndicator(strokeWidth: 2),
+                                            ),
+                                          ),
+                                          error: (e, _) => PrimaryTextField(
+                                            controller: TextEditingController(text: ''),
+                                            hintText: "Select Bank",
+                                            prefixIcon: Icons.account_balance_outlined,
+                                            enabled: false,
+                                            errorText: "Failed to load banks",
+                                          ),
                                         ),
                                       ],
                                       if (_selectedPaymentMode ==
@@ -549,11 +719,6 @@ class _EditCollectionScreenState extends ConsumerState<EditCollectionScreen> {
             ),
           ),
         );
-      },
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (e, _) => Scaffold(body: Center(child: Text('Error: $e'))),
-    );
   }
 
   Widget _buildBottomButton() {
@@ -586,9 +751,21 @@ class _EditCollectionScreenState extends ConsumerState<EditCollectionScreen> {
   }
 
   Widget _buildImageSection() {
+    final totalImages = _selectedImages.length + _existingImages.length;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Show existing images from API (URLs)
+        if (_existingImages.isNotEmpty)
+          ..._existingImages.asMap().entries.map((entry) {
+            int index = entry.key;
+            String imageUrl = entry.value;
+            return Padding(
+              padding: EdgeInsets.only(bottom: 12.h),
+              child: _buildNetworkImageThumbnail(imageUrl, index),
+            );
+          }),
+        // Show newly selected local images
         if (_selectedImages.isNotEmpty)
           ..._selectedImages.asMap().entries.map((entry) {
             int index = entry.key;
@@ -598,7 +775,7 @@ class _EditCollectionScreenState extends ConsumerState<EditCollectionScreen> {
               child: _buildImageThumbnail(imageFile, index),
             );
           }),
-        if (_isEditMode && _selectedImages.length < 2)
+        if (_isEditMode && totalImages < 2)
           GestureDetector(
             onTap: _pickImage,
             child: Container(
@@ -619,7 +796,7 @@ class _EditCollectionScreenState extends ConsumerState<EditCollectionScreen> {
                   ),
                   SizedBox(height: 8.h),
                   Text(
-                    "Tap to add collection image (${_selectedImages.length}/2)",
+                    "Tap to add collection image ($totalImages/2)",
                     style: TextStyle(
                       fontSize: 12.sp,
                       color: Colors.grey.shade600,
@@ -631,6 +808,58 @@ class _EditCollectionScreenState extends ConsumerState<EditCollectionScreen> {
             ),
           ),
       ],
+    );
+  }
+
+  /// Build thumbnail for network image (from API)
+  Widget _buildNetworkImageThumbnail(String imageUrl, int index) {
+    return GestureDetector(
+      onTap: () => _showNetworkImagePreview(imageUrl),
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12.r),
+            child: Image.network(
+              imageUrl,
+              width: double.infinity,
+              height: 160.h,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  width: double.infinity,
+                  height: 160.h,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF5F6FA),
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  child: const Icon(Icons.broken_image, size: 48, color: Colors.grey),
+                );
+              },
+            ),
+          ),
+          Positioned(
+            bottom: 8.h,
+            right: 8.w,
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(20.r),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.zoom_in, color: Colors.white, size: 14.sp),
+                  SizedBox(width: 4.w),
+                  Text(
+                    'Preview',
+                    style: TextStyle(color: Colors.white, fontSize: 10.sp),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
