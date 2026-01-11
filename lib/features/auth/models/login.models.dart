@@ -138,6 +138,7 @@ abstract class Organization with _$Organization {
     List<dynamic>? subscriptionHistory,
     String? createdAt,
     String? updatedAt,
+    List<String>? enabledModules,
   }) = _Organization;
 
   factory Organization.fromJson(Map<String, dynamic> json) =>

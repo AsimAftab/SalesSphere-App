@@ -1,13 +1,47 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
+import 'package:sales_sphere/core/constants/module_config.dart';
+import 'package:sales_sphere/core/providers/permission_controller.dart';
+import 'package:sales_sphere/core/utils/logger.dart';
 
-class DirectoryOptionsSheet extends StatelessWidget {
+/// Typed configuration class for directory module options
+class DirectoryModuleConfig {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Gradient gradient;
+  final String routePath;
+
+  const DirectoryModuleConfig({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.gradient,
+    required this.routePath,
+  });
+}
+
+class DirectoryOptionsSheet extends ConsumerWidget {
   const DirectoryOptionsSheet({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final permissionController = ref.watch(permissionControllerProvider);
+
+    // Get enabled directory modules using helper
+    final enabledDirectoryModules = ModuleConfig.getEnabledModules(
+      ModuleConfig.directoryModules,
+      permissionController.isModuleEnabled,
+    );
+
+    // If all directory options are disabled, show empty state
+    if (enabledDirectoryModules.isEmpty) {
+      return _buildEmptyState();
+    }
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -58,48 +92,8 @@ class DirectoryOptionsSheet extends StatelessWidget {
 
           SizedBox(height: 8.h),
 
-          // Options
-          _buildOption(
-            context,
-            icon: Icons.business,
-            title: 'Parties',
-            subtitle: 'Manage business partners',
-            gradient: LinearGradient(
-              colors: [Colors.blue.shade400, Colors.blue.shade600],
-            ),
-            onTap: () {
-              Navigator.pop(context);
-              context.push('/directory/party-list');
-            },
-          ),
-
-          _buildOption(
-            context,
-            icon: Icons.person_search,
-            title: 'Prospects',
-            subtitle: 'View potential customers',
-            gradient: LinearGradient(
-              colors: [Colors.orange.shade400, Colors.orange.shade600],
-            ),
-            onTap: () {
-              Navigator.pop(context);
-              context.push('/directory/prospects-list');
-            },
-          ),
-
-          _buildOption(
-            context,
-            icon: Icons.location_on,
-            title: 'Sites',
-            subtitle: 'Manage business locations',
-            gradient: LinearGradient(
-              colors: [Colors.green.shade400, Colors.green.shade600],
-            ),
-            onTap: () {
-              Navigator.pop(context);
-              context.push('/directory/sites-list');
-            },
-          ),
+          // Options - only show enabled modules (render dynamically)
+          ...enabledDirectoryModules.map((moduleId) => _buildModuleOption(context, moduleId)),
 
           SizedBox(height: 20.h),
         ],
@@ -107,14 +101,142 @@ class DirectoryOptionsSheet extends StatelessWidget {
     );
   }
 
+  /// Builds empty state when no directory modules are enabled
+  Widget _buildEmptyState() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(24.r),
+          topRight: Radius.circular(24.r),
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle bar
+          Container(
+            margin: EdgeInsets.only(top: 12.h, bottom: 8.h),
+            width: 40.w,
+            height: 4.h,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade300,
+              borderRadius: BorderRadius.circular(2.r),
+            ),
+          ),
+
+          // Empty state content
+          Padding(
+            padding: EdgeInsets.all(24.w),
+            child: Column(
+              children: [
+                Icon(
+                  Icons.folder_off,
+                  size: 48.sp,
+                  color: Colors.grey.shade400,
+                ),
+                SizedBox(height: 16.h),
+                Text(
+                  'No Directory Options Available',
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Poppins',
+                  ),
+                ),
+                SizedBox(height: 8.h),
+                Text(
+                  'Contact your administrator to enable directory modules',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    color: Colors.grey.shade600,
+                    fontFamily: 'Poppins',
+                  ),
+                ),
+                SizedBox(height: 24.h),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModuleOption(BuildContext context, String moduleId) {
+    final config = _getModuleConfig(moduleId);
+    return RepaintBoundary(
+      child: _buildOption(
+        context,
+        icon: config.icon,
+        title: config.title,
+        subtitle: config.subtitle,
+        gradient: config.gradient,
+        onTap: () async {
+          Navigator.pop(context);
+          try {
+            await context.push(config.routePath);
+          } catch (e) {
+            AppLogger.e('Navigation error: $e');
+          }
+        },
+      ),
+    );
+  }
+
+  DirectoryModuleConfig _getModuleConfig(String moduleId) {
+    switch (moduleId) {
+      case 'parties':
+        return const DirectoryModuleConfig(
+          icon: Icons.business,
+          title: 'Parties',
+          subtitle: 'Manage business partners',
+          gradient: LinearGradient(
+            colors: [Color(0xFF42A5F5), Color(0xFF1565C0)],
+          ),
+          routePath: '/directory/party-list',
+        );
+      case 'prospects':
+        return const DirectoryModuleConfig(
+          icon: Icons.person_search,
+          title: 'Prospects',
+          subtitle: 'View potential customers',
+          gradient: LinearGradient(
+            colors: [Color(0xFFFFA726), Color(0xFFEF6C00)],
+          ),
+          routePath: '/directory/prospects-list',
+        );
+      case 'sites':
+        return const DirectoryModuleConfig(
+          icon: Icons.location_on,
+          title: 'Sites',
+          subtitle: 'Manage business locations',
+          gradient: LinearGradient(
+            colors: [Color(0xFF66BB6A), Color(0xFF2E7D32)],
+          ),
+          routePath: '/directory/sites-list',
+        );
+      default:
+        return const DirectoryModuleConfig(
+          icon: Icons.folder,
+          title: 'Directory',
+          subtitle: 'View details',
+          gradient: LinearGradient(
+            colors: [Color(0xFFBDBDBD), Color(0xFF757575)],
+          ),
+          routePath: '/',
+        );
+    }
+  }
+
   Widget _buildOption(
-      BuildContext context, {
-        required IconData icon,
-        required String title,
-        required String subtitle,
-        required Gradient gradient,
-        required VoidCallback onTap,
-      }) {
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Gradient gradient,
+    required VoidCallback onTap,
+  }) {
     return InkWell(
       onTap: onTap,
       child: Container(

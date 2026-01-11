@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sales_sphere/features/collection/views/add_collection_screen.dart';
 import 'package:sales_sphere/features/collection/views/collection_screen.dart';
@@ -57,6 +58,32 @@ import '../../features/invoice/views/invoice_details_screen.dart';
 import '../../features/invoice/views/estimate_details_screen.dart';
 import '../providers/user_controller.dart';
 import '../providers/app_startup.dart';
+import '../providers/permission_controller.dart';
+import '../constants/module_config.dart';
+
+// ========================================
+// HELPER FUNCTIONS
+// ========================================
+
+/// Calculate the correct tab index based on route and enabled modules
+/// This ensures the correct tab is highlighted when modules are hidden
+int _calculateCurrentTabIndex(Ref ref, BuildContext context, String path) {
+  final permissionState = ref.read(permissionControllerProvider);
+
+  // Get module for current path
+  final moduleId = ModuleConfig.getModuleForRoute(path);
+
+  // If no module found or it's a standalone route (not in bottom nav), default to home
+  if (moduleId == null) return 0;
+
+  // Use centralized helper from ModuleConfig for consistency
+  final visualIndex = ModuleConfig.getVisualTabIndex(
+    moduleId,
+    permissionState.isModuleEnabled,
+  );
+
+  return visualIndex ?? 0;
+}
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   // Watch app startup state - this returns User? when complete
@@ -84,103 +111,41 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         return null; // Allow navigation - splash decides where to go next
       }
 
-      // Get the path the user is trying to access
+      // Check if route is always accessible (no auth required for these)
+      final isAlwaysAccessible = ModuleConfig.isAlwaysAccessibleRoute(requestedPath);
+      if (isAlwaysAccessible) {
+        return null; // Allow navigation to public routes
+      }
 
-      // Check against your allowed routes
-      final isGoingToLogin = requestedPath == '/';
-      final isGoingToSplash = requestedPath == '/splash';
-      final isGoingToOnboarding = requestedPath == '/onboarding';
-      final isGoingToForgotPassword = requestedPath == '/forgot-password';
-      final isGoingToCatalog = requestedPath.startsWith('/catalog');
-      final isGoingToParties = requestedPath.startsWith('/parties');
-      final isGoingToDirectory =
-          requestedPath.startsWith('/directory') ||
-          requestedPath.startsWith('/directory/prospects-list');
-      final isGoingToEditParty = requestedPath.startsWith(
-        '/edit_party_details_screen',
-      );
-      final isGoingToDetailAdded = requestedPath == '/detail-added';
-      final isGoingToProfile = requestedPath == '/profile';
-      final isGoingToAttendance = requestedPath.startsWith('/attendance');
-      final isGoingToProspects =
-          requestedPath.startsWith('/prospects') ||
-          requestedPath.startsWith('/add-prospect') ||
-          requestedPath.startsWith('/edit-prospect');
-      final isGoingToSites =
-          requestedPath.startsWith('/sites') ||
-          requestedPath.startsWith('/add-site') ||
-          requestedPath.startsWith('/edit-site');
-      final isGoingToAbout = requestedPath == '/about';
-      final isGoingToTerms = requestedPath == '/terms-and-conditions';
-      final isGoingToChangePassword =
-          requestedPath == '/settings/change-password';
-      final isGoingToBeatPlan = requestedPath.startsWith('/beat-plan');
-      final isGoingToUtilities = requestedPath.startsWith('/utilities');
-      final isGoingToSettings = requestedPath.startsWith('/settings');
-      final isGoingToMiscellaneous =
-          requestedPath.startsWith('/miscellaneous-work');
-      final isGoingToExpenseClaims =
-          requestedPath.startsWith('/expense-claims');
-      final isGoingToTourPlans = requestedPath == '/tour-plans';
-      final isGoingToAddTour = requestedPath == '/add-tour';
-      final isGoingToEditTour = requestedPath.startsWith('/edit-tour');
-      final isGoingToNotes = requestedPath.startsWith('/notes');
-      final isGoingToAddNotes = requestedPath == '/add-notes';
-      final isGoingToEditNotes = requestedPath.startsWith('/edit-notes');
-      final isGoingToCollections = requestedPath.startsWith('/collections');
-      final isGoingToAddCollection = requestedPath == '/add-collection';
-      final isGoingToEditCollection = requestedPath.startsWith('/edit-collection');
-      final isGoingToLeave = requestedPath.startsWith('/leave-requests');
-      final isGoingToApplyLeave = requestedPath == '/apply-leave';
-      final isGoingToOdometer = requestedPath.startsWith('/odometer');
-      final isGoingToOdometerList = requestedPath == '/odometer-list';
-      final isGoingToOdometerDetails = requestedPath.startsWith('/odometer-details');
-
-
-      // If user is not logged in AND not going to one of the allowed pages...
-      if (!isLoggedIn &&
-          !isGoingToLogin &&
-          !isGoingToSplash &&
-          !isGoingToOnboarding &&
-          !isGoingToForgotPassword &&
-          !isGoingToCatalog &&
-          !isGoingToParties &&
-          !isGoingToDirectory &&
-          !isGoingToEditParty &&
-          !isGoingToDetailAdded &&
-          !isGoingToProfile &&
-          !isGoingToAttendance &&
-          !isGoingToProspects &&
-          !isGoingToSites &&
-          !isGoingToAbout &&
-          !isGoingToTerms &&
-          !isGoingToChangePassword &&
-          !isGoingToBeatPlan &&
-          !isGoingToUtilities &&
-          !isGoingToSettings &&
-          !isGoingToMiscellaneous &&
-          !isGoingToExpenseClaims &&
-          !isGoingToTourPlans &&
-          !isGoingToAddTour &&
-          !isGoingToEditTour &&
-          !isGoingToNotes &&
-          !isGoingToAddNotes &&
-          !isGoingToEditNotes &&
-          !isGoingToCollections &&
-          !isGoingToAddCollection &&
-          !isGoingToEditCollection &&
-          !isGoingToLeave &&
-          !isGoingToApplyLeave &&
-          !isGoingToOdometer &&
-          !isGoingToOdometerList &&
-          !isGoingToOdometerDetails ) {
+      // ===== AUTH CHECK =====
+      // If user is not logged in, redirect to login
+      if (!isLoggedIn) {
         return '/';
       }
 
       // If user is logged in and trying to go to login page, redirect to home
-      // Note: Splash/onboarding already handled above (they manage their own navigation)
-      if (isLoggedIn && isGoingToLogin) {
+      if (isLoggedIn && requestedPath == '/') {
         return '/home';
+      }
+
+      // ===== MODULE-BASED ACCESS CONTROL (only for logged-in users) =====
+      // Check if this route requires module access
+      final moduleId = ModuleConfig.getModuleForRoute(requestedPath);
+
+      if (moduleId != null) {
+        final permissionState = ref.read(permissionControllerProvider);
+
+        // If subscription data hasn't loaded yet, redirect to home
+        // This prevents race condition where disabled features might be briefly exposed
+        if (permissionState.subscription == null) {
+          return '/home';
+        }
+
+        // Check if module is enabled in subscription
+        if (!permissionState.isModuleEnabled(moduleId)) {
+          // Module not enabled - redirect to home with flag for snackbar
+          return '/home?module_disabled=$moduleId';
+        }
       }
 
       // Otherwise, allow navigation
@@ -576,24 +541,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       // ========================================
       // MAIN APP ROUTES (With Bottom Navigation)
       // ========================================
+
       ShellRoute(
         builder: (context, state, child) {
-          // Determine current index based on location
-          final location = state.uri.path;
-          int currentIndex = 0;
+          // Check if user was redirected due to disabled module
+          _showModuleDisabledSnackbarIfNeeded(context);
 
-          if (location.startsWith('/home')) {
-            currentIndex = 0;
-          } else if (location.startsWith('/catalog')) {
-            currentIndex = 1;
-          } else if (location.startsWith('/invoice')) {
-            currentIndex = 2;
-          } else if (location.startsWith('/parties') ||
-              location.startsWith('/directory')) {
-            currentIndex = 3;
-          } else if (location.startsWith('/utilities')) {
-            currentIndex = 4;
-          }
+          // Calculate current index dynamically based on enabled modules
+          final currentIndex = _calculateCurrentTabIndex(ref, context, state.uri.path);
 
           return MainShell(currentIndex: currentIndex, child: child);
         },
@@ -671,6 +626,44 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     errorBuilder: (context, state) => ErrorPage(error: state.error),
   );
 });
+
+// ========================================
+// MODULE DISABLED SNACKBAR HELPER
+// ========================================
+/// Shows a snackbar when user tries to access a disabled module.
+/// Called from ShellRoute builder to check query params.
+void _showModuleDisabledSnackbarIfNeeded(BuildContext context) {
+  final GoRouterState state = GoRouterState.of(context);
+  final disabledModule = state.uri.queryParameters['module_disabled'];
+
+  if (disabledModule != null) {
+    // Get display name for the module
+    final displayName = ModuleConfig.getDisplayName(disabledModule);
+
+    // Show snackbar once
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$displayName is not available in your current plan'),
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+            margin: EdgeInsets.symmetric(
+              horizontal: 16.w,
+              vertical: 16.h,
+            ),
+          ),
+        );
+
+        // Clear the query param by navigating to clean home URL
+        final cleanPath = state.uri.path;
+        if (cleanPath == '/home') {
+          context.go(cleanPath);
+        }
+      }
+    });
+  }
+}
 
 // ========================================
 // ERROR PAGE
