@@ -90,9 +90,24 @@ class LoginViewModel extends _$LoginViewModel {
           AppLogger.i('✅ Permissions cached');
         }
 
-        // Save subscription if present (at data level, not inside user)
-        if (loginResponse.data.subscription != null) {
-          await tokenStorage.saveSubscription(loginResponse.data.subscription!.toJson());
+        // Get or create subscription from organization data
+        Subscription? subscription = loginResponse.data.subscription;
+        if (subscription == null) {
+          // Extract enabledModules from organization if subscription is not directly provided
+          final orgEnabledModules = loginResponse.data.user.organizationId.enabledModules;
+          if (orgEnabledModules != null && orgEnabledModules.isNotEmpty) {
+            subscription = Subscription(
+              planName: loginResponse.data.user.organizationId.subscriptionType ?? 'Unknown',
+              enabledModules: orgEnabledModules,
+              isActive: loginResponse.data.user.organizationId.isSubscriptionActive,
+            );
+            AppLogger.i('✅ Subscription created from organization data: ${orgEnabledModules.length} modules');
+          }
+        }
+
+        // Save subscription if present
+        if (subscription != null) {
+          await tokenStorage.saveSubscription(subscription.toJson());
           AppLogger.i('✅ Subscription cached');
         }
 
@@ -106,7 +121,7 @@ class LoginViewModel extends _$LoginViewModel {
         // Update permission controller with cached data
         ref.read(permissionControllerProvider.notifier).updateData(
               permissions: loginResponse.data.permissions,
-              subscription: loginResponse.data.subscription,
+              subscription: subscription,
               mobileAppAccess: loginResponse.data.mobileAppAccess,
               webPortalAccess: loginResponse.data.webPortalAccess,
             );

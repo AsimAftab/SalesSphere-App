@@ -3,8 +3,27 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
+import 'package:sales_sphere/core/constants/module_config.dart';
 import 'package:sales_sphere/core/providers/user_controller.dart';
+import 'package:sales_sphere/core/providers/permission_controller.dart';
 import 'package:sales_sphere/widget/utility_card.dart';
+
+/// Typed configuration class for utility cards
+class UtilityCardConfig {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color color;
+  final String routePath;
+
+  const UtilityCardConfig({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.color,
+    required this.routePath,
+  });
+}
 
 class UtilitiesScreen extends ConsumerWidget {
   const UtilitiesScreen({super.key});
@@ -20,6 +39,19 @@ class UtilitiesScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(userControllerProvider);
+    final permissionController = ref.watch(permissionControllerProvider);
+
+    // Get enabled utility modules using helper
+    final enabledUtilityModules = ModuleConfig.getEnabledModules(
+      ModuleConfig.utilityModules,
+      permissionController.isModuleEnabled,
+    );
+
+    // Check if any utilities are enabled
+    final anyUtilityEnabled = enabledUtilityModules.isNotEmpty;
+
+    // Cache avatar URL for null safety
+    final avatarUrl = user?.avatarUrl;
 
     return Scaffold(
       body: SafeArea(
@@ -40,7 +72,7 @@ class UtilitiesScreen extends ConsumerWidget {
                         style: TextStyle(
                           fontSize: 28.sp,
                           fontWeight: FontWeight.w600,
-                          color: const Color(0xFF1A1C1E),
+                          color: AppColors.textPrimary,
                           fontFamily: 'Poppins',
                         ),
                       ),
@@ -68,10 +100,10 @@ class UtilitiesScreen extends ConsumerWidget {
                       child: CircleAvatar(
                         radius: 26.r,
                         backgroundColor: AppColors.primary,
-                        backgroundImage: user?.avatarUrl != null
-                            ? NetworkImage(user!.avatarUrl!)
+                        backgroundImage: avatarUrl != null
+                            ? NetworkImage(avatarUrl)
                             : null,
-                        child: user?.avatarUrl == null
+                        child: avatarUrl == null
                             ? Text(
                                 _getInitials(user?.name ?? 'User'),
                                 style: TextStyle(
@@ -89,72 +121,57 @@ class UtilitiesScreen extends ConsumerWidget {
 
               SizedBox(height: 32.h),
 
-              GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 2,
-                crossAxisSpacing: 16.w,
-                mainAxisSpacing: 16.h,
-                childAspectRatio: 0.99,
-                children: const [
-                  UtilityCard(
-                    title: 'Attendance',
-                    subtitle: 'Mark and track daily attendance',
-                    icon: Icons.calendar_month_rounded,
-                    iconColor: Color(0xFF00ACC1),
-                    routePath: '/attendance',
+              // Show empty state if no utilities are enabled
+              if (!anyUtilityEnabled)
+                Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 48.h),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.lock_outline,
+                          size: 48.sp,
+                          color: Colors.grey.shade400,
+                        ),
+                        SizedBox(height: 16.h),
+                        Text(
+                          'No utilities available',
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey.shade700,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                        SizedBox(height: 8.h),
+                        Text(
+                          'Upgrade your plan to access more features',
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: Colors.grey.shade500,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  UtilityCard(
-                    title: 'Leave Request',
-                    subtitle: 'Apply for leaves and track approval status',
-                    icon: Icons.event_busy_rounded,
-                    iconColor: Color(0xFF303F9F),
-                    routePath: '/leave-requests',
-                  ),
-                  UtilityCard(
-                    title: 'Odometer',
-                    subtitle: 'Track travel distance during field visits',
-                    icon: Icons.speed_rounded,
-                    iconColor: Color(0xFF448AFF),
-                    routePath: '/odometer',
-                  ),
-                  UtilityCard(
-                    title: 'Expense Claims',
-                    subtitle: 'Submit and manage expense claims',
-                    icon: Icons.currency_rupee_rounded,
-                    iconColor: Color(0xFF00C853),
-                    routePath: '/expense-claims',
-                  ),
-                  UtilityCard(
-                    title: 'Notes',
-                    subtitle: 'Log discussions, feedback & issues',
-                    icon: Icons.chat_bubble_outline_rounded,
-                    iconColor: Color(0xFFFF5252),
-                    routePath: '/notes',
-                  ),
-                  UtilityCard(
-                    title: 'Collection',
-                    subtitle: 'Record payments collected from parties',
-                    icon: Icons.account_balance_wallet_rounded,
-                    iconColor: Color(0xFF26A69A),
-                    routePath: '/collections',
-                  ),
-                  UtilityCard(
-                    title: 'Tour Plan',
-                    subtitle: 'Plan and manage daily field visits',
-                    icon: Icons.navigation_outlined,
-                    iconColor: Color(0xFFFF9100),
-                    routePath: '/tour-plans',
-                  ),
-                  UtilityCard(
-                    title: 'Miscellaneous Work',
-                    subtitle: 'Log unplanned field tasks and assignments',
-                    icon: Icons.work_outline_rounded,
-                    iconColor: Color(0xFF7C4DFF),
-                    routePath: '/miscellaneous-work',
-                  ),
-                ],
-              ),
+                ),
+
+              // Show grid only if at least one utility is enabled
+              if (anyUtilityEnabled)
+                GridView.count(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 16.w,
+                  mainAxisSpacing: 16.h,
+                  childAspectRatio: 0.99,
+                  children: enabledUtilityModules
+                      .map((moduleId) => RepaintBoundary(
+                            child: _buildUtilityCard(moduleId),
+                          ))
+                      .toList(),
+                ),
 
               SizedBox(height: 80.h),
             ],
@@ -162,5 +179,93 @@ class UtilitiesScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildUtilityCard(String moduleId) {
+    final config = _getUtilityCardConfig(moduleId);
+    return UtilityCard(
+      title: config.title,
+      subtitle: config.subtitle,
+      icon: config.icon,
+      iconColor: config.color,
+      routePath: config.routePath,
+    );
+  }
+
+  UtilityCardConfig _getUtilityCardConfig(String moduleId) {
+    switch (moduleId) {
+      case 'attendance':
+        return const UtilityCardConfig(
+          title: 'Attendance',
+          subtitle: 'Mark and track daily attendance',
+          icon: Icons.calendar_month_rounded,
+          color: Color(0xFF00ACC1),
+          routePath: '/attendance',
+        );
+      case 'leaves':
+        return const UtilityCardConfig(
+          title: 'Leave Request',
+          subtitle: 'Apply for leaves and track approval status',
+          icon: Icons.event_busy_rounded,
+          color: Color(0xFF303F9F),
+          routePath: '/leave-requests',
+        );
+      case 'odometer':
+        return const UtilityCardConfig(
+          title: 'Odometer',
+          subtitle: 'Track travel distance during field visits',
+          icon: Icons.speed_rounded,
+          color: Color(0xFF448AFF),
+          routePath: '/odometer',
+        );
+      case 'expenses':
+        return const UtilityCardConfig(
+          title: 'Expense Claims',
+          subtitle: 'Submit and manage expense claims',
+          icon: Icons.currency_rupee_rounded,
+          color: Color(0xFF00C853),
+          routePath: '/expense-claims',
+        );
+      case 'notes':
+        return const UtilityCardConfig(
+          title: 'Notes',
+          subtitle: 'Log discussions, feedback & issues',
+          icon: Icons.chat_bubble_outline_rounded,
+          color: Color(0xFFFF5252),
+          routePath: '/notes',
+        );
+      case 'collections':
+        return const UtilityCardConfig(
+          title: 'Collection',
+          subtitle: 'Record payments collected from parties',
+          icon: Icons.account_balance_wallet_rounded,
+          color: Color(0xFF26A69A),
+          routePath: '/collections',
+        );
+      case 'tourPlan':
+        return const UtilityCardConfig(
+          title: 'Tour Plan',
+          subtitle: 'Plan and manage daily field visits',
+          icon: Icons.navigation_outlined,
+          color: Color(0xFFFF9100),
+          routePath: '/tour-plans',
+        );
+      case 'miscellaneousWork':
+        return const UtilityCardConfig(
+          title: 'Miscellaneous Work',
+          subtitle: 'Log unplanned field tasks and assignments',
+          icon: Icons.work_outline_rounded,
+          color: Color(0xFF7C4DFF),
+          routePath: '/miscellaneous-work',
+        );
+      default:
+        return const UtilityCardConfig(
+          title: 'Unknown',
+          subtitle: 'Access this feature',
+          icon: Icons.apps,
+          color: Colors.grey,
+          routePath: '/',
+        );
+    }
   }
 }

@@ -24,7 +24,8 @@ class MainShell extends StatelessWidget {
         context.go('/invoice');
         break;
       case 3:
-
+        // Directory - handled by showDirectoryOptions sheet in app_bottom_nav.dart
+        // This case is never directly called, but kept for completeness
         break;
       case 4:
         context.go('/utilities');
