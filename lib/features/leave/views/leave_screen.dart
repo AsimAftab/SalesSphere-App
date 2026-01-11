@@ -300,15 +300,17 @@ class _LeaveScreenState extends ConsumerState<LeaveScreen> {
   Widget _buildLeaveCard(LeaveListItem item) {
     final statusColor = _getStatusColor(item.status);
     final isPending = item.status.toLowerCase() == 'pending';
-    
+
     return InkWell(
-      onTap: isPending ? () async {
-        await context.push('/edit-leave/${item.id}');
-        // Refresh the list when returning from edit leave screen
-        if (mounted) {
-          ref.invalidate(leaveViewModelProvider);
-        }
-      } : null,
+      onTap: isPending
+          ? () async {
+              await context.push('/edit-leave/${item.id}');
+              // Refresh the list when returning from edit leave screen
+              if (mounted) {
+                ref.invalidate(leaveViewModelProvider);
+              }
+            }
+          : null,
       borderRadius: BorderRadius.circular(16.r),
       child: Container(
         padding: EdgeInsets.all(16.w),
@@ -335,58 +337,66 @@ class _LeaveScreenState extends ConsumerState<LeaveScreen> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                    Text(item.leaveIcon, style: TextStyle(fontSize: 20.sp)),
-                    SizedBox(width: 8.w),
-                    Expanded(
-                      child: Text(
-                        item.displayLeaveType,
-                        style: TextStyle(
-                          fontSize: 15.sp,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textdark,
-                          fontFamily: 'Poppins',
-                          height: 1.2,
-                        ),
-                        softWrap: true,
+                      Icon(
+                        item.leaveIcon,
+                        size: 20.sp,
+                        color: AppColors.textdark,
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(width: 8.w),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20.r),
-                ),
-                child: Text(
-                  item.status.toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w600,
-                    color: statusColor,
-                    fontFamily: 'Poppins',
+                      SizedBox(width: 8.w),
+                      Expanded(
+                        child: Text(
+                          item.displayLeaveType,
+                          style: TextStyle(
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textdark,
+                            fontFamily: 'Poppins',
+                            height: 1.2,
+                          ),
+                          softWrap: true,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+                SizedBox(width: 8.w),
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 4.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(20.r),
+                  ),
+                  child: Text(
+                    item.status.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w600,
+                      color: statusColor,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 12.h),
+            _infoRow(
+              Icons.calendar_today_outlined,
+              '${_formatDate(item.startDate)} - ${_formatDate(item.endDate)}',
+            ),
+            if (item.leaveDays != null) ...[
+              SizedBox(height: 8.h),
+              _infoRow(
+                Icons.event_available_outlined,
+                '${item.leaveDays} ${item.leaveDays == 1 ? 'day' : 'days'}',
               ),
             ],
-          ),
-          SizedBox(height: 12.h),
-          _infoRow(
-            Icons.calendar_today_outlined,
-            '${_formatDate(item.startDate)} - ${_formatDate(item.endDate)}',
-          ),
-          if (item.leaveDays != null) ...[
-            SizedBox(height: 8.h),
-            _infoRow(
-              Icons.event_available_outlined,
-              '${item.leaveDays} ${item.leaveDays == 1 ? 'day' : 'days'}',
-            ),
           ],
-        ],
+        ),
       ),
-    ));
+    );
   }
 
   Widget _infoRow(IconData icon, String text) {

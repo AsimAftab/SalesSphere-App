@@ -41,7 +41,7 @@ class _EditLeaveScreenState extends ConsumerState<EditLeaveScreen> {
     _startDateController = TextEditingController();
     _endDateController = TextEditingController();
     _reasonController = TextEditingController();
-    
+
     // Listen to start date changes to update end date picker constraints
     _startDateController.addListener(() {
       setState(() {});
@@ -50,13 +50,13 @@ class _EditLeaveScreenState extends ConsumerState<EditLeaveScreen> {
 
   void _initializeForm(LeaveListItem leaveItem) {
     if (_isInitialized) return;
-    
+
     _currentLeave = leaveItem;
     _selectedCategory = LeaveCategory.fromValue(leaveItem.leaveType);
     _startDateController.text = _formatDisplayDate(leaveItem.startDate);
     _endDateController.text = _formatDisplayDate(leaveItem.endDate);
     _reasonController.text = leaveItem.reason ?? '';
-    
+
     _isInitialized = true;
   }
 
@@ -102,7 +102,9 @@ class _EditLeaveScreenState extends ConsumerState<EditLeaveScreen> {
       }
 
       try {
-        await ref.read(editLeaveViewModelProvider(widget.leaveId).notifier).updateLeave(
+        await ref
+            .read(editLeaveViewModelProvider(widget.leaveId).notifier)
+            .updateLeave(
           leaveId: widget.leaveId,
           category: _selectedCategory!.value,
           startDate: _convertDateFormat(_startDateController.text)!,
@@ -112,7 +114,8 @@ class _EditLeaveScreenState extends ConsumerState<EditLeaveScreen> {
 
         if (!mounted) return;
 
-        final submissionState = ref.read(editLeaveViewModelProvider(widget.leaveId));
+        final submissionState = ref.read(
+            editLeaveViewModelProvider(widget.leaveId));
         submissionState.whenData((updatedLeave) {
           if (updatedLeave != null) {
             setState(() {
@@ -127,11 +130,13 @@ class _EditLeaveScreenState extends ConsumerState<EditLeaveScreen> {
           SnackbarUtils.showSuccess(context, 'Leave Updated Successfully');
         } else {
           final error = submissionState.error.toString();
-          SnackbarUtils.showError(context, error.replaceFirst('Exception: ', ''));
+          SnackbarUtils.showError(
+              context, error.replaceFirst('Exception: ', ''));
         }
       } catch (e) {
         if (!mounted) return;
-        SnackbarUtils.showError(context, e.toString().replaceFirst('Exception: ', ''));
+        SnackbarUtils.showError(
+            context, e.toString().replaceFirst('Exception: ', ''));
       }
     }
   }
@@ -197,25 +202,28 @@ class _EditLeaveScreenState extends ConsumerState<EditLeaveScreen> {
           return _buildForm();
         },
         loading: () => _buildLoadingSkeleton(),
-        error: (error, _) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.error_outline, size: 64.sp, color: Colors.white),
-              SizedBox(height: 16.h),
-              Text(
-                'Error: $error',
-                style: TextStyle(color: Colors.white, fontSize: 16.sp),
-                textAlign: TextAlign.center,
+        error: (error, _) =>
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline, size: 64.sp, color: Colors.white),
+                  SizedBox(height: 16.h),
+                  Text(
+                    'Error: $error',
+                    style: TextStyle(color: Colors.white, fontSize: 16.sp),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 16.h),
+                  ElevatedButton(
+                    onPressed: () =>
+                        ref.invalidate(
+                            editLeaveViewModelProvider(widget.leaveId)),
+                    child: const Text('Retry'),
+                  ),
+                ],
               ),
-              SizedBox(height: 16.h),
-              ElevatedButton(
-                onPressed: () => ref.invalidate(editLeaveViewModelProvider(widget.leaveId)),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
-        ),
+            ),
       ),
     );
   }
@@ -308,86 +316,98 @@ class _EditLeaveScreenState extends ConsumerState<EditLeaveScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                        CustomDatePicker(
-                          controller: _startDateController,
-                          hintText: "Start Date",
-                          prefixIcon: Icons.calendar_today_outlined,
-                          enabled: _isEditMode,
-                          firstDate: DateTime.now(),
-                        ),
-                        SizedBox(height: 16.h),
+                      CustomDatePicker(
+                        controller: _startDateController,
+                        hintText: "Start Date",
+                        prefixIcon: Icons.calendar_today_outlined,
+                        enabled: _isEditMode,
+                        firstDate: DateTime.now(),
+                      ),
+                      SizedBox(height: 16.h),
 
-                        CustomDatePicker(
-                          controller: _endDateController,
-                          hintText: "End Date (Optional)",
-                          prefixIcon: Icons.calendar_today_outlined,
-                          enabled: _isEditMode,
-                          firstDate: _startDateController.text.isNotEmpty
-                              ? DateFormat('dd MMM yyyy').parse(_startDateController.text)
-                              : DateTime.now(),
-                          validator: (value) {
-                            if (value != null && value.isNotEmpty && _startDateController.text.isNotEmpty) {
-                              try {
-                                final startDate = DateFormat('dd MMM yyyy').parse(_startDateController.text);
-                                final endDate = DateFormat('dd MMM yyyy').parse(value);
-                                if (endDate.isBefore(startDate)) {
-                                  return 'End date cannot be before start date';
-                                }
-                              } catch (e) {
-                                return null;
+                      CustomDatePicker(
+                        controller: _endDateController,
+                        hintText: "End Date (Optional)",
+                        prefixIcon: Icons.calendar_today_outlined,
+                        enabled: _isEditMode,
+                        firstDate: _startDateController.text.isNotEmpty
+                            ? DateFormat('dd MMM yyyy').parse(
+                            _startDateController.text)
+                            : DateTime.now(),
+                        validator: (value) {
+                          if (value != null && value.isNotEmpty &&
+                              _startDateController.text.isNotEmpty) {
+                            try {
+                              final startDate = DateFormat('dd MMM yyyy').parse(
+                                  _startDateController.text);
+                              final endDate = DateFormat('dd MMM yyyy').parse(
+                                  value);
+                              if (endDate.isBefore(startDate)) {
+                                return 'End date cannot be before start date';
                               }
+                            } catch (e) {
+                              return null;
                             }
-                            return null;
-                          },
-                        ),
-                        SizedBox(height: 16.h),
+                          }
+                          return null;
+                        },
+                      ),
+                      SizedBox(height: 16.h),
 
-                        CustomDropdownTextField<LeaveCategory>(
-                          hintText: "Category",
-                          value: _selectedCategory,
-                          enabled: _isEditMode,
-                          items: LeaveCategory.values.map((category) {
-                            return DropdownItem<LeaveCategory>(
-                              value: category,
-                              label: category.displayName,
-                              icon: category.icon,
-                            );
-                          }).toList(),
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedCategory = value;
-                            });
-                          },
-                          validator: (value) {
-                            if (value == null) {
-                              return 'Please select a category';
-                            }
-                            return null;
-                          },
-                        ),
+                      CustomDropdownTextField<LeaveCategory>(
+                        hintText: "Category",
+                        value: _selectedCategory,
+                        enabled: _isEditMode,
+                        prefixIcon: Icons.label_outline,
+                        items: LeaveCategory.values.map((category) {
+                          return DropdownItem<LeaveCategory>(
+                            value: category,
+                            label: category.displayName,
+                            icon: category.icon,
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedCategory = value;
+                          });
+                        },
+                        validator: (value) {
+                          if (value == null) {
+                            return 'Please select a category';
+                          }
+                          return null;
+                        },
+                      ),
 
-                        SizedBox(height: 16.h),
+                      SizedBox(height: 16.h),
 
-                        PrimaryTextField(
-                          controller: _reasonController,
-                          hintText: "Reason",
-                          prefixIcon: Icons.description_outlined,
-                          hasFocusBorder: true,
-                          enabled: _isEditMode,
-                          minLines: 1,
-                          maxLines: 5,
-                          validator: (v) {
-                            if (v == null || v.trim().isEmpty) {
-                              return 'Please provide a reason';
-                            }
-                            if (v.trim().length < 3) {
-                              return 'Reason must be at least 3 characters';
-                            }
-                            return null;
-                          },
-                        ),
+                      PrimaryTextField(
+                        controller: _reasonController,
+                        hintText: "Reason",
+                        prefixIcon: Icons.description_outlined,
+                        hasFocusBorder: true,
+                        enabled: _isEditMode,
+                        minLines: 1,
+                        maxLines: 5,
+                        validator: (v) {
+                          if (v == null || v
+                              .trim()
+                              .isEmpty) {
+                            return 'Please provide a reason';
+                          }
+                          if (v
+                              .trim()
+                              .length < 3) {
+                            return 'Reason must be at least 3 characters';
+                          }
+                          return null;
+                        },
+                      ),
 
-                        SizedBox(height: MediaQuery.of(context).viewInsets.bottom > 0 ? 100.h : 80.h),
+                      SizedBox(height: MediaQuery
+                          .of(context)
+                          .viewInsets
+                          .bottom > 0 ? 100.h : 80.h),
                     ],
                   ),
                 ),
@@ -400,22 +420,25 @@ class _EditLeaveScreenState extends ConsumerState<EditLeaveScreen> {
               16.w,
               16.h,
               16.w,
-              MediaQuery.of(context).padding.bottom + 16.h,
+              MediaQuery
+                  .of(context)
+                  .padding
+                  .bottom + 16.h,
             ),
             color: Colors.white,
             child: _isEditMode
                 ? PrimaryButton(
-                    label: "Save Changes",
-                    onPressed: _handleSubmit,
-                    leadingIcon: Icons.check_rounded,
-                    size: ButtonSize.medium,
-                  )
+              label: "Save Changes",
+              onPressed: _handleSubmit,
+              leadingIcon: Icons.check_rounded,
+              size: ButtonSize.medium,
+            )
                 : PrimaryButton(
-                    label: "Edit Leave",
-                    onPressed: _currentLeave == null ? null : _toggleEditMode,
-                    leadingIcon: Icons.edit_outlined,
-                    size: ButtonSize.medium,
-                  ),
+              label: "Edit Leave",
+              onPressed: _currentLeave == null ? null : _toggleEditMode,
+              leadingIcon: Icons.edit_outlined,
+              size: ButtonSize.medium,
+            ),
           ),
         ],
       ),

@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'odometer.model.freezed.dart';
+
 part 'odometer.model.g.dart';
 
 // ============================================================================

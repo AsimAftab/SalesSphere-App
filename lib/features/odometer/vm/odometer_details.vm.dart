@@ -20,7 +20,8 @@ class OdometerDetailsViewModel extends _$OdometerDetailsViewModel {
       distanceTravelled: 165,
       startLocation: "Downtown Warehouse, 123 Main St",
       stopLocation: "Central Distribution Center, 456 Oak",
-      description: "Regular daily route. No issues encountered. All deliveries completed successfully.",
+      description:
+          "Regular daily route. No issues encountered. All deliveries completed successfully.",
     );
   }
 }

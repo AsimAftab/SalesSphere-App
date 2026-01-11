@@ -43,7 +43,7 @@ class _AddMiscellaneousWorkScreenState
   late TextEditingController _addressController;
   late TextEditingController _latitudeController;
   late TextEditingController _longitudeController;
-  
+
   // Date
   DateTime _selectedDate = DateTime.now();
 
@@ -145,14 +145,17 @@ class _AddMiscellaneousWorkScreenState
   // ---------------------------------------------------------------------------
   Future<void> _handleSubmit() async {
     if (_formKey.currentState?.validate() ?? false) {
-      if (_addressController.text.trim().isEmpty) {
+      if (_addressController.text
+          .trim()
+          .isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Please enter an address')),
         );
         return;
       }
 
-      if (_latitudeController.text.isEmpty || _longitudeController.text.isEmpty) {
+      if (_latitudeController.text.isEmpty ||
+          _longitudeController.text.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Please select a location on map')),
         );
@@ -172,7 +175,9 @@ class _AddMiscellaneousWorkScreenState
         }
 
         // Format date as YYYY-MM-DD
-        final formattedDate = '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}';
+        final formattedDate = '${_selectedDate.year}-${_selectedDate.month
+            .toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(
+            2, '0')}';
 
         final request = CreateMiscellaneousWorkRequest(
           natureOfWork: _natureOfWorkController.text.trim(),
@@ -192,7 +197,8 @@ class _AddMiscellaneousWorkScreenState
             ScaffoldMessenger.of(context).hideCurrentSnackBar();
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Uploading ${_selectedImages.length} image(s)...'),
+                content: Text(
+                    'Uploading ${_selectedImages.length} image(s)...'),
                 backgroundColor: AppColors.primary,
                 duration: const Duration(seconds: 30),
               ),
@@ -321,7 +327,9 @@ class _AddMiscellaneousWorkScreenState
                         prefixIcon: Icons.work_outline,
                         hasFocusBorder: true,
                         validator: (value) =>
-                        (value == null || value.trim().isEmpty)
+                        (value == null || value
+                            .trim()
+                            .isEmpty)
                             ? 'Required'
                             : null,
                       ),
@@ -334,7 +342,9 @@ class _AddMiscellaneousWorkScreenState
                         prefixIcon: Icons.person_outline,
                         hasFocusBorder: true,
                         validator: (value) =>
-                        (value == null || value.trim().isEmpty)
+                        (value == null || value
+                            .trim()
+                            .isEmpty)
                             ? 'Required'
                             : null,
                       ),
@@ -350,7 +360,9 @@ class _AddMiscellaneousWorkScreenState
                         locationService: ref.read(locationServiceProvider),
                         enabled: true,
                         addressValidator: (value) =>
-                        (value == null || value.trim().isEmpty)
+                        (value == null || value
+                            .trim()
+                            .isEmpty)
                             ? 'Address required'
                             : null,
                         onLocationSelected: (location, address) {
@@ -389,7 +401,8 @@ class _AddMiscellaneousWorkScreenState
                               ),
                               SizedBox(width: 12.w),
                               Text(
-                                'Work Date: ${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
+                                'Work Date: ${_selectedDate.day}/${_selectedDate
+                                    .month}/${_selectedDate.year}',
                                 style: TextStyle(
                                   fontSize: 14.sp,
                                   color: AppColors.textdark,
@@ -435,7 +448,10 @@ class _AddMiscellaneousWorkScreenState
               16.w,
               16.h,
               16.w,
-              MediaQuery.of(context).padding.bottom + 16.h,
+              MediaQuery
+                  .of(context)
+                  .padding
+                  .bottom + 16.h,
             ),
             color: Colors.white,
             child: PrimaryButton(

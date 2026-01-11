@@ -328,7 +328,7 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                           final party = filteredParties[index];
                           return ListTile(
                             leading: Icon(
-                              Icons.person_outline,
+                              Icons.store_outlined,
                               color: AppColors.primary,
                             ),
                             title: Text(
@@ -627,7 +627,7 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                             child: Row(
                               children: [
                                 Icon(
-                                  Icons.people_outline,
+                                  Icons.store_outlined,
                                   color: Colors.grey.shade600,
                                   size: 20.sp,
                                 ),

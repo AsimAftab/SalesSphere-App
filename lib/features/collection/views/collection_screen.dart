@@ -137,7 +137,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                           : ListView.separated(
                         padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 80.h),
                         itemCount: displayList.length,
-                        separatorBuilder: (_, __) => SizedBox(height: 16.h),
+                        separatorBuilder: (_, __) => SizedBox(height: 8.h),
                         itemBuilder: (context, index) {
                           final item = displayList[index];
 
@@ -276,6 +276,9 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
   }
 
   Widget _buildCollectionCard(CollectionListItem item) {
+    final paymentModeEnum = PaymentMode.fromLabel(item.paymentMode);
+    final paymentIcon = paymentModeEnum?.icon ?? Icons.payments_outlined;
+
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
@@ -316,28 +319,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
           SizedBox(height: 10.h),
           _infoRow(Icons.calendar_today_outlined, _formatDate(item.date)),
           SizedBox(height: 6.h),
-          _infoRow(Icons.account_balance_wallet_outlined, item.paymentMode),
-          if (item.remarks != null) ...[
-            Padding(
-              padding: EdgeInsets.symmetric(vertical: 8.h),
-              child: Divider(color: Colors.grey.shade100),
-            ),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(Icons.description_outlined, size: 16.sp, color: Colors.grey.shade400),
-                SizedBox(width: 8.w),
-                Expanded(
-                  child: Text(
-                    item.remarks!,
-                    style: TextStyle(fontSize: 12.sp, color: Colors.grey.shade600, height: 1.4, fontFamily: 'Poppins'),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          ],
+          _infoRow(paymentIcon, item.paymentMode),
         ],
       ),
     );

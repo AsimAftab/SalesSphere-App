@@ -8,23 +8,20 @@ import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
 import 'package:sales_sphere/widget/custom_date_picker.dart';
+import 'package:sales_sphere/widget/custom_dropdown_textfield.dart';
 import 'package:sales_sphere/features/collection/vm/add_collection.vm.dart';
+import 'package:sales_sphere/features/collection/models/collection.model.dart';
 
 class AddCollectionScreen extends ConsumerStatefulWidget {
   const AddCollectionScreen({super.key});
 
   @override
-  ConsumerState<AddCollectionScreen> createState() => _AddCollectionScreenState();
+  ConsumerState<AddCollectionScreen> createState() =>
+      _AddCollectionScreenState();
 }
 
 class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
   final _formKey = GlobalKey<FormState>();
-
-  final LayerLink _paymentLink = LayerLink();
-  final LayerLink _bankLink = LayerLink();
-  final LayerLink _statusLink = LayerLink();
-
-  OverlayEntry? _overlayEntry;
 
   late TextEditingController _amountController;
   late TextEditingController _dateController;
@@ -34,8 +31,9 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
   late TextEditingController _descriptionController;
 
   String? _selectedPartyId = "Mock Party";
-  String? _paymentMode;
-  String? _chequeStatus;
+  PaymentMode? _selectedPaymentMode;
+  ChequeStatus? _selectedChequeStatus;
+  String? _selectedBank;
 
   final List<XFile> _selectedImages = [];
   final ImagePicker _picker = ImagePicker();
@@ -53,7 +51,6 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
 
   @override
   void dispose() {
-    _hideDropdown();
     _amountController.dispose();
     _dateController.dispose();
     _bankNameController.dispose();
@@ -61,108 +58,6 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
     _chequeDateController.dispose();
     _descriptionController.dispose();
     super.dispose();
-  }
-
-  void _hideDropdown() {
-    _overlayEntry?.remove();
-    _overlayEntry = null;
-  }
-
-  // Robust Searchable Dropdown with proper Z-index and Tap detection
-  void _showSearchableDropdown({
-    required LayerLink link,
-    required List<String> items,
-    required String? currentValue,
-    required String searchHint,
-    required Function(String) onSelected,
-    bool isSearchable = false,
-  }) {
-    _hideDropdown();
-    String searchQuery = "";
-
-    _overlayEntry = OverlayEntry(
-      builder: (context) => Stack(
-        children: [
-          // This layer allows clicking outside the dropdown to close it
-          GestureDetector(
-            onTap: _hideDropdown,
-            behavior: HitTestBehavior.translucent,
-            child: Container(color: Colors.transparent),
-          ),
-          Positioned(
-            width: MediaQuery.of(context).size.width - 48.w,
-            child: CompositedTransformFollower(
-              link: link,
-              showWhenUnlinked: false,
-              offset: Offset(0, 52.h),
-              child: Material(
-                elevation: 12, // High elevation ensures it floats above the white container
-                borderRadius: BorderRadius.circular(12.r),
-                color: Colors.white,
-                child: StatefulBuilder(
-                  builder: (context, setOverlayState) {
-                    final filteredItems = items
-                        .where((item) => item.toLowerCase().contains(searchQuery.toLowerCase()))
-                        .toList();
-
-                    return Container(
-                      constraints: BoxConstraints(maxHeight: 250.h),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12.r),
-                        border: Border.all(color: Colors.grey.shade200),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (isSearchable)
-                            Padding(
-                              padding: EdgeInsets.all(8.w),
-                              child: TextField(
-                                autofocus: true,
-                                style: TextStyle(fontFamily: 'Poppins', fontSize: 14.sp),
-                                decoration: InputDecoration(
-                                  hintText: searchHint,
-                                  prefixIcon: Icon(Icons.search, size: 18.sp),
-                                  isDense: true,
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)),
-                                ),
-                                onChanged: (val) => setOverlayState(() => searchQuery = val),
-                              ),
-                            ),
-                          Flexible(
-                            child: ListView.builder(
-                              padding: EdgeInsets.zero,
-                              shrinkWrap: true,
-                              itemCount: filteredItems.length,
-                              itemBuilder: (context, index) {
-                                final item = filteredItems[index];
-                                final bool isSelected = currentValue == item;
-                                return ListTile(
-                                  dense: true,
-                                  title: Text(item, style: TextStyle(fontFamily: 'Poppins', fontSize: 14.sp)),
-                                  trailing: isSelected
-                                      ? Icon(Icons.check, color: AppColors.primary, size: 20.sp)
-                                      : null,
-                                  onTap: () {
-                                    onSelected(item);
-                                    _hideDropdown();
-                                  },
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-    Overlay.of(context).insert(_overlayEntry!);
   }
 
   void _showImagePreview(XFile imageFile) {
@@ -173,8 +68,27 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
         insetPadding: EdgeInsets.all(16.w),
         child: Stack(
           children: [
-            InteractiveViewer(child: ClipRRect(borderRadius: BorderRadius.circular(12.r), child: Image.file(File(imageFile.path)))),
-            Positioned(top: 0, right: 0, child: GestureDetector(onTap: () => context.pop(), child: Container(padding: EdgeInsets.all(8.w), decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle), child: Icon(Icons.close, color: Colors.white, size: 24.sp)))),
+            InteractiveViewer(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12.r),
+                child: Image.file(File(imageFile.path)),
+              ),
+            ),
+            Positioned(
+              top: 0,
+              right: 0,
+              child: GestureDetector(
+                onTap: () => context.pop(),
+                child: Container(
+                  padding: EdgeInsets.all(8.w),
+                  decoration: const BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.close, color: Colors.white, size: 24.sp),
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -189,28 +103,63 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
         builder: (context) => SafeArea(
           child: Wrap(
             children: [
-              ListTile(leading: const Icon(Icons.photo_library), title: const Text('Gallery'), onTap: () async { context.pop(); final XFile? img = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70); if (img != null) setState(() => _selectedImages.add(img)); }),
-              ListTile(leading: const Icon(Icons.photo_camera), title: const Text('Camera'), onTap: () async { context.pop(); final XFile? img = await _picker.pickImage(source: ImageSource.camera, imageQuality: 70); if (img != null) setState(() => _selectedImages.add(img)); }),
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Gallery'),
+                onTap: () async {
+                  context.pop();
+                  final XFile? img = await _picker.pickImage(
+                    source: ImageSource.gallery,
+                    imageQuality: 70,
+                  );
+                  if (img != null) setState(() => _selectedImages.add(img));
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_camera),
+                title: const Text('Camera'),
+                onTap: () async {
+                  context.pop();
+                  final XFile? img = await _picker.pickImage(
+                    source: ImageSource.camera,
+                    imageQuality: 70,
+                  );
+                  if (img != null) setState(() => _selectedImages.add(img));
+                },
+              ),
             ],
           ),
         ),
       );
-    } catch (e) { debugPrint("Error: $e"); }
+    } catch (e) {
+      debugPrint("Error: $e");
+    }
   }
 
   Future<void> _handleSubmit() async {
     if (_formKey.currentState?.validate() ?? false) {
-      if (_paymentMode == null) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select Payment Mode')));
+      if (_selectedPaymentMode == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select Payment Mode')),
+        );
         return;
       }
 
-      final bool imageRequired = ['Cheque', 'Bank Transfer', 'QR Pay'].contains(_paymentMode);
+      final bool imageRequired = [
+        PaymentMode.cheque,
+        PaymentMode.bankTransfer,
+        PaymentMode.qrPay,
+      ].contains(_selectedPaymentMode);
+
       if (imageRequired && _selectedImages.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Please upload an image for $_paymentMode payment'),
-          backgroundColor: AppColors.primary,
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Please upload an image for ${_selectedPaymentMode?.label} payment',
+            ),
+            backgroundColor: AppColors.primary,
+          ),
+        );
         return;
       }
 
@@ -220,12 +169,14 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
           'party': _selectedPartyId,
           'amount': double.parse(_amountController.text),
           'date': _dateController.text,
-          'paymentMode': _paymentMode,
-          if (_paymentMode == 'Cheque' || _paymentMode == 'Bank Transfer') 'bankName': _bankNameController.text,
-          if (_paymentMode == 'Cheque') ...{
+          'paymentMode': _selectedPaymentMode?.label,
+          if (_selectedPaymentMode == PaymentMode.cheque ||
+              _selectedPaymentMode == PaymentMode.bankTransfer)
+            'bankName': _selectedBank,
+          if (_selectedPaymentMode == PaymentMode.cheque) ...{
             'chequeNumber': _chequeNoController.text,
             'chequeDate': _chequeDateController.text,
-            'chequeStatus': _chequeStatus
+            'chequeStatus': _selectedChequeStatus?.label,
           },
           'description': _descriptionController.text.trim(),
         };
@@ -235,117 +186,273 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
           images: _selectedImages.map((e) => e.path).toList(),
         );
 
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Collection Added Successfully'), backgroundColor: Colors.green));
-          context.pop();
-        }
+        // --- CHANGE START ---
+        // Crucial: Check if the widget is still in the tree before using context
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Collection Added Successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // Navigate back
+        context.pop();
+        // --- CHANGE END ---
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+        // Also check here for safety
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final bool requiresImage = ['Cheque', 'Bank Transfer', 'QR Pay'].contains(_paymentMode);
+    final bool requiresImage = [
+      PaymentMode.cheque,
+      PaymentMode.bankTransfer,
+      PaymentMode.qrPay,
+    ].contains(_selectedPaymentMode);
 
     return Scaffold(
-      resizeToAvoidBottomInset: true, // Crucial for keyboard handling
+      resizeToAvoidBottomInset: true,
       backgroundColor: AppColors.primary,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        elevation: 0, centerTitle: true,
-        title: const Text("Add Collection", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontFamily: 'Poppins')),
-        leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => context.pop()),
+        elevation: 0,
+        centerTitle: true,
+        title: const Text(
+          "Add Collection",
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            fontFamily: 'Poppins',
+          ),
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => context.pop(),
+        ),
       ),
       body: GestureDetector(
-        onTap: () {
-          FocusScope.of(context).unfocus(); // Dismiss keyboard on background tap
-          _hideDropdown();
-        },
+        onTap: () => FocusScope.of(context).unfocus(),
         child: Container(
           margin: EdgeInsets.only(top: 16.h),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.only(topLeft: Radius.circular(32.r), topRight: Radius.circular(32.r))),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(32.r),
+              topRight: Radius.circular(32.r),
+            ),
+          ),
           child: Form(
             key: _formKey,
             child: Column(
               children: [
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 24.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 24.w,
+                      vertical: 24.h,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildDropdown("Party Name", _selectedPartyId, Icons.people_outline, () {}, true, null),
+                        // Party Name (Disabled for this example)
+                        CustomDropdownTextField<String>(
+                          hintText: "Party Name",
+                          value: _selectedPartyId,
+                          prefixIcon: Icons.people_outline,
+                          enabled: false,
+                          items: [
+                            DropdownItem(
+                              value: "Mock Party",
+                              label: "Mock Party",
+                            ),
+                          ],
+                          onChanged: (_) {},
+                        ),
                         SizedBox(height: 16.h),
-                        PrimaryTextField(controller: _amountController, hintText: "Amount Received", prefixIcon: Icons.currency_rupee, keyboardType: TextInputType.number, validator: (v) => v!.isEmpty ? 'Required' : null),
+                        PrimaryTextField(
+                          controller: _amountController,
+                          hintText: "Amount Received",
+                          prefixIcon: Icons.currency_rupee,
+                          keyboardType: TextInputType.number,
+                          validator: (v) => v!.isEmpty ? 'Required' : null,
+                        ),
                         SizedBox(height: 16.h),
-                        CustomDatePicker(controller: _dateController, hintText: "Received Date", prefixIcon: Icons.calendar_today_outlined),
+                        CustomDatePicker(
+                          controller: _dateController,
+                          hintText: "Received Date",
+                          prefixIcon: Icons.calendar_today_outlined,
+                        ),
                         SizedBox(height: 16.h),
 
-                        _buildDropdown("Payment Mode", _paymentMode, Icons.credit_card_outlined, () {
-                          _showSearchableDropdown(
-                            link: _paymentLink,
-                            items: ['Cash', 'Cheque', 'Bank Transfer', 'QR Pay'],
-                            currentValue: _paymentMode,
-                            searchHint: "",
-                            isSearchable: false,
-                            onSelected: (val) => setState(() {
-                              _paymentMode = val;
-                              _bankNameController.clear();
-                              _chequeNoController.clear();
-                              _chequeStatus = null;
-                            }),
-                          );
-                        }, true, _paymentLink),
+                        // Payment Mode Dropdown
+                        CustomDropdownTextField<PaymentMode>(
+                          hintText: "Payment Mode",
+                          value: _selectedPaymentMode,
+                          prefixIcon: Icons.credit_card_outlined,
+                          items: PaymentMode.values
+                              .map(
+                                (mode) => DropdownItem(
+                                  value: mode,
+                                  label: mode.label,
+                                  icon: mode.icon,
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (val) => setState(() {
+                            _selectedPaymentMode = val;
+                            _selectedBank = null;
+                            _chequeNoController.clear();
+                            _selectedChequeStatus = null;
+                          }),
+                          validator: (v) => v == null ? 'Required' : null,
+                        ),
 
-                        if (_paymentMode == 'Cheque' || _paymentMode == 'Bank Transfer') ...[
+                        if (_selectedPaymentMode == PaymentMode.cheque ||
+                            _selectedPaymentMode ==
+                                PaymentMode.bankTransfer) ...[
                           SizedBox(height: 16.h),
-                          _buildDropdown("Select Bank", _bankNameController.text.isEmpty ? null : _bankNameController.text, Icons.account_balance_outlined, () {
-                            _showSearchableDropdown(
-                              link: _bankLink,
-                              items: ["HDFC Bank", "ICICI Bank", "SBI", "Axis Bank", "Kotak", "PNB", "Canara Bank"],
-                              currentValue: _bankNameController.text,
-                              searchHint: "Search bank...",
-                              isSearchable: true,
-                              onSelected: (val) => setState(() => _bankNameController.text = val),
-                            );
-                          }, true, _bankLink),
+                          // Updated Bank Selector Dropdown with search and icons
+                          CustomDropdownTextField<String>(
+                            hintText: "Select Bank",
+                            searchHint: "Search your bank...",
+                            // This triggers the search bar in the overlay
+                            value: _selectedBank,
+                            prefixIcon: Icons.account_balance_outlined,
+                            items:
+                                [
+                                      {
+                                        'name': 'HDFC Bank',
+                                        'icon': Icons.account_balance,
+                                      },
+                                      {
+                                        'name': 'ICICI Bank',
+                                        'icon': Icons.account_balance,
+                                      },
+                                      {
+                                        'name': 'SBI',
+                                        'icon': Icons.account_balance,
+                                      },
+                                      {
+                                        'name': 'Axis Bank',
+                                        'icon': Icons.account_balance,
+                                      },
+                                      {
+                                        'name': 'Kotak Bank',
+                                        'icon': Icons.account_balance,
+                                      },
+                                      {
+                                        'name': 'PNB',
+                                        'icon': Icons.account_balance,
+                                      },
+                                      {
+                                        'name': 'Canara Bank',
+                                        'icon': Icons.account_balance,
+                                      },
+                                    ]
+                                    .map(
+                                      (bank) => DropdownItem<String>(
+                                        value: bank['name'] as String,
+                                        label: bank['name'] as String,
+                                        icon:
+                                            bank['icon']
+                                                as IconData, // This will show the monochrome icon
+                                      ),
+                                    )
+                                    .toList(),
+                            onChanged: (val) =>
+                                setState(() => _selectedBank = val),
+                            validator: (v) => v == null ? 'Required' : null,
+                          ),
                         ],
-                        if (_paymentMode == 'Cheque') ...[
+
+                        if (_selectedPaymentMode == PaymentMode.cheque) ...[
                           SizedBox(height: 16.h),
-                          PrimaryTextField(controller: _chequeNoController, hintText: "Cheque Number", prefixIcon: Icons.numbers_outlined, validator: (v) => v!.isEmpty ? 'Required' : null),
+                          PrimaryTextField(
+                            controller: _chequeNoController,
+                            hintText: "Cheque Number",
+                            prefixIcon: Icons.numbers_outlined,
+                            validator: (v) => v!.isEmpty ? 'Required' : null,
+                          ),
                           SizedBox(height: 16.h),
-                          CustomDatePicker(controller: _chequeDateController, hintText: "Date of Cheque", prefixIcon: Icons.calendar_today_outlined),
+                          CustomDatePicker(
+                            controller: _chequeDateController,
+                            hintText: "Date of Cheque",
+                            prefixIcon: Icons.calendar_today_outlined,
+                          ),
                           SizedBox(height: 16.h),
-                          _buildDropdown("Cheque Status", _chequeStatus, Icons.assignment_outlined, () {
-                            _showSearchableDropdown(
-                              link: _statusLink,
-                              items: ['Pending', 'Deposited', 'Cleared', 'Bounced'],
-                              currentValue: _chequeStatus,
-                              searchHint: "",
-                              isSearchable: false,
-                              onSelected: (val) => setState(() => _chequeStatus = val),
-                            );
-                          }, true, _statusLink),
+                          // Cheque Status Dropdown
+                          CustomDropdownTextField<ChequeStatus>(
+                            hintText: "Cheque Status",
+                            value: _selectedChequeStatus,
+                            prefixIcon: Icons.assignment_outlined,
+                            items: ChequeStatus.values
+                                .map(
+                                  (status) => DropdownItem(
+                                    value: status,
+                                    label: status.label,
+                                    icon: status.icon,
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (val) =>
+                                setState(() => _selectedChequeStatus = val),
+                            validator: (v) => v == null ? 'Required' : null,
+                          ),
                         ],
                         SizedBox(height: 16.h),
-                        PrimaryTextField(hintText: "Description", controller: _descriptionController, prefixIcon: Icons.description_outlined, hasFocusBorder: true, minLines: 1, maxLines: 5, textInputAction: TextInputAction.newline, validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null),
+                        PrimaryTextField(
+                          hintText: "Description",
+                          controller: _descriptionController,
+                          prefixIcon: Icons.description_outlined,
+                          hasFocusBorder: true,
+                          minLines: 1,
+                          maxLines: 5,
+                          textInputAction: TextInputAction.newline,
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? 'Required'
+                              : null,
+                        ),
 
                         if (requiresImage) ...[
                           SizedBox(height: 20.h),
-                          Text("Upload Images", style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w500, color: Colors.grey.shade600, fontFamily: 'Poppins')),
+                          Text(
+                            "Upload Images",
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey.shade600,
+                              fontFamily: 'Poppins',
+                            ),
+                          ),
                           SizedBox(height: 8.h),
                           _buildImageSection(),
                         ],
 
-                        // KEYBOARD BUFFER FIX: Pushes content up to allow scrolling when keyboard is open
-                        SizedBox(height: MediaQuery.of(context).viewInsets.bottom > 0 ? 320.h : 100.h),
+                        SizedBox(
+                          height: MediaQuery.of(context).viewInsets.bottom > 0
+                              ? 320.h
+                              : 100.h,
+                        ),
                       ],
                     ),
                   ),
                 ),
-                Padding(padding: EdgeInsets.fromLTRB(24.w, 8.h, 24.w, 24.h), child: PrimaryButton(label: "Add Collection", onPressed: _handleSubmit, width: double.infinity)),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(24.w, 8.h, 24.w, 24.h),
+                  child: PrimaryButton(
+                    label: "Add Collection",
+                    onPressed: _handleSubmit,
+                    width: double.infinity,
+                  ),
+                ),
               ],
             ),
           ),
@@ -362,8 +469,9 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: _selectedImages.length,
-            separatorBuilder: (context, index) => SizedBox(height: 12.h), // Clean gaps between previews
-            itemBuilder: (context, index) => _buildImageThumbnail(_selectedImages[index], index),
+            separatorBuilder: (context, index) => SizedBox(height: 12.h),
+            itemBuilder: (context, index) =>
+                _buildImageThumbnail(_selectedImages[index], index),
           ),
 
         if (_selectedImages.length < 2) ...[
@@ -381,11 +489,19 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.add_photo_alternate_outlined, size: 32.sp, color: Colors.grey.shade400),
+                  Icon(
+                    Icons.add_photo_alternate_outlined,
+                    size: 32.sp,
+                    color: Colors.grey.shade400,
+                  ),
                   SizedBox(height: 8.h),
                   Text(
-                      "Tap to add image (${_selectedImages.length}/2)",
-                      style: TextStyle(fontSize: 12.sp, color: Colors.grey.shade600, fontFamily: 'Poppins')
+                    "Tap to add image (${_selectedImages.length}/2)",
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: Colors.grey.shade600,
+                      fontFamily: 'Poppins',
+                    ),
                   ),
                 ],
               ),
@@ -401,47 +517,53 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
       onTap: () => _showImagePreview(imageFile),
       child: Stack(
         children: [
-          ClipRRect(borderRadius: BorderRadius.circular(12.r), child: Image.file(File(imageFile.path), width: double.infinity, height: 160.h, fit: BoxFit.cover)),
-          Positioned(bottom: 8.h, right: 8.w, child: Container(padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h), decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.6), borderRadius: BorderRadius.circular(20.r)), child: Row(children: [Icon(Icons.zoom_in, color: Colors.white, size: 14.sp), SizedBox(width: 4.w), Text('Preview', style: TextStyle(color: Colors.white, fontSize: 10.sp))]))),
-          Positioned(top: 8.h, right: 8.w, child: GestureDetector(onTap: () => setState(() => _selectedImages.removeAt(index)), child: Container(padding: EdgeInsets.all(4.w), decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle), child: Icon(Icons.close, color: Colors.white, size: 16.sp)))),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12.r),
+            child: Image.file(
+              File(imageFile.path),
+              width: double.infinity,
+              height: 160.h,
+              fit: BoxFit.cover,
+            ),
+          ),
+          Positioned(
+            bottom: 8.h,
+            right: 8.w,
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(20.r),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.zoom_in, color: Colors.white, size: 14.sp),
+                  SizedBox(width: 4.w),
+                  Text(
+                    'Preview',
+                    style: TextStyle(color: Colors.white, fontSize: 10.sp),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Positioned(
+            top: 8.h,
+            right: 8.w,
+            child: GestureDetector(
+              onTap: () => setState(() => _selectedImages.removeAt(index)),
+              child: Container(
+                padding: EdgeInsets.all(4.w),
+                decoration: const BoxDecoration(
+                  color: Colors.black54,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.close, color: Colors.white, size: 16.sp),
+              ),
+            ),
+          ),
         ],
       ),
     );
-  }
-
-  Widget _buildDropdown(String label, String? value, IconData icon, VoidCallback onTap, bool isRequired, LayerLink? link) {
-    Widget dropdown = FormField<String>(
-      validator: (v) => isRequired && (value == null || value.isEmpty) ? '$label is required' : null,
-      builder: (state) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            GestureDetector(
-              onTap: onTap,
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-                decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(color: state.hasError ? Colors.red : Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(12.r)
-                ),
-                child: Row(
-                  children: [
-                    Icon(icon, color: Colors.grey.shade600, size: 20.sp),
-                    SizedBox(width: 12.w),
-                    Text(value ?? label, style: TextStyle(color: value != null ? Colors.black : Colors.grey.shade500, fontFamily: 'Poppins', fontSize: 14.sp)),
-                    const Spacer(),
-                    const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
-                  ],
-                ),
-              ),
-            ),
-            if (state.hasError) Padding(padding: EdgeInsets.only(top: 5.h, left: 12.w), child: Text(state.errorText!, style: TextStyle(color: Colors.red, fontSize: 12.sp))),
-          ],
-        );
-      },
-    );
-
-    return link != null ? CompositedTransformTarget(link: link, child: dropdown) : dropdown;
   }
 }
