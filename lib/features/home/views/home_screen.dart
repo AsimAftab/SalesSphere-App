@@ -133,25 +133,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
           SizedBox(width: 12.w),
 
-          // Settings Icon
-          GestureDetector(
-            onTap: () => context.pushNamed('settings'),
-            child: Container(
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.background,
-              ),
-              padding: EdgeInsets.all(8.w),
-              child: Icon(
-                Icons.settings_outlined,
-                size: 24.sp,
-                color: AppColors.textPrimary,
-              ),
-            ),
-          ),
-
-          SizedBox(width: 12.w),
-
           // User Avatar (Your code for this was perfect)
           GestureDetector(
             onTap: () => context.pushNamed('profile'),

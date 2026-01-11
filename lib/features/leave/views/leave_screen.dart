@@ -150,6 +150,7 @@ class _LeaveScreenState extends ConsumerState<LeaveScreen> {
 
   Widget _buildSearchBar(String query) {
     return Container(
+      color: Colors.transparent,
       padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 16.h),
       child: TextField(
         controller: _searchController,
@@ -157,6 +158,11 @@ class _LeaveScreenState extends ConsumerState<LeaveScreen> {
             ref.read(leaveSearchQueryProvider.notifier).updateQuery(val),
         decoration: InputDecoration(
           hintText: 'Search leave request',
+          hintStyle: TextStyle(
+            color: Colors.grey.shade400,
+            fontSize: 14.sp,
+            fontFamily: 'Poppins',
+          ),
           prefixIcon: Icon(
             Icons.search,
             color: Colors.grey.shade400,
@@ -188,6 +194,10 @@ class _LeaveScreenState extends ConsumerState<LeaveScreen> {
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12.r),
             borderSide: const BorderSide(color: AppColors.primary, width: 2),
+          ),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 16.w,
+            vertical: 12.h,
           ),
         ),
       ),

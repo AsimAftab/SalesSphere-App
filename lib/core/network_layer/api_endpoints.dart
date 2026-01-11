@@ -35,6 +35,7 @@ class ApiEndpoints {
   static const String createParty = '/api/v1/parties';
   static String updateParty(String id) => '/api/v1/parties/$id';
   static String deleteParty(String id) => '/api/v1/parties/$id';
+  static const String myAssignedParties = '/api/v1/parties/my-assigned';
 
   //Prospects EndPoints (Final)
   static const String prospects = '/api/v1/prospects';
@@ -221,4 +222,23 @@ class ApiEndpoints {
 
   /// Get expense claim categories
   static const String expenseClaimCategories = '/api/v1/expense-claims/categories';
+
+  // Collection Endpoints
+  /// Get all collections for current user
+  static const String myCollections = '/api/v1/collections/my-collections';
+
+  /// Create new collection
+  static const String createCollection = '/api/v1/collections';
+
+  /// Get collection by ID
+  static String collectionById(String id) => '/api/v1/collections/$id';
+
+  /// Update collection by ID
+  static String updateCollection(String id) => '/api/v1/collections/$id';
+
+  /// Upload image to collection
+  static String uploadCollectionImage(String collectionId) => '/api/v1/collections/$collectionId/images';
+
+  /// Get bank names for collections
+  static const String bankNames = '/api/v1/collections/utils/bank-names';
 }

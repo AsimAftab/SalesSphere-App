@@ -165,13 +165,27 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
         // Format date to ISO 8601 (yyyy-MM-dd)
         final formattedDate = _selectedDate.toIso8601String().split('T')[0];
 
+        // Determine category to send
+        String categoryToSend;
+        if (_isAddingNewCategory && _newCategoryController.text.trim().isNotEmpty) {
+          categoryToSend = _newCategoryController.text.trim();
+        } else if (_selectedCategoryId != null) {
+          final categoriesAsync = ref.read(expenseCategoriesViewModelProvider);
+          final categories = categoriesAsync.value ?? [];
+          final selectedCategory = categories.firstWhere(
+                (c) => c.id == _selectedCategoryId,
+            orElse: () => categories.first,
+          );
+          categoryToSend = selectedCategory.name;
+        } else {
+          throw Exception('Please select or add a category');
+        }
+
         // Step 1: Create expense claim
         final claimId = await viewModel.createExpenseClaim(
           title: _titleController.text.trim(),
           amount: double.parse(_amountController.text.trim()),
-          category: _isAddingNewCategory
-              ? _newCategoryController.text.trim()
-              : _selectedCategoryId!,
+          category: categoryToSend,
           incurredDate: formattedDate,
           partyId: _selectedPartyId,
           description: _descriptionController.text.trim().isEmpty

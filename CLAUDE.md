@@ -74,11 +74,17 @@ flutter build web
 - `userControllerProvider` - Current logged-in user data (`User?`)
 - `permissionControllerProvider` - Permissions, subscription, access flags (`PermissionState`)
 - `tokenStorageServiceProvider` - JWT token storage service
+- `sharedPrefsProvider` - SharedPreferences instance
+- `appStartupProvider` - App startup state management
+- `trackingCoordinatorProvider` - Real-time tracking orchestrator singleton
 
 ### Routing: GoRouter
 - Centralized routing in `lib/core/router/route_handler.dart`
 - Router is provided via `goRouterProvider` and watched by the App widget
 - Routes use declarative GoRoute configuration with redirect guards
+- `refreshListenable` on auth state changes triggers router rebuild without full app rebuild
+- Module-based access control via `ModuleConfig` - checks `enabledModules` from subscription
+- ShellRoute for bottom navigation with dynamic tab calculation based on enabled modules
 
 ### Models: Freezed + JSON Serializable
 - All data models use `@freezed` annotation for immutability and code generation
@@ -234,6 +240,33 @@ try {
 - Centralized in `lib/core/network_layer/api_endpoints.dart`
 - Example: `ApiEndpoints.login`, `ApiEndpoints.userById('123')`
 
+### API Request/Response Patterns
+- Use `@JsonKey(includeIfNull: false)` on optional request model fields to exclude null values from JSON
+- This prevents sending null/empty fields to the API which can cause validation errors
+- Example for UpdateCollectionRequest:
+```dart
+@freezed
+abstract class UpdateCollectionRequest with _$UpdateCollectionRequest {
+  const factory UpdateCollectionRequest({
+    required double amountReceived,
+    String? receivedDate,
+    @JsonKey(includeIfNull: false) String? bankName,
+    @JsonKey(includeIfNull: false) String? chequeNumber,
+  }) = _UpdateCollectionRequest;
+}
+```
+- Response wrappers typically follow the pattern:
+```dart
+@freezed
+abstract class ApiResponse with _$ApiResponse {
+  const factory ApiResponse({
+    required bool success,
+    required int count,
+    required List<Data> data,
+  }) = _ApiResponse;
+}
+```
+
 ## Important Model Details
 
 ### User/Profile Models
@@ -318,3 +351,33 @@ WEBSOCKET_PATH=/live/tracking
 - **Portrait-only**: App locked to portrait orientation (configured in main.dart)
 - **Error Handling**: Global Flutter error handler logs to AppLogger in main.dart, Sentry for crash reporting
 - **Network Calls**: Always use `dioClientProvider`, handle `NetworkException`
+
+## Module-Based Access Control
+
+The app uses a subscription-based module system to control feature access:
+
+**ModuleConfig System** (`lib/core/constants/module_config.dart`):
+- Maps UI components (routes, tabs, utilities) to subscription's `enabledModules` list
+- Modules organized into: `navTabModules`, `directoryModules`, `utilityModules`
+- Always accessible routes: splash, onboarding, login, profile, settings
+- Dynamic tab index calculation based on enabled modules
+- Access redirects to home with snackbar when attempting to access disabled modules
+
+**Navigation Tab Structure** (based on enabled modules):
+- Index 0: Home (dashboard)
+- Index 1: Catalog (products)
+- Index 2: Invoice (invoices) - with floating action button
+- Index 3: Directory (parties/prospects/sites)
+- Index 4: Utilities (collection, expense claims, etc.)
+
+**Usage in routes**:
+```dart
+// Check module access before allowing navigation
+redirect: (context, state) {
+  final enabledModules = ref.read(permissionControllerProvider).enabledModules;
+  if (!ModuleConfig.isAccessible('catalog', enabledModules)) {
+    return '/home';
+  }
+  return null;
+}
+```

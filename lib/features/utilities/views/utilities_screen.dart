@@ -152,12 +152,20 @@ class UtilitiesScreen extends ConsumerWidget {
                             fontFamily: 'Poppins',
                           ),
                         ),
+                        SizedBox(height: 32.h),
+                        // Settings card shown even when no utilities enabled
+                        // Wrap in SizedBox to provide height constraints
+                        SizedBox(
+                          width: (MediaQuery.of(context).size.width - 40.w - 16.w) / 2,
+                          height: ((MediaQuery.of(context).size.width - 40.w - 16.w) / 2) / 0.99,
+                          child: _buildSettingsCard(),
+                        ),
                       ],
                     ),
                   ),
                 ),
 
-              // Show grid only if at least one utility is enabled
+              // Show grid with utilities + Settings card at the end
               if (anyUtilityEnabled)
                 GridView.count(
                   shrinkWrap: true,
@@ -166,11 +174,14 @@ class UtilitiesScreen extends ConsumerWidget {
                   crossAxisSpacing: 16.w,
                   mainAxisSpacing: 16.h,
                   childAspectRatio: 0.99,
-                  children: enabledUtilityModules
-                      .map((moduleId) => RepaintBoundary(
-                            child: _buildUtilityCard(moduleId),
-                          ))
-                      .toList(),
+                  // Add all utility modules + Settings card
+                  children: [
+                    ...enabledUtilityModules.map((moduleId) => RepaintBoundary(
+                          child: _buildUtilityCard(moduleId),
+                        )),
+                    // Settings card as last item in grid
+                    RepaintBoundary(child: _buildSettingsCard()),
+                  ],
                 ),
 
               SizedBox(height: 80.h),
@@ -189,6 +200,16 @@ class UtilitiesScreen extends ConsumerWidget {
       icon: config.icon,
       iconColor: config.color,
       routePath: config.routePath,
+    );
+  }
+
+  Widget _buildSettingsCard() {
+    return const UtilityCard(
+      title: 'Settings',
+      subtitle: 'Manage app preferences and account',
+      icon: Icons.settings_rounded,
+      iconColor: Color(0xFF607D8B),
+      routePath: '/settings',
     );
   }
 
