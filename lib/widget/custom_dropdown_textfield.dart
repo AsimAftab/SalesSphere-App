@@ -3,9 +3,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../core/constants/app_colors.dart';
 
 /// Custom Dropdown TextField Component
-/// A beautiful dropdown that matches PrimaryTextField styling
+/// A beautiful dropdown that matches PrimaryTextField styling with B&W icons
 class CustomDropdownTextField<T> extends StatefulWidget {
   final String hintText;
+  final String? searchHint;
   final T? value;
   final List<DropdownItem<T>> items;
   final void Function(T?) onChanged;
@@ -16,6 +17,7 @@ class CustomDropdownTextField<T> extends StatefulWidget {
   const CustomDropdownTextField({
     super.key,
     required this.hintText,
+    this.searchHint,
     required this.items,
     required this.onChanged,
     this.value,
@@ -25,14 +27,41 @@ class CustomDropdownTextField<T> extends StatefulWidget {
   });
 
   @override
-  State<CustomDropdownTextField<T>> createState() => _CustomDropdownTextFieldState<T>();
+  State<CustomDropdownTextField<T>> createState() =>
+      _CustomDropdownTextFieldState<T>();
 }
 
-class _CustomDropdownTextFieldState<T> extends State<CustomDropdownTextField<T>> {
+class _CustomDropdownTextFieldState<T>
+    extends State<CustomDropdownTextField<T>> {
   final LayerLink _layerLink = LayerLink();
   OverlayEntry? _overlayEntry;
   bool _isDropdownOpen = false;
   String? _validatorError;
+  String searchQuery = "";
+
+  // Grayscale matrix for Emojis
+  final List<double> _greyscaleMatrix = const <double>[
+    0.2126,
+    0.7152,
+    0.0722,
+    0,
+    0,
+    0.2126,
+    0.7152,
+    0.0722,
+    0,
+    0,
+    0.2126,
+    0.7152,
+    0.0722,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+  ];
 
   @override
   void dispose() {
@@ -44,13 +73,16 @@ class _CustomDropdownTextFieldState<T> extends State<CustomDropdownTextField<T>>
     if (_overlayEntry != null) {
       _overlayEntry?.remove();
       _overlayEntry = null;
-      setState(() => _isDropdownOpen = false);
+      setState(() {
+        _isDropdownOpen = false;
+        searchQuery = ""; // Reset search when closed
+      });
     }
   }
 
   void _showDropdown() {
     if (!widget.enabled) return;
-    
+
     _hideDropdown();
     setState(() => _isDropdownOpen = true);
 
@@ -72,60 +104,157 @@ class _CustomDropdownTextFieldState<T> extends State<CustomDropdownTextField<T>>
                 elevation: 12,
                 borderRadius: BorderRadius.circular(12.r),
                 color: Colors.white,
-                child: Container(
-                  constraints: BoxConstraints(maxHeight: 350.h),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(color: Colors.grey.shade200),
-                  ),
-                  child: ListView.separated(
-                    padding: EdgeInsets.symmetric(vertical: 8.h),
-                    shrinkWrap: true,
-                    itemCount: widget.items.length,
-                    separatorBuilder: (context, index) => 
-                        Divider(height: 1, color: Colors.grey.shade50),
-                    itemBuilder: (context, index) {
-                      final item = widget.items[index];
-                      final isSelected = widget.value == item.value;
+                child: StatefulBuilder(
+                  builder: (context, setOverlayState) {
+                    final TextEditingController searchController =
+                        TextEditingController(text: searchQuery);
 
-                      return ListTile(
-                        dense: true,
-                        leading: item.icon != null
-                            ? (item.icon is IconData
-                                ? Icon(
-                                    item.icon as IconData,
-                                    color: Colors.grey.shade600,
-                                    size: 20.sp,
-                                  )
-                                : Text(
-                                    item.icon as String,
-                                    style: TextStyle(fontSize: 20.sp),
-                                  ))
-                            : null,
-                        title: Text(
-                          item.label,
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 14.sp,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        trailing: isSelected
-                            ? Icon(Icons.check, color: AppColors.secondary, size: 20.sp)
-                            : null,
-                        onTap: () {
-                          widget.onChanged(item.value);
-                          // Clear error on selection
-                          if (_validatorError != null) {
-                            setState(() {
-                              _validatorError = null;
-                            });
-                          }
-                          _hideDropdown();
-                        },
+                    final filteredList = widget.items.where((item) {
+                      if (widget.searchHint == null || searchQuery.isEmpty)
+                        return true;
+                      return item.label.toLowerCase().contains(
+                        searchQuery.toLowerCase(),
                       );
-                    },
-                  ),
+                    }).toList();
+
+                    return Container(
+                      constraints: BoxConstraints(maxHeight: 350.h),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12.r),
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (widget.searchHint != null)
+                            Padding(
+                              padding: EdgeInsets.all(12.w),
+                              child: TextField(
+                                controller: searchController,
+                                style: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 14.sp,
+                                ),
+                                decoration: InputDecoration(
+                                  hintText: widget.searchHint,
+                                  prefixIcon: Icon(Icons.search, size: 20.sp),
+                                  suffixIcon: searchQuery.isNotEmpty
+                                      ? IconButton(
+                                          icon: Icon(
+                                            Icons.clear,
+                                            size: 18.sp,
+                                            color: Colors.grey,
+                                          ),
+                                          onPressed: () {
+                                            setOverlayState(() {
+                                              searchQuery = "";
+                                              searchController.clear();
+                                            });
+                                          },
+                                        )
+                                      : null,
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.symmetric(
+                                    vertical: 8.h,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8.r),
+                                  ),
+                                ),
+                                onChanged: (val) {
+                                  setOverlayState(() => searchQuery = val);
+                                },
+                              ),
+                            ),
+
+                          if (filteredList.isEmpty && searchQuery.isNotEmpty)
+                            Padding(
+                              padding: EdgeInsets.symmetric(vertical: 20.h),
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    Icons.search_off,
+                                    size: 40.sp,
+                                    color: Colors.grey.shade300,
+                                  ),
+                                  SizedBox(height: 8.h),
+                                  Text(
+                                    "No results found",
+                                    style: TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontSize: 14.sp,
+                                      color: Colors.grey.shade500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          else
+                            Flexible(
+                              child: ListView.separated(
+                                padding: EdgeInsets.symmetric(vertical: 8.h),
+                                shrinkWrap: true,
+                                itemCount: filteredList.length,
+                                separatorBuilder: (context, index) => Divider(
+                                  height: 1,
+                                  color: Colors.grey.shade50,
+                                ),
+                                itemBuilder: (context, index) {
+                                  final item = filteredList[index];
+                                  final isSelected = widget.value == item.value;
+
+                                  return ListTile(
+                                    dense: true,
+                                    leading: item.icon != null
+                                        ? (item.icon is IconData
+                                              ? Icon(
+                                                  item.icon as IconData,
+                                                  color: Colors.black87,
+                                                  size: 20.sp,
+                                                )
+                                              : ColorFiltered(
+                                                  colorFilter:
+                                                      ColorFilter.matrix(
+                                                        _greyscaleMatrix,
+                                                      ),
+                                                  child: Text(
+                                                    item.icon as String,
+                                                    style: TextStyle(
+                                                      fontSize: 20.sp,
+                                                    ),
+                                                  ),
+                                                ))
+                                        : null,
+                                    title: Text(
+                                      item.label,
+                                      style: TextStyle(
+                                        fontFamily: 'Poppins',
+                                        fontSize: 14.sp,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                    trailing: isSelected
+                                        ? Icon(
+                                            Icons.check,
+                                            color: AppColors.secondary,
+                                            size: 20.sp,
+                                          )
+                                        : null,
+                                    onTap: () {
+                                      widget.onChanged(item.value);
+                                      if (_validatorError != null) {
+                                        setState(() => _validatorError = null);
+                                      }
+                                      _hideDropdown();
+                                    },
+                                  );
+                                },
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
               ),
             ),
@@ -164,16 +293,16 @@ class _CustomDropdownTextFieldState<T> extends State<CustomDropdownTextField<T>>
                 color: hasError
                     ? AppColors.error.withValues(alpha: 0.05)
                     : (shouldShowGreyStyle
-                        ? Colors.grey.shade100
-                        : AppColors.surface),
+                          ? Colors.grey.shade100
+                          : AppColors.surface),
                 border: Border.all(
                   color: hasError
                       ? AppColors.error
                       : (_isDropdownOpen
-                          ? AppColors.secondary
-                          : (shouldShowGreyStyle
-                              ? AppColors.border.withValues(alpha: 0.2)
-                              : AppColors.border)),
+                            ? AppColors.secondary
+                            : (shouldShowGreyStyle
+                                  ? AppColors.border.withValues(alpha: 0.2)
+                                  : AppColors.border)),
                   width: _isDropdownOpen ? 2 : 1.5,
                 ),
                 borderRadius: BorderRadius.circular(12.r),
@@ -189,13 +318,18 @@ class _CustomDropdownTextFieldState<T> extends State<CustomDropdownTextField<T>>
                               color: hasError
                                   ? AppColors.error
                                   : (shouldShowGreyStyle
-                                      ? AppColors.textSecondary.withValues(alpha: 0.4)
-                                      : AppColors.textSecondary),
+                                        ? AppColors.textSecondary.withValues(
+                                            alpha: 0.4,
+                                          )
+                                        : Colors.black87),
                               size: 20.sp,
                             )
-                          : Text(
-                              selectedItem.icon as String,
-                              style: TextStyle(fontSize: 20.sp),
+                          : ColorFiltered(
+                              colorFilter: ColorFilter.matrix(_greyscaleMatrix),
+                              child: Text(
+                                selectedItem.icon as String,
+                                style: TextStyle(fontSize: 20.sp),
+                              ),
                             ),
                     )
                   else if (widget.prefixIcon != null)
@@ -206,8 +340,10 @@ class _CustomDropdownTextFieldState<T> extends State<CustomDropdownTextField<T>>
                         color: hasError
                             ? AppColors.error
                             : (shouldShowGreyStyle
-                                ? AppColors.textSecondary.withValues(alpha: 0.4)
-                                : AppColors.textSecondary),
+                                  ? AppColors.textSecondary.withValues(
+                                      alpha: 0.4,
+                                    )
+                                  : AppColors.textSecondary),
                         size: 20.sp,
                       ),
                     ),
@@ -217,11 +353,13 @@ class _CustomDropdownTextFieldState<T> extends State<CustomDropdownTextField<T>>
                       style: TextStyle(
                         color: selectedItem != null
                             ? (shouldShowGreyStyle
-                                ? AppColors.textSecondary.withValues(alpha: 0.6)
-                                : AppColors.textPrimary)
+                                  ? AppColors.textSecondary.withValues(
+                                      alpha: 0.6,
+                                    )
+                                  : AppColors.textPrimary)
                             : (shouldShowGreyStyle
-                                ? AppColors.textHint.withValues(alpha: 0.5)
-                                : AppColors.textHint),
+                                  ? AppColors.textHint.withValues(alpha: 0.5)
+                                  : AppColors.textHint),
                         fontFamily: 'Poppins',
                         fontSize: 15.sp,
                         fontWeight: FontWeight.w400,
@@ -233,9 +371,7 @@ class _CustomDropdownTextFieldState<T> extends State<CustomDropdownTextField<T>>
                       _isDropdownOpen
                           ? Icons.keyboard_arrow_up
                           : Icons.keyboard_arrow_down,
-                      color: hasError
-                          ? AppColors.error
-                          : Colors.grey.shade400,
+                      color: hasError ? AppColors.error : Colors.grey.shade400,
                       size: 20.sp,
                     ),
                 ],
@@ -277,9 +413,5 @@ class DropdownItem<T> {
   final String label;
   final dynamic icon; // Can be IconData or String (emoji)
 
-  const DropdownItem({
-    required this.value,
-    required this.label,
-    this.icon,
-  });
+  const DropdownItem({required this.value, required this.label, this.icon});
 }

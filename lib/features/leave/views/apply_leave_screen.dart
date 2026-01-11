@@ -17,10 +17,12 @@ class ApplyLeaveRequestScreen extends ConsumerStatefulWidget {
   const ApplyLeaveRequestScreen({super.key});
 
   @override
-  ConsumerState<ApplyLeaveRequestScreen> createState() => _ApplyLeaveRequestScreenState();
+  ConsumerState<ApplyLeaveRequestScreen> createState() =>
+      _ApplyLeaveRequestScreenState();
 }
 
-class _ApplyLeaveRequestScreenState extends ConsumerState<ApplyLeaveRequestScreen> {
+class _ApplyLeaveRequestScreenState
+    extends ConsumerState<ApplyLeaveRequestScreen> {
   final _formKey = GlobalKey<FormState>();
 
   late TextEditingController _startDateController;
@@ -34,7 +36,7 @@ class _ApplyLeaveRequestScreenState extends ConsumerState<ApplyLeaveRequestScree
     _startDateController = TextEditingController();
     _endDateController = TextEditingController();
     _reasonController = TextEditingController();
-    
+
     // Listen to start date changes to update end date picker constraints
     _startDateController.addListener(() {
       setState(() {});
@@ -148,13 +150,17 @@ class _ApplyLeaveRequestScreenState extends ConsumerState<ApplyLeaveRequestScree
                           prefixIcon: Icons.calendar_today_outlined,
                           enabled: true,
                           firstDate: _startDateController.text.isNotEmpty
-                              ? DateFormat('dd MMM yyyy').parse(_startDateController.text)
+                              ? DateFormat('dd MMM yyyy').parse(
+                              _startDateController.text)
                               : DateTime.now(),
                           validator: (value) {
-                            if (value != null && value.isNotEmpty && _startDateController.text.isNotEmpty) {
+                            if (value != null && value.isNotEmpty &&
+                                _startDateController.text.isNotEmpty) {
                               try {
-                                final startDate = DateFormat('dd MMM yyyy').parse(_startDateController.text);
-                                final endDate = DateFormat('dd MMM yyyy').parse(value);
+                                final startDate = DateFormat('dd MMM yyyy')
+                                    .parse(_startDateController.text);
+                                final endDate = DateFormat('dd MMM yyyy').parse(
+                                    value);
                                 if (endDate.isBefore(startDate)) {
                                   return 'End date cannot be before start date';
                                 }
@@ -201,17 +207,24 @@ class _ApplyLeaveRequestScreenState extends ConsumerState<ApplyLeaveRequestScree
                           minLines: 1,
                           maxLines: 5,
                           validator: (v) {
-                            if (v == null || v.trim().isEmpty) {
+                            if (v == null || v
+                                .trim()
+                                .isEmpty) {
                               return 'Please provide a reason';
                             }
-                            if (v.trim().length < 3) {
+                            if (v
+                                .trim()
+                                .length < 3) {
                               return 'Reason must be at least 3 characters';
                             }
                             return null;
                           },
                         ),
 
-                        SizedBox(height: MediaQuery.of(context).viewInsets.bottom > 0 ? 100.h : 80.h),
+                        SizedBox(height: MediaQuery
+                            .of(context)
+                            .viewInsets
+                            .bottom > 0 ? 100.h : 80.h),
                       ],
                     ),
                   ),
@@ -224,7 +237,10 @@ class _ApplyLeaveRequestScreenState extends ConsumerState<ApplyLeaveRequestScree
                 16.w,
                 16.h,
                 16.w,
-                MediaQuery.of(context).padding.bottom + 16.h,
+                MediaQuery
+                    .of(context)
+                    .padding
+                    .bottom + 16.h,
               ),
               color: Colors.white,
               child: PrimaryButton(

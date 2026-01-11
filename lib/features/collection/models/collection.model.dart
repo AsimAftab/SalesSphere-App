@@ -1,6 +1,8 @@
+import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'collection.model.freezed.dart';
+
 part 'collection.model.g.dart';
 
 // ============================================================================
@@ -141,6 +143,10 @@ abstract class CollectionListItem with _$CollectionListItem {
     required String paymentMode,
     String? remarks,
     List<String>? imagePaths,
+    String? bankName,
+    String? chequeNumber,
+    String? chequeDate,
+    String? chequeStatus,
   }) = _CollectionListItem;
 
   factory CollectionListItem.fromApiData(CollectionApiData apiData) {
@@ -152,6 +158,43 @@ abstract class CollectionListItem with _$CollectionListItem {
       paymentMode: apiData.paymentMode,
       remarks: apiData.remarks,
       imagePaths: null,
+      bankName: null,
+      chequeNumber: null,
+      chequeDate: null,
+      chequeStatus: null,
     );
   }
 }
+
+enum PaymentMode {
+  cash('Cash', Icons.money_outlined),
+  cheque('Cheque', Icons.account_balance_wallet_outlined),
+  bankTransfer('Bank Transfer', Icons.account_balance_outlined),
+  qrPay('QR Pay', Icons.qr_code_scanner_outlined);
+
+  final String label;
+  final IconData icon;
+
+  const PaymentMode(this.label, this.icon);
+
+  static PaymentMode? fromLabel(String? label) {
+    if (label == null) return null;
+    return PaymentMode.values.firstWhere(
+          (e) => e.label == label,
+      orElse: () => PaymentMode.cash,
+    );
+  }
+}
+
+enum ChequeStatus {
+  pending('Pending', Icons.hourglass_empty_outlined),
+  deposited('Deposited', Icons.file_upload_outlined),
+  cleared('Cleared', Icons.check_circle_outline),
+  bounced('Bounced', Icons.error_outline);
+
+  final String label;
+  final IconData icon;
+
+  const ChequeStatus(this.label, this.icon);
+}
+

@@ -47,7 +47,11 @@ class EditCollectionViewModel extends _$EditCollectionViewModel {
         date: data['date'] ?? DateTime.now().toString(),
         paymentMode: data['paymentMode'] ?? 'Cash',
         remarks: data['description'],
-        imagePaths: imagePaths, // Pass image paths to the model
+        imagePaths: imagePaths,
+        bankName: data['bankName'],
+        chequeNumber: data['chequeNumber'],
+        chequeDate: data['chequeDate'],
+        chequeStatus: data['chequeStatus'],
       );
 
       // Push change to the main list provider

@@ -10,12 +10,7 @@ import 'package:sales_sphere/features/notes/vm/notes.vm.dart';
 import 'package:sales_sphere/features/notes/models/notes.model.dart';
 
 /// Enum for filtering notes by entity type
-enum NoteFilter {
-  all,
-  party,
-  prospect,
-  site,
-}
+enum NoteFilter { all, party, prospect, site }
 
 class NotesScreen extends ConsumerStatefulWidget {
   const NotesScreen({super.key});
@@ -49,7 +44,8 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
 
   List<NoteListItem> _applyFilter(List<NoteListItem> notes, String query) {
     return notes.where((note) {
-      final matchesSearch = note.title.toLowerCase().contains(query.toLowerCase()) ||
+      final matchesSearch =
+          note.title.toLowerCase().contains(query.toLowerCase()) ||
           note.name.toLowerCase().contains(query.toLowerCase());
 
       bool matchesCategory = true;
@@ -106,16 +102,15 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
           ),
           Column(
             children: [
-              Container(
-                height: 120.h,
-                color: Colors.transparent,
-              ),
+              Container(height: 120.h, color: Colors.transparent),
               Container(
                 color: Colors.transparent,
                 padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 16.h),
                 child: TextField(
                   controller: _searchController,
-                  onChanged: (val) => ref.read(noteSearchQueryProvider.notifier).updateQuery(val),
+                  onChanged: (val) => ref
+                      .read(noteSearchQueryProvider.notifier)
+                      .updateQuery(val),
                   decoration: InputDecoration(
                     hintText: 'Search notes',
                     hintStyle: TextStyle(
@@ -140,7 +135,10 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.r),
-                      borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                      borderSide: const BorderSide(
+                        color: AppColors.primary,
+                        width: 2,
+                      ),
                     ),
                     contentPadding: EdgeInsets.symmetric(
                       horizontal: 16.w,
@@ -156,25 +154,31 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                   data: (notes) {
                     final filteredList = _applyFilter(notes, searchQuery);
                     return RefreshIndicator(
-                      onRefresh: () => ref.read(notesViewModelProvider.notifier).refresh(),
+                      onRefresh: () =>
+                          ref.read(notesViewModelProvider.notifier).refresh(),
                       color: AppColors.primary,
                       child: filteredList.isEmpty
                           ? _buildEmptyState(searchQuery)
                           : ListView.separated(
-                        padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 80.h),
-                        itemCount: filteredList.length,
-                        separatorBuilder: (_, __) => SizedBox(height: 12.h),
-                        itemBuilder: (context, index) {
-                          final note = filteredList[index];
-                          return GestureDetector(
-                            onTap: () {
-                              // Navigate to the edit screen using the note's ID
-                              context.push('/edit-notes/${note.id}');
-                            },
-                            child: _buildNoteCard(note),
-                          );
-                        },
-                      ),
+                              padding: EdgeInsets.fromLTRB(
+                                16.w,
+                                8.h,
+                                16.w,
+                                80.h,
+                              ),
+                              itemCount: filteredList.length,
+                              separatorBuilder: (_, __) =>
+                                  SizedBox(height: 12.h),
+                              itemBuilder: (context, index) {
+                                final note = filteredList[index];
+                                return GestureDetector(
+                                  onTap: () {
+                                    context.push('/edit-notes/${note.id}');
+                                  },
+                                  child: _buildNoteCard(note),
+                                );
+                              },
+                            ),
                     );
                   },
                   loading: () => Skeletonizer(
@@ -218,7 +222,6 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
     );
   }
 
-  // Helper UI methods kept inside the State class
   Widget _buildFilterDropdown() {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16.w),
@@ -226,7 +229,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: Colors.grey.shade300),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -237,7 +240,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
       ),
       child: Row(
         children: [
-          Icon(Icons.filter_list, size: 20.sp, color: AppColors.textdark),
+          Icon(Icons.filter_list, size: 20.sp, color: AppColors.primary),
           SizedBox(width: 12.w),
           Text(
             'Filter:',
@@ -248,32 +251,80 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
               fontFamily: 'Poppins',
             ),
           ),
-          SizedBox(width: 8.w),
-          Container(height: 24.h, width: 1, color: Colors.grey.shade200),
-          SizedBox(width: 8.w),
+          SizedBox(width: 12.w),
           Expanded(
             child: DropdownButtonHideUnderline(
               child: DropdownButton<NoteFilter>(
                 value: _activeFilter,
                 isExpanded: true,
-                icon: Icon(Icons.keyboard_arrow_down, color: AppColors.textdark, size: 24.sp),
+                icon: Icon(
+                  Icons.keyboard_arrow_down,
+                  color: AppColors.primary,
+                  size: 24.sp,
+                ),
                 style: TextStyle(
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textdark,
+                  color: AppColors.primary,
                   fontFamily: 'Poppins',
                 ),
                 dropdownColor: Colors.white,
+                borderRadius: BorderRadius.circular(12.r),
                 items: [
-                  DropdownMenuItem(value: NoteFilter.all, child: Text('All Notes')),
-                  DropdownMenuItem(value: NoteFilter.party, child: Text('Parties')),
-                  DropdownMenuItem(value: NoteFilter.prospect, child: Text('Prospects')),
-                  DropdownMenuItem(value: NoteFilter.site, child: Text('Sites')),
+                  _buildFilterItem(
+                    NoteFilter.all,
+                    'All Notes',
+                    Icons.list,
+                    AppColors.textdark,
+                  ),
+                  _buildFilterItem(
+                    NoteFilter.party,
+                    'Parties',
+                    Icons.store_outlined,
+                    Colors.blue,
+                  ),
+                  _buildFilterItem(
+                    NoteFilter.prospect,
+                    'Prospects',
+                    Icons.person_search_outlined,
+                    Colors.orange,
+                  ),
+                  _buildFilterItem(
+                    NoteFilter.site,
+                    'Sites',
+                    Icons.location_city_outlined,
+                    Colors.green,
+                  ),
                 ],
                 onChanged: (newValue) {
-                  if (newValue != null) setState(() => _activeFilter = newValue);
+                  if (newValue != null)
+                    setState(() => _activeFilter = newValue);
                 },
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  DropdownMenuItem<NoteFilter> _buildFilterItem(
+    NoteFilter value,
+    String text,
+    IconData icon,
+    Color iconColor,
+  ) {
+    return DropdownMenuItem(
+      value: value,
+      child: Row(
+        children: [
+          Icon(icon, size: 18.sp, color: iconColor),
+          SizedBox(width: 8.w),
+          Text(
+            text,
+            style: TextStyle(
+              color: AppColors.textdark,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
@@ -311,7 +362,10 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
           SizedBox(height: 12.h),
           _InfoRow(icon: Icons.person_outline, text: note.name),
           SizedBox(height: 8.h),
-          _InfoRow(icon: Icons.calendar_today_outlined, text: _formatDate(note.date)),
+          _InfoRow(
+            icon: Icons.calendar_today_outlined,
+            text: _formatDate(note.date),
+          ),
         ],
       ),
     );
@@ -325,11 +379,21 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
         Center(
           child: Column(
             children: [
-              Icon(Icons.notes_rounded, size: 64.sp, color: Colors.grey.shade400),
+              Icon(
+                Icons.notes_rounded,
+                size: 64.sp,
+                color: Colors.grey.shade400,
+              ),
               SizedBox(height: 16.h),
               Text(
-                searchQuery.isEmpty ? 'No notes found' : 'No results for "$searchQuery"',
-                style: TextStyle(fontSize: 16.sp, color: Colors.grey.shade600, fontFamily: 'Poppins'),
+                searchQuery.isEmpty
+                    ? 'No notes found'
+                    : 'No results for "$searchQuery"',
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  color: Colors.grey.shade600,
+                  fontFamily: 'Poppins',
+                ),
               ),
             ],
           ),
@@ -339,10 +403,10 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
   }
 }
 
-// Fixed: Correctly defined _InfoRow as a standalone class outside _NotesScreenState
 class _InfoRow extends StatelessWidget {
   final IconData icon;
   final String text;
+
   const _InfoRow({required this.icon, required this.text});
 
   @override
@@ -353,7 +417,11 @@ class _InfoRow extends StatelessWidget {
         SizedBox(width: 8.w),
         Text(
           text,
-          style: TextStyle(fontSize: 14.sp, color: Colors.grey.shade500, fontFamily: 'Poppins'),
+          style: TextStyle(
+            fontSize: 14.sp,
+            color: Colors.grey.shade500,
+            fontFamily: 'Poppins',
+          ),
         ),
       ],
     );

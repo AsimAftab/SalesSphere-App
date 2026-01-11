@@ -40,7 +40,10 @@ class OdometerViewModel extends _$OdometerViewModel {
 
   /// Helper to pick images from the camera
   Future<XFile?> pickImage() async {
-    return await _picker.pickImage(source: ImageSource.camera, imageQuality: 70);
+    return await _picker.pickImage(
+      source: ImageSource.camera,
+      imageQuality: 70,
+    );
   }
 
   /// Starts a new trip and updates the state
@@ -54,13 +57,15 @@ class OdometerViewModel extends _$OdometerViewModel {
 
     // API CALL: POST /api/v1/odometer/start
     // After success, invalidate self to show the "In Progress" status
-    state = AsyncData(OdometerReading(
-      startReading: reading,
-      unit: unit,
-      startReadingImage: imagePath,
-      description: description,
-      startTime: DateTime.now(),
-    ));
+    state = AsyncData(
+      OdometerReading(
+        startReading: reading,
+        unit: unit,
+        startReadingImage: imagePath,
+        description: description,
+        startTime: DateTime.now(),
+      ),
+    );
 
     // Also invalidate the summary as a new reading has been added
     ref.invalidate(odometerMonthlySummaryProvider);

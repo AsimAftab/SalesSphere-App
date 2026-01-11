@@ -100,16 +100,18 @@ class _OdometerListScreenState extends ConsumerState<OdometerListScreen> {
                             padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 80.h),
                             itemCount: items.length,
                             separatorBuilder: (_, __) => SizedBox(height: 12.h),
-                            itemBuilder: (context, index) => _buildOdometerCard(items[index]),
+                            itemBuilder: (context, index) =>
+                                _buildOdometerCard(items[index]),
                           );
                         },
                         loading: () => _buildSkeletonList(),
-                        error: (err, stack) => Center(
-                          child: Padding(
-                            padding: EdgeInsets.only(top: 40.h),
-                            child: Text('Error: $err'),
-                          ),
-                        ),
+                        error: (err, stack) =>
+                            Center(
+                              child: Padding(
+                                padding: EdgeInsets.only(top: 40.h),
+                                child: Text('Error: $err'),
+                              ),
+                            ),
                       ),
                     ],
                   ),
@@ -128,7 +130,8 @@ class _OdometerListScreenState extends ConsumerState<OdometerListScreen> {
       padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 12.h),
       child: TextField(
         controller: _searchController,
-        onChanged: (val) => ref.read(odometerListSearchQueryProvider.notifier).updateQuery(val),
+        onChanged: (val) =>
+            ref.read(odometerListSearchQueryProvider.notifier).updateQuery(val),
         decoration: InputDecoration(
           hintText: 'Search readings',
           hintStyle: TextStyle(
@@ -136,13 +139,15 @@ class _OdometerListScreenState extends ConsumerState<OdometerListScreen> {
             fontSize: 14.sp,
             fontFamily: 'Poppins',
           ),
-          prefixIcon: Icon(Icons.search, color: Colors.grey.shade400, size: 20.sp),
+          prefixIcon: Icon(
+              Icons.search, color: Colors.grey.shade400, size: 20.sp),
           suffixIcon: searchQuery.isNotEmpty
               ? IconButton(
             icon: Icon(Icons.clear, color: Colors.grey.shade400, size: 20.sp),
             onPressed: () {
               _searchController.clear();
-              ref.read(odometerListSearchQueryProvider.notifier).updateQuery('');
+              ref.read(odometerListSearchQueryProvider.notifier).updateQuery(
+                  '');
             },
           )
               : null,
@@ -160,7 +165,8 @@ class _OdometerListScreenState extends ConsumerState<OdometerListScreen> {
             borderRadius: BorderRadius.circular(12.r),
             borderSide: const BorderSide(color: AppColors.primary, width: 2),
           ),
-          contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+          contentPadding: EdgeInsets.symmetric(
+              horizontal: 16.w, vertical: 12.h),
         ),
       ),
     );
@@ -189,8 +195,10 @@ class _OdometerListScreenState extends ConsumerState<OdometerListScreen> {
             padding: EdgeInsets.all(8.w),
             icon: Icon(Icons.chevron_left, size: 24.sp),
             onPressed: () {
-              final newMonth = DateTime(selectedMonth.year, selectedMonth.month - 1);
-              ref.read(selectedOdometerMonthProvider.notifier).updateMonth(newMonth);
+              final newMonth = DateTime(
+                  selectedMonth.year, selectedMonth.month - 1);
+              ref.read(selectedOdometerMonthProvider.notifier).updateMonth(
+                  newMonth);
             },
           ),
           Text(
@@ -207,8 +215,10 @@ class _OdometerListScreenState extends ConsumerState<OdometerListScreen> {
             padding: EdgeInsets.all(8.w),
             icon: Icon(Icons.chevron_right, size: 24.sp),
             onPressed: () {
-              final newMonth = DateTime(selectedMonth.year, selectedMonth.month + 1);
-              ref.read(selectedOdometerMonthProvider.notifier).updateMonth(newMonth);
+              final newMonth = DateTime(
+                  selectedMonth.year, selectedMonth.month + 1);
+              ref.read(selectedOdometerMonthProvider.notifier).updateMonth(
+                  newMonth);
             },
           ),
         ],
@@ -241,7 +251,8 @@ class _OdometerListScreenState extends ConsumerState<OdometerListScreen> {
     return Column( // Remove Center() here if called from the Column above
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(Icons.calendar_today_outlined, size: 80.sp, color: Colors.grey.shade300),
+        Icon(Icons.calendar_today_outlined, size: 80.sp,
+            color: Colors.grey.shade300),
         SizedBox(height: 24.h),
         Text(
           'No odometer readings',
@@ -290,7 +301,8 @@ class _OdometerListScreenState extends ConsumerState<OdometerListScreen> {
           children: [
             Row(
               children: [
-                Icon(Icons.calendar_today_outlined, size: 16.sp, color: Colors.grey.shade400),
+                Icon(Icons.calendar_today_outlined, size: 16.sp,
+                    color: Colors.grey.shade400),
                 SizedBox(width: 8.w),
                 Text(
                   dateFormat.format(item.date),
@@ -304,25 +316,31 @@ class _OdometerListScreenState extends ConsumerState<OdometerListScreen> {
               ],
             ),
             SizedBox(height: 12.h),
-            _buildInfoRow(Icons.speed_outlined, 'Start meter', '${item.startReading.toInt()} km'),
+            _buildInfoRow(Icons.speed_outlined, 'Start meter',
+                '${item.startReading.toInt()} km'),
             SizedBox(height: 8.h),
-            _buildInfoRow(Icons.speed_outlined, 'End meter', '${item.endReading.toInt()} km'),
+            _buildInfoRow(Icons.speed_outlined, 'End meter',
+                '${item.endReading.toInt()} km'),
             SizedBox(height: 8.h),
-            _buildInfoRow(Icons.route, 'Total Distance', '${item.totalDistance.toInt()} km', isHighlight: true),
+            _buildInfoRow(Icons.route, 'Total Distance',
+                '${item.totalDistance.toInt()} km', isHighlight: true),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String label, String value, {bool isHighlight = false}) {
+  Widget _buildInfoRow(IconData icon, String label, String value,
+      {bool isHighlight = false}) {
     return Row(
       children: [
         Icon(icon, size: 16.sp, color: Colors.grey.shade400),
         SizedBox(width: 8.w),
         Text(
           '$label: ',
-          style: TextStyle(color: Colors.grey.shade500, fontSize: 13.sp, fontFamily: 'Poppins'),
+          style: TextStyle(color: Colors.grey.shade500,
+              fontSize: 13.sp,
+              fontFamily: 'Poppins'),
         ),
         Text(
           value,

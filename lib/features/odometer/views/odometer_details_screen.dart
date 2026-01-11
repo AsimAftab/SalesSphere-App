@@ -12,11 +12,14 @@ import '../vm/odometer_details.vm.dart';
 
 class OdometerDetailsScreen extends ConsumerWidget {
   final String id;
+
   const OdometerDetailsScreen({super.key, required this.id});
 
   // Method to open location in Google Maps
   Future<void> _openMap(String address) async {
-    final googleMapsUrl = Uri.parse("https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(address)}");
+    final googleMapsUrl = Uri.parse(
+        "https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(
+            address)}");
 
     if (await canLaunchUrl(googleMapsUrl)) {
       await launchUrl(googleMapsUrl);
@@ -29,34 +32,36 @@ class OdometerDetailsScreen extends ConsumerWidget {
 
     showDialog(
       context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: EdgeInsets.all(10.w),
-        child: Stack(
-          alignment: Alignment.topRight,
-          children: [
-            InteractiveViewer(
-              panEnabled: true,
-              minScale: 0.5,
-              maxScale: 4,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12.r),
-                child: path.startsWith('http')
-                    ? Image.network(path, fit: BoxFit.contain)
-                    : Image.file(File(path), fit: BoxFit.contain),
-              ),
+      builder: (context) =>
+          Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: EdgeInsets.all(10.w),
+            child: Stack(
+              alignment: Alignment.topRight,
+              children: [
+                InteractiveViewer(
+                  panEnabled: true,
+                  minScale: 0.5,
+                  maxScale: 4,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12.r),
+                    child: path.startsWith('http')
+                        ? Image.network(path, fit: BoxFit.contain)
+                        : Image.file(File(path), fit: BoxFit.contain),
+                  ),
+                ),
+                Positioned(
+                  top: 10.h,
+                  right: 10.w,
+                  child: IconButton(
+                    icon: const Icon(
+                        Icons.close, color: Colors.white, size: 30),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ),
+              ],
             ),
-            Positioned(
-              top: 10.h,
-              right: 10.w,
-              child: IconButton(
-                icon: const Icon(Icons.close, color: Colors.white, size: 30),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ),
-          ],
-        ),
-      ),
+          ),
     );
   }
 
@@ -97,7 +102,9 @@ class OdometerDetailsScreen extends ConsumerWidget {
           ),
           detailsAsync.when(
             data: (data) => _buildContent(context, data),
-            loading: () => Skeletonizer(enabled: true, child: _buildContent(context, _mockData())),
+            loading: () =>
+                Skeletonizer(
+                    enabled: true, child: _buildContent(context, _mockData())),
             error: (err, stack) => Center(child: Text('Error: $err')),
           ),
         ],
@@ -115,16 +122,21 @@ class OdometerDetailsScreen extends ConsumerWidget {
         children: [
           // Time Card
           _buildInfoCard([
-            _buildDetailRow(Icons.calendar_today_outlined, "Start Date & Time", dateFormat.format(data.startTime)),
-            _buildDetailRow(Icons.calendar_today_outlined, "End Date & Time", dateFormat.format(data.stopTime)),
+            _buildDetailRow(Icons.calendar_today_outlined, "Start Date & Time",
+                dateFormat.format(data.startTime)),
+            _buildDetailRow(Icons.calendar_today_outlined, "End Date & Time",
+                dateFormat.format(data.stopTime)),
           ]),
           SizedBox(height: 16.h),
 
           // Readings Card
           _buildInfoCard([
-            _buildDetailRow(Icons.speed, "Starting Reading", "${data.startReading.toInt()} Km"),
-            _buildDetailRow(Icons.speed, "Ending Reading", "${data.stopReading.toInt()} Km"),
-            _buildDetailRow(Icons.route, "Total Distance Travelled", "${data.distanceTravelled.toInt()} Km", isHighlighted: true),
+            _buildDetailRow(Icons.speed, "Starting Reading",
+                "${data.startReading.toInt()} Km"),
+            _buildDetailRow(Icons.speed, "Ending Reading",
+                "${data.stopReading.toInt()} Km"),
+            _buildDetailRow(Icons.route, "Total Distance Travelled",
+                "${data.distanceTravelled.toInt()} Km", isHighlighted: true),
           ]),
           SizedBox(height: 16.h),
 
@@ -148,14 +160,18 @@ class OdometerDetailsScreen extends ConsumerWidget {
           SizedBox(height: 16.h),
 
           _buildInfoCard([
-            _buildDetailRow(Icons.description_outlined, "Description", data.description ?? "No description provided"),
+            _buildDetailRow(Icons.description_outlined, "Description",
+                data.description ?? "No description provided"),
           ]),
           SizedBox(height: 24.h),
 
-          Text("Odometer Images", style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w600, color: AppColors.textdark)),
+          Text("Odometer Images", style: TextStyle(fontSize: 15.sp,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textdark)),
           SizedBox(height: 12.h),
 
-          _buildImageSection(context, "Starting Reading", data.startReadingImage),
+          _buildImageSection(
+              context, "Starting Reading", data.startReadingImage),
           SizedBox(height: 12.h),
           _buildImageSection(context, "Ending Reading", data.stopReadingImage),
         ],
@@ -169,13 +185,18 @@ class OdometerDetailsScreen extends ConsumerWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12.r),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4))
+        ],
       ),
       child: Column(children: children),
     );
   }
 
-  Widget _buildDetailRow(IconData icon, String label, String value, {bool isHighlighted = false, bool hasLink = false, VoidCallback? onLinkTap}) {
+  Widget _buildDetailRow(IconData icon, String label, String value,
+      {bool isHighlighted = false, bool hasLink = false, VoidCallback? onLinkTap}) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 4.h),
       child: Row(
@@ -183,7 +204,8 @@ class OdometerDetailsScreen extends ConsumerWidget {
         children: [
           Container(
             padding: EdgeInsets.all(6.w),
-            decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(8.r)),
+            decoration: BoxDecoration(color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(8.r)),
             child: Icon(icon, size: 18.sp, color: Colors.grey.shade400),
           ),
           SizedBox(width: 12.w),
@@ -193,12 +215,14 @@ class OdometerDetailsScreen extends ConsumerWidget {
               children: [
                 Row(
                   children: [
-                    Text(label, style: TextStyle(fontSize: 11.sp, color: Colors.grey.shade500)),
+                    Text(label, style: TextStyle(
+                        fontSize: 11.sp, color: Colors.grey.shade500)),
                     if (hasLink) ...[
                       SizedBox(width: 4.w),
                       GestureDetector(
                         onTap: onLinkTap,
-                        child: Icon(Icons.open_in_new, size: 12.sp, color: Colors.blue),
+                        child: Icon(
+                            Icons.open_in_new, size: 12.sp, color: Colors.blue),
                       )
                     ],
                   ],
@@ -207,8 +231,10 @@ class OdometerDetailsScreen extends ConsumerWidget {
                   value,
                   style: TextStyle(
                     fontSize: 14.sp,
-                    fontWeight: isHighlighted ? FontWeight.w700 : FontWeight.w500,
-                    color: isHighlighted ? AppColors.primary : Colors.grey.shade800,
+                    fontWeight: isHighlighted ? FontWeight.w700 : FontWeight
+                        .w500,
+                    color: isHighlighted ? AppColors.primary : Colors.grey
+                        .shade800,
                   ),
                 ),
               ],
@@ -219,7 +245,8 @@ class OdometerDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildImageSection(BuildContext context, String label, String? imagePath) {
+  Widget _buildImageSection(BuildContext context, String label,
+      String? imagePath) {
     return GestureDetector(
       onTap: () => _showImagePreview(context, imagePath, label),
       child: Container(
@@ -236,17 +263,23 @@ class OdometerDetailsScreen extends ConsumerWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(12.r),
                 child: imagePath.startsWith('http')
-                    ? Image.network(imagePath, width: double.infinity, height: 200.h, fit: BoxFit.cover)
-                    : Image.file(File(imagePath), width: double.infinity, height: 200.h, fit: BoxFit.cover),
+                    ? Image.network(imagePath, width: double.infinity,
+                    height: 200.h,
+                    fit: BoxFit.cover)
+                    : Image.file(File(imagePath), width: double.infinity,
+                    height: 200.h,
+                    fit: BoxFit.cover),
               )
             else
               Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.image_not_supported_outlined, size: 40.sp, color: Colors.grey.shade400),
+                    Icon(Icons.image_not_supported_outlined, size: 40.sp,
+                        color: Colors.grey.shade400),
                     SizedBox(height: 8.h),
-                    Text("No image available", style: TextStyle(fontSize: 12.sp, color: Colors.grey.shade600)),
+                    Text("No image available", style: TextStyle(
+                        fontSize: 12.sp, color: Colors.grey.shade600)),
                   ],
                 ),
               ),
@@ -255,7 +288,8 @@ class OdometerDetailsScreen extends ConsumerWidget {
                 bottom: 8.h,
                 right: 8.w,
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                  padding: EdgeInsets.symmetric(
+                      horizontal: 12.w, vertical: 6.h),
                   decoration: BoxDecoration(
                     color: Colors.black.withValues(alpha: 0.6),
                     borderRadius: BorderRadius.circular(20.r),
@@ -265,7 +299,8 @@ class OdometerDetailsScreen extends ConsumerWidget {
                     children: [
                       Icon(Icons.zoom_in, color: Colors.white, size: 16.sp),
                       SizedBox(width: 4.w),
-                      Text('Tap to preview', style: TextStyle(color: Colors.white, fontSize: 10.sp)),
+                      Text('Tap to preview', style: TextStyle(
+                          color: Colors.white, fontSize: 10.sp)),
                     ],
                   ),
                 ),
@@ -279,7 +314,9 @@ class OdometerDetailsScreen extends ConsumerWidget {
                   color: Colors.black.withValues(alpha: 0.4),
                   borderRadius: BorderRadius.circular(4.r),
                 ),
-                child: Text(label, style: TextStyle(color: Colors.white, fontSize: 10.sp, fontWeight: FontWeight.bold)),
+                child: Text(label, style: TextStyle(color: Colors.white,
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.bold)),
               ),
             ),
           ],

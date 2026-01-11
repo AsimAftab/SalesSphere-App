@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'leave.model.freezed.dart';
@@ -108,7 +109,7 @@ abstract class LeaveListItem with _$LeaveListItem {
 
   LeaveCategory get category => LeaveCategory.fromValue(leaveType);
   String get displayLeaveType => category.displayName;
-  String get leaveIcon => category.icon;
+  IconData get leaveIcon => category.icon;
 }
 
 enum LeaveFilter { all, pending, approved, rejected }
@@ -140,33 +141,33 @@ enum LeaveCategory {
         return 'Maternity Leave';
       case LeaveCategory.paternityLeave:
         return 'Paternity Leave';
+      case LeaveCategory.familyResponsibility:
+        return 'Family Responsibility Leave';
       case LeaveCategory.compassionateLeave:
         return 'Compassionate Leave';
       case LeaveCategory.religiousHolidays:
-        return 'Religious Holidays';
-      case LeaveCategory.familyResponsibility:
-        return 'Family Responsibility';
+        return 'Leave for religious holidays';
       case LeaveCategory.miscellaneous:
-        return 'Miscellaneous';
+        return 'Miscellaneous/Others';
     }
   }
 
-  String get icon {
+  IconData get icon {
     switch (this) {
       case LeaveCategory.sickLeave:
-        return '🏥';
+        return Icons.medical_services_outlined;
       case LeaveCategory.maternityLeave:
-        return '👶';
+        return Icons.face_retouching_natural;
       case LeaveCategory.paternityLeave:
-        return '👨‍👦';
-      case LeaveCategory.compassionateLeave:
-        return '💐';
-      case LeaveCategory.religiousHolidays:
-        return '🕌';
+        return Icons.face_outlined;
       case LeaveCategory.familyResponsibility:
-        return '👨‍👩‍👧';
+        return Icons.groups_outlined;
+      case LeaveCategory.compassionateLeave:
+        return Icons.volunteer_activism_outlined;
+      case LeaveCategory.religiousHolidays:
+        return Icons.church_outlined;
       case LeaveCategory.miscellaneous:
-        return '📋';
+        return Icons.more_horiz_outlined;
     }
   }
 }
