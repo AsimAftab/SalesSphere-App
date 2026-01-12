@@ -31,8 +31,9 @@ class NotesViewModel extends _$NotesViewModel {
       }
     } on DioException catch (e) {
       AppLogger.e('Failed to fetch notes', e);
+      // Rethrow the NetworkException directly so UI can handle it
       if (e.error is NetworkException) {
-        throw Exception((e.error as NetworkException).userFriendlyMessage);
+        rethrow;
       }
       throw Exception('Failed to fetch notes');
     }

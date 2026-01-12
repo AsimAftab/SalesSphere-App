@@ -4,7 +4,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:dio/dio.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/exceptions/offline_exception.dart';
+import 'package:sales_sphere/core/network_layer/network_exceptions.dart';
 import 'package:sales_sphere/widget/no_internet_screen.dart';
+import 'package:sales_sphere/widget/permission_denied_widget.dart';
 
 /// Error Handler Widget
 /// Displays NoInternetScreen for OfflineException, generic error for others
@@ -37,11 +39,47 @@ class ErrorHandlerWidget extends StatelessWidget {
     return false;
   }
 
+  /// Check if error is permission denied (403 Forbidden)
+  bool _isPermissionDenied(Object error) {
+    // Direct NetworkException with 403
+    if (error is NetworkException && error.statusCode == 403) {
+      return true;
+    }
+
+    // DioException wrapping NetworkException with 403
+    if (error is DioException && error.error is NetworkException) {
+      final networkException = error.error as NetworkException;
+      return networkException.statusCode == 403;
+    }
+
+    return false;
+  }
+
+  /// Extract NetworkException from error
+  NetworkException? _extractNetworkException(Object error) {
+    if (error is NetworkException) {
+      return error;
+    }
+    if (error is DioException && error.error is NetworkException) {
+      return error.error as NetworkException;
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     // Check if error is due to no internet connection
     if (_isOfflineError(error)) {
       return NoInternetScreen(onRetry: onRetry);
+    }
+
+    // Check if error is permission denied (403)
+    if (_isPermissionDenied(error)) {
+      final networkException = _extractNetworkException(error);
+      return PermissionDeniedWidget(
+        message: networkException?.message,
+        onRetry: onRetry,
+      );
     }
 
     // Show generic error for other errors

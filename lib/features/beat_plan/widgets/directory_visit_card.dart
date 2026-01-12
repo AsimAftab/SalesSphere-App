@@ -191,7 +191,7 @@ class DirectoryVisitCard extends StatelessWidget {
                               SizedBox(width: 4.w),
                               Expanded(
                                 child: Text(
-                                  directory.location.address,
+                                  directory.location.address ?? 'No address available',
                                   style: TextStyle(
                                     fontSize: 12.sp,
                                     color: AppColors.textSecondary,
