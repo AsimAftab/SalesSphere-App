@@ -212,14 +212,14 @@ class _MiscellaneousListScreenState extends ConsumerState<MiscellaneousListScree
                               size: 24.sp,
                             ),
                             isLeadingCircle: true,
-                            leadingBackgroundColor: const Color(0xFFFF9100), // Orange
+                            leadingBackgroundColor: AppColors.primary,
                             leadingSize: 48.w,
                             title: work.natureOfWork,
                             subtitle: _extractLocation(work.address),
                             secondarySubtitle: 'Assigned by: ${work.assignedBy}',
                             onTap: () => _navigateToWorkDetails(work.id),
                             showArrow: true,
-                            arrowColor: const Color(0xFFFF9100), // Orange arrow
+                            arrowColor: AppColors.primary,
                           );
                         },
                       ),
@@ -264,7 +264,7 @@ class _MiscellaneousListScreenState extends ConsumerState<MiscellaneousListScree
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _navigateToAddWork,
-        backgroundColor: const Color(0xFFFF9100), // Orange
+        backgroundColor: AppColors.primary,
         elevation: 4,
         icon: Icon(
           Icons.add,

@@ -6,11 +6,13 @@ import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:intl/intl.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/services/google_places_service.dart';
 import 'package:sales_sphere/core/services/location_service.dart';
 import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
+import 'package:sales_sphere/widget/custom_date_picker.dart';
 import 'package:sales_sphere/widget/location_picker_widget.dart';
 import 'package:sales_sphere/features/miscellaneous/models/miscellaneous.model.dart';
 import 'package:sales_sphere/features/miscellaneous/vm/miscellaneous_add.vm.dart';
@@ -40,6 +42,7 @@ class _AddMiscellaneousWorkScreenState
   // Controllers
   late TextEditingController _natureOfWorkController;
   late TextEditingController _assignedByController;
+  late TextEditingController _workDateController;
   late TextEditingController _addressController;
   late TextEditingController _latitudeController;
   late TextEditingController _longitudeController;
@@ -65,6 +68,7 @@ class _AddMiscellaneousWorkScreenState
   void _initializeControllers() {
     _natureOfWorkController = TextEditingController();
     _assignedByController = TextEditingController();
+    _workDateController = TextEditingController();
     _addressController = TextEditingController();
     _latitudeController = TextEditingController();
     _longitudeController = TextEditingController();
@@ -74,6 +78,7 @@ class _AddMiscellaneousWorkScreenState
   void dispose() {
     _natureOfWorkController.dispose();
     _assignedByController.dispose();
+    _workDateController.dispose();
     _addressController.dispose();
     _latitudeController.dispose();
     _longitudeController.dispose();
@@ -174,9 +179,17 @@ class _AddMiscellaneousWorkScreenState
           );
         }
 
-        // Format date as YYYY-MM-DD
-        final formattedDate = '${_selectedDate.year}-${_selectedDate.month
-            .toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(
+        // Parse date from controller and format as YYYY-MM-DD
+        DateTime dateToSubmit = _selectedDate;
+        if (_workDateController.text.isNotEmpty) {
+          try {
+            dateToSubmit = DateFormat('dd MMM yyyy').parse(_workDateController.text);
+          } catch (e) {
+            dateToSubmit = _selectedDate;
+          }
+        }
+        final formattedDate = '${dateToSubmit.year}-${dateToSubmit.month
+            .toString().padLeft(2, '0')}-${dateToSubmit.day.toString().padLeft(
             2, '0')}';
 
         final request = CreateMiscellaneousWorkRequest(
@@ -246,35 +259,7 @@ class _AddMiscellaneousWorkScreenState
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // DATE PICKER
-  // ---------------------------------------------------------------------------
-  Future<void> _selectDate() async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2030),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: AppColors.primary,
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: AppColors.textdark,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-      });
-    }
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -350,6 +335,20 @@ class _AddMiscellaneousWorkScreenState
                       ),
                       SizedBox(height: 16.h),
 
+                      // Work Date Picker
+                      CustomDatePicker(
+                        hintText: "Work Date",
+                        controller: _workDateController,
+                        prefixIcon: Icons.event_outlined,
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime(2030),
+                        validator: (value) =>
+                        (value == null || value.trim().isEmpty)
+                            ? 'Work date required'
+                            : null,
+                      ),
+                      SizedBox(height: 16.h),
+
                       // Location Picker
                       LocationPickerWidget(
                         addressController: _addressController,
@@ -379,51 +378,41 @@ class _AddMiscellaneousWorkScreenState
                       ),
                       SizedBox(height: 16.h),
 
-                      // Work Date Picker
-                      GestureDetector(
-                        onTap: _selectDate,
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 16.w,
-                            vertical: 14.h,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF5F6FA),
-                            borderRadius: BorderRadius.circular(12.r),
-                            border: Border.all(color: const Color(0xFFE0E0E0)),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.calendar_today_outlined,
-                                color: Colors.grey.shade600,
-                                size: 20.sp,
-                              ),
-                              SizedBox(width: 12.w),
-                              Text(
-                                'Work Date: ${_selectedDate.day}/${_selectedDate
-                                    .month}/${_selectedDate.year}',
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  color: AppColors.textdark,
-                                  fontFamily: 'Poppins',
-                                ),
-                              ),
-                              const Spacer(),
-                              Icon(
-                                Icons.arrow_drop_down,
-                                color: Colors.grey.shade600,
-                                size: 24.sp,
-                              ),
-                            ],
-                          ),
+                      // Location Details Section
+                      Text(
+                        "Location Details (Auto-generated from map)",
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.grey.shade600,
+                          fontFamily: 'Poppins',
                         ),
                       ),
-                      SizedBox(height: 24.h),
+                      SizedBox(height: 12.h),
+
+                      // Latitude (Non-editable)
+                      PrimaryTextField(
+                        hintText: "Latitude (Auto-generated)",
+                        controller: _latitudeController,
+                        prefixIcon: Icons.explore_outlined,
+                        hasFocusBorder: true,
+                        enabled: false,
+                      ),
+                      SizedBox(height: 16.h),
+
+                      // Longitude (Non-editable)
+                      PrimaryTextField(
+                        hintText: "Longitude (Auto-generated)",
+                        controller: _longitudeController,
+                        prefixIcon: Icons.explore_outlined,
+                        hasFocusBorder: true,
+                        enabled: false,
+                      ),
+                      SizedBox(height: 16.h),
 
                       // Image Picker Section
                       Text(
-                        "Images (Max 2 images)",
+                        "Images (Max 2 images allowed)",
                         style: TextStyle(
                           fontSize: 12.sp,
                           fontWeight: FontWeight.w500,
@@ -469,73 +458,126 @@ class _AddMiscellaneousWorkScreenState
   Widget _buildImageUploadArea() {
     return Column(
       children: [
-        GestureDetector(
-          onTap: _pickImage,
-          child: Container(
-            width: double.infinity,
-            padding: EdgeInsets.symmetric(vertical: 16.h),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF5F6FA),
-              borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(color: const Color(0xFFE0E0E0)),
-            ),
-            child: Column(
-              children: [
-                Icon(Icons.add_photo_alternate_outlined,
-                    color: Colors.grey, size: 32.sp),
-                SizedBox(height: 8.h),
-                Text(
-                  "Upload Image (${_selectedImages.length}/2)",
-                  style: TextStyle(
-                    color: Colors.grey.shade600,
-                    fontSize: 14.sp,
-                    fontFamily: 'Poppins',
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        if (_selectedImages.isNotEmpty) ...[
-          SizedBox(height: 12.h),
-          SizedBox(
-            height: 100.h,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: _selectedImages.length,
-              itemBuilder: (context, index) {
-                return Stack(
-                  children: [
-                    Container(
-                      margin: EdgeInsets.only(right: 12.w),
-                      width: 100.w,
-                      decoration: BoxDecoration(
+        // Show selected images first
+        if (_selectedImages.isNotEmpty)
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _selectedImages.length,
+            itemBuilder: (context, index) {
+              return Padding(
+                padding: EdgeInsets.only(bottom: 12.h),
+                child: GestureDetector(
+                  onTap: () {
+                    // Show preview dialog
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return Dialog(
+                          backgroundColor: Colors.transparent,
+                          child: InteractiveViewer(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12.r),
+                              child: Image.file(File(_selectedImages[index].path)),
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                  child: Stack(
+                    children: [
+                      ClipRRect(
                         borderRadius: BorderRadius.circular(12.r),
-                        image: DecorationImage(
-                          image: FileImage(File(_selectedImages[index].path)),
+                        child: Image.file(
+                          File(_selectedImages[index].path),
+                          width: double.infinity,
+                          height: 200.h,
                           fit: BoxFit.cover,
                         ),
                       ),
-                    ),
-                    Positioned(
-                      top: 4,
-                      right: 16,
-                      child: GestureDetector(
-                        onTap: () => _removeImage(index),
-                        child: CircleAvatar(
-                          radius: 12.r,
-                          backgroundColor: Colors.red,
-                          child: Icon(Icons.close,
-                              color: Colors.white, size: 16.sp),
+                      Positioned(
+                        bottom: 8.h,
+                        right: 8.w,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.6),
+                            borderRadius: BorderRadius.circular(20.r),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.zoom_in, color: Colors.white, size: 16.sp),
+                              SizedBox(width: 4.w),
+                              Text(
+                                'Tap to preview',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10.sp,
+                                  fontFamily: 'Poppins',
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
+                      Positioned(
+                        top: 8.h,
+                        right: 8.w,
+                        child: GestureDetector(
+                          onTap: () => _removeImage(index),
+                          child: Container(
+                            padding: EdgeInsets.all(6.w),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.6),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.close,
+                              color: Colors.white,
+                              size: 20.sp,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+
+        // Upload button
+        if (_selectedImages.length < 2)
+          GestureDetector(
+            onTap: _pickImage,
+            child: Container(
+              width: double.infinity,
+              height: 120.h,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF5F6FA),
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: const Color(0xFFE0E0E0)),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.add_photo_alternate_outlined,
+                      color: Colors.grey.shade400, size: 40.sp),
+                  SizedBox(height: 8.h),
+                  Text(
+                    "Tap to add image",
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontSize: 12.sp,
+                      fontFamily: 'Poppins',
                     ),
-                  ],
-                );
-              },
+                  ),
+                ],
+              ),
             ),
           ),
-        ],
       ],
     );
   }

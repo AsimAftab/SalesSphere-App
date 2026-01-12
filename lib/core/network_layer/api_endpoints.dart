@@ -241,4 +241,22 @@ class ApiEndpoints {
 
   /// Get bank names for collections
   static const String bankNames = '/api/v1/collections/utils/bank-names';
+
+  // Odometer Endpoints
+  /// Get today's odometer status (active trip or none)
+  static const String odometerTodayStatus = '/api/v1/odometer/status/today';
+
+  /// Start a new odometer reading
+  static const String odometerStart = '/api/v1/odometer/start';
+
+  /// Stop an active odometer reading
+  static const String odometerStop = '/api/v1/odometer/stop';
+
+  /// Upload start image for odometer reading
+  static String odometerStartImage(String odometerId) =>
+      '/api/v1/odometer/$odometerId/start-image';
+
+  /// Upload stop image for odometer reading
+  static String odometerStopImage(String odometerId) =>
+      '/api/v1/odometer/$odometerId/stop-image';
 }

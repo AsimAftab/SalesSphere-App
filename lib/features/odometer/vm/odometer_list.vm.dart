@@ -1,6 +1,9 @@
+import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sales_sphere/core/network_layer/dio_client.dart';
+import 'package:sales_sphere/core/utils/logger.dart';
 import '../model/odometer.model.dart';
 
 part 'odometer_list.vm.g.dart';
@@ -26,52 +29,74 @@ class OdometerListSearchQuery extends _$OdometerListSearchQuery {
 class OdometerListViewModel extends _$OdometerListViewModel {
   @override
   Future<List<OdometerListItem>> build() async {
-    await Future.delayed(const Duration(seconds: 1));
+    final selectedMonth = ref.watch(selectedOdometerMonthProvider);
+    return _fetchMonthlyReport(selectedMonth);
+  }
 
-    return [
-      OdometerListItem(
-        id: '1',
-        date: DateTime(2025, 12, 21),
-        startReading: 45320,
-        endReading: 45485,
-        totalDistance: 165,
-      ),
-      OdometerListItem(
-        id: '2',
-        date: DateTime(2024, 12, 20),
-        startReading: 45150,
-        endReading: 45320,
-        totalDistance: 170,
-      ),
-      OdometerListItem(
-        id: '3',
-        date: DateTime(2024, 12, 19),
-        startReading: 45000,
-        endReading: 45150,
-        totalDistance: 150,
-      ),
-      OdometerListItem(
-        id: '4',
-        date: DateTime(2024, 12, 18),
-        startReading: 44850,
-        endReading: 45000,
-        totalDistance: 150,
-      ),
-      OdometerListItem(
-        id: '5',
-        date: DateTime(2026, 01, 19),
-        startReading: 45000,
-        endReading: 45150,
-        totalDistance: 150,
-      ),
-      OdometerListItem(
-        id: '6',
-        date: DateTime(2026, 01, 18),
-        startReading: 44860,
-        endReading: 45000,
-        totalDistance: 150,
-      ),
-    ];
+  /// Fetch monthly odometer report from API
+  Future<List<OdometerListItem>> _fetchMonthlyReport(DateTime month) async {
+    try {
+      AppLogger.i('📋 Fetching odometer monthly report for ${DateFormat('MMMM yyyy').format(month)}...');
+
+      final dio = ref.read(dioClientProvider);
+      final response = await dio.get(
+        '/api/v1/odometer/my-monthly-report',
+        queryParameters: {
+          'month': month.month,
+          'year': month.year,
+        },
+      );
+
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        final data = response.data['data'];
+        final odometerMap = data['odometer'] as Map<String, dynamic>;
+
+        // Convert the odometer map to list of OdometerListItem
+        final items = <OdometerListItem>[];
+
+        odometerMap.forEach((dayKey, dayData) {
+          if (dayData is! Map<String, dynamic>) return;
+
+          final entry = DailyOdometerEntry.fromJson(dayData);
+
+          // Only include completed readings
+          if (entry.status == 'completed' &&
+              entry.startReading != null &&
+              entry.stopReading != null) {
+            final day = int.parse(dayKey);
+
+            // Create the date from the selected month and day
+            final date = DateTime(month.year, month.month, day);
+
+            // Use the MongoDB ID if available, otherwise fall back to constructed ID
+            // Note: Backend should include '_id' in monthly report for details to work
+            final itemId = entry.id ?? 'odometer_${month.year}_${month.month}_$day';
+
+            items.add(OdometerListItem(
+              id: itemId,
+              date: date,
+              startReading: entry.startReading!,
+              endReading: entry.stopReading!,
+              totalDistance: entry.distance ?? (entry.stopReading! - entry.startReading!),
+            ));
+          }
+        });
+
+        // Sort by date descending
+        items.sort((a, b) => b.date.compareTo(a.date));
+
+        AppLogger.i('✅ Loaded ${items.length} odometer readings');
+        return items;
+      }
+
+      return [];
+    } on DioException catch (e) {
+      AppLogger.e('❌ Failed to fetch monthly report: $e');
+      return [];
+    } catch (e) {
+      AppLogger.e('❌ Unexpected error: $e');
+      return [];
+    }
   }
 
   Future<void> refresh() async {

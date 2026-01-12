@@ -2,15 +2,18 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:intl/intl.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/services/google_places_service.dart';
 import 'package:sales_sphere/core/services/location_service.dart';
 import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
+import 'package:sales_sphere/widget/custom_date_picker.dart';
 import 'package:sales_sphere/widget/location_picker_widget.dart';
 import 'package:sales_sphere/features/miscellaneous/models/miscellaneous.model.dart';
 import 'package:sales_sphere/features/miscellaneous/vm/miscellaneous_edit.vm.dart';
@@ -43,9 +46,12 @@ class _EditMiscellaneousWorkScreenState
     extends ConsumerState<EditMiscellaneousWorkScreen> {
   final _formKey = GlobalKey<FormState>();
 
+  bool _isEditMode = false;
+
   // Controllers
   late TextEditingController _natureOfWorkController;
   late TextEditingController _assignedByController;
+  late TextEditingController _workDateController;
   late TextEditingController _addressController;
   late TextEditingController _latitudeController;
   late TextEditingController _longitudeController;
@@ -72,6 +78,7 @@ class _EditMiscellaneousWorkScreenState
   void _initializeControllers() {
     _natureOfWorkController = TextEditingController();
     _assignedByController = TextEditingController();
+    _workDateController = TextEditingController();
     _addressController = TextEditingController();
     _latitudeController = TextEditingController();
     _longitudeController = TextEditingController();
@@ -86,6 +93,7 @@ class _EditMiscellaneousWorkScreenState
     // Parse work date
     if (widget.workData.workDate != null) {
       _selectedDate = DateTime.parse(widget.workData.workDate!);
+      _workDateController.text = DateFormat('dd MMM yyyy').format(_selectedDate);
     } else {
       _selectedDate = DateTime.now();
     }
@@ -97,10 +105,17 @@ class _EditMiscellaneousWorkScreenState
     _longitudeController.text = _defaultLocation.longitude.toStringAsFixed(6);
   }
 
+  void _toggleEditMode() {
+    setState(() {
+      _isEditMode = !_isEditMode;
+    });
+  }
+
   @override
   void dispose() {
     _natureOfWorkController.dispose();
     _assignedByController.dispose();
+    _workDateController.dispose();
     _addressController.dispose();
     _latitudeController.dispose();
     _longitudeController.dispose();
@@ -280,12 +295,23 @@ class _EditMiscellaneousWorkScreenState
         }
 
         // Step 3: Update work data
+        // Parse date from controller and format as YYYY-MM-DD
+        DateTime dateToSubmit = _selectedDate;
+        if (_workDateController.text.isNotEmpty) {
+          try {
+            dateToSubmit = DateFormat('dd MMM yyyy').parse(_workDateController.text);
+          } catch (e) {
+            dateToSubmit = _selectedDate;
+          }
+        }
+        final formattedDate = '${dateToSubmit.year}-${dateToSubmit.month.toString().padLeft(2, '0')}-${dateToSubmit.day.toString().padLeft(2, '0')}';
+
         final updateRequest = CreateMiscellaneousWorkRequest(
           natureOfWork: _natureOfWorkController.text.trim(),
           address: _addressController.text.trim(),
           latitude: double.parse(_latitudeController.text),
           longitude: double.parse(_longitudeController.text),
-          workDate: _selectedDate.toIso8601String().split('T')[0],
+          workDate: formattedDate,
           assignedBy: _assignedByController.text.trim(),
         );
 
@@ -295,13 +321,16 @@ class _EditMiscellaneousWorkScreenState
           request: updateRequest,
         );
 
-        // Close loading dialog
+        // Close loading dialog if open
         if (mounted) {
           context.pop();
         }
 
         // Show success and go back
         if (mounted) {
+          setState(() {
+            _isEditMode = false;
+          });
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Work updated successfully'),
@@ -310,7 +339,6 @@ class _EditMiscellaneousWorkScreenState
           );
           // Refresh the list screen
           ref.invalidate(miscellaneousListViewModelProvider);
-          context.pop(); // Go back
         }
       } catch (e) {
         // Close loading dialog if open
@@ -327,90 +355,108 @@ class _EditMiscellaneousWorkScreenState
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // DATE PICKER
-  // ---------------------------------------------------------------------------
-  Future<void> _selectDate() async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2030),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: AppColors.primary,
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: AppColors.textdark,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-      });
-    }
-  }
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      backgroundColor: AppColors.primary,
+      backgroundColor: Colors.grey.shade50,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: AppColors.primary,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(
-          'Edit Miscellaneous Work',
+          "Details",
           style: TextStyle(
-            color: Colors.white,
-            fontSize: 18.sp,
+            color: AppColors.textdark,
+            fontSize: 20.sp,
             fontFamily: 'Poppins',
             fontWeight: FontWeight.w600,
           ),
         ),
-        centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: AppColors.textdark),
           onPressed: () => context.pop(),
         ),
-      ),
-      body: Column(
-        children: [
-          SizedBox(height: 16.h),
-          // White Card Container
-          Expanded(
-            child: Container(
-              width: double.infinity,
-              padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 32.h),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(32.r),
-                  topRight: Radius.circular(32.r),
+        actions: [
+          if (_isEditMode)
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _isEditMode = false;
+                  _selectedImages.clear();
+                  _deletedImageNumbers.clear();
+                  _loadExistingData(); // Reset data
+                });
+              },
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  color: AppColors.error,
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-              child: Form(
-                key: _formKey,
+            ),
+        ],
+      ),
+      body: Stack(
+        children: [
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SvgPicture.asset(
+              'assets/images/corner_bubble.svg',
+              fit: BoxFit.cover,
+              height: 180.h,
+            ),
+          ),
+          Column(
+            children: [
+              Container(
+                height: 120.h,
+                color: Colors.transparent,
+              ),
+              // White Card Container
+              Expanded(
                 child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  child: Padding(
+                    padding: EdgeInsets.only(bottom: 100.h),
+                    child: Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(16.w),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16.r),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.04),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                       // Nature of Work
                       PrimaryTextField(
                         hintText: "Nature of Work",
                         controller: _natureOfWorkController,
                         prefixIcon: Icons.work_outline,
                         hasFocusBorder: true,
-                        validator: (value) =>
-                            (value == null || value.trim().isEmpty)
-                                ? 'Required'
-                                : null,
+                        enabled: _isEditMode,
+                        validator: _isEditMode
+                            ? (value) =>
+                                (value == null || value.trim().isEmpty)
+                                    ? 'Required'
+                                    : null
+                            : null,
                       ),
                       SizedBox(height: 16.h),
 
@@ -420,10 +466,31 @@ class _EditMiscellaneousWorkScreenState
                         controller: _assignedByController,
                         prefixIcon: Icons.person_outline,
                         hasFocusBorder: true,
-                        validator: (value) =>
-                            (value == null || value.trim().isEmpty)
-                                ? 'Required'
-                                : null,
+                        enabled: _isEditMode,
+                        validator: _isEditMode
+                            ? (value) =>
+                                (value == null || value.trim().isEmpty)
+                                    ? 'Required'
+                                    : null
+                            : null,
+                      ),
+                      SizedBox(height: 16.h),
+
+                      // Work Date Picker
+                      CustomDatePicker(
+                        hintText: "Work Date",
+                        controller: _workDateController,
+                        prefixIcon: Icons.event_outlined,
+                        initialDate: _selectedDate,
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime(2030),
+                        enabled: _isEditMode,
+                        validator: _isEditMode
+                            ? (value) =>
+                                (value == null || value.trim().isEmpty)
+                                    ? 'Work date required'
+                                    : null
+                            : null,
                       ),
                       SizedBox(height: 16.h),
 
@@ -435,11 +502,13 @@ class _EditMiscellaneousWorkScreenState
                         initialLocation: _defaultLocation,
                         placesService: ref.read(googlePlacesServiceProvider),
                         locationService: ref.read(locationServiceProvider),
-                        enabled: true,
-                        addressValidator: (value) =>
-                            (value == null || value.trim().isEmpty)
-                                ? 'Address required'
-                                : null,
+                        enabled: _isEditMode,
+                        addressValidator: _isEditMode
+                            ? (value) =>
+                                (value == null || value.trim().isEmpty)
+                                    ? 'Address required'
+                                    : null
+                            : null,
                         onLocationSelected: (location, address) {
                           if (mounted) {
                             setState(() {
@@ -454,230 +523,334 @@ class _EditMiscellaneousWorkScreenState
                       ),
                       SizedBox(height: 16.h),
 
-                      // Work Date Picker
-                      GestureDetector(
-                        onTap: _selectDate,
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 16.w,
-                            vertical: 14.h,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF5F6FA),
-                            borderRadius: BorderRadius.circular(12.r),
-                            border: Border.all(color: const Color(0xFFE0E0E0)),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.calendar_today_outlined,
-                                color: Colors.grey.shade600,
-                                size: 20.sp,
-                              ),
-                              SizedBox(width: 12.w),
-                              Text(
-                                'Work Date: ${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  color: AppColors.textdark,
-                                  fontFamily: 'Poppins',
-                                ),
-                              ),
-                              const Spacer(),
-                              Icon(
-                                Icons.arrow_drop_down,
-                                color: Colors.grey.shade600,
-                                size: 24.sp,
-                              ),
-                            ],
-                          ),
+                      // Location Details Section
+                      Text(
+                        "Location Details (Auto-generated from map)",
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.grey.shade600,
+                          fontFamily: 'Poppins',
                         ),
                       ),
-                      SizedBox(height: 24.h),
+                      SizedBox(height: 12.h),
+
+                      // Latitude (Non-editable)
+                      PrimaryTextField(
+                        hintText: "Latitude (Auto-generated)",
+                        controller: _latitudeController,
+                        prefixIcon: Icons.explore_outlined,
+                        hasFocusBorder: true,
+                        enabled: false,
+                      ),
+                      SizedBox(height: 16.h),
+
+                      // Longitude (Non-editable)
+                      PrimaryTextField(
+                        hintText: "Longitude (Auto-generated)",
+                        controller: _longitudeController,
+                        prefixIcon: Icons.explore_outlined,
+                        hasFocusBorder: true,
+                        enabled: false,
+                      ),
+                      SizedBox(height: 16.h),
 
                       // Existing Images Section
                       if (widget.workData.images.isNotEmpty) ...[
                         Text(
-                          "Existing Images (${widget.workData.images.length - _deletedImageNumbers.length}/${widget.workData.images.length})",
+                          "Images",
                           style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textdark,
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey.shade600,
                             fontFamily: 'Poppins',
                           ),
                         ),
-                        SizedBox(height: 12.h),
-                        SizedBox(
-                          height: 100.h,
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: widget.workData.images.length,
-                            separatorBuilder: (context, index) => SizedBox(width: 12.w),
-                            itemBuilder: (context, index) {
-                              final image = widget.workData.images[index];
-                              final isDeleted = _deletedImageNumbers.contains(image.imageNumber);
-                              
-                              return Stack(
-                                children: [
-                                  Opacity(
-                                    opacity: isDeleted ? 0.4 : 1.0,
-                                    child: ClipRRect(
+                        SizedBox(height: 8.h),
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: widget.workData.images.length,
+                          itemBuilder: (context, index) {
+                            final image = widget.workData.images[index];
+                            final isDeleted = _deletedImageNumbers.contains(image.imageNumber);
+                            
+                            // Don't show deleted images
+                            if (isDeleted) return const SizedBox.shrink();
+                            
+                            return Padding(
+                              padding: EdgeInsets.only(bottom: 6.h),
+                              child: GestureDetector(
+                                onTap: () {
+                                  // Show preview dialog
+                                  showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return Dialog(
+                                        backgroundColor: Colors.transparent,
+                                        child: InteractiveViewer(
+                                          child: ClipRRect(
+                                            borderRadius: BorderRadius.circular(12.r),
+                                            child: Image.network(image.imageUrl),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  );
+                                },
+                                child: Stack(
+                                  children: [
+                                    ClipRRect(
                                       borderRadius: BorderRadius.circular(12.r),
                                       child: Image.network(
                                         image.imageUrl,
-                                        width: 100.w,
-                                        height: 100.h,
+                                        width: double.infinity,
+                                        height: 200.h,
                                         fit: BoxFit.cover,
                                         errorBuilder: (context, error, stackTrace) {
                                           return Container(
-                                            width: 100.w,
-                                            height: 100.h,
+                                            width: double.infinity,
+                                            height: 200.h,
                                             color: Colors.grey.shade300,
                                             child: Icon(
                                               Icons.broken_image,
                                               color: Colors.grey.shade600,
+                                              size: 48.sp,
                                             ),
                                           );
                                         },
                                       ),
                                     ),
-                                  ),
-                                  if (isDeleted)
-                                    Positioned.fill(
+                                    Positioned(
+                                      bottom: 8.h,
+                                      left: 8.w,
                                       child: Container(
+                                        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                                         decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(12.r),
-                                          color: Colors.black54,
+                                          color: Colors.black.withValues(alpha: 0.6),
+                                          borderRadius: BorderRadius.circular(20.r),
                                         ),
-                                        child: Center(
-                                          child: Icon(
-                                            Icons.delete_outline,
-                                            color: Colors.white,
-                                            size: 32.sp,
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(Icons.touch_app, color: Colors.white, size: 14.sp),
+                                            SizedBox(width: 4.w),
+                                            Text(
+                                              'Tap to preview',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 11.sp,
+                                                fontWeight: FontWeight.w500,
+                                                fontFamily: 'Poppins',
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    if (_isEditMode)
+                                      Positioned(
+                                        top: 8.h,
+                                        right: 8.w,
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            setState(() {
+                                              _deletedImageNumbers.add(image.imageNumber);
+                                            });
+                                          },
+                                          child: Container(
+                                            padding: EdgeInsets.all(6.w),
+                                            decoration: BoxDecoration(
+                                              color: Colors.black.withValues(alpha: 0.6),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: Icon(
+                                              Icons.close,
+                                              color: Colors.white,
+                                              size: 20.sp,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                  Positioned(
-                                    top: 4.h,
-                                    right: 4.w,
-                                    child: GestureDetector(
-                                      onTap: () {
-                                        if (isDeleted) {
-                                          setState(() {
-                                            _deletedImageNumbers.remove(image.imageNumber);
-                                          });
-                                        } else {
-                                          _deleteExistingImage(image.imageNumber);
-                                        }
-                                      },
-                                      child: Container(
-                                        padding: EdgeInsets.all(4.w),
-                                        decoration: BoxDecoration(
-                                          color: isDeleted ? Colors.orange : Colors.red,
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: Icon(
-                                          isDeleted ? Icons.undo : Icons.delete,
-                                          color: Colors.white,
-                                          size: 16.sp,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
                         ),
-                        SizedBox(height: 24.h),
                       ],
 
-                      // Add New Images Section
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
+                      // Add New Images Section (only in edit mode)
+                      if (_isEditMode) ...[
+                        if (widget.workData.images.isEmpty)
                           Text(
-                            "Add New Images (${_getTotalImagesCount()}/2)",
+                            "Images (Max 2 images allowed)",
                             style: TextStyle(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textdark,
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey.shade600,
                               fontFamily: 'Poppins',
                             ),
                           ),
-                          if (_getTotalImagesCount() < 2)
-                            IconButton(
-                              icon: Icon(
-                                Icons.add_photo_alternate,
-                                color: const Color(0xFFFF9100),
-                                size: 28.sp,
-                              ),
-                              onPressed: _pickImages,
-                            ),
-                        ],
-                      ),
-                      SizedBox(height: 12.h),
-
-                      // Selected New Images Preview
-                      if (_selectedImages.isNotEmpty)
-                        SizedBox(
-                          height: 100.h,
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
+                        if (widget.workData.images.isEmpty)
+                          SizedBox(height: 8.h),
+                        
+                        if (_selectedImages.isNotEmpty)
+                          ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
                             itemCount: _selectedImages.length,
-                            separatorBuilder: (context, index) =>
-                                SizedBox(width: 12.w),
                             itemBuilder: (context, index) {
-                              return Stack(
-                                children: [
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(12.r),
-                                    child: Image.file(
-                                      File(_selectedImages[index].path),
-                                      width: 100.w,
-                                      height: 100.h,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                  Positioned(
-                                    top: 4.h,
-                                    right: 4.w,
-                                    child: GestureDetector(
-                                      onTap: () => _removeNewImage(index),
-                                      child: Container(
-                                        padding: EdgeInsets.all(4.w),
-                                        decoration: const BoxDecoration(
-                                          color: Colors.red,
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: Icon(
-                                          Icons.close,
-                                          color: Colors.white,
-                                          size: 16.sp,
+                              return Padding(
+                                padding: EdgeInsets.only(bottom: 12.h),
+                                child: GestureDetector(
+                                  onTap: () {
+                                    // Show preview dialog
+                                    showDialog(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return Dialog(
+                                          backgroundColor: Colors.transparent,
+                                          child: InteractiveViewer(
+                                            child: ClipRRect(
+                                              borderRadius: BorderRadius.circular(12.r),
+                                              child: Image.file(File(_selectedImages[index].path)),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  },
+                                  child: Stack(
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(12.r),
+                                        child: Image.file(
+                                          File(_selectedImages[index].path),
+                                          width: double.infinity,
+                                          height: 200.h,
+                                          fit: BoxFit.cover,
                                         ),
                                       ),
-                                    ),
+                                      Positioned(
+                                        bottom: 8.h,
+                                        right: 8.w,
+                                        child: Container(
+                                          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black.withValues(alpha: 0.6),
+                                            borderRadius: BorderRadius.circular(20.r),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(Icons.zoom_in, color: Colors.white, size: 16.sp),
+                                              SizedBox(width: 4.w),
+                                              Text(
+                                                'Tap to preview',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 10.sp,
+                                                  fontFamily: 'Poppins',
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      Positioned(
+                                        top: 8.h,
+                                        right: 8.w,
+                                        child: GestureDetector(
+                                          onTap: () => _removeNewImage(index),
+                                          child: Container(
+                                            padding: EdgeInsets.all(6.w),
+                                            decoration: BoxDecoration(
+                                              color: Colors.black.withValues(alpha: 0.6),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: Icon(
+                                              Icons.close,
+                                              color: Colors.white,
+                                              size: 20.sp,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ],
+                                ),
                               );
                             },
                           ),
+
+                        // Upload button
+                        if (_getTotalImagesCount() < 2)
+                          GestureDetector(
+                            onTap: _pickImages,
+                            child: Container(
+                              width: double.infinity,
+                              height: 120.h,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF5F6FA),
+                                borderRadius: BorderRadius.circular(12.r),
+                                border: Border.all(color: const Color(0xFFE0E0E0)),
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.add_photo_alternate_outlined,
+                                      color: Colors.grey.shade400, size: 40.sp),
+                                  SizedBox(height: 8.h),
+                                  Text(
+                                    "Tap to add image",
+                                    style: TextStyle(
+                                      color: Colors.grey.shade600,
+                                      fontSize: 12.sp,
+                                      fontFamily: 'Poppins',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                      ],
+
+                            SizedBox(height: 80.h),
+                          ],
                         ),
-
-                      SizedBox(height: 32.h),
-
-                      // Update Button
-                      CustomButton(
-                        label: 'Update Work',
-                        onPressed: _handleUpdate,
-                        backgroundColor: const Color(0xFFFF9100),
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),
-            ),
+              
+              // Bottom Button
+              Container(
+                padding: EdgeInsets.fromLTRB(
+                  16.w,
+                  16.h,
+                  16.w,
+                  MediaQuery.of(context).padding.bottom + 16.h,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.06),
+                      blurRadius: 10,
+                      offset: const Offset(0, -2),
+                    ),
+                  ],
+                ),
+                child: PrimaryButton(
+                  label: _isEditMode ? 'Save Changes' : 'Edit Detail',
+                  onPressed: _isEditMode ? _handleUpdate : _toggleEditMode,
+                  leadingIcon: _isEditMode ? Icons.check_rounded : Icons.edit_outlined,
+                  size: ButtonSize.medium,
+                ),
+              ),
+            ],
           ),
         ],
       ),

@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
+import 'package:sales_sphere/features/odometer/model/odometer.model.dart';
 import '../vm/odometer_details.vm.dart';
 
 class OdometerDetailsScreen extends ConsumerWidget {
@@ -16,13 +17,13 @@ class OdometerDetailsScreen extends ConsumerWidget {
   const OdometerDetailsScreen({super.key, required this.id});
 
   // Method to open location in Google Maps
-  Future<void> _openMap(String address) async {
+  Future<void> _openInMaps(double latitude, double longitude) async {
     final googleMapsUrl = Uri.parse(
-        "https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(
-            address)}");
+      'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude',
+    );
 
     if (await canLaunchUrl(googleMapsUrl)) {
-      await launchUrl(googleMapsUrl);
+      await launchUrl(googleMapsUrl, mode: LaunchMode.externalApplication);
     }
   }
 
@@ -112,7 +113,7 @@ class OdometerDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildContent(BuildContext context, dynamic data) {
+  Widget _buildContent(BuildContext context, OdometerDetails data) {
     final dateFormat = DateFormat('dd MMM yyyy, hh:mm a');
 
     return SingleChildScrollView(
@@ -124,47 +125,49 @@ class OdometerDetailsScreen extends ConsumerWidget {
           _buildInfoCard([
             _buildDetailRow(Icons.calendar_today_outlined, "Start Date & Time",
                 dateFormat.format(data.startTime)),
-            _buildDetailRow(Icons.calendar_today_outlined, "End Date & Time",
-                dateFormat.format(data.stopTime)),
+            if (data.stopTime != null)
+              _buildDetailRow(Icons.calendar_today_outlined, "End Date & Time",
+                  dateFormat.format(data.stopTime!)),
           ]),
           SizedBox(height: 16.h),
 
           // Readings Card
           _buildInfoCard([
             _buildDetailRow(Icons.speed, "Starting Reading",
-                "${data.startReading.toInt()} Km"),
-            _buildDetailRow(Icons.speed, "Ending Reading",
-                "${data.stopReading.toInt()} Km"),
+                "${data.startReading.toInt()} ${data.unit.toLowerCase()}"),
+            if (data.stopReading != null)
+              _buildDetailRow(Icons.speed, "Ending Reading",
+                  "${data.stopReading!.toInt()} ${data.unit.toLowerCase()}"),
             _buildDetailRow(Icons.route, "Total Distance Travelled",
-                "${data.distanceTravelled.toInt()} Km", isHighlighted: true),
+                "${data.distanceTravelled.toInt()} ${data.unit.toLowerCase()}", isHighlighted: true),
           ]),
           SizedBox(height: 16.h),
 
-          // Location Card
-          _buildInfoCard([
-            _buildDetailRow(
-              Icons.location_on_outlined,
-              "Start Reading Location",
-              data.startLocation,
-              hasLink: true,
-              onLinkTap: () => _openMap(data.startLocation),
+          // Start Location Card
+          if (data.startLocation != null)
+            _buildLocationCard(
+              context,
+              data.startLocation!,
+              'Start Location',
             ),
-            _buildDetailRow(
-              Icons.location_on_outlined,
-              "Stop Reading Location",
-              data.stopLocation,
-              hasLink: true,
-              onLinkTap: () => _openMap(data.stopLocation),
+
+          // Stop Location Card
+          if (data.stopLocation != null)
+            _buildStopLocationCard(
+              context,
+              data.stopLocation!,
             ),
-          ]),
+
           SizedBox(height: 16.h),
 
+          // Description Card
           _buildInfoCard([
             _buildDetailRow(Icons.description_outlined, "Description",
-                data.description ?? "No description provided"),
+                data.displayDescription),
           ]),
           SizedBox(height: 24.h),
 
+          // Images Section
           Text("Odometer Images", style: TextStyle(fontSize: 15.sp,
               fontWeight: FontWeight.w600,
               color: AppColors.textdark)),
@@ -173,7 +176,192 @@ class OdometerDetailsScreen extends ConsumerWidget {
           _buildImageSection(
               context, "Starting Reading", data.startReadingImage),
           SizedBox(height: 12.h),
-          _buildImageSection(context, "Ending Reading", data.stopReadingImage),
+          if (data.stopReadingImage != null)
+            _buildImageSection(context, "Ending Reading", data.stopReadingImage),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLocationCard(
+    BuildContext context,
+    StartLocation location,
+    String title,
+  ) {
+    return Container(
+      padding: EdgeInsets.all(20.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+        Row(
+          children: [
+            Container(
+              padding: EdgeInsets.all(10.w),
+              decoration: BoxDecoration(
+                color: title.contains('Start')
+                    ? AppColors.success.withValues(alpha: 0.1)
+                    : AppColors.error.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+              child: Icon(
+                title.contains('Start') ? Icons.play_arrow : Icons.stop,
+                size: 20.sp,
+                color: title.contains('Start') ? AppColors.success : AppColors.error,
+              ),
+            ),
+            SizedBox(width: 12.w),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        SizedBox(height: 16.h),
+        _buildLocationDetails(context, location),
+      ]),
+    );
+  }
+
+  Widget _buildLocationDetails(
+    BuildContext context,
+    dynamic location, // StartLocation or StopLocation
+  ) {
+    final latitude = location.latitude;
+    final longitude = location.longitude;
+    final address = location.address;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.location_on, size: 16.sp, color: AppColors.textSecondary),
+            SizedBox(width: 8.w),
+            Text(
+              'Location Details',
+              style: TextStyle(
+                fontSize: 13.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 8.h),
+        if (address != null)
+          Text(
+            address,
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: AppColors.textPrimary,
+              height: 1.4,
+            ),
+          ),
+        SizedBox(height: 12.h),
+        Text(
+          'Coordinates: ${latitude.toStringAsFixed(6)}, ${longitude.toStringAsFixed(6)}',
+          style: TextStyle(
+            fontSize: 11.sp,
+            color: AppColors.textSecondary,
+            fontFamily: 'monospace',
+          ),
+        ),
+        SizedBox(height: 12.h),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: () => _openInMaps(latitude, longitude),
+            icon: Icon(Icons.map, size: 18.sp),
+            label: Text(
+              'Open in Maps',
+              style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600),
+            ),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.primary,
+              side: BorderSide(color: AppColors.primary, width: 1.5),
+              padding: EdgeInsets.symmetric(vertical: 12.h),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStopLocationCard(
+    BuildContext context,
+    StopLocation location,
+  ) {
+    return Container(
+      padding: EdgeInsets.all(20.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(10.w),
+                decoration: BoxDecoration(
+                  color: AppColors.error.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                child: Icon(
+                  Icons.stop,
+                  size: 20.sp,
+                  color: AppColors.error,
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Stop Location',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          SizedBox(height: 16.h),
+          _buildLocationDetails(context, location),
         ],
       ),
     );
@@ -325,18 +513,26 @@ class OdometerDetailsScreen extends ConsumerWidget {
     );
   }
 
-  dynamic _mockData() {
-    return (
-    startTime: DateTime.now(),
-    stopTime: DateTime.now(),
-    startReading: 0,
-    stopReading: 0,
-    distanceTravelled: 0,
-    startLocation: "Loading...",
-    stopLocation: "Loading...",
-    description: "Loading summary...",
-    startReadingImage: "",
-    stopReadingImage: "",
+  OdometerDetails _mockData() {
+    return OdometerDetails(
+      id: 'loading',
+      startTime: DateTime.now(),
+      stopTime: DateTime.now(),
+      startReading: 0,
+      stopReading: 0,
+      distanceTravelled: 0,
+      startLocation: const StartLocation(
+        latitude: 0.0,
+        longitude: 0.0,
+        address: 'Loading...',
+      ),
+      stopLocation: const StopLocation(
+        latitude: 0.0,
+        longitude: 0.0,
+        address: 'Loading...',
+      ),
+      startReadingImage: '',
+      stopReadingImage: '',
     );
   }
 }
