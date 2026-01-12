@@ -181,7 +181,7 @@ abstract class BeatDirectoryContact with _$BeatDirectoryContact {
 @freezed
 abstract class BeatDirectoryLocation with _$BeatDirectoryLocation {
   const factory BeatDirectoryLocation({
-    required String address,
+    String? address,  // Optional - API may not return this
     required double latitude,
     required double longitude,
   }) = _BeatDirectoryLocation;

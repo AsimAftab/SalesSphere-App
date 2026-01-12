@@ -6,8 +6,10 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
+import 'package:sales_sphere/core/network_layer/network_exceptions.dart';
 import 'package:sales_sphere/features/notes/vm/notes.vm.dart';
 import 'package:sales_sphere/features/notes/models/notes.model.dart';
+import 'package:sales_sphere/widget/permission_denied_widget.dart';
 
 /// Enum for filtering notes by entity type
 enum NoteFilter { all, party, prospect, site }
@@ -197,7 +199,58 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                       ),
                     ),
                   ),
-                  error: (e, _) => Center(child: Text('Error: $e')),
+                  error: (e, _) {
+                    // Check if error is permission denied (403)
+                    if (e is NetworkException && e.statusCode == 403) {
+                      return PermissionDeniedWidget(
+                        feature: 'Notes',
+                        message: e.message,
+                        onRetry: () => ref.invalidate(notesViewModelProvider),
+                      );
+                    }
+                    
+                    // Generic error fallback
+                    return Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(24.w),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              size: 64.sp,
+                              color: AppColors.error,
+                            ),
+                            SizedBox(height: 16.h),
+                            Text(
+                              'Something went wrong',
+                              style: TextStyle(
+                                fontSize: 18.sp,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
+                            SizedBox(height: 8.h),
+                            Text(
+                              e.toString(),
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                color: AppColors.textSecondary,
+                                fontFamily: 'Poppins',
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            SizedBox(height: 24.h),
+                            OutlinedButton.icon(
+                              onPressed: () => ref.invalidate(notesViewModelProvider),
+                              icon: Icon(Icons.refresh, size: 18.sp),
+                              label: Text('Retry'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
             ],

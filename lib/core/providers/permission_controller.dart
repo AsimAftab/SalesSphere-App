@@ -54,13 +54,7 @@ class PermissionState {
 class PermissionController extends _$PermissionController {
   @override
   PermissionState build() {
-    // Try to load cached data on initialization
-    _loadCachedData();
-    return const PermissionState();
-  }
-
-  /// Load cached permissions and subscription from storage
-  void _loadCachedData() {
+    // Load cached data synchronously before returning initial state
     try {
       final tokenStorage = ref.read(tokenStorageServiceProvider);
 
@@ -73,15 +67,18 @@ class PermissionController extends _$PermissionController {
       }
 
       if (permissions != null || subscription != null) {
-        state = PermissionState(
+        AppLogger.i('✅ Cached permissions and subscription loaded on build');
+        return PermissionState(
           permissions: permissions,
           subscription: subscription,
         );
-        AppLogger.i('✅ Cached permissions and subscription loaded');
       }
     } catch (e, stack) {
       AppLogger.e('❌ Error loading cached permission data', e, stack);
     }
+    
+    // Return empty state if no cached data
+    return const PermissionState();
   }
 
   /// Update permissions and subscription state

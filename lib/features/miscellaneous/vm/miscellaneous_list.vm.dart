@@ -1,8 +1,10 @@
 import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
+import 'package:sales_sphere/core/network_layer/dio_client.dart';
+import 'package:sales_sphere/core/network_layer/permission_denied_exception.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:sales_sphere/features/miscellaneous/models/miscellaneous.model.dart';
 
@@ -40,26 +42,34 @@ class MiscellaneousListViewModel extends _$MiscellaneousListViewModel {
     _isFetching = true;
     try {
       final dio = ref.read(dioClientProvider);
-      AppLogger.i('Fetching miscellaneous works from API: ${ApiEndpoints.myMiscellaneousWorks}');
+      AppLogger.i(
+        'Fetching miscellaneous works from API: ${ApiEndpoints.myMiscellaneousWorks}',
+      );
 
       final response = await dio.get(ApiEndpoints.myMiscellaneousWorks);
 
       AppLogger.d('Misc Works API response: ${response.statusCode}');
 
-      if (response.statusCode == 200) {
-        final apiResponse = MiscWorkListApiResponse.fromJson(response.data);
-        AppLogger.i('✅ Fetched ${apiResponse.count} miscellaneous works successfully');
-
-        return apiResponse.data;
-      } else {
-        throw Exception('Failed to fetch miscellaneous works: ${response.statusMessage}');
+      // Check for permission denied before parsing
+      if (response.statusCode == 403) {
+        throw PermissionDeniedException(
+          message: response.data['message'] ?? 'Permission denied',
+        );
       }
+
+      final apiResponse = MiscWorkListApiResponse.fromJson(response.data);
+      AppLogger.i(
+        '✅ Fetched ${apiResponse.count} miscellaneous works successfully',
+      );
+
+      return apiResponse.data;
     } on DioException catch (e) {
       AppLogger.e('❌ Dio error fetching misc works: ${e.message}');
-      throw Exception('Network error: ${e.message}');
+      // Rethrow DioException directly so UI can check for NetworkException (403, etc.)
+      rethrow;
     } catch (e) {
       AppLogger.e('❌ Error fetching misc works: $e');
-      throw Exception('Failed to fetch miscellaneous works: $e');
+      rethrow;
     } finally {
       _isFetching = false;
     }
