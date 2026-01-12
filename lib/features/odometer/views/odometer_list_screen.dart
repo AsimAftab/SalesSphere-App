@@ -65,55 +65,61 @@ class _OdometerListScreenState extends ConsumerState<OdometerListScreen> {
           ),
           LayoutBuilder(
             builder: (context, constraints) {
-              return SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                  child: Column(
-                    children: [
-                      Container(height: 100.h, color: Colors.transparent),
+              return RefreshIndicator(
+                onRefresh: () =>
+                    ref.read(odometerListViewModelProvider.notifier).refresh(),
+                color: AppColors.primary,
+                backgroundColor: Colors.white,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                    child: Column(
+                      children: [
+                        Container(height: 100.h, color: Colors.transparent),
 
-                      // Search Bar
-                      _buildSearchBar(searchQuery),
+                        // Search Bar
+                        _buildSearchBar(searchQuery),
 
-                      // Month Selector
-                      _buildMonthSelector(selectedMonth),
+                        // Month Selector
+                        _buildMonthSelector(selectedMonth),
 
-                      // Section Header
-                      SizedBox(height: 20.h),
-                      _buildSectionHeader(),
+                        // Section Header
+                        SizedBox(height: 20.h),
+                        _buildSectionHeader(),
 
-                      readingsAsync.when(
-                        data: (items) {
-                          if (items.isEmpty) {
-                            return Column(
-                              children: [
-                                // This creates a flexible gap between the header and the empty state
-                                SizedBox(height: constraints.maxHeight * 0.15),
-                                _buildEmptyState(selectedMonth),
-                              ],
+                        readingsAsync.when(
+                          data: (items) {
+                            if (items.isEmpty) {
+                              return Column(
+                                children: [
+                                  // This creates a flexible gap between the header and the empty state
+                                  SizedBox(height: constraints.maxHeight * 0.15),
+                                  _buildEmptyState(selectedMonth),
+                                ],
+                              );
+                            }
+                            return ListView.separated(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 80.h),
+                              itemCount: items.length,
+                              separatorBuilder: (_, __) => SizedBox(height: 12.h),
+                              itemBuilder: (context, index) =>
+                                  _buildOdometerCard(items[index]),
                             );
-                          }
-                          return ListView.separated(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 80.h),
-                            itemCount: items.length,
-                            separatorBuilder: (_, __) => SizedBox(height: 12.h),
-                            itemBuilder: (context, index) =>
-                                _buildOdometerCard(items[index]),
-                          );
-                        },
-                        loading: () => _buildSkeletonList(),
-                        error: (err, stack) =>
-                            Center(
-                              child: Padding(
-                                padding: EdgeInsets.only(top: 40.h),
-                                child: Text('Error: $err'),
+                          },
+                          loading: () => _buildSkeletonList(),
+                          error: (err, stack) =>
+                              Center(
+                                child: Padding(
+                                  padding: EdgeInsets.only(top: 40.h),
+                                  child: Text('Error: $err'),
+                                ),
                               ),
-                            ),
-                      ),
-                    ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );

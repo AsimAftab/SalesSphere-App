@@ -17,8 +17,8 @@ class OdometerScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final odometerState = ref.watch(odometerViewModelProvider);
     final activeTrip = odometerState.value;
-    final bool isInProgress = activeTrip != null &&
-        activeTrip.stopReading == null;
+    final bool isInProgress = activeTrip?.isInProgress == true;
+    final bool isCompleted = activeTrip?.isCompleted == true;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -39,9 +39,10 @@ class OdometerScreen extends ConsumerWidget {
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
         child: Column(
           children: [
-            _buildStatusHeader(isInProgress),
+            _buildStatusHeader(activeTrip),
             SizedBox(height: 12.h),
-            _buildActionButton(context, isInProgress, activeTrip),
+            // Hide button when trip is completed (like attendance)
+            if (!isCompleted) _buildActionButton(context, isInProgress, activeTrip),
             SizedBox(height: 12.h),
             _buildTodaySummary(activeTrip),
             SizedBox(height: 12.h),
@@ -52,7 +53,26 @@ class OdometerScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatusHeader(bool inProgress) {
+  Widget _buildStatusHeader(OdometerReading? activeTrip) {
+    // Determine status based on active trip state
+    String statusText;
+    Color statusColor;
+    Color backgroundColor;
+
+    if (activeTrip == null) {
+      statusText = "not started";
+      statusColor = AppColors.textSecondary;
+      backgroundColor = AppColors.textSecondary.withValues(alpha: 0.15);
+    } else if (activeTrip.isInProgress) {
+      statusText = "in progress";
+      statusColor = AppColors.success;
+      backgroundColor = AppColors.success.withValues(alpha: 0.15);
+    } else {
+      statusText = "completed";
+      statusColor = AppColors.info;
+      backgroundColor = AppColors.info.withValues(alpha: 0.15);
+    }
+
     return Container(
       padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
@@ -84,17 +104,15 @@ class OdometerScreen extends ConsumerWidget {
           Container(
             padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
             decoration: BoxDecoration(
-              color: inProgress
-                  ? AppColors.success.withValues(alpha: 0.15)
-                  : AppColors.textSecondary.withValues(alpha: 0.15),
+              color: backgroundColor,
               borderRadius: BorderRadius.circular(20.r),
             ),
             child: Text(
-              inProgress ? "in progress" : "not started",
+              statusText,
               style: TextStyle(
                 fontSize: 12.sp,
                 fontWeight: FontWeight.bold,
-                color: inProgress ? AppColors.success : AppColors.textSecondary,
+                color: statusColor,
               ),
             ),
           ),
@@ -138,10 +156,21 @@ class OdometerScreen extends ConsumerWidget {
 
   Widget _buildTodaySummary(OdometerReading? data) {
     const double factor = 0.621371;
-    String getK(double? v, String u) =>
-        v == null ? "--" : (u == "KM" ? v : v / factor).toStringAsFixed(0);
-    String getM(double? v, String u) =>
-        v == null ? "--" : (u == "MILES" ? v : v * factor).toStringAsFixed(0);
+    String getK(double? v, String u) {
+      if (v == null) return "--";
+      // Normalize unit to uppercase for comparison (API returns lowercase)
+      final normalizedUnit = u.toUpperCase();
+      return (normalizedUnit == "KM" || normalizedUnit == "KMS")
+          ? v.toStringAsFixed(0)
+          : (v / factor).toStringAsFixed(0);
+    }
+    String getM(double? v, String u) {
+      if (v == null) return "--";
+      final normalizedUnit = u.toUpperCase();
+      return (normalizedUnit == "MILES" || normalizedUnit == "MILE")
+          ? v.toStringAsFixed(0)
+          : (v * factor).toStringAsFixed(0);
+    }
 
     return Container(
       padding: EdgeInsets.all(18.w),
@@ -259,8 +288,8 @@ class OdometerScreen extends ConsumerWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _stat("${summary.totalReadings}",
-                        "Total Number of\nOdometer Readings"),
+                    _stat("${summary.daysCompleted}",
+                        "Days\nCompleted"),
                     Container(width: 1, height: 40, color: AppColors.border),
                     _stat("${summary.totalDistance.toStringAsFixed(0)} ${summary
                         .unit}", "Total Distance\nTravelled"),
@@ -317,14 +346,14 @@ class _OdometerReadingFormState extends ConsumerState<OdometerReadingForm> {
   String unit = "KM";
   File? _image;
   bool _showValidationErrors = false;
+  bool _isSubmitting = false;
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
     if (widget.isStop) {
-      unit = widget.activeData?.unit ?? "KM";
-      // Prefill description from active state
-      _descriptionController.text = widget.activeData?.description ?? "";
+      unit = widget.activeData?.unit.toUpperCase() ?? "KM";
     }
   }
 
@@ -447,17 +476,104 @@ class _OdometerReadingFormState extends ConsumerState<OdometerReadingForm> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (widget.isStop) ...[
+                      // Start Reading Section Header
+                      Container(
+                        padding: EdgeInsets.symmetric(vertical: 8.h),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: EdgeInsets.all(6.w),
+                              decoration: BoxDecoration(
+                                color: AppColors.info.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(6.r),
+                              ),
+                              child: Icon(Icons.info_outline,
+                                  color: AppColors.info, size: 16.sp),
+                            ),
+                            SizedBox(width: 8.w),
+                            Text(
+                              "Start Reading Details",
+                              style: TextStyle(
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+
+                      // Start Reading (read-only)
                       PrimaryTextField(
+                          label: Text("Start Reading",
+                              style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary)),
                           hintText: "Start meter reading",
                           controller: TextEditingController(text: widget
-                              .activeData?.startReading.toStringAsFixed(0)),
+                              .activeData?.startReading.toStringAsFixed(0) ?? ""),
                           prefixIcon: Icons.speed,
                           enabled: false),
                       SizedBox(height: 12.h),
-                      // Display the image captured during 'Start' phase
-                      _staticImageBox("Start Reading Image",
-                          widget.activeData?.startReadingImage),
+
+                      // Start Description (read-only)
+                      PrimaryTextField(
+                          label: Text("Start Description",
+                              style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary)),
+                          hintText: "No description",
+                          controller: TextEditingController(
+                              text: widget.activeData?.description ?? ""),
+                          prefixIcon: Icons.description_outlined,
+                          enabled: false,
+                          maxLines: 2),
                       SizedBox(height: 12.h),
+
+                      // Start Image Display
+                      Text(
+                        "Start Reading Image",
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      SizedBox(height: 6.h),
+                      _networkImageBox("Start Reading Image",
+                          widget.activeData?.startReadingImage),
+                      SizedBox(height: 16.h),
+
+                      // Divider
+                      Container(
+                        height: 1,
+                        color: AppColors.border,
+                        margin: EdgeInsets.symmetric(vertical: 8.h),
+                      ),
+
+                      // Stop Reading Section Header
+                      Container(
+                        padding: EdgeInsets.symmetric(vertical: 8.h),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: EdgeInsets.all(6.w),
+                              decoration: BoxDecoration(
+                                color: AppColors.secondary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(6.r),
+                              ),
+                              child: Icon(Icons.edit,
+                                  color: AppColors.secondary, size: 16.sp),
+                            ),
+                            SizedBox(width: 8.w),
+                            Text(
+                              "Stop Reading Details",
+                              style: TextStyle(
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
                     ],
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -499,7 +615,11 @@ class _OdometerReadingFormState extends ConsumerState<OdometerReadingForm> {
 
                     SizedBox(height: 16.h),
                     PrimaryTextField(
-                      hintText: "Description",
+                      label: widget.isStop
+                          ? Text("Stop Description",
+                              style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary))
+                          : null,
+                      hintText: widget.isStop ? "Enter stop description" : "Enter description",
                       controller: _descriptionController,
                       prefixIcon: Icons.description_outlined,
                       hasFocusBorder: true,
@@ -508,35 +628,75 @@ class _OdometerReadingFormState extends ConsumerState<OdometerReadingForm> {
                       textInputAction: TextInputAction.newline,
                     ),
                     SizedBox(height: 24.h),
+                    // Error message display
+                    if (_errorMessage != null) ...[
+                      Container(
+                        padding: EdgeInsets.all(12.w),
+                        decoration: BoxDecoration(
+                          color: AppColors.error.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8.r),
+                          border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.error_outline, color: AppColors.error, size: 16.sp),
+                            SizedBox(width: 8.w),
+                            Expanded(
+                              child: Text(
+                                _errorMessage!,
+                                style: TextStyle(color: AppColors.error, fontSize: 12.sp),
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () => setState(() => _errorMessage = null),
+                              child: Icon(Icons.close, color: AppColors.error, size: 16.sp),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 12.h),
+                    ],
                     PrimaryButton(
-                      label: "Submit Reading",
-                      onPressed: () {
+                      label: _isSubmitting ? "Submitting..." : "Submit Reading",
+                      onPressed: _isSubmitting ? null : () async {
                         setState(() {
                           _showValidationErrors = true;
+                          _errorMessage = null;
                         });
 
                         if ((_formKey.currentState?.validate() ?? false) &&
                             _image != null) {
-                          final val = double.parse(_readingController.text);
-                          if (widget.isStop) {
-                            ref
-                                .read(odometerViewModelProvider.notifier)
-                                .stopTrip(
-                                reading: val,
-                                imagePath: _image!.path,
-                                description: _descriptionController.text);
-                          } else {
-                            ref
-                                .read(odometerViewModelProvider.notifier)
-                                .startTrip(
-                                reading: val,
-                                unit: unit,
-                                imagePath: _image!.path,
-                                description: _descriptionController.text);
+                          setState(() => _isSubmitting = true);
+
+                          try {
+                            final val = double.parse(_readingController.text);
+                            if (widget.isStop) {
+                              await ref
+                                  .read(odometerViewModelProvider.notifier)
+                                  .stopTrip(
+                                  reading: val,
+                                  imagePath: _image!.path,
+                                  description: _descriptionController.text);
+                            } else {
+                              await ref
+                                  .read(odometerViewModelProvider.notifier)
+                                  .startTrip(
+                                  reading: val,
+                                  unit: unit,
+                                  imagePath: _image!.path,
+                                  description: _descriptionController.text);
+                            }
+                              // Success - close the dialog
+                              if (mounted) context.pop();
+                          } catch (e) {
+                            setState(() {
+                              _isSubmitting = false;
+                              _errorMessage = e.toString().replaceAll('Exception: ', '');
+                            });
                           }
-                          context.pop();
                         }
                       },
+                      isLoading: _isSubmitting,
                     ),
                   ],
                 ),
@@ -548,22 +708,66 @@ class _OdometerReadingFormState extends ConsumerState<OdometerReadingForm> {
     );
   }
 
-  // UPDATED: Background color white to match other input fields
-  Widget _staticImageBox(String label, String? imagePath) =>
-      Container(
-          height: 120.h,
-          width: double.infinity,
-          decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border.all(color: AppColors.border),
-              borderRadius: BorderRadius.circular(8.r)),
-          child: imagePath == null || imagePath.isEmpty
-              ? Center(child: Text(label, style: TextStyle(
-              color: AppColors.textSecondary, fontSize: 12.sp)))
-              : ClipRRect(
-            borderRadius: BorderRadius.circular(8.r),
-            child: Image.file(File(imagePath), fit: BoxFit.cover),
-          ));
+  // Display network image from URL (for start image from API)
+  Widget _networkImageBox(String label, String? imageUrl) {
+    return Container(
+      height: 120.h,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(8.r),
+      ),
+      child: imageUrl == null || imageUrl.isEmpty
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.image_not_supported,
+                      color: AppColors.textSecondary, size: 30.sp),
+                  SizedBox(height: 8.h),
+                  Text(label,
+                      style: TextStyle(
+                          fontSize: 12.sp, color: AppColors.textSecondary)),
+                ],
+              ),
+            )
+          : ClipRRect(
+              borderRadius: BorderRadius.circular(8.r),
+              child: Image.network(
+                imageUrl,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Center(
+                    child: CircularProgressIndicator(
+                      value: loadingProgress.expectedTotalBytes != null
+                          ? loadingProgress.cumulativeBytesLoaded /
+                              loadingProgress.expectedTotalBytes!
+                          : null,
+                      color: AppColors.secondary,
+                    ),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.broken_image,
+                            color: AppColors.textSecondary, size: 30.sp),
+                        SizedBox(height: 8.h),
+                        Text("Failed to load image",
+                            style: TextStyle(
+                                fontSize: 11.sp, color: AppColors.error)),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+    );
+  }
 
   // UPDATED: Standardized white background for image picker
   Widget _imagePickerBox(String label) {
