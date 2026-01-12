@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
@@ -146,22 +147,22 @@ class _EditLeaveScreenState extends ConsumerState<EditLeaveScreen> {
     final leaveAsync = ref.watch(editLeaveViewModelProvider(widget.leaveId));
 
     return Scaffold(
-      backgroundColor: AppColors.primary,
+      backgroundColor: Colors.grey.shade50,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(
-          "Edit Leave Request",
+          "Details",
           style: TextStyle(
-            color: Colors.white,
+            color: AppColors.textdark,
             fontSize: 20.sp,
             fontFamily: 'Poppins',
             fontWeight: FontWeight.w600,
           ),
         ),
-        centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: AppColors.textdark),
           onPressed: () => context.pop(),
         ),
         actions: [
@@ -178,7 +179,7 @@ class _EditLeaveScreenState extends ConsumerState<EditLeaveScreen> {
               child: Text(
                 'Cancel',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: AppColors.error,
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w500,
                 ),
@@ -229,63 +230,87 @@ class _EditLeaveScreenState extends ConsumerState<EditLeaveScreen> {
   }
 
   Widget _buildLoadingSkeleton() {
-    return Column(
+    return Stack(
       children: [
-        SizedBox(height: 16.h),
-        Expanded(
-          child: Container(
-            width: double.infinity,
-            padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 32.h),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(32.r),
-                topRight: Radius.circular(32.r),
-              ),
-            ),
-            child: Skeletonizer(
-              enabled: true,
-              child: Column(
-                children: [
-                  Container(
-                    height: 56.h,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12.r),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                  ),
-                  SizedBox(height: 16.h),
-                  Container(
-                    height: 56.h,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12.r),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                  ),
-                  SizedBox(height: 16.h),
-                  Container(
-                    height: 56.h,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12.r),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                  ),
-                  SizedBox(height: 16.h),
-                  Container(
-                    height: 120.h,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12.r),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: SvgPicture.asset(
+            'assets/images/corner_bubble.svg',
+            fit: BoxFit.cover,
+            height: 180.h,
           ),
+        ),
+        Column(
+          children: [
+            Container(
+              height: 120.h,
+              color: Colors.transparent,
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                child: Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(16.w),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16.r),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Skeletonizer(
+                    enabled: true,
+                    child: Column(
+                      children: [
+                        Container(
+                          height: 56.h,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12.r),
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
+                        ),
+                        SizedBox(height: 16.h),
+                        Container(
+                          height: 56.h,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12.r),
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
+                        ),
+                        SizedBox(height: 16.h),
+                        Container(
+                          height: 56.h,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12.r),
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
+                        ),
+                        SizedBox(height: 16.h),
+                        Container(
+                          height: 120.h,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12.r),
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -296,26 +321,48 @@ class _EditLeaveScreenState extends ConsumerState<EditLeaveScreen> {
       onTap: () {
         FocusScope.of(context).unfocus();
       },
-      child: Column(
+      child: Stack(
         children: [
-          SizedBox(height: 16.h),
-          Expanded(
-            child: Container(
-              width: double.infinity,
-              padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 32.h),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(32.r),
-                  topRight: Radius.circular(32.r),
-                ),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SvgPicture.asset(
+              'assets/images/corner_bubble.svg',
+              fit: BoxFit.cover,
+              height: 180.h,
+            ),
+          ),
+          Column(
+            children: [
+              Container(
+                height: 120.h,
+                color: Colors.transparent,
               ),
-              child: Form(
-                key: _formKey,
+              Expanded(
                 child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  child: Padding(
+                    padding: EdgeInsets.only(bottom: 100.h),
+                    child: Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(16.w),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16.r),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.04),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                       CustomDatePicker(
                         controller: _startDateController,
                         hintText: "Start Date",
@@ -404,41 +451,46 @@ class _EditLeaveScreenState extends ConsumerState<EditLeaveScreen> {
                         },
                       ),
 
-                      SizedBox(height: MediaQuery
-                          .of(context)
-                          .viewInsets
-                          .bottom > 0 ? 100.h : 80.h),
-                    ],
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
-          ),
 
-          Container(
-            padding: EdgeInsets.fromLTRB(
-              16.w,
-              16.h,
-              16.w,
-              MediaQuery
-                  .of(context)
-                  .padding
-                  .bottom + 16.h,
-            ),
-            color: Colors.white,
-            child: _isEditMode
-                ? PrimaryButton(
-              label: "Save Changes",
-              onPressed: _handleSubmit,
-              leadingIcon: Icons.check_rounded,
-              size: ButtonSize.medium,
-            )
-                : PrimaryButton(
-              label: "Edit Leave",
-              onPressed: _currentLeave == null ? null : _toggleEditMode,
-              leadingIcon: Icons.edit_outlined,
-              size: ButtonSize.medium,
-            ),
+              Container(
+                padding: EdgeInsets.fromLTRB(
+                  16.w,
+                  16.h,
+                  16.w,
+                  MediaQuery.of(context).padding.bottom + 16.h,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.06),
+                      blurRadius: 10,
+                      offset: const Offset(0, -2),
+                    ),
+                  ],
+                ),
+                child: _isEditMode
+                    ? PrimaryButton(
+                        label: "Save Changes",
+                        onPressed: _handleSubmit,
+                        leadingIcon: Icons.check_rounded,
+                        size: ButtonSize.medium,
+                      )
+                    : PrimaryButton(
+                        label: "Edit Detail",
+                        onPressed: _currentLeave == null ? null : _toggleEditMode,
+                        leadingIcon: Icons.edit_outlined,
+                        size: ButtonSize.medium,
+                      ),
+              ),
+            ],
           ),
         ],
       ),
