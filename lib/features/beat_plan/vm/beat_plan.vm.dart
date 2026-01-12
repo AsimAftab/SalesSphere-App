@@ -272,20 +272,25 @@ class BeatPlanDetailViewModel extends _$BeatPlanDetailViewModel {
       if (response.statusCode == 200) {
         AppLogger.i('✅ Visit marked as complete');
 
-        // Refresh beat plan details to get updated data
+        // Refresh beat plan details to get updated data and update tracking progress
         if (ref.mounted) {
-          await refresh(beatPlanId);
-
-          // Update tracking notification with new progress
           try {
-            // Get updated progress from refreshed state
-            if (state.hasValue && state.value != null) {
-              final visitedCount = state.value!.progress.visitedDirectories;
-              await TrackingCoordinator.instance.updateVisitProgress(visitedCount);
-              AppLogger.i('📊 Tracking notification updated with progress');
+            // Fetch beat plan details directly to avoid race conditions with state
+            final beatPlan = await _fetchBeatPlanDetails(beatPlanId);
+            if (beatPlan == null) {
+              AppLogger.w('⚠️ Beat plan data is null after fetch');
+              return true;
             }
+            state = AsyncData(beatPlan);
+
+            // Update tracking notification with new progress
+            final visitedCount = beatPlan.progress.visitedDirectories;
+            await TrackingCoordinator.instance.updateVisitProgress(visitedCount);
+            AppLogger.i('📊 Tracking notification updated with progress: $visitedCount visited');
           } catch (e) {
-            AppLogger.w('⚠️ Could not update tracking progress: $e');
+            AppLogger.w('⚠️ Could not refresh/update tracking progress: $e');
+            // Still return true since the visit was marked successfully
+            // The progress update is best-effort
           }
         }
         return true;
@@ -324,20 +329,25 @@ class BeatPlanDetailViewModel extends _$BeatPlanDetailViewModel {
       if (response.statusCode == 200) {
         AppLogger.i('✅ Visit marked as pending');
 
-        // Refresh beat plan details to get updated data
+        // Refresh beat plan details to get updated data and update tracking progress
         if (ref.mounted) {
-          await refresh(beatPlanId);
-
-          // Update tracking notification with new progress
           try {
-            // Get updated progress from refreshed state
-            if (state.hasValue && state.value != null) {
-              final visitedCount = state.value!.progress.visitedDirectories;
-              await TrackingCoordinator.instance.updateVisitProgress(visitedCount);
-              AppLogger.i('📊 Tracking notification updated with progress');
+            // Fetch beat plan details directly to avoid race conditions with state
+            final beatPlan = await _fetchBeatPlanDetails(beatPlanId);
+            if (beatPlan == null) {
+              AppLogger.w('⚠️ Beat plan data is null after fetch');
+              return true;
             }
+            state = AsyncData(beatPlan);
+
+            // Update tracking notification with new progress
+            final visitedCount = beatPlan.progress.visitedDirectories;
+            await TrackingCoordinator.instance.updateVisitProgress(visitedCount);
+            AppLogger.i('📊 Tracking notification updated with progress: $visitedCount visited');
           } catch (e) {
-            AppLogger.w('⚠️ Could not update tracking progress: $e');
+            AppLogger.w('⚠️ Could not refresh/update tracking progress: $e');
+            // Still return true since the visit was marked successfully
+            // The progress update is best-effort
           }
         }
         return true;

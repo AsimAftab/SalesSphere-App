@@ -70,6 +70,11 @@ import '../constants/module_config.dart';
 int _calculateCurrentTabIndex(Ref ref, BuildContext context, String path) {
   final permissionState = ref.read(permissionControllerProvider);
 
+  // Special handling for utilities route (not tied to a specific module)
+  if (path == '/utilities') {
+    return 4; // Utilities tab is always at index 4
+  }
+
   // Get module for current path
   final moduleId = ModuleConfig.getModuleForRoute(path);
 
