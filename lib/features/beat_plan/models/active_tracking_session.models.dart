@@ -37,10 +37,28 @@ abstract class ActiveBeatPlan with _$ActiveBeatPlan {
     required String name,
     required String status,
     required BeatSchedule schedule,
+    @Default(ActiveBeatPlanProgress()) ActiveBeatPlanProgress progress,
   }) = _ActiveBeatPlan;
 
   factory ActiveBeatPlan.fromJson(Map<String, dynamic> json) =>
       _$ActiveBeatPlanFromJson(json);
+}
+
+/// Active Beat Plan Progress
+@freezed
+abstract class ActiveBeatPlanProgress with _$ActiveBeatPlanProgress {
+  const factory ActiveBeatPlanProgress({
+    @Default(0) int totalDirectories,
+    @Default(0) int visitedDirectories,
+    @Default(0) int unvisitedDirectories,
+    @Default(0) int percentage,
+    @Default(0) int totalParties,
+    @Default(0) int totalSites,
+    @Default(0) int totalProspects,
+  }) = _ActiveBeatPlanProgress;
+
+  factory ActiveBeatPlanProgress.fromJson(Map<String, dynamic> json) =>
+      _$ActiveBeatPlanProgressFromJson(json);
 }
 
 /// Beat Schedule

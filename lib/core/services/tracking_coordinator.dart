@@ -172,12 +172,62 @@ class TrackingCoordinator {
         AppLogger.i('📍 Resuming tracking for beat plan: ${activeSession.beatPlan.name}');
         AppLogger.i('🔑 Session ID: $sessionId');
 
-        // Get local tracking info from SharedPreferences (if available)
-        final prefs = await SharedPreferences.getInstance();
+        // Get progress from server response
+        // The active session endpoint might not include progress, so we need to check
+        var totalDirectories = activeSession.beatPlan.progress.totalDirectories;
+        var visitedDirectories = activeSession.beatPlan.progress.visitedDirectories;
 
-        // Load progress info (or use defaults if not available)
-        final totalDirectories = prefs.getInt('totalDirectories') ?? 0;
-        final visitedDirectories = prefs.getInt('visitedDirectories') ?? 0;
+        AppLogger.i('📊 Active session progress: $visitedDirectories/$totalDirectories directories');
+
+        // If the active session endpoint doesn't return progress data, fetch from details endpoint
+        if (totalDirectories <= 0) {
+          AppLogger.w('⚠️ Active session endpoint returned no progress, fetching from details endpoint...');
+          try {
+            final dio = _getDioClient();
+            final detailsResponse = await dio.get('/api/v1/beat-plans/$beatPlanId').timeout(
+              const Duration(seconds: 10),
+              onTimeout: () {
+                AppLogger.w('⚠️ Beat plan details API timeout');
+                throw TimeoutException('API timeout');
+              },
+            );
+
+            if (detailsResponse.statusCode == 200 && detailsResponse.data['success'] == true) {
+              final data = detailsResponse.data['data'];
+              final progress = data['progress'] as Map<String, dynamic>?;
+              if (progress != null) {
+                totalDirectories = progress['totalDirectories'] ?? 0;
+                visitedDirectories = progress['visitedDirectories'] ?? 0;
+                AppLogger.i('📊 Details endpoint progress: $visitedDirectories/$totalDirectories directories');
+              }
+            }
+          } catch (e) {
+            AppLogger.w('⚠️ Could not fetch progress from details endpoint: $e');
+            // Fall back to SharedPreferences if available
+            final prefs = await SharedPreferences.getInstance();
+            totalDirectories = prefs.getInt('totalDirectories') ?? 0;
+            visitedDirectories = prefs.getInt('visitedDirectories') ?? 0;
+            AppLogger.i('📊 Fallback to SharedPreferences: $visitedDirectories/$totalDirectories directories');
+          }
+        }
+
+        // Validate the progress data
+        if (totalDirectories <= 0) {
+          AppLogger.w('⚠️ Could not get valid totalDirectories: $totalDirectories');
+          // Use 1 as minimum to prevent auto-stop
+          totalDirectories = 1;
+        }
+
+        if (visitedDirectories < 0) {
+          AppLogger.w('⚠️ Invalid visitedDirectories: $visitedDirectories');
+          visitedDirectories = 0;
+        }
+
+        if (visitedDirectories > totalDirectories && totalDirectories > 0) {
+          AppLogger.e('❌ Invalid progress: visited($visitedDirectories) > total($totalDirectories)');
+          // Reset visited to avoid auto-stop
+          visitedDirectories = 0;
+        }
 
         // Set tracking state
         _currentBeatPlanId = beatPlanId;
@@ -187,12 +237,17 @@ class TrackingCoordinator {
         _totalDirectories = totalDirectories;
         _visitedDirectories = visitedDirectories;
 
-        // Save session info to SharedPreferences
+        // Get SharedPreferences instance
+        final prefs = await SharedPreferences.getInstance();
+
+        // Save session info to SharedPreferences with fresh values from server
         await prefs.setString('beatPlanId', beatPlanId);
         await prefs.setString('sessionId', sessionId);
         await prefs.setBool('isTracking', true);
+        await prefs.setInt('totalDirectories', totalDirectories);
+        await prefs.setInt('visitedDirectories', visitedDirectories);
 
-        AppLogger.i('📊 Resumed progress: $visitedDirectories/$totalDirectories directories');
+        AppLogger.i('📊 Final resumed progress: $visitedDirectories/$totalDirectories directories');
 
         // Reconnect to socket with session ID
         try {
@@ -285,9 +340,27 @@ class TrackingCoordinator {
               AppLogger.i('🔑 Session ID: $sessionId');
             }
 
-            // Load progress info
-            final totalDirectories = prefs.getInt('totalDirectories') ?? 0;
-            final visitedDirectories = prefs.getInt('visitedDirectories') ?? 0;
+            // Load progress info from SharedPreferences
+            var totalDirectories = prefs.getInt('totalDirectories') ?? 0;
+            var visitedDirectories = prefs.getInt('visitedDirectories') ?? 0;
+
+            // Validate the progress data from SharedPreferences
+            if (totalDirectories <= 0) {
+              AppLogger.w('⚠️ SharedPreferences has invalid totalDirectories: $totalDirectories');
+            }
+
+            if (visitedDirectories < 0) {
+              AppLogger.w('⚠️ SharedPreferences has invalid visitedDirectories: $visitedDirectories');
+              visitedDirectories = 0;
+            }
+
+            if (visitedDirectories > totalDirectories && totalDirectories > 0) {
+              AppLogger.e('❌ Invalid progress in SharedPreferences: visited($visitedDirectories) > total($totalDirectories)');
+              // Reset visited to avoid auto-stop with stale data
+              AppLogger.w('⚠️ Resetting visitedDirectories to 0 due to stale data');
+              visitedDirectories = 0;
+              await prefs.setInt('visitedDirectories', 0);
+            }
 
             // Set tracking state
             _currentBeatPlanId = beatPlanId;
@@ -543,10 +616,13 @@ class TrackingCoordinator {
       _totalDirectories = 0;
       _visitedDirectories = 0;
 
-      // Clear progress from SharedPreferences
+      // Clear all tracking data from SharedPreferences to prevent stale data on resume
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('totalDirectories');
       await prefs.remove('visitedDirectories');
+      await prefs.remove('beatPlanId');
+      await prefs.remove('sessionId');
+      await prefs.remove('isTracking');
 
       _emitState(TrackingState.stopped);
 
@@ -633,6 +709,25 @@ class TrackingCoordinator {
 
     try {
       AppLogger.i('📊 Updating visit progress: $visitedDirectories/$_totalDirectories');
+
+      // Validate input
+      if (visitedDirectories < 0) {
+        AppLogger.e('❌ Invalid visitedDirectories: $visitedDirectories (negative)');
+        return;
+      }
+
+      // Check for stale data that would cause premature auto-stop
+      if (visitedDirectories > _totalDirectories && _totalDirectories > 0) {
+        AppLogger.e('❌ Invalid progress: visited($visitedDirectories) > total($_totalDirectories)');
+        AppLogger.w('⚠️ Skipping auto-stop check due to invalid data');
+        // Still update the value and emit stats, but don't auto-stop
+        _visitedDirectories = visitedDirectories;
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setInt('visitedDirectories', visitedDirectories);
+        await _backgroundService.updateProgress(visitedDirectories);
+        _emitStats();
+        return;
+      }
 
       // Update visited count
       _visitedDirectories = visitedDirectories;
