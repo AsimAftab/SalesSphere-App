@@ -568,6 +568,7 @@ class _EditMiscellaneousWorkScreenState
                         ),
                         SizedBox(height: 8.h),
                         ListView.builder(
+                          padding: EdgeInsets.zero,
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
                           itemCount: widget.workData.images.length,
@@ -697,6 +698,7 @@ class _EditMiscellaneousWorkScreenState
                         
                         if (_selectedImages.isNotEmpty)
                           ListView.builder(
+                            padding: EdgeInsets.zero,
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             itemCount: _selectedImages.length,
@@ -815,8 +817,6 @@ class _EditMiscellaneousWorkScreenState
                             ),
                           ),
                       ],
-
-                            SizedBox(height: 80.h),
                           ],
                         ),
                       ),

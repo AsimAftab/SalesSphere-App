@@ -15,6 +15,7 @@ import 'package:sales_sphere/features/expense-claim/models/expense_claim.model.d
 import 'package:sales_sphere/features/expense-claim/vm/expense_claim_edit.vm.dart';
 import 'package:sales_sphere/features/expense-claim/vm/expense_claims.vm.dart';
 import 'package:sales_sphere/features/expense-claim/vm/expense_categories.vm.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class EditExpenseClaimScreen extends ConsumerStatefulWidget {
   final String claimId;
@@ -421,34 +422,154 @@ class _EditExpenseClaimScreenState
     final categoriesAsync = ref.watch(expenseCategoriesViewModelProvider);
     final claimAsync = ref.watch(expenseClaimByIdProvider(widget.claimId));
 
-    ref.listen(expenseClaimByIdProvider(widget.claimId), (previous, next) {
-      if (next is AsyncData<ExpenseClaimDetailApiData> && !_isDataLoaded) {
-        _loadExistingData(next.value);
-        setState(() {
-          _isDataLoaded = true;
-        });
-      }
-    });
-
     return claimAsync.when(
       data: (claimData) {
         return _buildScreen(context, claimData, partiesAsync, categoriesAsync);
       },
       loading: () => Scaffold(
-        backgroundColor: AppColors.primary,
+        backgroundColor: Colors.grey.shade50,
+        extendBodyBehindAppBar: true,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
+          title: Text(
+            "Details",
+            style: TextStyle(
+              color: AppColors.textdark,
+              fontSize: 18.sp,
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            icon: const Icon(Icons.arrow_back, color: AppColors.textdark),
             onPressed: () => context.pop(),
           ),
         ),
-        body: const Center(child: CircularProgressIndicator(color: Colors.white)),
+        body: Stack(
+          children: [
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: SvgPicture.asset(
+                'assets/images/corner_bubble.svg',
+                fit: BoxFit.cover,
+                height: 180.h,
+              ),
+            ),
+            Column(
+              children: [
+                Container(
+                  height: 120.h,
+                  color: Colors.transparent,
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w),
+                    child: Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(16.w),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16.r),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.04),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Skeletonizer(
+                        enabled: true,
+                        child: Column(
+                          children: [
+                            Container(
+                              height: 56.h,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12.r),
+                                border: Border.all(color: Colors.grey.shade300),
+                              ),
+                            ),
+                            SizedBox(height: 16.h),
+                            Container(
+                              height: 56.h,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12.r),
+                                border: Border.all(color: Colors.grey.shade300),
+                              ),
+                            ),
+                            SizedBox(height: 16.h),
+                            Container(
+                              height: 56.h,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12.r),
+                                border: Border.all(color: Colors.grey.shade300),
+                              ),
+                            ),
+                            SizedBox(height: 16.h),
+                            Container(
+                              height: 120.h,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12.r),
+                                border: Border.all(color: Colors.grey.shade300),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
       error: (error, stack) => Scaffold(
-        appBar: AppBar(title: const Text('Error')),
-        body: Center(child: Text('Error loading claim: $error')),
+        backgroundColor: Colors.grey.shade50,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          title: const Text('Error'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: AppColors.textdark),
+            onPressed: () => context.pop(),
+          ),
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 64.sp, color: AppColors.error),
+              SizedBox(height: 16.h),
+              Text(
+                'Error loading claim',
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textdark,
+                ),
+              ),
+              SizedBox(height: 8.h),
+              Text(
+                '$error',
+                style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 16.h),
+              ElevatedButton(
+                onPressed: () => ref.invalidate(expenseClaimByIdProvider(widget.claimId)),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -459,6 +580,16 @@ class _EditExpenseClaimScreenState
       AsyncValue partiesAsync,
       AsyncValue categoriesAsync,
       ) {
+    // Always load data when screen is built to prevent empty fields
+    if (!_isDataLoaded) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _loadExistingData(claimData);
+        setState(() {
+          _isDataLoaded = true;
+        });
+      });
+    }
+    
     final bool isPending = claimData.status == 'pending';
     final bool isEditable = isPending && _isEditMode;
 
@@ -765,18 +896,20 @@ class _EditExpenseClaimScreenState
                                 ),
                                 SizedBox(height: 24.h),
 
-                                // Image Picker Section
-                                Text(
-                                  "Receipt Image (Optional)",
-                                  style: TextStyle(
-                                    fontSize: 12.sp,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.grey.shade600,
-                                    fontFamily: 'Poppins',
+                                // Image Picker Section - only show label if there's an image or in edit mode
+                                if (_hasExistingImage || _newImage != null || isEditable) ...[
+                                  Text(
+                                    "Receipt Image (Optional)",
+                                    style: TextStyle(
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.grey.shade600,
+                                      fontFamily: 'Poppins',
+                                    ),
                                   ),
-                                ),
-                                SizedBox(height: 8.h),
-                                _buildImageSection(claimData),
+                                  SizedBox(height: 8.h),
+                                  _buildImageSection(claimData),
+                                ],
                               ],
                             ),
                           ),

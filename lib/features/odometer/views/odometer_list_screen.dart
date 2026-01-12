@@ -63,67 +63,90 @@ class _OdometerListScreenState extends ConsumerState<OdometerListScreen> {
               height: 180.h,
             ),
           ),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              return RefreshIndicator(
-                onRefresh: () =>
-                    ref.read(odometerListViewModelProvider.notifier).refresh(),
-                color: AppColors.primary,
-                backgroundColor: Colors.white,
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                    child: Column(
-                      children: [
-                        Container(height: 100.h, color: Colors.transparent),
+          Column(
+            children: [
+              Container(height: 120.h, color: Colors.transparent),
 
-                        // Search Bar
-                        _buildSearchBar(searchQuery),
+              // Search Bar
+              _buildSearchBar(searchQuery),
 
-                        // Month Selector
-                        _buildMonthSelector(selectedMonth),
+              // Month Selector
+              _buildMonthSelector(selectedMonth),
 
-                        // Section Header
-                        SizedBox(height: 20.h),
-                        _buildSectionHeader(),
+              // Section Header
+              SizedBox(height: 20.h),
+              _buildSectionHeader(),
 
-                        readingsAsync.when(
-                          data: (items) {
-                            if (items.isEmpty) {
-                              return Column(
-                                children: [
-                                  // This creates a flexible gap between the header and the empty state
-                                  SizedBox(height: constraints.maxHeight * 0.15),
-                                  _buildEmptyState(selectedMonth),
-                                ],
-                              );
-                            }
-                            return ListView.separated(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 80.h),
-                              itemCount: items.length,
-                              separatorBuilder: (_, __) => SizedBox(height: 12.h),
-                              itemBuilder: (context, index) =>
-                                  _buildOdometerCard(items[index]),
-                            );
-                          },
-                          loading: () => _buildSkeletonList(),
-                          error: (err, stack) =>
-                              Center(
-                                child: Padding(
-                                  padding: EdgeInsets.only(top: 40.h),
-                                  child: Text('Error: $err'),
-                                ),
+              Expanded(
+                child: readingsAsync.when(
+                  data: (items) {
+                    return RefreshIndicator(
+                      onRefresh: () =>
+                          ref.read(odometerListViewModelProvider.notifier).refresh(),
+                      color: AppColors.primary,
+                      child: items.isEmpty
+                          ? _buildEmptyStateListView(selectedMonth)
+                          : ListView.separated(
+                              padding: EdgeInsets.fromLTRB(
+                                16.w,
+                                8.h,
+                                16.w,
+                                80.h,
                               ),
-                        ),
-                      ],
+                              itemCount: items.length,
+                              separatorBuilder: (_, __) =>
+                                  SizedBox(height: 12.h),
+                              itemBuilder: (context, index) {
+                                return _buildOdometerCard(items[index]);
+                              },
+                            ),
+                    );
+                  },
+                  loading: () => _buildSkeletonList(),
+                  error: (err, stack) => Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24.w),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            size: 64.sp,
+                            color: AppColors.error,
+                          ),
+                          SizedBox(height: 16.h),
+                          Text(
+                            'Something went wrong',
+                            style: TextStyle(
+                              fontSize: 18.sp,
+                              fontWeight: FontWeight.w600,
+                              fontFamily: 'Poppins',
+                            ),
+                          ),
+                          SizedBox(height: 8.h),
+                          Text(
+                            err.toString(),
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              color: AppColors.textSecondary,
+                              fontFamily: 'Poppins',
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          SizedBox(height: 24.h),
+                          OutlinedButton.icon(
+                            onPressed: () =>
+                                ref.invalidate(odometerListViewModelProvider),
+                            icon: Icon(Icons.refresh, size: 18.sp),
+                            label: Text('Retry'),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              );
-            },
+              ),
+            ],
           ),
         ],
       ),
@@ -252,33 +275,39 @@ class _OdometerListScreenState extends ConsumerState<OdometerListScreen> {
     );
   }
 
-  Widget _buildEmptyState(DateTime selectedMonth) {
+  Widget _buildEmptyStateListView(DateTime selectedMonth) {
     final monthYear = DateFormat('MMMM yyyy').format(selectedMonth);
-    return Column( // Remove Center() here if called from the Column above
-      mainAxisAlignment: MainAxisAlignment.center,
+    return ListView(
+      padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 80.h),
       children: [
-        Icon(Icons.calendar_today_outlined, size: 80.sp,
-            color: Colors.grey.shade300),
-        SizedBox(height: 24.h),
-        Text(
-          'No odometer readings',
-          style: TextStyle(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey.shade600,
-            fontFamily: 'Poppins',
+        SizedBox(height: 100.h),
+        Center(
+          child: Column(
+            children: [
+              Icon(Icons.calendar_today_outlined, size: 80.sp,
+                  color: Colors.grey.shade300),
+              SizedBox(height: 24.h),
+              Text(
+                'No odometer readings',
+                style: TextStyle(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade600,
+                  fontFamily: 'Poppins',
+                ),
+              ),
+              SizedBox(height: 8.h),
+              Text(
+                'for $monthYear',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  color: Colors.grey.shade400,
+                  fontFamily: 'Poppins',
+                ),
+              ),
+            ],
           ),
         ),
-        SizedBox(height: 8.h),
-        Text(
-          'for $monthYear',
-          style: TextStyle(
-            fontSize: 14.sp,
-            color: Colors.grey.shade400,
-            fontFamily: 'Poppins',
-          ),
-        ),
-        // REMOVE: SizedBox(height: 100.h),
       ],
     );
   }
@@ -365,12 +394,10 @@ class _OdometerListScreenState extends ConsumerState<OdometerListScreen> {
     return Skeletonizer(
       enabled: true,
       child: ListView.separated(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
         padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 80.h),
         itemCount: 5,
         separatorBuilder: (_, __) => SizedBox(height: 12.h),
-        itemBuilder: (context, index) => _buildSkeletonCard(),
+        itemBuilder: (_, __) => _buildSkeletonCard(),
       ),
     );
   }
