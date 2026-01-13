@@ -28,10 +28,10 @@ class SettingsTile extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(16.r),
           boxShadow: [
-            BoxShadow(
+            const BoxShadow(
               color: Colors.black12,
               blurRadius: 6,
-              offset: const Offset(0, 2),
+              offset: Offset(0, 2),
             ),
           ],
         ),

@@ -89,7 +89,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
         backgroundColor: AppColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
@@ -282,7 +282,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                     ? SizedBox(
                         height: 20.h,
                         width: 20.w,
-                        child: CircularProgressIndicator(
+                        child: const CircularProgressIndicator(
                           strokeWidth: 2,
                           valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
@@ -317,7 +317,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
           Container(
             width: 4.w,
             height: 4.w,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: AppColors.info,
               shape: BoxShape.circle,
             ),

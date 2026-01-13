@@ -8,13 +8,16 @@ part 'odometer.model.g.dart';
 // ============================================================================
 
 /// API Response for today's odometer status
+/// Now supports multiple trips per day
 @freezed
 abstract class OdometerTodayStatusResponse with _$OdometerTodayStatusResponse {
   const factory OdometerTodayStatusResponse({
     required bool success,
-    OdometerReading? data,
+    @Default([]) List<OdometerReading> trips,
+    @Default(0) int totalTrips,
+    @Default(false) bool hasActiveTrip,
     String? message,
-    required String status, // "not_started", "in_progress"
+    String? status, // "not_started", "in_progress"
     String? organizationTimezone,
   }) = _OdometerTodayStatusResponse;
 
@@ -116,6 +119,7 @@ abstract class StopOdometerRequest with _$StopOdometerRequest {
 abstract class OdometerDetails with _$OdometerDetails {
   const factory OdometerDetails({
     @JsonKey(name: '_id') required String id,
+    @Default(1) int tripNumber,
     required DateTime startTime,
     DateTime? stopTime,
     required double startReading,
@@ -123,6 +127,7 @@ abstract class OdometerDetails with _$OdometerDetails {
     @JsonKey(name: 'distance') @Default(0.0) double distanceTravelled,
     @JsonKey(name: 'startUnit') @Default('KM') String unit,
     @JsonKey(name: 'startDescription') String? description,
+    @JsonKey(name: 'stopDescription') String? stopDescription,
     @JsonKey(name: 'startImage') String? startReadingImage,
     @JsonKey(name: 'stopImage') String? stopReadingImage,
     @JsonKey(name: 'startLocation') StartLocation? startLocation,
@@ -147,8 +152,11 @@ abstract class OdometerDetails with _$OdometerDetails {
   /// Get stop location as display string
   String get stopLocationDisplay => stopLocation?.address ?? 'Unknown location';
 
-  /// Get description (use startDescription if not available)
-  String get displayDescription => description ?? 'No description provided';
+  /// Get start description (use startDescription if not available)
+  String get displayStartDescription => description ?? 'No description provided';
+
+  /// Get stop description
+  String get displayStopDescription => stopDescription ?? 'No description provided';
 }
 
 /// Lightweight model for Odometer history list display
@@ -157,6 +165,7 @@ abstract class OdometerListItem with _$OdometerListItem {
   const factory OdometerListItem({
     @JsonKey(name: '_id') required String id,
     required DateTime date,
+    @Default(1) int tripNumber,
     required double startReading,
     required double endReading,
     required double totalDistance,
@@ -172,9 +181,10 @@ abstract class OdometerListItem with _$OdometerListItem {
 abstract class OdometerReading with _$OdometerReading {
   const factory OdometerReading({
     @JsonKey(name: '_id') String? id,
-    required double startReading,
+    @Default(1) int tripNumber,
+    @Default(0.0) double startReading,
     @JsonKey(name: 'startUnit')
-    required String unit, // 'km' or 'miles' from API
+    @Default('KM') String unit, // 'km' or 'miles' from API
     @JsonKey(name: 'startDescription') String? description,
     @JsonKey(name: 'startImage') String? startReadingImage,
     double? stopReading,

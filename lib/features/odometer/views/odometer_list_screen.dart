@@ -80,6 +80,19 @@ class _OdometerListScreenState extends ConsumerState<OdometerListScreen> {
               Expanded(
                 child: readingsAsync.when(
                   data: (items) {
+                    // Group trips by date
+                    final groupedByDate = <DateTime, List<OdometerListItem>>{};
+                    for (var item in items) {
+                      final dateKey = DateTime(item.date.year, item.date.month, item.date.day);
+                      groupedByDate.putIfAbsent(dateKey, () => []).add(item);
+                    }
+                    // Sort trips within each day by trip number ascending
+                    groupedByDate.forEach((date, trips) {
+                      trips.sort((a, b) => a.tripNumber.compareTo(b.tripNumber));
+                    });
+                    // Sort dates descending
+                    final sortedDates = groupedByDate.keys.toList()..sort((a, b) => b.compareTo(a));
+
                     return RefreshIndicator(
                       onRefresh: () =>
                           ref.read(odometerListViewModelProvider.notifier).refresh(),
@@ -93,11 +106,13 @@ class _OdometerListScreenState extends ConsumerState<OdometerListScreen> {
                                 16.w,
                                 80.h,
                               ),
-                              itemCount: items.length,
+                              itemCount: sortedDates.length,
                               separatorBuilder: (_, __) =>
                                   SizedBox(height: 12.h),
                               itemBuilder: (context, index) {
-                                return _buildOdometerCard(items[index]);
+                                final date = sortedDates[index];
+                                final tripsForDay = groupedByDate[date]!;
+                                return _buildDayTripsCard(date, tripsForDay);
                               },
                             ),
                     );
@@ -352,13 +367,143 @@ class _OdometerListScreenState extends ConsumerState<OdometerListScreen> {
             ),
             SizedBox(height: 12.h),
             _buildInfoRow(Icons.speed_outlined, 'Start meter',
-                '${item.startReading.toInt()} km'),
+                '${item.startReading.toInt()} ${item.unit}'),
             SizedBox(height: 8.h),
             _buildInfoRow(Icons.speed_outlined, 'End meter',
-                '${item.endReading.toInt()} km'),
+                '${item.endReading.toInt()} ${item.unit}'),
             SizedBox(height: 8.h),
             _buildInfoRow(Icons.route, 'Total Distance',
-                '${item.totalDistance.toInt()} km', isHighlight: true),
+                '${item.totalDistance.toInt()} ${item.unit}', isHighlight: true),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDayTripsCard(DateTime date, List<OdometerListItem> trips) {
+    final dateFormat = DateFormat('MMM dd, yyyy');
+    final weekdayFormat = DateFormat('EEEE');
+    final totalDistance = trips.fold<double>(0, (sum, trip) => sum + trip.totalDistance);
+    final unit = trips.isNotEmpty ? trips.first.unit : 'KM';
+
+    return GestureDetector(
+      onTap: () {
+        // Navigate to details screen with first trip and trip IDs for tabs
+        final tripIds = trips.map((t) => t.id).join(',');
+        context.push('/odometer-details/${trips.first.id}?tripIds=$tripIds');
+      },
+      child: Container(
+        margin: EdgeInsets.only(bottom: 0),
+        padding: EdgeInsets.all(16.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(color: Colors.grey.shade100),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Date and weekday
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        dateFormat.format(date),
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textdark,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                      SizedBox(height: 2.h),
+                      Text(
+                        weekdayFormat.format(date),
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: Colors.grey.shade600,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.chevron_right, color: Colors.grey.shade400, size: 24.sp),
+              ],
+            ),
+            SizedBox(height: 12.h),
+            // Trip count and distance horizontal
+            Row(
+              children: [
+                // Trip count
+                Expanded(
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                    decoration: BoxDecoration(
+                      color: AppColors.secondary.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.local_shipping_outlined, 
+                            size: 16.sp, 
+                            color: AppColors.secondary),
+                        SizedBox(width: 8.w),
+                        Text(
+                          '${trips.length} ${trips.length == 1 ? 'trip' : 'trips'}',
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.secondary,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(width: 12.w),
+                // Total distance
+                Expanded(
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.route, 
+                            size: 16.sp, 
+                            color: AppColors.primary),
+                        SizedBox(width: 8.w),
+                        Text(
+                          '${totalDistance.toInt()} $unit',
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primary,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),

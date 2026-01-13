@@ -456,7 +456,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           // Extract the ID from path parameters
           final id = state.pathParameters['id'] ?? '';
-          return OdometerDetailsScreen(id: id);
+          // Extract tripIds from query parameters
+          final tripIds = state.uri.queryParameters['tripIds'];
+          return OdometerDetailsScreen(id: id, tripIds: tripIds);
         },
       ),
 
