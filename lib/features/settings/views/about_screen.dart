@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -14,8 +15,8 @@ class AboutScreen extends StatelessWidget {
         backgroundColor: AppColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
-          onPressed: () => Navigator.of(context).pop(),
+          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          onPressed: () => context.pop(),
         ),
         title: Text(
           'About SalesSphere',
@@ -238,7 +239,7 @@ class AboutScreen extends StatelessWidget {
             child: Container(
               width: 6.w,
               height: 6.h,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppColors.secondary,
                 shape: BoxShape.circle,
               ),

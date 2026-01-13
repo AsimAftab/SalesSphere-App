@@ -33,7 +33,17 @@ class OdometerListViewModel extends _$OdometerListViewModel {
     return _fetchMonthlyReport(selectedMonth);
   }
 
+  /// Helper to safely convert dynamic values to double
+  double _toDouble(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? 0.0;
+    return 0.0;
+  }
+
   /// Fetch monthly odometer report from API
+  /// Now supports multiple trips per day
   Future<List<OdometerListItem>> _fetchMonthlyReport(DateTime month) async {
     try {
       AppLogger.i('📋 Fetching odometer monthly report for ${DateFormat('MMMM yyyy').format(month)}...');
@@ -55,35 +65,41 @@ class OdometerListViewModel extends _$OdometerListViewModel {
         final items = <OdometerListItem>[];
 
         odometerMap.forEach((dayKey, dayData) {
-          if (dayData is! Map<String, dynamic>) return;
+          final day = int.parse(dayKey);
+          final date = DateTime(month.year, month.month, day);
 
-          final entry = DailyOdometerEntry.fromJson(dayData);
+          // Handle new format where dayData is a List directly
+          if (dayData is List) {
+            for (var tripData in dayData) {
+              if (tripData is! Map<String, dynamic>) continue;
 
-          // Only include completed readings
-          if (entry.status == 'completed' &&
-              entry.startReading != null &&
-              entry.stopReading != null) {
-            final day = int.parse(dayKey);
+              final tripStatus = tripData['status'] ?? tripData['tripStatus'];
+              // Only include completed trips
+              if (tripStatus == 'completed' ||
+                  tripData['stopReading'] != null) {
+                final itemId = tripData['_id'] ??
+                    'odometer_${month.year}_${month.month}_${day}_trip_${tripData['tripNumber'] ?? 1}';
 
-            // Create the date from the selected month and day
-            final date = DateTime(month.year, month.month, day);
-
-            // Use the MongoDB ID if available, otherwise fall back to constructed ID
-            // Note: Backend should include '_id' in monthly report for details to work
-            final itemId = entry.id ?? 'odometer_${month.year}_${month.month}_$day';
-
-            items.add(OdometerListItem(
-              id: itemId,
-              date: date,
-              startReading: entry.startReading!,
-              endReading: entry.stopReading!,
-              totalDistance: entry.distance ?? (entry.stopReading! - entry.startReading!),
-            ));
+                items.add(OdometerListItem(
+                  id: itemId,
+                  date: date,
+                  tripNumber: tripData['tripNumber'] ?? 1,
+                  startReading: _toDouble(tripData['startReading']),
+                  endReading: _toDouble(tripData['stopReading'] ?? tripData['startReading']),
+                  totalDistance: _toDouble(tripData['distance']),
+                  unit: tripData['startUnit'] ?? 'km',
+                ));
+              }
+            }
           }
         });
 
-        // Sort by date descending
-        items.sort((a, b) => b.date.compareTo(a.date));
+        // Sort by date descending, then by trip number descending
+        items.sort((a, b) {
+          final dateCompare = b.date.compareTo(a.date);
+          if (dateCompare != 0) return dateCompare;
+          return b.tripNumber.compareTo(a.tripNumber);
+        });
 
         AppLogger.i('✅ Loaded ${items.length} odometer readings');
         return items;

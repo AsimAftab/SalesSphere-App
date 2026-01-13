@@ -98,7 +98,7 @@ class PermissionDeniedWidget extends StatelessWidget {
                 ),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.primary,
-                  side: BorderSide(color: AppColors.primary, width: 1.5),
+                  side: const BorderSide(color: AppColors.primary, width: 1.5),
                   padding: EdgeInsets.symmetric(
                     horizontal: 24.w,
                     vertical: 12.h,
