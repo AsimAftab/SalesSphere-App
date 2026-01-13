@@ -363,7 +363,7 @@ class OdometerViewModel extends _$OdometerViewModel {
       } else {
         final errorMessage = response.data['message'] ??
             'Failed to stop odometer reading (Status: ${response.statusCode})';
-        AppLogger.e('❌ HTTP error $response.statusCode: $errorMessage');
+        AppLogger.e('❌ HTTP error ${response.statusCode}: $errorMessage');
         throw Exception(errorMessage);
       }
     } catch (e) {

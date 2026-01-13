@@ -33,6 +33,15 @@ class OdometerListViewModel extends _$OdometerListViewModel {
     return _fetchMonthlyReport(selectedMonth);
   }
 
+  /// Helper to safely convert dynamic values to double
+  double _toDouble(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? 0.0;
+    return 0.0;
+  }
+
   /// Fetch monthly odometer report from API
   /// Now supports multiple trips per day
   Future<List<OdometerListItem>> _fetchMonthlyReport(DateTime month) async {
@@ -75,9 +84,9 @@ class OdometerListViewModel extends _$OdometerListViewModel {
                   id: itemId,
                   date: date,
                   tripNumber: tripData['tripNumber'] ?? 1,
-                  startReading: (tripData['startReading'] ?? 0).toDouble(),
-                  endReading: (tripData['stopReading'] ?? tripData['startReading'] ?? 0).toDouble(),
-                  totalDistance: (tripData['distance'] ?? 0).toDouble(),
+                  startReading: _toDouble(tripData['startReading']),
+                  endReading: _toDouble(tripData['stopReading'] ?? tripData['startReading']),
+                  totalDistance: _toDouble(tripData['distance']),
                   unit: tripData['startUnit'] ?? 'km',
                 ));
               }

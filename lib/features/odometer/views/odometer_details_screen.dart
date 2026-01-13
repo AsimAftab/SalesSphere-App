@@ -40,8 +40,10 @@ class _OdometerDetailsScreenState extends ConsumerState<OdometerDetailsScreen>
     if (widget.tripIds != null && widget.tripIds!.isNotEmpty) {
       _tripIdsList = widget.tripIds!.split(',');
       _tabController = TabController(length: _tripIdsList.length, vsync: this);
+      // Add listener to rebuild on tab changes
+      _tabController?.addListener(_tabListener);
     }
-    
+
     // Add scroll listener to hide/show tabs
     _scrollController.addListener(_onScroll);
   }
@@ -61,9 +63,16 @@ class _OdometerDetailsScreenState extends ConsumerState<OdometerDetailsScreen>
 
   @override
   void dispose() {
+    _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _tabController?.removeListener(_tabListener);
     _tabController?.dispose();
     super.dispose();
+  }
+
+  void _tabListener() {
+    if (_tabController?.indexIsChanging ?? false) return;
+    setState(() {});
   }
 
   // Method to open location in Google Maps
@@ -175,7 +184,6 @@ class _OdometerDetailsScreenState extends ConsumerState<OdometerDetailsScreen>
                             fontWeight: FontWeight.w400,
                             fontFamily: 'Poppins',
                           ),
-                          onTap: (index) => setState(() {}),
                           tabs: List.generate(
                             _tripIdsList.length,
                             (index) {

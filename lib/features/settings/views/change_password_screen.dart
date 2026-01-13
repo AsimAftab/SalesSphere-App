@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/utils/snackbar_utils.dart';
 import 'package:sales_sphere/features/settings/vm/change_password_vm.dart';
@@ -10,7 +11,8 @@ class ChangePasswordScreen extends ConsumerStatefulWidget {
   const ChangePasswordScreen({super.key});
 
   @override
-  ConsumerState<ChangePasswordScreen> createState() => _ChangePasswordScreenState();
+  ConsumerState<ChangePasswordScreen> createState() =>
+      _ChangePasswordScreenState();
 }
 
 class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
@@ -51,7 +53,9 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
 
   Future<void> _handleChangePassword() async {
     if (_formKey.currentState!.validate()) {
-      final success = await ref.read(changePasswordViewModelProvider.notifier).changePassword(
+      final success = await ref
+          .read(changePasswordViewModelProvider.notifier)
+          .changePassword(
             currentPassword: _currentPasswordController.text,
             newPassword: _newPasswordController.text,
             confirmNewPassword: _confirmNewPasswordController.text,
@@ -64,7 +68,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
           context,
           'Password changed successfully! Please login again.',
         );
-        Navigator.of(context).pop();
+        context.pop();
       } else {
         final error = ref.read(changePasswordViewModelProvider).error;
         String errorMessage = 'Failed to change password';
@@ -90,7 +94,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => context.pop(),
         ),
         title: Text(
           'Change Password',
@@ -142,7 +146,9 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                       suffixWidget: IconButton(
                         onPressed: _toggleCurrentPasswordVisibility,
                         icon: Icon(
-                          _isCurrentPasswordVisible ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                          _isCurrentPasswordVisible
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
                           color: AppColors.textSecondary,
                           size: 20.sp,
                         ),
@@ -174,12 +180,16 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                       suffixWidget: IconButton(
                         onPressed: _toggleNewPasswordVisibility,
                         icon: Icon(
-                          _isNewPasswordVisible ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                          _isNewPasswordVisible
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
                           color: AppColors.textSecondary,
                           size: 20.sp,
                         ),
                       ),
-                      validator: ref.read(changePasswordViewModelProvider.notifier).validatePassword,
+                      validator: ref
+                          .read(changePasswordViewModelProvider.notifier)
+                          .validatePassword,
                     ),
 
                     SizedBox(height: 20.h),
@@ -201,7 +211,9 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                       suffixWidget: IconButton(
                         onPressed: _toggleConfirmNewPasswordVisibility,
                         icon: Icon(
-                          _isConfirmNewPasswordVisible ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                          _isConfirmNewPasswordVisible
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
                           color: AppColors.textSecondary,
                           size: 20.sp,
                         ),
@@ -239,7 +251,11 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.info_outline, size: 18.sp, color: AppColors.info),
+                      Icon(
+                        Icons.info_outline,
+                        size: 18.sp,
+                        color: AppColors.info,
+                      ),
                       SizedBox(width: 8.w),
                       Text(
                         'Password Requirements',
@@ -272,7 +288,9 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.secondary,
                   foregroundColor: Colors.white,
-                  disabledBackgroundColor: AppColors.textSecondary.withValues(alpha: 0.3),
+                  disabledBackgroundColor: AppColors.textSecondary.withValues(
+                    alpha: 0.3,
+                  ),
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12.r),
@@ -284,7 +302,9 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                         width: 20.w,
                         child: const CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
                         ),
                       )
                     : Row(

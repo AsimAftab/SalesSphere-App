@@ -26,10 +26,16 @@ class _OdometerScreenState extends ConsumerState<OdometerScreen> {
   final PageController _pageController = PageController(viewportFraction: 0.93);
 
   @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final odometerState = ref.watch(odometerViewModelProvider);
     final statusResponse = odometerState.value;
-    final hasActiveTrip = ref.read(odometerViewModelProvider.notifier).hasActiveTrip;
+    final hasActiveTrip = statusResponse?.hasActiveTrip ?? false;
     final allTrips = statusResponse?.trips ?? [];
 
     return Scaffold(
@@ -65,8 +71,13 @@ class _OdometerScreenState extends ConsumerState<OdometerScreen> {
 
                   if (!hasActiveTrip)
                     _buildAddTripButton(context)
-                  else
-                    _buildActiveTripIndicator(allTrips.firstWhere((t) => t.isInProgress)),
+                  else if (allTrips.isNotEmpty)
+                    _buildActiveTripIndicator(
+                      allTrips.firstWhere(
+                        (t) => t.isInProgress,
+                        orElse: () => allTrips.first,
+                      ),
+                    ),
 
                   SizedBox(height: 24.h),
 
@@ -176,12 +187,8 @@ class _OdometerScreenState extends ConsumerState<OdometerScreen> {
       badgeColor = AppColors.secondary;
       final activeTrip = allTrips.firstWhere((t) => t.isInProgress, orElse: () => allTrips.first);
       if (activeTrip.startTime != null) {
-        try {
-          final startTime = DateTime.parse(activeTrip.startTime.toString()).toLocal();
-          timeInfo = DateFormat('hh:mm a').format(startTime);
-        } catch (e) {
-          timeInfo = null;
-        }
+        final startTime = activeTrip.startTime!.toLocal();
+        timeInfo = DateFormat('hh:mm a').format(startTime);
       }
     } else if (hasAnyCompletedTrips) {
       statusText = "Completed";
@@ -262,7 +269,7 @@ class _OdometerScreenState extends ConsumerState<OdometerScreen> {
   Widget _buildAddTripButton(BuildContext context) {
     return PrimaryButton(
       label: "Start New Trip",
-      onPressed: () => _showStartTripDialog(context, ref),
+      onPressed: () => _showStartTripDialog(context),
       leadingIcon: Icons.add_rounded,
       height: 52.h,
     );
@@ -351,7 +358,7 @@ class _OdometerScreenState extends ConsumerState<OdometerScreen> {
           // Stop Button
           CustomButton(
             label: "Stop Trip",
-            onPressed: () => _showStopTripDialog(context, ref, trip),
+            onPressed: () => _showStopTripDialog(context, trip),
             backgroundColor: AppColors.red500,
             leadingIcon: Icons.stop_circle_outlined,
             trailingIcon: Icons.arrow_forward_rounded,
@@ -603,7 +610,28 @@ class _OdometerScreenState extends ConsumerState<OdometerScreen> {
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (error, _) => Container(
+        padding: EdgeInsets.all(20.w),
+        decoration: BoxDecoration(
+          color: AppColors.cardBackground,
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        child: Column(
+          children: [
+            Icon(Icons.error_outline, color: AppColors.error, size: 32.sp),
+            SizedBox(height: 12.h),
+            Text(
+              'Unable to load summary',
+              style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+            ),
+            SizedBox(height: 8.h),
+            Text(
+              'Swipe to refresh or try again later',
+              style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -617,11 +645,11 @@ class _OdometerScreenState extends ConsumerState<OdometerScreen> {
     );
   }
 
-  void _showStartTripDialog(BuildContext context, WidgetRef ref) {
+  void _showStartTripDialog(BuildContext context) {
     showDialog(context: context, builder: (context) => const OdometerReadingForm(isStop: false));
   }
 
-  void _showStopTripDialog(BuildContext context, WidgetRef ref, OdometerReading trip) {
+  void _showStopTripDialog(BuildContext context, OdometerReading trip) {
     showDialog(context: context, builder: (context) => OdometerReadingForm(isStop: true, activeData: trip));
   }
 }
@@ -801,7 +829,12 @@ class _OdometerReadingFormState extends ConsumerState<OdometerReadingForm> {
     return GestureDetector(
       onTap: () async {
         final x = await ref.read(odometerViewModelProvider.notifier).pickImage();
-        if (x != null) setState(() { _image = File(x.path); _showValidationErrors = false; });
+        if (x != null) {
+          setState(() {
+            _image = File(x.path);
+            _showValidationErrors = false;
+          });
+        }
       },
       child: Container(
         height: 120.h,
@@ -1021,9 +1054,14 @@ class _OdometerReadingFormState extends ConsumerState<OdometerReadingForm> {
     });
 
     if ((_formKey.currentState?.validate() ?? false) && _image != null) {
+      final val = double.tryParse(_readingController.text);
+      if (val == null) {
+        setState(() => _isSubmitting = false);
+        return;
+      }
+
       setState(() => _isSubmitting = true);
       try {
-        final val = double.parse(_readingController.text);
         if (widget.isStop) {
           await ref.read(odometerViewModelProvider.notifier).stopTrip(
             reading: val,
