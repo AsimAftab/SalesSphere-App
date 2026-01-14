@@ -15,6 +15,10 @@ class GeofencingService {
   /// Strict geofence radius for testing or high-accuracy requirements
   static const double strictGeofenceRadius = 20.0; // 20 meters
 
+  /// Attendance geofence radius in meters
+  /// Users must be within this distance to mark attendance
+  static const double attendanceGeofenceRadius = 100.0; // 100 meters
+
   /// Calculate distance between two coordinates in meters
   /// Uses the Haversine formula via Geolocator
   double calculateDistance({

@@ -36,6 +36,8 @@ class ApiEndpoints {
   static String updateParty(String id) => '/api/v1/parties/$id';
   static String deleteParty(String id) => '/api/v1/parties/$id';
   static const String myAssignedParties = '/api/v1/parties/my-assigned';
+  static const String partyTypes = '/api/v1/parties/types';
+  static String uploadPartyImage(String partyId) => '/api/v1/parties/$partyId/image';
 
   //Prospects EndPoints (Final)
   static const String prospects = '/api/v1/prospects';

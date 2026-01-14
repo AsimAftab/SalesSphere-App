@@ -7,6 +7,55 @@ part 'parties.model.g.dart';
 // API Response Models
 // ============================================================================
 
+/// Party Type model
+@freezed
+abstract class PartyType with _$PartyType {
+  const factory PartyType({
+    @JsonKey(name: '_id') required String id,
+    required String name,
+  }) = _PartyType;
+
+  factory PartyType.fromJson(Map<String, dynamic> json) =>
+      _$PartyTypeFromJson(json);
+}
+
+/// API Response wrapper for party types endpoint
+@freezed
+abstract class PartyTypesApiResponse with _$PartyTypesApiResponse {
+  const factory PartyTypesApiResponse({
+    required bool success,
+    required int count,
+    required List<PartyType> data,
+  }) = _PartyTypesApiResponse;
+
+  factory PartyTypesApiResponse.fromJson(Map<String, dynamic> json) =>
+      _$PartyTypesApiResponseFromJson(json);
+}
+
+/// Image upload response data
+@freezed
+abstract class PartyImageUploadData with _$PartyImageUploadData {
+  const factory PartyImageUploadData({
+    required String imageUrl,
+  }) = _PartyImageUploadData;
+
+  factory PartyImageUploadData.fromJson(Map<String, dynamic> json) =>
+      _$PartyImageUploadDataFromJson(json);
+}
+
+/// API Response wrapper for party image upload
+@freezed
+abstract class PartyImageUploadResponse with _$PartyImageUploadResponse {
+  const factory PartyImageUploadResponse({
+    required bool success,
+    required String message,
+    required PartyImageUploadData data,
+  }) = _PartyImageUploadResponse;
+
+  factory PartyImageUploadResponse.fromJson(Map<String, dynamic> json) =>
+      _$PartyImageUploadResponseFromJson(json);
+}
+
 /// User info for assignedBy field
 @freezed
 abstract class AssignedBy with _$AssignedBy {
@@ -96,6 +145,8 @@ abstract class PartyDetailApiData with _$PartyDetailApiData {
     required String ownerName,
     String? dateJoined,
     required String panVatNumber,
+    String? partyType,
+    String? image,
     required PartyContact contact,
     required PartyLocationDetail location,
     String? description,
@@ -112,10 +163,8 @@ abstract class PartyDetailApiData with _$PartyDetailApiData {
 /// Contact information for party
 @freezed
 abstract class PartyContact with _$PartyContact {
-  const factory PartyContact({
-    required String phone,
-    String? email,
-  }) = _PartyContact;
+  const factory PartyContact({required String phone, String? email}) =
+      _PartyContact;
 
   factory PartyContact.fromJson(Map<String, dynamic> json) =>
       _$PartyContactFromJson(json);
@@ -124,9 +173,7 @@ abstract class PartyContact with _$PartyContact {
 /// Location data for party (list view - address only)
 @freezed
 abstract class PartyLocation with _$PartyLocation {
-  const factory PartyLocation({
-    required String address,
-  }) = _PartyLocation;
+  const factory PartyLocation({required String address}) = _PartyLocation;
 
   factory PartyLocation.fromJson(Map<String, dynamic> json) =>
       _$PartyLocationFromJson(json);
@@ -156,6 +203,7 @@ abstract class UpdatePartyRequest with _$UpdatePartyRequest {
     required String partyName,
     required String ownerName,
     required String panVatNumber,
+    String? partyType,
     required UpdatePartyContact contact,
     required UpdatePartyLocation location,
     String? description,
@@ -170,10 +218,8 @@ abstract class UpdatePartyRequest with _$UpdatePartyRequest {
       partyName: party.name,
       ownerName: party.ownerName,
       panVatNumber: party.panVatNumber,
-      contact: UpdatePartyContact(
-        phone: party.phoneNumber,
-        email: party.email,
-      ),
+      partyType: party.partyType,
+      contact: UpdatePartyContact(phone: party.phoneNumber, email: party.email),
       location: UpdatePartyLocation(
         address: party.fullAddress,
         latitude: party.latitude,
@@ -187,10 +233,8 @@ abstract class UpdatePartyRequest with _$UpdatePartyRequest {
 /// Contact info for update request
 @freezed
 abstract class UpdatePartyContact with _$UpdatePartyContact {
-  const factory UpdatePartyContact({
-    required String phone,
-    String? email,
-  }) = _UpdatePartyContact;
+  const factory UpdatePartyContact({required String phone, String? email}) =
+      _UpdatePartyContact;
 
   factory UpdatePartyContact.fromJson(Map<String, dynamic> json) =>
       _$UpdatePartyContactFromJson(json);
@@ -221,6 +265,7 @@ abstract class CreatePartyRequest with _$CreatePartyRequest {
     required String ownerName,
     required String dateJoined,
     required String panVatNumber,
+    String? partyType,
     required CreatePartyContact contact,
     required CreatePartyLocation location,
     String? description,
@@ -233,10 +278,8 @@ abstract class CreatePartyRequest with _$CreatePartyRequest {
 /// Contact info for create request
 @freezed
 abstract class CreatePartyContact with _$CreatePartyContact {
-  const factory CreatePartyContact({
-    required String phone,
-    String? email,
-  }) = _CreatePartyContact;
+  const factory CreatePartyContact({required String phone, String? email}) =
+      _CreatePartyContact;
 
   factory CreatePartyContact.fromJson(Map<String, dynamic> json) =>
       _$CreatePartyContactFromJson(json);
@@ -321,6 +364,8 @@ abstract class PartyDetails with _$PartyDetails {
     required String name,
     required String ownerName,
     required String panVatNumber,
+    String? partyType,
+    String? imageUrl,
     required String phoneNumber,
     String? email,
     required String fullAddress,
@@ -343,6 +388,8 @@ abstract class PartyDetails with _$PartyDetails {
       name: apiData.partyName,
       ownerName: apiData.ownerName,
       panVatNumber: apiData.panVatNumber,
+      partyType: apiData.partyType,
+      imageUrl: apiData.image,
       phoneNumber: apiData.contact.phone,
       email: apiData.contact.email,
       fullAddress: apiData.location.address,

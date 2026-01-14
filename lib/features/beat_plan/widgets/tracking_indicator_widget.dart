@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
@@ -17,14 +19,16 @@ class TrackingIndicatorWidget extends StatefulWidget {
   });
 
   @override
-  State<TrackingIndicatorWidget> createState() =>
-      _TrackingIndicatorWidgetState();
+  State<TrackingIndicatorWidget> createState() => _TrackingIndicatorWidgetState();
 }
 
 class _TrackingIndicatorWidgetState extends State<TrackingIndicatorWidget>
     with SingleTickerProviderStateMixin {
   late TrackingState _currentState;
   late AnimationController _animationController;
+
+  // Stream subscription to properly cancel when widget is disposed
+  StreamSubscription<TrackingState>? _stateSubscription;
 
   @override
   void initState() {
@@ -42,12 +46,15 @@ class _TrackingIndicatorWidgetState extends State<TrackingIndicatorWidget>
 
   @override
   void dispose() {
+    _stateSubscription?.cancel();
     _animationController.dispose();
     super.dispose();
   }
 
   void _subscribeToTrackingState() {
-    TrackingCoordinator.instance.onStateChanged.listen((state) {
+    _stateSubscription = TrackingCoordinator.instance.onStateChanged.listen((
+      state,
+    ) {
       if (mounted) {
         setState(() {
           _currentState = state;
@@ -108,7 +115,9 @@ class _TrackingIndicatorWidgetState extends State<TrackingIndicatorWidget>
                     height: (widget.size * 2).w,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: color.withValues(alpha:_animationController.value * 0.2),
+                      color: color.withValues(
+                        alpha: _animationController.value * 0.2,
+                      ),
                     ),
                   ),
                   // Inner dot
@@ -120,7 +129,9 @@ class _TrackingIndicatorWidgetState extends State<TrackingIndicatorWidget>
                       color: color,
                       boxShadow: [
                         BoxShadow(
-                          color: color.withValues(alpha:_animationController.value * 0.6),
+                          color: color.withValues(
+                            alpha: _animationController.value * 0.6,
+                          ),
                           blurRadius: 8 * _animationController.value,
                           spreadRadius: 2 * _animationController.value,
                         ),
@@ -189,9 +200,6 @@ class CompactTrackingIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const TrackingIndicatorWidget(
-      showLabel: false,
-      size: 10.0,
-    );
+    return const TrackingIndicatorWidget(showLabel: false, size: 10.0);
   }
 }

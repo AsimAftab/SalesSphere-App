@@ -6,7 +6,8 @@ part 'tracking_coordinator_provider.g.dart';
 
 /// Tracking Coordinator Service Provider
 /// Provides access to the singleton tracking coordinator
-@riverpod
+/// NOTE: keepAlive is required to prevent stream controllers from being closed
+@Riverpod(keepAlive: true)
 TrackingCoordinator trackingCoordinator(Ref ref) {
   final coordinator = TrackingCoordinator.instance;
 

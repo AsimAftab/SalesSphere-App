@@ -143,6 +143,8 @@ abstract class TodayAttendanceStatusResponse
     String? organizationCheckInTime,
     String? organizationCheckOutTime,
     String? organizationHalfDayCheckOutTime,
+    @Default(false) bool enableGeoFencingAttendance,
+    OrganizationLocation? organizationLocation,
   }) = _TodayAttendanceStatusResponse;
 
   factory TodayAttendanceStatusResponse.fromJson(Map<String, dynamic> json) =>
@@ -323,6 +325,33 @@ class HalfDayWindowClosedException implements Exception {
 
   @override
   String toString() => restriction.message;
+}
+
+// ========================================
+// ORGANIZATION LOCATION MODEL (Geofencing)
+// ========================================
+@freezed
+abstract class OrganizationLocation with _$OrganizationLocation {
+  const factory OrganizationLocation({
+    required double latitude,
+    required double longitude,
+    required String address,
+  }) = _OrganizationLocation;
+
+  factory OrganizationLocation.fromJson(Map<String, dynamic> json) =>
+      _$OrganizationLocationFromJson(json);
+}
+
+// ========================================
+// GEOFENCE VIOLATION EXCEPTION
+// ========================================
+class GeofenceViolationException implements Exception {
+  final String message;
+
+  GeofenceViolationException(this.message);
+
+  @override
+  String toString() => message;
 }
 
 // ========================================

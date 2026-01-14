@@ -6,6 +6,7 @@ import 'package:sales_sphere/core/exceptions/offline_exception.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
 import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/providers/connectivity_provider.dart';
+import 'package:sales_sphere/core/services/geofencing_service.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 import '../models/attendance.models.dart';
 
@@ -90,6 +91,91 @@ class TodayAttendanceViewModel extends _$TodayAttendanceViewModel {
     }
   }
 
+  /// Check if geofencing is enabled for attendance
+  bool isGeofencingEnabled(TodayAttendanceStatusResponse? statusResponse) {
+    if (statusResponse == null) return false;
+    return statusResponse.enableGeoFencingAttendance &&
+        statusResponse.organizationLocation != null;
+  }
+
+  /// Validate user location against geofence before check-in
+  /// Throws GeofenceViolationException if outside radius
+  Future<void> validateGeofenceForCheckIn(
+    TodayAttendanceStatusResponse statusResponse,
+    double userLat,
+    double userLng,
+  ) async {
+    if (!isGeofencingEnabled(statusResponse)) {
+      AppLogger.i('ℹ️ Geofencing not enabled, skipping validation');
+      return;
+    }
+
+    final orgLocation = statusResponse.organizationLocation!;
+    AppLogger.i('📍 Validating geofence for check-in...');
+    AppLogger.d('   Organization: ${orgLocation.latitude}, ${orgLocation.longitude}');
+    AppLogger.d('   User: $userLat, $userLng');
+
+    final result = GeofencingService.instance.validateGeofence(
+      userLat: userLat,
+      userLng: userLng,
+      targetLat: orgLocation.latitude,
+      targetLng: orgLocation.longitude,
+      radius: GeofencingService.attendanceGeofenceRadius,
+    );
+
+    if (!result.isWithinGeofence) {
+      final distanceFormatted = GeofencingService.instance.formatDistance(result.distanceOutside);
+      final radiusFormatted = GeofencingService.instance.formatDistance(result.radius);
+      AppLogger.w('⚠️ Geofence violation: ${distanceFormatted} outside (allowed: ${radiusFormatted})');
+      throw GeofenceViolationException(
+        'You are outside the attendance geofence. '
+        'Please move within ${radiusFormatted} of ${orgLocation.address}. '
+        '(Current distance: ${distanceFormatted} away)',
+      );
+    }
+
+    AppLogger.i('✅ Geofence validation passed for check-in');
+  }
+
+  /// Validate user location against geofence before check-out
+  /// Throws GeofenceViolationException if outside radius
+  Future<void> validateGeofenceForCheckOut(
+    TodayAttendanceStatusResponse statusResponse,
+    double userLat,
+    double userLng,
+  ) async {
+    if (!isGeofencingEnabled(statusResponse)) {
+      AppLogger.i('ℹ️ Geofencing not enabled, skipping validation');
+      return;
+    }
+
+    final orgLocation = statusResponse.organizationLocation!;
+    AppLogger.i('📍 Validating geofence for check-out...');
+    AppLogger.d('   Organization: ${orgLocation.latitude}, ${orgLocation.longitude}');
+    AppLogger.d('   User: $userLat, $userLng');
+
+    final result = GeofencingService.instance.validateGeofence(
+      userLat: userLat,
+      userLng: userLng,
+      targetLat: orgLocation.latitude,
+      targetLng: orgLocation.longitude,
+      radius: GeofencingService.attendanceGeofenceRadius,
+    );
+
+    if (!result.isWithinGeofence) {
+      final distanceFormatted = GeofencingService.instance.formatDistance(result.distanceOutside);
+      final radiusFormatted = GeofencingService.instance.formatDistance(result.radius);
+      AppLogger.w('⚠️ Geofence violation: ${distanceFormatted} outside (allowed: ${radiusFormatted})');
+      throw GeofenceViolationException(
+        'You are outside the attendance geofence. '
+        'Please move within ${radiusFormatted} of ${orgLocation.address}. '
+        '(Current distance: ${distanceFormatted} away)',
+      );
+    }
+
+    AppLogger.i('✅ Geofence validation passed for check-out');
+  }
+
   /// Check-in method
   Future<void> checkIn({
     required double latitude,
@@ -103,6 +189,12 @@ class TodayAttendanceViewModel extends _$TodayAttendanceViewModel {
 
     try {
       AppLogger.i('📍 Checking in at: $address');
+
+      // Validate geofence before API call
+      final currentStatus = previousState.value;
+      if (currentStatus != null) {
+        await validateGeofenceForCheckIn(currentStatus, latitude, longitude);
+      }
 
       final dio = ref.read(dioClientProvider);
       final response = await dio.post(
@@ -150,6 +242,10 @@ class TodayAttendanceViewModel extends _$TodayAttendanceViewModel {
         state = AsyncError(Exception('Check-in failed'), StackTrace.current);
         throw Exception('Check-in failed');
       }
+    } on GeofenceViolationException {
+      // Geofence violation - restore state and rethrow
+      state = previousState;
+      rethrow;
     } on DioException catch (e) {
       AppLogger.e('❌ Check-in failed: ${e.response?.statusCode} - ${e.response?.data}');
 
@@ -203,6 +299,12 @@ class TodayAttendanceViewModel extends _$TodayAttendanceViewModel {
 
     try {
       AppLogger.i('📍 Checking out at: $address${isHalfDay ? ' (Half-day)' : ''}');
+
+      // Validate geofence before API call
+      final currentStatus = previousState.value;
+      if (currentStatus != null) {
+        await validateGeofenceForCheckOut(currentStatus, latitude, longitude);
+      }
 
       final dio = ref.read(dioClientProvider);
       final response = await dio.put(
@@ -265,6 +367,10 @@ class TodayAttendanceViewModel extends _$TodayAttendanceViewModel {
         state = AsyncError(Exception('Check-out failed'), StackTrace.current);
         throw Exception('Check-out failed');
       }
+    } on GeofenceViolationException {
+      // Geofence violation - restore state and rethrow
+      state = previousState;
+      rethrow;
     } on CheckoutRestrictionException {
       // Validation errors - state already restored, just re-throw
       rethrow;

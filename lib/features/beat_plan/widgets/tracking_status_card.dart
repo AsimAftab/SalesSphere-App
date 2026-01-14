@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
@@ -20,6 +21,10 @@ class _TrackingStatusCardState extends State<TrackingStatusCard> {
   TrackingStats? _currentStats;
   late TrackingState _currentState;
 
+  // Stream subscriptions to properly cancel when widget is disposed
+  StreamSubscription<TrackingStats>? _statsSubscription;
+  StreamSubscription<TrackingState>? _stateSubscription;
+
   @override
   void initState() {
     super.initState();
@@ -30,7 +35,7 @@ class _TrackingStatusCardState extends State<TrackingStatusCard> {
 
   void _subscribeToTracking() {
     // Listen to tracking stats updates
-    TrackingCoordinator.instance.onStatsChanged.listen((stats) {
+    _statsSubscription = TrackingCoordinator.instance.onStatsChanged.listen((stats) {
       if (mounted) {
         setState(() {
           _currentStats = stats;
@@ -39,13 +44,20 @@ class _TrackingStatusCardState extends State<TrackingStatusCard> {
     });
 
     // Listen to tracking state changes
-    TrackingCoordinator.instance.onStateChanged.listen((state) {
+    _stateSubscription = TrackingCoordinator.instance.onStateChanged.listen((state) {
       if (mounted) {
         setState(() {
           _currentState = state;
         });
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _statsSubscription?.cancel();
+    _stateSubscription?.cancel();
+    super.dispose();
   }
 
   @override

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -5,7 +6,9 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:sales_sphere/core/utils/date_formatter.dart';
+import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/services/google_places_service.dart';
@@ -13,8 +16,11 @@ import 'package:sales_sphere/core/services/location_service.dart';
 import 'package:sales_sphere/core/utils/field_validators.dart';
 import 'package:sales_sphere/features/parties/models/parties.model.dart';
 import 'package:sales_sphere/features/parties/vm/edit_party.vm.dart';
+import 'package:sales_sphere/features/parties/vm/party_types.vm.dart';
+import 'package:sales_sphere/features/parties/vm/party_image.vm.dart';
 import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
+import 'package:sales_sphere/widget/custom_dropdown_textfield.dart';
 import 'package:sales_sphere/widget/location_picker_widget.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
@@ -56,6 +62,13 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
   late TextEditingController _notesController;
   late TextEditingController _dateJoinedController;
 
+  // Party type selection
+  String? _selectedPartyType;
+
+  // Image selection
+  XFile? _selectedImage;
+  final ImagePicker _picker = ImagePicker();
+
   PartyDetails? _currentParty;
   LatLng? _initialLocation;
   @override
@@ -91,6 +104,7 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
       _longitudeController.text = party.longitude?.toString() ?? '';
       _notesController.text = party.notes ?? '';
       _dateJoinedController.text = DateFormatter.formatDateOnly(party.dateJoined);
+      _selectedPartyType = party.partyType;
 
       // Set initial location for map if coordinates exist
       if (party.latitude != null && party.longitude != null) {
@@ -114,6 +128,163 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
     super.dispose();
   }
 
+  // Pick image from gallery or camera
+  Future<void> _pickImage() async {
+    try {
+      await showModalBottomSheet(
+        context: context,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+        ),
+        builder: (BuildContext context) {
+          return SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.photo_library),
+                  title: const Text('Gallery'),
+                  onTap: () async {
+                    context.pop();
+                    final XFile? image = await _picker.pickImage(
+                      source: ImageSource.gallery,
+                      maxWidth: 1920,
+                      maxHeight: 1080,
+                      imageQuality: 85,
+                    );
+                    if (image != null) {
+                      setState(() {
+                        _selectedImage = image;
+                      });
+                    }
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo_camera),
+                  title: const Text('Camera'),
+                  onTap: () async {
+                    context.pop();
+                    final XFile? image = await _picker.pickImage(
+                      source: ImageSource.camera,
+                      maxWidth: 1920,
+                      maxHeight: 1080,
+                      imageQuality: 85,
+                    );
+                    if (image != null) {
+                      setState(() {
+                        _selectedImage = image;
+                      });
+                    }
+                  },
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    } catch (e) {
+      AppLogger.e('Error picking image: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to pick image: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  // Show image preview dialog
+  void _showImagePreview({bool isNetworkImage = false}) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: EdgeInsets.all(16.w),
+          child: Stack(
+            children: [
+              Container(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.8,
+                  maxWidth: MediaQuery.of(context).size.width,
+                ),
+                child: InteractiveViewer(
+                  minScale: 0.5,
+                  maxScale: 4.0,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12.r),
+                    child: isNetworkImage
+                        ? Image.network(
+                            _currentParty!.imageUrl!,
+                            fit: BoxFit.contain,
+                          )
+                        : Image.file(
+                            File(_selectedImage!.path),
+                            fit: BoxFit.contain,
+                          ),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 0,
+                right: 0,
+                child: GestureDetector(
+                  onTap: () => context.pop(),
+                  child: Container(
+                    padding: EdgeInsets.all(8.w),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.7),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 24.sp,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: 16.h,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 8.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.7),
+                      borderRadius: BorderRadius.circular(20.r),
+                    ),
+                    child: Text(
+                      'Pinch to zoom',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12.sp,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // Remove selected image
+  void _removeImage() {
+    setState(() {
+      _selectedImage = null;
+    });
+  }
+
   Future<void> _handleSave() async {
     if (_formKey.currentState?.validate() ?? false) {
       if (_currentParty == null) return;
@@ -128,6 +299,7 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
             : _emailController.text.trim(),
         ownerName: _ownerNameController.text.trim(),
         panVatNumber: _panVatNumberController.text.trim(),
+        partyType: _selectedPartyType,
         fullAddress: _fullAddressController.text.trim(),
         latitude: double.tryParse(_latitudeController.text.trim()),
         longitude: double.tryParse(_longitudeController.text.trim()),
@@ -164,6 +336,23 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
 
         // Call API to update party
         await vm.updateParty(updatedParty);
+
+        // Upload new image if selected
+        if (_selectedImage != null && mounted) {
+          try {
+            final imageVm = ref.read(partyImageViewModelProvider.notifier);
+            await imageVm.uploadImage(
+              partyId: updatedParty.id,
+              imageFile: File(_selectedImage!.path),
+            );
+            AppLogger.i('✅ Party image uploaded successfully');
+            // Update the party with new image URL (will be fetched on reload)
+            _selectedImage = null;
+          } catch (e) {
+            AppLogger.e('❌ Error uploading party image: $e');
+            // Don't fail the whole operation if image upload fails
+          }
+        }
 
         if (mounted) {
           // Close loading snackbar
@@ -620,8 +809,6 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                           ),
                           SizedBox(height: 16.h),
 
-
-
                           PrimaryTextField(
                             hintText: "Date Joined",
                             controller: _dateJoinedController,
@@ -629,6 +816,271 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                             hasFocusBorder: true,
                             enabled: false,
                             textInputAction: TextInputAction.newline,
+                          ),
+                          
+                          // Only show Party Type if it exists or we're in edit mode
+                          if (_selectedPartyType != null || _isEditMode) ...[
+                            SizedBox(height: 16.h),
+                            
+                            // Party Type Dropdown
+                            ref.watch(partyTypesViewModelProvider).when(
+                              data: (partyTypes) => CustomDropdownTextField<String>(
+                                hintText: "Party Type",
+                                searchHint: "Search party type...",
+                                value: _selectedPartyType,
+                                prefixIcon: Icons.category_outlined,
+                                enabled: _isEditMode,
+                                items: partyTypes
+                                    .map(
+                                      (type) => DropdownItem<String>(
+                                        value: type.name,
+                                        label: type.name,
+                                        icon: Icons.business,
+                                      ),
+                                    )
+                                    .toList(),
+                                onChanged: (val) =>
+                                    setState(() => _selectedPartyType = val),
+                              ),
+                              loading: () => PrimaryTextField(
+                                controller: TextEditingController(text: 'Loading party types...'),
+                                hintText: "Party Type",
+                                prefixIcon: Icons.category_outlined,
+                                enabled: false,
+                                suffixWidget: const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                ),
+                              ),
+                              error: (e, _) => PrimaryTextField(
+                                controller: TextEditingController(text: ''),
+                                hintText: "Party Type",
+                                prefixIcon: Icons.category_outlined,
+                                enabled: false,
+                                errorText: "Failed to load party types",
+                              ),
+                            ),
+                          ],
+                          
+                          // Party Image Section
+                          SizedBox(height: 20.h),
+                          Text(
+                            "Party Image",
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey.shade600,
+                              fontFamily: 'Poppins',
+                            ),
+                          ),
+                          SizedBox(height: 8.h),
+                          GestureDetector(
+                            onTap: () {
+                              if (_selectedImage != null) {
+                                _showImagePreview(isNetworkImage: false);
+                              } else if (_currentParty?.imageUrl != null) {
+                                _showImagePreview(isNetworkImage: true);
+                              } else if (_isEditMode) {
+                                _pickImage();
+                              }
+                            },
+                            child: Container(
+                              height: (_selectedImage != null || _currentParty?.imageUrl != null) ? 200.h : 120.h,
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF5F6FA),
+                                borderRadius: BorderRadius.circular(12.r),
+                                border: Border.all(
+                                  color: const Color(0xFFE0E0E0),
+                                  style: BorderStyle.solid,
+                                ),
+                              ),
+                              child: _selectedImage != null
+                                  ? Stack(
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(12.r),
+                                          child: Image.file(
+                                            File(_selectedImage!.path),
+                                            width: double.infinity,
+                                            height: 200.h,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                        // Preview overlay indicator
+                                        Positioned(
+                                          bottom: 8.h,
+                                          right: 8.w,
+                                          child: Container(
+                                            padding: EdgeInsets.symmetric(
+                                              horizontal: 12.w,
+                                              vertical: 6.h,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.black.withValues(alpha: 0.6),
+                                              borderRadius: BorderRadius.circular(20.r),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(
+                                                  Icons.zoom_in,
+                                                  color: Colors.white,
+                                                  size: 16.sp,
+                                                ),
+                                                SizedBox(width: 4.w),
+                                                Text(
+                                                  'Tap to preview',
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 10.sp,
+                                                    fontFamily: 'Poppins',
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        // Close button
+                                        if (_isEditMode)
+                                          Positioned(
+                                            top: 8.h,
+                                            right: 8.w,
+                                            child: GestureDetector(
+                                              onTap: _removeImage,
+                                              child: Container(
+                                                padding: EdgeInsets.all(6.w),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.black.withValues(alpha: 0.6),
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                child: Icon(
+                                                  Icons.close,
+                                                  color: Colors.white,
+                                                  size: 20.sp,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    )
+                                  : (_currentParty?.imageUrl != null
+                                      ? Stack(
+                                          children: [
+                                            ClipRRect(
+                                              borderRadius: BorderRadius.circular(12.r),
+                                              child: Image.network(
+                                                _currentParty!.imageUrl!,
+                                                width: double.infinity,
+                                                height: 200.h,
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (context, error, stackTrace) {
+                                                  return Container(
+                                                    height: 200.h,
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.grey.shade200,
+                                                      borderRadius: BorderRadius.circular(12.r),
+                                                    ),
+                                                    child: Column(
+                                                      mainAxisAlignment: MainAxisAlignment.center,
+                                                      children: [
+                                                        Icon(
+                                                          Icons.broken_image_outlined,
+                                                          size: 40.sp,
+                                                          color: Colors.grey.shade400,
+                                                        ),
+                                                        SizedBox(height: 8.h),
+                                                        Text(
+                                                          "Failed to load image",
+                                                          style: TextStyle(
+                                                            fontSize: 12.sp,
+                                                            color: Colors.grey.shade600,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                            ),
+                                            // Preview overlay indicator
+                                            Positioned(
+                                              bottom: 8.h,
+                                              right: 8.w,
+                                              child: Container(
+                                                padding: EdgeInsets.symmetric(
+                                                  horizontal: 12.w,
+                                                  vertical: 6.h,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.black.withValues(alpha: 0.6),
+                                                  borderRadius: BorderRadius.circular(20.r),
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Icon(
+                                                      Icons.zoom_in,
+                                                      color: Colors.white,
+                                                      size: 16.sp,
+                                                    ),
+                                                    SizedBox(width: 4.w),
+                                                    Text(
+                                                      'Tap to preview',
+                                                      style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: 10.sp,
+                                                        fontFamily: 'Poppins',
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                            // Change image button for network images in edit mode
+                                            if (_isEditMode)
+                                              Positioned(
+                                                top: 8.h,
+                                                right: 8.w,
+                                                child: GestureDetector(
+                                                  onTap: _pickImage,
+                                                  child: Container(
+                                                    padding: EdgeInsets.all(6.w),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.black.withValues(alpha: 0.6),
+                                                      shape: BoxShape.circle,
+                                                    ),
+                                                    child: Icon(
+                                                      Icons.edit,
+                                                      color: Colors.white,
+                                                      size: 20.sp,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                          ],
+                                        )
+                                      : Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.add_photo_alternate_outlined,
+                                              size: 40.sp,
+                                              color: Colors.grey.shade400,
+                                            ),
+                                            SizedBox(height: 8.h),
+                                            Text(
+                                              _isEditMode ? "Tap to add party image" : "No image",
+                                              style: TextStyle(
+                                                fontSize: 12.sp,
+                                                color: Colors.grey.shade600,
+                                                fontFamily: 'Poppins',
+                                              ),
+                                            ),
+                                          ],
+                                        )),
+                            ),
                           ),
                         ],
                       ),
