@@ -261,6 +261,8 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
       PaymentMode.qrPay,
     ].contains(_selectedPaymentMode);
 
+    final bool isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
       backgroundColor: AppColors.primary,
@@ -303,7 +305,7 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
                       left: 24.w,
                       right: 24.w,
                       top: 24.h,
-                      bottom: 24.h + MediaQuery.of(context).viewInsets.bottom,
+                      bottom: 24.h,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -513,14 +515,15 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
                     ),
                   ),
                 ),
-                Padding(
-                  padding: EdgeInsets.fromLTRB(24.w, 8.h, 24.w, 24.h),
-                  child: PrimaryButton(
-                    label: "Add Collection",
-                    onPressed: _handleSubmit,
-                    width: double.infinity,
+                if (!isKeyboardOpen)
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(24.w, 8.h, 24.w, 24.h),
+                    child: PrimaryButton(
+                      label: "Add Collection",
+                      onPressed: _handleSubmit,
+                      width: double.infinity,
+                    ),
                   ),
-                ),
               ],
             ),
           ),

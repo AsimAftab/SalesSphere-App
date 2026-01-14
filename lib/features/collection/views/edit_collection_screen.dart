@@ -476,7 +476,7 @@ class _EditCollectionScreenState extends ConsumerState<EditCollectionScreen> {
                         padding: EdgeInsets.only(
                           left: 16.w,
                           right: 16.w,
-                          bottom: 24.h + MediaQuery.of(context).viewInsets.bottom,
+                          bottom: 24.h,
                         ),
                         child: Column(
                           children: [
@@ -722,6 +722,12 @@ class _EditCollectionScreenState extends ConsumerState<EditCollectionScreen> {
   }
 
   Widget _buildBottomButton() {
+    final isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
+    
+    if (isKeyboardVisible) {
+      return const SizedBox.shrink();
+    }
+    
     return Container(
       padding: EdgeInsets.fromLTRB(
         16.w,
