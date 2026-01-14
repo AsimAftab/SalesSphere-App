@@ -34,10 +34,12 @@ class CustomDropdownTextField<T> extends StatefulWidget {
 class _CustomDropdownTextFieldState<T>
     extends State<CustomDropdownTextField<T>> {
   final LayerLink _layerLink = LayerLink();
+  final GlobalKey _fieldKey = GlobalKey();
   OverlayEntry? _overlayEntry;
   bool _isDropdownOpen = false;
   String? _validatorError;
   String searchQuery = "";
+  final TextEditingController _searchController = TextEditingController();
 
   // Grayscale matrix for Emojis
   final List<double> _greyscaleMatrix = const <double>[
@@ -65,25 +67,46 @@ class _CustomDropdownTextFieldState<T>
 
   @override
   void dispose() {
-    _hideDropdown();
+    _removeOverlay();
+    _searchController.dispose();
     super.dispose();
+  }
+
+  void _removeOverlay() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+    _isDropdownOpen = false;
+    searchQuery = "";
   }
 
   void _hideDropdown() {
     if (_overlayEntry != null) {
-      _overlayEntry?.remove();
-      _overlayEntry = null;
-      setState(() {
-        _isDropdownOpen = false;
-        searchQuery = ""; // Reset search when closed
-      });
+      _removeOverlay();
+      if (mounted) {
+        setState(() {
+          _searchController.clear();
+        });
+      }
     }
   }
 
   void _showDropdown() {
-    if (!widget.enabled) return;
+    if (!widget.enabled || !mounted) return;
 
     _hideDropdown();
+    
+    // Scroll field into view if it has search functionality
+    if (widget.searchHint != null && _fieldKey.currentContext != null) {
+      Future.delayed(const Duration(milliseconds: 100), () {
+        Scrollable.ensureVisible(
+          _fieldKey.currentContext!,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          alignment: 0.2, // Position field at 20% from top of viewport
+        );
+      });
+    }
+    
     setState(() => _isDropdownOpen = true);
 
     _overlayEntry = OverlayEntry(
@@ -100,37 +123,43 @@ class _CustomDropdownTextFieldState<T>
               link: _layerLink,
               showWhenUnlinked: false,
               offset: Offset(0, 68.h),
-              child: Material(
-                elevation: 12,
-                borderRadius: BorderRadius.circular(12.r),
-                color: Colors.white,
-                child: StatefulBuilder(
-                  builder: (context, setOverlayState) {
-                    final TextEditingController searchController =
-                        TextEditingController(text: searchQuery);
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+                  final screenHeight = MediaQuery.of(context).size.height;
+                  final maxHeight = screenHeight - keyboardHeight - 200.h;
+                  
+                  return Material(
+                    elevation: 12,
+                    borderRadius: BorderRadius.circular(12.r),
+                    color: Colors.white,
+                    child: StatefulBuilder(
+                      builder: (context, setOverlayState) {
+                        final filteredList = widget.items.where((item) {
+                          if (widget.searchHint == null || searchQuery.isEmpty) {
+                            return true;
+                          }
+                          return item.label.toLowerCase().contains(
+                            searchQuery.toLowerCase(),
+                          );
+                        }).toList();
 
-                    final filteredList = widget.items.where((item) {
-                      if (widget.searchHint == null || searchQuery.isEmpty)
-                        return true;
-                      return item.label.toLowerCase().contains(
-                        searchQuery.toLowerCase(),
-                      );
-                    }).toList();
-
-                    return Container(
-                      constraints: BoxConstraints(maxHeight: 350.h),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12.r),
-                        border: Border.all(color: Colors.grey.shade200),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
+                        return Container(
+                          constraints: BoxConstraints(
+                            maxHeight: maxHeight.clamp(200.h, 350.h),
+                          ),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12.r),
+                            border: Border.all(color: Colors.grey.shade200),
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
                           if (widget.searchHint != null)
                             Padding(
                               padding: EdgeInsets.all(12.w),
                               child: TextField(
-                                controller: searchController,
+                                controller: _searchController,
                                 autofocus: true,
                                 style: TextStyle(
                                   fontFamily: 'Poppins',
@@ -154,7 +183,7 @@ class _CustomDropdownTextFieldState<T>
                                           onPressed: () {
                                             setOverlayState(() {
                                               searchQuery = "";
-                                              searchController.clear();
+                                              _searchController.clear();
                                             });
                                           },
                                         )
@@ -248,7 +277,7 @@ class _CustomDropdownTextFieldState<T>
                                         : null,
                                     onTap: () {
                                       widget.onChanged(item.value);
-                                      if (_validatorError != null) {
+                                      if (_validatorError != null && mounted) {
                                         setState(() => _validatorError = null);
                                       }
                                       _hideDropdown();
@@ -262,6 +291,8 @@ class _CustomDropdownTextFieldState<T>
                     );
                   },
                 ),
+                  );
+                },
               ),
             ),
           ),
@@ -294,6 +325,7 @@ class _CustomDropdownTextFieldState<T>
           child: GestureDetector(
             onTap: isEnabled ? _showDropdown : null,
             child: Container(
+              key: _fieldKey,
               padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
               decoration: BoxDecoration(
                 color: hasError
