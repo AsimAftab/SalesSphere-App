@@ -1,18 +1,20 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:table_calendar/table_calendar.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:geocoding/geocoding.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:dio/dio.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/exceptions/offline_exception.dart';
 import 'package:sales_sphere/core/providers/user_controller.dart';
+import 'package:sales_sphere/core/services/geofencing_service.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:sales_sphere/widget/no_internet_screen.dart';
+import 'package:table_calendar/table_calendar.dart';
+
 import '../models/attendance.models.dart';
 import '../vm/attendance.vm.dart';
 import 'attendance_monthly_details_screen.dart' show AttendanceFilter;
@@ -95,7 +97,11 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
           IconButton(
             icon: Stack(
               children: [
-                Icon(Icons.notifications_outlined, size: 26.sp, color: AppColors.textPrimary),
+                Icon(
+                  Icons.notifications_outlined,
+                  size: 26.sp,
+                  color: AppColors.textPrimary,
+                ),
                 Positioned(
                   right: 0,
                   top: 0,
@@ -119,10 +125,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
               child: Container(
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppColors.textOrange,
-                    width: 2.5,
-                  ),
+                  border: Border.all(color: AppColors.textOrange, width: 2.5),
                 ),
                 child: CircleAvatar(
                   radius: 18.r,
@@ -154,6 +157,17 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
             _buildTodayStatusBadge(todayAttendance),
 
             SizedBox(height: 16.h),
+
+            // Geofence Status Indicator (only show when enabled)
+            if (todayAttendanceStatus?.enableGeoFencingAttendance == true &&
+                todayAttendanceStatus?.organizationLocation != null)
+              _buildGeofenceStatusIndicator(todayAttendanceStatus!),
+
+            if (todayAttendanceStatus?.enableGeoFencingAttendance == true &&
+                todayAttendanceStatus?.organizationLocation != null)
+              SizedBox(height: 16.h)
+            else
+              SizedBox(height: 16.h),
 
             // Check In Button
             _buildCheckInButton(todayAttendanceStatus),
@@ -198,7 +212,9 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
         statusText = 'Checked In';
         badgeColor = AppColors.success;
         try {
-          final checkInDateTime = DateTime.parse(todayAttendance.checkInTime!).toLocal();
+          final checkInDateTime = DateTime.parse(
+            todayAttendance.checkInTime!,
+          ).toLocal();
           timeInfo = DateFormat('hh:mm a').format(checkInDateTime);
         } catch (e) {
           timeInfo = todayAttendance.checkInTime;
@@ -208,13 +224,18 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
         statusText = 'Checked Out';
         badgeColor = AppColors.info;
         try {
-          final checkInDateTime = DateTime.parse(todayAttendance.checkInTime!).toLocal();
-          final checkOutDateTime = DateTime.parse(todayAttendance.checkOutTime!).toLocal();
+          final checkInDateTime = DateTime.parse(
+            todayAttendance.checkInTime!,
+          ).toLocal();
+          final checkOutDateTime = DateTime.parse(
+            todayAttendance.checkOutTime!,
+          ).toLocal();
           final checkIn = DateFormat('hh:mm a').format(checkInDateTime);
           final checkOut = DateFormat('hh:mm a').format(checkOutDateTime);
           timeInfo = '$checkIn | $checkOut';
         } catch (e) {
-          timeInfo = '${todayAttendance.checkInTime} | ${todayAttendance.checkOutTime}';
+          timeInfo =
+              '${todayAttendance.checkInTime} | ${todayAttendance.checkOutTime}';
         }
       }
     }
@@ -236,7 +257,11 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.access_time, size: 20.sp, color: AppColors.textSecondary),
+              Icon(
+                Icons.access_time,
+                size: 20.sp,
+                color: AppColors.textSecondary,
+              ),
               SizedBox(width: 8.w),
               Text(
                 'Today\'s Status',
@@ -285,7 +310,68 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
     );
   }
 
-  Widget _buildCheckInButton(TodayAttendanceStatusResponse? todayAttendanceStatus) {
+  Widget _buildGeofenceStatusIndicator(TodayAttendanceStatusResponse status) {
+    final orgLocation = status.organizationLocation!;
+    final radius = GeofencingService.attendanceGeofenceRadius;
+    final radiusFormatted = GeofencingService.instance.formatDistance(radius);
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      decoration: BoxDecoration(
+        color: AppColors.info.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(
+          color: AppColors.info.withValues(alpha: 0.2),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(8.w),
+            decoration: BoxDecoration(
+              color: AppColors.info.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.location_on_outlined,
+              size: 18.sp,
+              color: AppColors.info,
+            ),
+          ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Office Location Required',
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                SizedBox(height: 2.h),
+                Text(
+                  'Within ${radiusFormatted} required',
+                  style: TextStyle(
+                    fontSize: 11.sp,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(Icons.info_outline, size: 16.sp, color: AppColors.info),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCheckInButton(
+    TodayAttendanceStatusResponse? todayAttendanceStatus,
+  ) {
     final todayAttendance = todayAttendanceStatus?.data;
     final isCheckedIn = todayAttendance?.checkInTime != null;
     final isCheckedOut = todayAttendance?.checkOutTime != null;
@@ -309,12 +395,18 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
           width: double.infinity,
           height: 52.h,
           child: ElevatedButton(
-            onPressed: isButtonEnabled ? () => _handleCheckInOut(isCheckedIn) : null,
+            onPressed: isButtonEnabled
+                ? () => _handleCheckInOut(isCheckedIn)
+                : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: isButtonEnabled ? AppColors.secondary : AppColors.textSecondary.withValues(alpha: 0.3),
+              backgroundColor: isButtonEnabled
+                  ? AppColors.secondary
+                  : AppColors.textSecondary.withValues(alpha: 0.3),
               foregroundColor: Colors.white,
               elevation: 0,
-              disabledBackgroundColor: AppColors.textSecondary.withValues(alpha: 0.3),
+              disabledBackgroundColor: AppColors.textSecondary.withValues(
+                alpha: 0.3,
+              ),
               disabledForegroundColor: Colors.white.withValues(alpha: 0.5),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12.r),
@@ -323,10 +415,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  isCheckedIn ? Icons.logout : Icons.login,
-                  size: 20.sp,
-                ),
+                Icon(isCheckedIn ? Icons.logout : Icons.login, size: 20.sp),
                 SizedBox(width: 8.w),
                 Text(
                   isCheckedIn ? 'Check Out' : 'Check In',
@@ -339,7 +428,9 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
             ),
           ),
         ),
-        if (!isCheckedIn && !isCheckInAllowed && todayAttendanceStatus?.organizationCheckInTime != null) ...[
+        if (!isCheckedIn &&
+            !isCheckInAllowed &&
+            todayAttendanceStatus?.organizationCheckInTime != null) ...[
           SizedBox(height: 8.h),
           Text(
             'Check-in will be available 2 hours before ${todayAttendanceStatus!.organizationCheckInTime}',
@@ -364,9 +455,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(),
-        ),
+        builder: (context) => const Center(child: CircularProgressIndicator()),
       );
 
       // Request location permission
@@ -409,13 +498,17 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
 
       // Call check-in or check-out
       if (!isCheckedIn) {
-        await ref.read(todayAttendanceViewModelProvider.notifier).checkIn(
+        await ref
+            .read(todayAttendanceViewModelProvider.notifier)
+            .checkIn(
               latitude: position.latitude,
               longitude: position.longitude,
               address: address,
             );
       } else {
-        await ref.read(todayAttendanceViewModelProvider.notifier).checkOut(
+        await ref
+            .read(todayAttendanceViewModelProvider.notifier)
+            .checkOut(
               latitude: position.latitude,
               longitude: position.longitude,
               address: address,
@@ -433,7 +526,13 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
       if (!mounted) return;
       Navigator.pop(context); // Close loading dialog
       _showSuccessSnackbar(
-          isCheckedIn ? 'Checked out successfully!' : 'Checked in successfully!');
+        isCheckedIn ? 'Checked out successfully!' : 'Checked in successfully!',
+      );
+    } on GeofenceViolationException catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context); // Close loading dialog
+      AppLogger.w('Geofence violation: ${e.message}');
+      _showGeofenceViolationDialog(e.message);
     } on CheckInErrorException catch (e) {
       if (!mounted) return;
       Navigator.pop(context); // Close loading dialog
@@ -450,7 +549,9 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
       AppLogger.w('Checkout restricted: ${e.restriction.message}');
 
       // Show half-day option dialog if available and we have position/address
-      if (e.restriction.canUseHalfDayFallback && position != null && address != null) {
+      if (e.restriction.canUseHalfDayFallback &&
+          position != null &&
+          address != null) {
         _showHalfDayCheckoutDialog(
           restriction: e.restriction,
           position: position,
@@ -464,16 +565,23 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
       if (!mounted) return;
       Navigator.pop(context); // Close loading dialog
       AppLogger.e('Check-in/out failed: $e');
-      _showErrorSnackbar('Failed to ${isCheckedIn ? "check out" : "check in"}. Please try again.');
+      _showErrorSnackbar(
+        'Failed to ${isCheckedIn ? "check out" : "check in"}. Please try again.',
+      );
     }
   }
 
   void _showCheckInErrorDialog(CheckInError error) {
     // Determine if window is closed (too late) or not yet open (too early)
-    final isWindowClosed = error.latestAllowedCheckIn != null &&
-                           error.earliestAllowedCheckIn == null;
-    final iconData = isWindowClosed ? Icons.lock_clock : Icons.access_time_filled;
-    final titleText = isWindowClosed ? 'Check-In Window Closed' : 'Check-In Not Allowed';
+    final isWindowClosed =
+        error.latestAllowedCheckIn != null &&
+        error.earliestAllowedCheckIn == null;
+    final iconData = isWindowClosed
+        ? Icons.lock_clock
+        : Icons.access_time_filled;
+    final titleText = isWindowClosed
+        ? 'Check-In Window Closed'
+        : 'Check-In Not Allowed';
 
     showDialog(
       context: context,
@@ -562,10 +670,15 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             // Current Time (for window closed scenario)
-                            if (error.currentTime != null && isWindowClosed) ...[
+                            if (error.currentTime != null &&
+                                isWindowClosed) ...[
                               Row(
                                 children: [
-                                  Icon(Icons.access_time, size: 16.sp, color: AppColors.textSecondary),
+                                  Icon(
+                                    Icons.access_time,
+                                    size: 16.sp,
+                                    color: AppColors.textSecondary,
+                                  ),
                                   SizedBox(width: 8.w),
                                   Flexible(
                                     child: RichText(
@@ -599,7 +712,11 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                             if (error.scheduledCheckInTime != null) ...[
                               Row(
                                 children: [
-                                  Icon(Icons.schedule, size: 16.sp, color: AppColors.info),
+                                  Icon(
+                                    Icons.schedule,
+                                    size: 16.sp,
+                                    color: AppColors.info,
+                                  ),
                                   SizedBox(width: 8.w),
                                   Flexible(
                                     child: RichText(
@@ -633,14 +750,20 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                             if (error.latestAllowedCheckIn != null)
                               Row(
                                 children: [
-                                  Icon(Icons.error_outline, size: 16.sp, color: AppColors.error),
+                                  Icon(
+                                    Icons.error_outline,
+                                    size: 16.sp,
+                                    color: AppColors.error,
+                                  ),
                                   SizedBox(width: 8.w),
                                   Flexible(
                                     child: RichText(
                                       text: TextSpan(
                                         children: [
                                           TextSpan(
-                                            text: isWindowClosed ? 'Window Closed At: ' : 'Latest Allowed: ',
+                                            text: isWindowClosed
+                                                ? 'Window Closed At: '
+                                                : 'Latest Allowed: ',
                                             style: TextStyle(
                                               fontSize: 13.sp,
                                               fontWeight: FontWeight.w600,
@@ -663,10 +786,15 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                               ),
                             // Earliest Allowed (for too early scenario)
                             if (error.earliestAllowedCheckIn != null) ...[
-                              if (error.latestAllowedCheckIn != null) SizedBox(height: 8.h),
+                              if (error.latestAllowedCheckIn != null)
+                                SizedBox(height: 8.h),
                               Row(
                                 children: [
-                                  Icon(Icons.check_circle, size: 16.sp, color: AppColors.success),
+                                  Icon(
+                                    Icons.check_circle,
+                                    size: 16.sp,
+                                    color: AppColors.success,
+                                  ),
                                   SizedBox(width: 8.w),
                                   Flexible(
                                     child: RichText(
@@ -821,7 +949,11 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                             if (restriction.scheduledCheckout != null) ...[
                               Row(
                                 children: [
-                                  Icon(Icons.schedule, size: 16.sp, color: AppColors.info),
+                                  Icon(
+                                    Icons.schedule,
+                                    size: 16.sp,
+                                    color: AppColors.info,
+                                  ),
                                   SizedBox(width: 8.w),
                                   Flexible(
                                     child: RichText(
@@ -836,7 +968,8 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                                             ),
                                           ),
                                           TextSpan(
-                                            text: restriction.scheduledCheckout!,
+                                            text:
+                                                restriction.scheduledCheckout!,
                                             style: TextStyle(
                                               fontSize: 13.sp,
                                               fontWeight: FontWeight.w700,
@@ -854,7 +987,11 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                             if (restriction.allowedFrom != null)
                               Row(
                                 children: [
-                                  Icon(Icons.check_circle, size: 16.sp, color: AppColors.success),
+                                  Icon(
+                                    Icons.check_circle,
+                                    size: 16.sp,
+                                    color: AppColors.success,
+                                  ),
                                   SizedBox(width: 8.w),
                                   Flexible(
                                     child: RichText(
@@ -886,7 +1023,11 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                               SizedBox(height: 8.h),
                               Row(
                                 children: [
-                                  Icon(Icons.info_outline, size: 16.sp, color: AppColors.textSecondary),
+                                  Icon(
+                                    Icons.info_outline,
+                                    size: 16.sp,
+                                    color: AppColors.textSecondary,
+                                  ),
                                   SizedBox(width: 8.w),
                                   Flexible(
                                     child: RichText(
@@ -926,7 +1067,9 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                       child: ElevatedButton(
                         onPressed: () {
                           Navigator.of(dialogContext).pop();
-                          ref.read(todayAttendanceViewModelProvider.notifier).refresh();
+                          ref
+                              .read(todayAttendanceViewModelProvider.notifier)
+                              .refresh();
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.secondary,
@@ -1039,7 +1182,11 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.info_outline, size: 20.sp, color: AppColors.info),
+                            Icon(
+                              Icons.info_outline,
+                              size: 20.sp,
+                              color: AppColors.info,
+                            ),
                             SizedBox(width: 12.w),
                             Expanded(
                               child: Column(
@@ -1074,7 +1221,9 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                       child: ElevatedButton(
                         onPressed: () {
                           Navigator.of(dialogContext).pop();
-                          ref.read(todayAttendanceViewModelProvider.notifier).refresh();
+                          ref
+                              .read(todayAttendanceViewModelProvider.notifier)
+                              .refresh();
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.secondary,
@@ -1087,6 +1236,121 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                         ),
                         child: Text(
                           'OK',
+                          style: TextStyle(
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showGeofenceViolationDialog(String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.r),
+        ),
+        contentPadding: EdgeInsets.zero,
+        content: Container(
+          width: double.maxFinite,
+          constraints: BoxConstraints(maxWidth: 340.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header with icon
+              Container(
+                padding: EdgeInsets.all(20.w),
+                decoration: BoxDecoration(
+                  color: AppColors.warning.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(20.r),
+                    topRight: Radius.circular(20.r),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(16.w),
+                      decoration: BoxDecoration(
+                        color: AppColors.warning.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.location_off_outlined,
+                        color: AppColors.warning,
+                        size: 32.sp,
+                      ),
+                    ),
+                    SizedBox(height: 12.h),
+                    Text(
+                      'Outside Attendance Geofence',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Content
+              Padding(
+                padding: EdgeInsets.all(20.w),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          size: 18.sp,
+                          color: AppColors.textSecondary,
+                        ),
+                        SizedBox(width: 8.w),
+                        Expanded(
+                          child: Text(
+                            message,
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              color: AppColors.textPrimary,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 20.h),
+                    // Retry button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.of(dialogContext).pop(),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.secondary,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                          padding: EdgeInsets.symmetric(vertical: 14.h),
+                        ),
+                        child: Text(
+                          'Retry',
                           style: TextStyle(
                             fontSize: 15.sp,
                             fontWeight: FontWeight.w700,
@@ -1120,225 +1384,235 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
           }
         },
         child: AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20.r),
-        ),
-        contentPadding: EdgeInsets.zero,
-        content: Container(
-          width: double.maxFinite,
-          constraints: BoxConstraints(maxWidth: 340.w),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Header with icon
-              Container(
-                padding: EdgeInsets.all(20.w),
-                decoration: BoxDecoration(
-                  color: AppColors.warning.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(20.r),
-                    topRight: Radius.circular(20.r),
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.r),
+          ),
+          contentPadding: EdgeInsets.zero,
+          content: Container(
+            width: double.maxFinite,
+            constraints: BoxConstraints(maxWidth: 340.w),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Header with icon
+                Container(
+                  padding: EdgeInsets.all(20.w),
+                  decoration: BoxDecoration(
+                    color: AppColors.warning.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(20.r),
+                      topRight: Radius.circular(20.r),
+                    ),
                   ),
-                ),
-                child: Column(
-                  children: [
-                    Container(
-                      padding: EdgeInsets.all(16.w),
-                      decoration: BoxDecoration(
-                        color: AppColors.warning.withValues(alpha: 0.15),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.schedule_rounded,
-                        color: AppColors.warning,
-                        size: 32.sp,
-                      ),
-                    ),
-                    SizedBox(height: 12.h),
-                    Text(
-                      'Full-Day Checkout Not Available',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Content
-              Padding(
-                padding: EdgeInsets.all(20.w),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Restriction info
-                    if (restriction.allowedFrom != null) ...[
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(
-                            Icons.info_outline,
-                            size: 18.sp,
-                            color: AppColors.textSecondary,
-                          ),
-                          SizedBox(width: 8.w),
-                          Expanded(
-                            child: Text(
-                              'Full-day checkout is available from ${restriction.allowedFrom}',
-                              style: TextStyle(
-                                fontSize: 14.sp,
-                                color: AppColors.textSecondary,
-                                height: 1.4,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 16.h),
-                    ],
-                    // Half-day option highlight
-                    Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.all(14.w),
-                      decoration: BoxDecoration(
-                        color: AppColors.success.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(12.r),
-                        border: Border.all(
-                          color: AppColors.success.withValues(alpha: 0.2),
-                          width: 1,
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(16.w),
+                        decoration: BoxDecoration(
+                          color: AppColors.warning.withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.schedule_rounded,
+                          color: AppColors.warning,
+                          size: 32.sp,
                         ),
                       ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: EdgeInsets.all(6.w),
-                            decoration: BoxDecoration(
-                              color: AppColors.success.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(8.r),
+                      SizedBox(height: 12.h),
+                      Text(
+                        'Full-Day Checkout Not Available',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Content
+                Padding(
+                  padding: EdgeInsets.all(20.w),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Restriction info
+                      if (restriction.allowedFrom != null) ...[
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              Icons.info_outline,
+                              size: 18.sp,
+                              color: AppColors.textSecondary,
                             ),
-                            child: Icon(
-                              Icons.check_circle_outline,
-                              color: AppColors.success,
-                              size: 20.sp,
+                            SizedBox(width: 8.w),
+                            Expanded(
+                              child: Text(
+                                'Full-day checkout is available from ${restriction.allowedFrom}',
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  color: AppColors.textSecondary,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 16.h),
+                      ],
+                      // Half-day option highlight
+                      Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.all(14.w),
+                        decoration: BoxDecoration(
+                          color: AppColors.success.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(12.r),
+                          border: Border.all(
+                            color: AppColors.success.withValues(alpha: 0.2),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: EdgeInsets.all(6.w),
+                              decoration: BoxDecoration(
+                                color: AppColors.success.withValues(
+                                  alpha: 0.15,
+                                ),
+                                borderRadius: BorderRadius.circular(8.r),
+                              ),
+                              child: Icon(
+                                Icons.check_circle_outline,
+                                color: AppColors.success,
+                                size: 20.sp,
+                              ),
+                            ),
+                            SizedBox(width: 12.w),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Half-Day Checkout Available',
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  if (restriction.halfDayAllowedFrom !=
+                                      null) ...[
+                                    SizedBox(height: 2.h),
+                                    Text(
+                                      'Available from ${restriction.halfDayAllowedFrom}',
+                                      style: TextStyle(
+                                        fontSize: 12.sp,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 20.h),
+                      // Buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () {
+                                ref
+                                    .read(
+                                      todayAttendanceViewModelProvider.notifier,
+                                    )
+                                    .refresh();
+                                Navigator.of(dialogContext).pop();
+                              },
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(
+                                  color: AppColors.border,
+                                  width: 1.5,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12.r),
+                                ),
+                                padding: EdgeInsets.symmetric(vertical: 14.h),
+                              ),
+                              child: Text(
+                                'Cancel',
+                                style: TextStyle(
+                                  fontSize: 15.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
                             ),
                           ),
                           SizedBox(width: 12.w),
                           Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Half-Day Checkout Available',
-                                  style: TextStyle(
-                                    fontSize: 14.sp,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.textPrimary,
-                                  ),
+                            flex: 2,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.of(dialogContext).pop();
+                                _performHalfDayCheckout(position, address);
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.success,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12.r),
                                 ),
-                                if (restriction.halfDayAllowedFrom != null) ...[
-                                  SizedBox(height: 2.h),
-                                  Text(
-                                    'Available from ${restriction.halfDayAllowedFrom}',
-                                    style: TextStyle(
-                                      fontSize: 12.sp,
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ),
-                                ],
-                              ],
+                                padding: EdgeInsets.symmetric(
+                                  vertical: 14.h,
+                                  horizontal: 8.w,
+                                ),
+                              ),
+                              child: Text(
+                                'Checkout Half-Day',
+                                style: TextStyle(
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
                             ),
                           ),
                         ],
                       ),
-                    ),
-                    SizedBox(height: 20.h),
-                    // Buttons
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () {
-                              ref.read(todayAttendanceViewModelProvider.notifier).refresh();
-                              Navigator.of(dialogContext).pop();
-                            },
-                            style: OutlinedButton.styleFrom(
-                              side: BorderSide(
-                                color: AppColors.border,
-                                width: 1.5,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.r),
-                              ),
-                              padding: EdgeInsets.symmetric(vertical: 14.h),
-                            ),
-                            child: Text(
-                              'Cancel',
-                              style: TextStyle(
-                                fontSize: 15.sp,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 12.w),
-                        Expanded(
-                          flex: 2,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              Navigator.of(dialogContext).pop();
-                              _performHalfDayCheckout(position, address);
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.success,
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.r),
-                              ),
-                              padding: EdgeInsets.symmetric(
-                                vertical: 14.h,
-                                horizontal: 8.w,
-                              ),
-                            ),
-                            child: Text(
-                              'Checkout Half-Day',
-                              style: TextStyle(
-                                fontSize: 13.sp,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
         ),
       ),
     );
   }
 
-  Future<void> _performHalfDayCheckout(Position position, String address) async {
+  Future<void> _performHalfDayCheckout(
+    Position position,
+    String address,
+  ) async {
     try {
       // Show loading dialog
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(),
-        ),
+        builder: (context) => const Center(child: CircularProgressIndicator()),
       );
 
-      await ref.read(todayAttendanceViewModelProvider.notifier).checkOut(
+      await ref
+          .read(todayAttendanceViewModelProvider.notifier)
+          .checkOut(
             latitude: position.latitude,
             longitude: position.longitude,
             address: address,
@@ -1505,7 +1779,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
           outsideDaysVisible: true,
           weekendTextStyle: TextStyle(
             fontSize: 14.sp,
-            color: AppColors.textSecondary.withValues(alpha:0.5),
+            color: AppColors.textSecondary.withValues(alpha: 0.5),
           ),
           defaultTextStyle: TextStyle(
             fontSize: 14.sp,
@@ -1516,7 +1790,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
             shape: BoxShape.circle,
           ),
           todayDecoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha:0.2),
+            color: AppColors.primary.withValues(alpha: 0.2),
             shape: BoxShape.circle,
           ),
           markerDecoration: const BoxDecoration(
@@ -1525,7 +1799,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
           ),
           outsideTextStyle: TextStyle(
             fontSize: 14.sp,
-            color: AppColors.textSecondary.withValues(alpha:0.3),
+            color: AppColors.textSecondary.withValues(alpha: 0.3),
           ),
         ),
         headerStyle: HeaderStyle(
@@ -1581,7 +1855,12 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
             return _buildCalendarDay(day, monthlyReport, false, isToday: true);
           },
           outsideBuilder: (context, day, focusedDay) {
-            return _buildCalendarDay(day, monthlyReport, false, isOutside: true);
+            return _buildCalendarDay(
+              day,
+              monthlyReport,
+              false,
+              isOutside: true,
+            );
           },
         ),
       ),
@@ -1616,19 +1895,16 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
       backgroundColor = AppColors.primary;
       textColor = Colors.white;
     } else if (isToday) {
-      backgroundColor = AppColors.primary.withValues(alpha:0.15);
+      backgroundColor = AppColors.primary.withValues(alpha: 0.15);
     }
 
     if (isOutside) {
-      textColor = AppColors.textSecondary.withValues(alpha:0.3);
+      textColor = AppColors.textSecondary.withValues(alpha: 0.3);
     }
 
     return Container(
       margin: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        shape: BoxShape.circle,
-      ),
+      decoration: BoxDecoration(color: backgroundColor, shape: BoxShape.circle),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -1688,18 +1964,12 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
         Container(
           width: 10.w,
           height: 10.h,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         SizedBox(width: 6.w),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 12.sp,
-            color: AppColors.textSecondary,
-          ),
+          style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
         ),
       ],
     );
@@ -1748,19 +2018,23 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildSummaryItem(presentDays.toString(), 'Present', filter: AttendanceFilter.present),
-              Container(
-                width: 1.w,
-                height: 40.h,
-                color: AppColors.border,
+              _buildSummaryItem(
+                presentDays.toString(),
+                'Present',
+                filter: AttendanceFilter.present,
               ),
-              _buildSummaryItem(absentDays.toString(), 'Absent', filter: AttendanceFilter.absent),
-              Container(
-                width: 1.w,
-                height: 40.h,
-                color: AppColors.border,
+              Container(width: 1.w, height: 40.h, color: AppColors.border),
+              _buildSummaryItem(
+                absentDays.toString(),
+                'Absent',
+                filter: AttendanceFilter.absent,
               ),
-              _buildSummaryItem(leaveDays.toString(), 'Leave', filter: AttendanceFilter.leave),
+              Container(width: 1.w, height: 40.h, color: AppColors.border),
+              _buildSummaryItem(
+                leaveDays.toString(),
+                'Leave',
+                filter: AttendanceFilter.leave,
+              ),
             ],
           ),
           SizedBox(height: 16.h),
@@ -1768,18 +2042,15 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildSummaryItem(halfDays.toString(), 'Half-Day', filter: AttendanceFilter.halfDay),
-              Container(
-                width: 1.w,
-                height: 40.h,
-                color: AppColors.border,
+              _buildSummaryItem(
+                halfDays.toString(),
+                'Half-Day',
+                filter: AttendanceFilter.halfDay,
               ),
-              _buildSummaryItem(weekendDays.toString(), 'Weekend'), // No filter for weekend
-              Container(
-                width: 1.w,
-                height: 40.h,
-                color: AppColors.border,
-              ),
+              Container(width: 1.w, height: 40.h, color: AppColors.border),
+              _buildSummaryItem(weekendDays.toString(), 'Weekend'),
+              // No filter for weekend
+              Container(width: 1.w, height: 40.h, color: AppColors.border),
               _buildSummaryItem(
                 '${attendancePercentage.toStringAsFixed(0)}%',
                 'Attendance',
@@ -1795,10 +2066,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
               onPressed: () {
                 context.push(
                   '/attendance/monthly-details',
-                  extra: {
-                    'month': _focusedDay,
-                    'filter': null,
-                  },
+                  extra: {'month': _focusedDay, 'filter': null},
                 );
               },
               style: OutlinedButton.styleFrom(
@@ -1822,16 +2090,17 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
     );
   }
 
-  Widget _buildSummaryItem(String value, String label, {AttendanceFilter? filter}) {
+  Widget _buildSummaryItem(
+    String value,
+    String label, {
+    AttendanceFilter? filter,
+  }) {
     return InkWell(
       onTap: filter != null
           ? () {
               context.push(
                 '/attendance/monthly-details',
-                extra: {
-                  'month': _focusedDay,
-                  'filter': filter,
-                },
+                extra: {'month': _focusedDay, 'filter': filter},
               );
             }
           : null,
@@ -1851,10 +2120,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
             SizedBox(height: 4.h),
             Text(
               label,
-              style: TextStyle(
-                fontSize: 12.sp,
-                color: AppColors.textSecondary,
-              ),
+              style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
             ),
           ],
         ),
@@ -1877,15 +2143,14 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
           ),
         ),
       ),
-      body: const Center(
-        child: CircularProgressIndicator(),
-      ),
+      body: const Center(child: CircularProgressIndicator()),
     );
   }
 
   Widget _buildError(Object error) {
     // Check if error is OfflineException (typed exception from connectivity check)
-    final isOffline = error is OfflineException ||
+    final isOffline =
+        error is OfflineException ||
         (error is DioException && error.error is OfflineException);
 
     if (isOffline) {
@@ -1916,11 +2181,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 64.sp,
-              color: AppColors.error,
-            ),
+            Icon(Icons.error_outline, size: 64.sp, color: AppColors.error),
             SizedBox(height: 16.h),
             Text(
               'Failed to load attendance data',
@@ -1957,10 +2218,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
               ),
               child: Text(
                 'Retry',
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600),
               ),
             ),
           ],
@@ -1969,6 +2227,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
     );
   }
 }
+
 String _getInitials(String name) {
   final trimmedName = name.trim();
   if (trimmedName.isNotEmpty) {
