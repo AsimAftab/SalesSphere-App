@@ -476,12 +476,12 @@ class BackgroundTrackingService {
 
     await plugin.initialize(initializationSettings);
 
-    // Create notification channel
+    // Create notification channel with MAX importance to prevent dismissal (Uber-like)
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
       _channelId,
       _channelName,
       description: 'Ongoing beat plan tracking notification',
-      importance: Importance.low,
+      importance: Importance.max,  // MAX importance - truly non-dismissible
       playSound: false,
       enableVibration: false,
     );
@@ -537,8 +537,8 @@ Do not force close this app.
       _channelId,
       _channelName,
       channelDescription: 'Real-time beat plan tracking - Keep this active',
-      importance: Importance.high, // Changed to high for visibility
-      priority: Priority.high, // Changed to high
+      importance: Importance.max, // MAX importance for Uber-like non-dismissible notification
+      priority: Priority.high, // High priority
       ongoing: true, // Cannot be dismissed by user
       autoCancel: false,
       playSound: false,
