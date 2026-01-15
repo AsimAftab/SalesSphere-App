@@ -6,14 +6,16 @@ part 'location_tracking_provider.g.dart';
 
 /// Location Tracking Service Provider
 /// Provides access to the singleton location tracking service
-@riverpod
+/// NOTE: keepAlive is required to prevent service from being disposed during navigation
+@Riverpod(keepAlive: true)
 LocationTrackingService locationTrackingService(Ref ref) {
   final service = LocationTrackingService.instance;
 
-  // Cleanup when provider is disposed
+  // Cleanup when provider is disposed (only on logout/app shutdown)
   ref.onDispose(() {
     AppLogger.d('Disposing LocationTrackingService provider');
-    service.dispose();
+    // Don't dispose singleton - only dispose on logout/app shutdown
+    // service.dispose() is now called only when explicitly stopping tracking
   });
 
   return service;

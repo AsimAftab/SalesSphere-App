@@ -6,14 +6,16 @@ part 'tracking_socket_provider.g.dart';
 
 /// Tracking Socket Service Provider
 /// Provides access to the singleton tracking socket service
-@riverpod
+/// NOTE: keepAlive is required to prevent service from being disposed during navigation
+@Riverpod(keepAlive: true)
 TrackingSocketService trackingSocketService(Ref ref) {
   final service = TrackingSocketService.instance;
 
-  // Cleanup when provider is disposed
+  // Cleanup when provider is disposed (only on logout/app shutdown)
   ref.onDispose(() {
     AppLogger.d('Disposing TrackingSocketService provider');
-    service.dispose();
+    // Don't dispose singleton - only dispose on logout/app shutdown
+    // service.dispose() is now called only when explicitly stopping tracking
   });
 
   return service;

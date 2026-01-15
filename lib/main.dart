@@ -88,12 +88,12 @@ Future<void> main() async {
 
     await notificationPlugin.initialize(initializationSettings);
 
-    // Create notification channel for tracking (high importance like Uber)
+    // Create notification channel for tracking (MAX importance like Uber - non-dismissible)
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
       'tracking_channel',
       'Beat Plan Tracking',
       description: 'Real-time beat plan tracking - Keep this notification active',
-      importance: Importance.high, // High importance for visibility
+      importance: Importance.max, // MAX importance - truly non-dismissible
       playSound: false,
       enableVibration: false,
       showBadge: true,
