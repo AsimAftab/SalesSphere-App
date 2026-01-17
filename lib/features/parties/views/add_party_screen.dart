@@ -17,9 +17,10 @@ import 'package:sales_sphere/features/parties/vm/party_image.vm.dart';
 import 'package:sales_sphere/features/parties/vm/party_types.vm.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
 import 'package:sales_sphere/widget/custom_date_picker.dart';
-import 'package:sales_sphere/widget/custom_dropdown_textfield.dart';
 import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/location_picker_widget.dart';
+import 'package:sales_sphere/widget/primary_async_dropdown.dart';
+import 'package:sales_sphere/widget/primary_image_picker.dart';
 
 import '../../../core/utils/logger.dart';
 
@@ -169,84 +170,6 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
         );
       }
     }
-  }
-
-  // Show image preview dialog
-  void _showImagePreview() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: EdgeInsets.all(16.w),
-          child: Stack(
-            children: [
-              Container(
-                constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height * 0.8,
-                  maxWidth: MediaQuery.of(context).size.width,
-                ),
-                child: InteractiveViewer(
-                  minScale: 0.5,
-                  maxScale: 4.0,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12.r),
-                    child: Image.file(
-                      File(_selectedImage!.path),
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                top: 0,
-                right: 0,
-                child: GestureDetector(
-                  onTap: () => context.pop(),
-                  child: Container(
-                    padding: EdgeInsets.all(8.w),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.7),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.close,
-                      color: Colors.white,
-                      size: 24.sp,
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                bottom: 16.h,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 16.w,
-                      vertical: 8.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.7),
-                      borderRadius: BorderRadius.circular(20.r),
-                    ),
-                    child: Text(
-                      'Pinch to zoom',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12.sp,
-                        fontFamily: 'Poppins',
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
   }
 
   // Remove selected image
@@ -657,50 +580,16 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
                       SizedBox(height: 16.h),
 
                       // Party Type Dropdown
-                      ref
-                          .watch(partyTypesViewModelProvider)
-                          .when(
-                            data: (partyTypes) =>
-                                CustomDropdownTextField<String>(
-                                  hintText: "Party Type",
-                                  searchHint: "Search party type...",
-                                  value: _selectedPartyType,
-                                  prefixIcon: Icons.category_outlined,
-                                  items: partyTypes
-                                      .map(
-                                        (type) => DropdownItem<String>(
-                                          value: type.name,
-                                          label: type.name,
-                                          icon: Icons.business,
-                                        ),
-                                      )
-                                      .toList(),
-                                  onChanged: (val) =>
-                                      setState(() => _selectedPartyType = val),
-                                ),
-                            loading: () => PrimaryTextField(
-                              controller: TextEditingController(
-                                text: 'Loading party types...',
-                              ),
-                              hintText: "Party Type",
-                              prefixIcon: Icons.category_outlined,
-                              enabled: false,
-                              suffixWidget: const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              ),
-                            ),
-                            error: (e, _) => PrimaryTextField(
-                              controller: TextEditingController(text: ''),
-                              hintText: "Party Type",
-                              prefixIcon: Icons.category_outlined,
-                              enabled: false,
-                              errorText: "Failed to load party types",
-                            ),
-                          ),
+                      PrimaryAsyncDropdown<PartyType>(
+                        itemsAsync: ref.watch(partyTypesViewModelProvider),
+                        initialValue: _selectedPartyType,
+                        onChanged: (val) =>
+                            setState(() => _selectedPartyType = val),
+                        itemLabel: (type) => type.name,
+                        hintText: 'Party Type',
+                        prefixIcon: Icons.category_outlined,
+                        title: 'Select Party Type',
+                      ),
                       SizedBox(height: 16.h),
 
                       PrimaryTextField(
@@ -713,121 +602,6 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
                         textInputAction: TextInputAction.newline,
                       ),
                       SizedBox(height: 20.h),
-
-                      // Party Image Section
-                      Text(
-                        "Party Image (Optional)",
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.grey.shade600,
-                          fontFamily: 'Poppins',
-                        ),
-                      ),
-                      SizedBox(height: 8.h),
-                      GestureDetector(
-                        onTap: _selectedImage == null ? _pickImage : _showImagePreview,
-                        child: Container(
-                          height: _selectedImage == null ? 120.h : 200.h,
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF5F6FA),
-                            borderRadius: BorderRadius.circular(12.r),
-                            border: Border.all(
-                              color: const Color(0xFFE0E0E0),
-                              style: BorderStyle.solid,
-                            ),
-                          ),
-                          child: _selectedImage == null
-                              ? Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.add_photo_alternate_outlined,
-                                      size: 40.sp,
-                                      color: Colors.grey.shade400,
-                                    ),
-                                    SizedBox(height: 8.h),
-                                    Text(
-                                      "Tap to add party image",
-                                      style: TextStyle(
-                                        fontSize: 12.sp,
-                                        color: Colors.grey.shade600,
-                                        fontFamily: 'Poppins',
-                                      ),
-                                    ),
-                                  ],
-                                )
-                              : Stack(
-                                  children: [
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(12.r),
-                                      child: Image.file(
-                                        File(_selectedImage!.path),
-                                        width: double.infinity,
-                                        height: 200.h,
-                                        fit: BoxFit.cover,
-                                      ),
-                                    ),
-                                    // Preview overlay indicator
-                                    Positioned(
-                                      bottom: 8.h,
-                                      right: 8.w,
-                                      child: Container(
-                                        padding: EdgeInsets.symmetric(
-                                          horizontal: 12.w,
-                                          vertical: 6.h,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: Colors.black.withValues(alpha: 0.6),
-                                          borderRadius: BorderRadius.circular(20.r),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(
-                                              Icons.zoom_in,
-                                              color: Colors.white,
-                                              size: 16.sp,
-                                            ),
-                                            SizedBox(width: 4.w),
-                                            Text(
-                                              'Tap to preview',
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 10.sp,
-                                                fontFamily: 'Poppins',
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    // Close button
-                                    Positioned(
-                                      top: 8.h,
-                                      right: 8.w,
-                                      child: GestureDetector(
-                                        onTap: _removeImage,
-                                        child: Container(
-                                          padding: EdgeInsets.all(6.w),
-                                          decoration: BoxDecoration(
-                                            color: Colors.black.withValues(alpha: 0.6),
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: Icon(
-                                            Icons.close,
-                                            color: Colors.white,
-                                            size: 20.sp,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                        ),
-                      ),
-                      SizedBox(height: 16.h),
 
                       // Location Picker with Google Maps (includes address search)
                       LocationPickerWidget(
@@ -889,6 +663,16 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
                         prefixIcon: Icons.explore_outlined,
                         hasFocusBorder: true,
                         enabled: false,
+                      ),
+                      SizedBox(height: 16.h),
+
+                      // Party Image Section
+                      PrimaryImagePicker(
+                        images: _selectedImage != null ? [_selectedImage!] : [],
+                        maxImages: 1,
+                        label: 'Party Image (Optional)',
+                        onPick: _pickImage,
+                        onRemove: (index) => _removeImage(),
                       ),
 
                       SizedBox(height: 80.h),

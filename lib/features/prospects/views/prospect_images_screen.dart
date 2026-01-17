@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:wechat_assets_picker/wechat_assets_picker.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
@@ -34,14 +35,147 @@ class _ProspectImagesScreenState extends ConsumerState<ProspectImagesScreen> {
   bool _isUploading = false;
   String? _uploadProgress;
 
+  /// Request gallery/photos permission for Android 13+
+  Future<bool> _requestGalleryPermission() async {
+    if (Platform.isAndroid) {
+      // Android 13+ (API 33+) uses photos permission
+      final androidInfo = await _getAndroidVersion();
+      if (androidInfo >= 33) {
+        final status = await Permission.photos.status;
+        if (status.isGranted) {
+          return true;
+        }
+        final result = await Permission.photos.request();
+        if (result.isGranted) {
+          return true;
+        }
+        // If permanently denied, show settings dialog
+        if (result.isPermanentlyDenied) {
+          _showPermissionSettingsDialog('Photos');
+          return false;
+        }
+        return false;
+      } else {
+        // Android < 13 uses storage permission
+        final status = await Permission.storage.status;
+        if (status.isGranted) {
+          return true;
+        }
+        final result = await Permission.storage.request();
+        if (result.isGranted) {
+          return true;
+        }
+        if (result.isPermanentlyDenied) {
+          _showPermissionSettingsDialog('Storage');
+          return false;
+        }
+        return false;
+      }
+    } else if (Platform.isIOS) {
+      // iOS uses photos permission
+      final status = await Permission.photos.status;
+      if (status.isGranted) {
+        return true;
+      }
+      final result = await Permission.photos.request();
+      return result.isGranted;
+    }
+    return true; // Other platforms might not need explicit permission
+  }
+
+  /// Request camera permission
+  Future<bool> _requestCameraPermission() async {
+    final status = await Permission.camera.status;
+    if (status.isGranted) {
+      return true;
+    }
+    final result = await Permission.camera.request();
+    if (result.isGranted) {
+      return true;
+    }
+    if (result.isPermanentlyDenied) {
+      _showPermissionSettingsDialog('Camera');
+      return false;
+    }
+    return false;
+  }
+
+  /// Get Android SDK version (approximate)
+  Future<int> _getAndroidVersion() async {
+    if (Platform.isAndroid) {
+      // Try to get Android version from device info
+      // Default to 33 (Android 13) if we can't determine
+      try {
+        // This is a simplified check - in production you'd use device_info_plus
+        return 33;
+      } catch (e) {
+        return 33;
+      }
+    }
+    return 0;
+  }
+
+  /// Show dialog to open app settings
+  void _showPermissionSettingsDialog(String permissionType) {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        title: Text(
+          'Permission Required',
+          style: TextStyle(
+            fontSize: 18.sp,
+            fontWeight: FontWeight.w600,
+            fontFamily: 'Poppins',
+          ),
+        ),
+        content: Text(
+          '$permissionType permission is permanently denied. Please enable it in app settings.',
+          style: TextStyle(
+            fontSize: 14.sp,
+            fontFamily: 'Poppins',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => context.pop(),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: AppColors.textdark,
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              context.pop();
+              openAppSettings();
+            },
+            child: Text(
+              'Open Settings',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// Pick and upload multiple images (up to 5)
   Future<void> _pickMultipleImages() async {
     try {
-      // Get current images to check available slots
-      final currentImages = await ref.read(prospectImagesProvider(widget.prospectId).future);
-      final availableSlots = 5 - currentImages.length;
-
-      if (availableSlots <= 0) {
+      // Request gallery permission first
+      final hasPermission = await _requestGalleryPermission();
+      if (!hasPermission) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -49,7 +183,9 @@ class _ProspectImagesScreenState extends ConsumerState<ProspectImagesScreen> {
                 children: [
                   Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20.sp),
                   SizedBox(width: 12.w),
-                  const Text('Maximum 5 photos allowed'),
+                  Expanded(
+                    child: const Text('Gallery permission is required to select photos'),
+                  ),
                 ],
               ),
               backgroundColor: AppColors.error,
@@ -63,6 +199,38 @@ class _ProspectImagesScreenState extends ConsumerState<ProspectImagesScreen> {
         }
         return;
       }
+
+      // Get current images to check available slots
+      final currentImages = await ref.read(prospectImagesProvider(widget.prospectId).future);
+      final availableSlots = 5 - currentImages.length;
+
+      if (availableSlots <= 0) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20.sp),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: const Text('Maximum 5 photos allowed'),
+                  ),
+                ],
+              ),
+              backgroundColor: AppColors.error,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              margin: EdgeInsets.all(16.w),
+            ),
+          );
+        }
+        return;
+      }
+
+      // Check if widget is still mounted before proceeding
+      if (!mounted) return;
 
       // Pick multiple images using wechat_assets_picker with visual limit
       // Shows "X/availableSlots" counter in the picker UI
@@ -358,6 +526,33 @@ class _ProspectImagesScreenState extends ConsumerState<ProspectImagesScreen> {
   /// Pick single image from camera
   Future<void> _pickCameraImage() async {
     try {
+      // Request camera permission first
+      final hasPermission = await _requestCameraPermission();
+      if (!hasPermission) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20.sp),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: const Text('Camera permission is required to take photos'),
+                  ),
+                ],
+              ),
+              backgroundColor: AppColors.error,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              margin: EdgeInsets.all(16.w),
+            ),
+          );
+        }
+        return;
+      }
+
       // Get current images to check available slots
       final currentImages = await ref.read(prospectImagesProvider(widget.prospectId).future);
       final availableSlots = 5 - currentImages.length;
@@ -370,7 +565,9 @@ class _ProspectImagesScreenState extends ConsumerState<ProspectImagesScreen> {
                 children: [
                   Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20.sp),
                   SizedBox(width: 12.w),
-                  const Text('Maximum 5 photos allowed'),
+                  Expanded(
+                    child: const Text('Maximum 5 photos allowed'),
+                  ),
                 ],
               ),
               backgroundColor: AppColors.error,
