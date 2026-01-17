@@ -1,6 +1,7 @@
 // lib/features/prospects/models/prospects.model.dart
 
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'prospect_interest.model.dart';
 
 part 'prospects.model.freezed.dart';
 part 'prospects.model.g.dart';
@@ -55,6 +56,7 @@ abstract class CreateProspectRequest with _$CreateProspectRequest {
     required CreateProspectContact contact,
     required CreateProspectLocation location,
     @JsonKey(name: 'description', includeIfNull: false) String? notes,
+    @JsonKey(includeIfNull: false) List<ProspectInterest>? prospectInterest,
   }) = _CreateProspectRequest;
 
   factory CreateProspectRequest.fromJson(Map<String, dynamic> json) =>
@@ -110,6 +112,7 @@ abstract class ProspectDetailApiData with _$ProspectDetailApiData {
     ProspectContact? contact,
     ProspectLocationDetail? location,
     @JsonKey(name: 'description') String? notes,
+    @JsonKey(includeIfNull: false) List<ProspectInterest>? prospectInterest,
     String? organizationId,
     String? createdBy,
     String? createdAt,
@@ -154,21 +157,39 @@ abstract class ProspectLocationDetail with _$ProspectLocationDetail {
 @freezed
 abstract class UpdateProspectRequest with _$UpdateProspectRequest {
   const factory UpdateProspectRequest({
-    required String ownerName,
-    required UpdateProspectLocation location,
+    @JsonKey(includeIfNull: false) String? prospectName,
+    @JsonKey(includeIfNull: false) String? ownerName,
+    @JsonKey(includeIfNull: false) String? dateJoined,
+    @JsonKey(includeIfNull: false) String? panVatNumber,
+    @JsonKey(includeIfNull: false) UpdateProspectContact? contact,
+    @JsonKey(includeIfNull: false) UpdateProspectLocation? location,
+    @JsonKey(includeIfNull: false) String? description,
+    @JsonKey(includeIfNull: false) List<ProspectInterest>? prospectInterest,
   }) = _UpdateProspectRequest;
 
   factory UpdateProspectRequest.fromJson(Map<String, dynamic> json) =>
       _$UpdateProspectRequestFromJson(json);
 }
 
+/// Contact info for update request
+@freezed
+abstract class UpdateProspectContact with _$UpdateProspectContact {
+  const factory UpdateProspectContact({
+    @JsonKey(includeIfNull: false) String? phone,
+    @JsonKey(includeIfNull: false) String? email,
+  }) = _UpdateProspectContact;
+
+  factory UpdateProspectContact.fromJson(Map<String, dynamic> json) =>
+      _$UpdateProspectContactFromJson(json);
+}
+
 /// Location info for update request
 @freezed
 abstract class UpdateProspectLocation with _$UpdateProspectLocation {
   const factory UpdateProspectLocation({
-    required String address,
-    required double latitude,
-    required double longitude,
+    @JsonKey(includeIfNull: false) String? address,
+    @JsonKey(includeIfNull: false) double? latitude,
+    @JsonKey(includeIfNull: false) double? longitude,
   }) = _UpdateProspectLocation;
 
   factory UpdateProspectLocation.fromJson(Map<String, dynamic> json) =>
@@ -207,6 +228,7 @@ abstract class ProspectDetails with _$ProspectDetails {
     double? latitude,
     double? longitude,
     String? notes,
+    @JsonKey(includeIfNull: false) List<ProspectInterest>? prospectInterest,
     @Default(true) bool isActive,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -229,6 +251,7 @@ abstract class ProspectDetails with _$ProspectDetails {
       latitude: apiData.location?.latitude,
       longitude: apiData.location?.longitude,
       notes: apiData.notes,
+      prospectInterest: apiData.prospectInterest,
       isActive: true,
       createdAt: apiData.createdAt != null
           ? DateTime.tryParse(apiData.createdAt!)

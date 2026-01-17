@@ -136,6 +136,67 @@ abstract class SiteImage with _$SiteImage {
 }
 
 // ============================================================================
+// SUPPORTING MODELS - SUB-ORGANIZATION & SITE INTEREST
+// ============================================================================
+
+/// Technician model
+@freezed
+abstract class SiteTechnician with _$SiteTechnician {
+  const factory SiteTechnician({
+    required String name,
+    required String phone,
+    @JsonKey(name: '_id', includeIfNull: false) String? id,
+  }) = _SiteTechnician;
+
+  factory SiteTechnician.fromJson(Map<String, dynamic> json) =>
+      _$SiteTechnicianFromJson(json);
+}
+
+/// Site interest model
+@freezed
+abstract class SiteInterest with _$SiteInterest {
+  const factory SiteInterest({
+    required String category,
+    required List<String> brands,
+    required List<SiteTechnician> technicians,
+    @JsonKey(name: '_id', includeIfNull: false) String? id,
+  }) = _SiteInterest;
+
+  factory SiteInterest.fromJson(Map<String, dynamic> json) =>
+      _$SiteInterestFromJson(json);
+}
+
+/// Sub-organization model
+@freezed
+abstract class SubOrganization with _$SubOrganization {
+  const factory SubOrganization({
+    @JsonKey(name: '_id') required String id,
+    required String name,
+  }) = _SubOrganization;
+
+  factory SubOrganization.fromJson(Map<String, dynamic> json) =>
+      _$SubOrganizationFromJson(json);
+}
+
+/// Site category model (from GET /sites/categories)
+@freezed
+abstract class SiteCategory with _$SiteCategory {
+  const factory SiteCategory({
+    @JsonKey(name: '_id') required String id,
+    required String name,
+    required List<String> brands,
+    required List<SiteTechnician> technicians,
+    required String organizationId,
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    @JsonKey(name: '__v') int? v,
+  }) = _SiteCategory;
+
+  factory SiteCategory.fromJson(Map<String, dynamic> json) =>
+      _$SiteCategoryFromJson(json);
+}
+
+// ============================================================================
 // API REQUEST MODELS - CREATE
 // ============================================================================
 
@@ -147,10 +208,12 @@ abstract class CreateSiteRequest with _$CreateSiteRequest {
   const factory CreateSiteRequest({
     required String siteName,
     required String ownerName,
+    String? subOrganization,
     required String dateJoined,
     required CreateSiteContact contact,
     required CreateSiteLocation location,
     String? description,
+    @Default([]) List<SiteInterest> siteInterest,
   }) = _CreateSiteRequest;
 
   factory CreateSiteRequest.fromJson(Map<String, dynamic> json) =>
@@ -175,7 +238,6 @@ abstract class CreateSiteRequest with _$CreateSiteRequest {
     );
   }
 }
-
 /// Contact info for create site request
 @freezed
 abstract class CreateSiteContact with _$CreateSiteContact {
@@ -213,10 +275,12 @@ abstract class UpdateSiteRequest with _$UpdateSiteRequest {
   const factory UpdateSiteRequest({
     required String siteName,
     required String ownerName,
+    String? subOrganization,
     required String dateJoined,
     required CreateSiteContact contact,
     required CreateSiteLocation location,
     String? description,
+    @Default([]) List<SiteInterest> siteInterest,
   }) = _UpdateSiteRequest;
 
   factory UpdateSiteRequest.fromJson(Map<String, dynamic> json) =>
@@ -227,6 +291,7 @@ abstract class UpdateSiteRequest with _$UpdateSiteRequest {
     return UpdateSiteRequest(
       siteName: site.name,
       ownerName: site.managerName,
+      subOrganization: null,
       dateJoined: site.dateJoined ?? '',
       contact: CreateSiteContact(
         phone: site.phoneNumber,
@@ -238,6 +303,7 @@ abstract class UpdateSiteRequest with _$UpdateSiteRequest {
         longitude: site.longitude ?? 0.0,
       ),
       description: site.notes,
+      siteInterest: [],
     );
   }
 }
@@ -400,10 +466,12 @@ abstract class FetchSiteData with _$FetchSiteData {
     @JsonKey(name: '_id') required String id,
     required String siteName,
     required String ownerName,
+    String? subOrganization,
     required String dateJoined,
     required CreateSiteContact contact,
     required CreateSiteLocation location,
     String? description,
+    @Default([]) List<SiteInterest> siteInterest,
     required String organizationId,
     required SiteCreatedBy createdBy,
     @Default([]) List<SiteImageData> images,
@@ -502,10 +570,12 @@ abstract class GetSiteData with _$GetSiteData {
     @JsonKey(name: '_id') required String id,
     required String siteName,
     required String ownerName,
+    String? subOrganization,
     required String dateJoined,
     required CreateSiteContact contact,
     required CreateSiteLocation location,
     String? description,
+    @Default([]) List<SiteInterest> siteInterest,
     required String organizationId,
     required SiteCreatedBy createdBy,
     @Default([]) List<SiteImageData> images,
@@ -559,10 +629,12 @@ abstract class UpdateSiteResponseData with _$UpdateSiteResponseData {
     @JsonKey(name: '_id') required String id,
     required String siteName,
     required String ownerName,
+    String? subOrganization,
     required String dateJoined,
     required CreateSiteContact contact,
     required CreateSiteLocation location,
     String? description,
+    @Default([]) List<SiteInterest> siteInterest,
     required String organizationId,
     required SiteCreatedBy createdBy,
     @Default([]) List<SiteImageData> images,
@@ -582,15 +654,21 @@ abstract class CreateSiteResponseData with _$CreateSiteResponseData {
     @JsonKey(name: '_id') required String id,
     required String siteName,
     required String ownerName,
+    String? subOrganization,
     required String dateJoined,
     required CreateSiteContact contact,
     required CreateSiteLocation location,
     String? description,
+    @Default([]) List<SiteInterest> siteInterest,
     required String organizationId,
     required String createdBy,
-    @Default([]) List<String> images,
+    @Default([]) List<String> assignedUsers,
+    required String assignedBy,
+    required DateTime assignedAt,
+    @Default([]) List<SiteImageData> images,
     required DateTime createdAt,
     required DateTime updatedAt,
+    @JsonKey(name: '__v') int? v,
   }) = _CreateSiteResponseData;
 
   factory CreateSiteResponseData.fromJson(Map<String, dynamic> json) =>
@@ -622,6 +700,40 @@ abstract class UploadSiteImageData with _$UploadSiteImageData {
 
   factory UploadSiteImageData.fromJson(Map<String, dynamic> json) =>
       _$UploadSiteImageDataFromJson(json);
+}
+
+// ============================================================================
+// API RESPONSE MODELS - SUB-ORGANIZATIONS & CATEGORIES
+// ============================================================================
+
+/// Response for get sub-organizations (GET /sites/sub-organizations)
+@freezed
+abstract class SubOrganizationsResponse with _$SubOrganizationsResponse {
+  const SubOrganizationsResponse._();
+
+  const factory SubOrganizationsResponse({
+    required bool success,
+    required int count,
+    required List<SubOrganization> data,
+  }) = _SubOrganizationsResponse;
+
+  factory SubOrganizationsResponse.fromJson(Map<String, dynamic> json) =>
+      _$SubOrganizationsResponseFromJson(json);
+}
+
+/// Response for get site categories (GET /sites/categories)
+@freezed
+abstract class SiteCategoriesResponse with _$SiteCategoriesResponse {
+  const SiteCategoriesResponse._();
+
+  const factory SiteCategoriesResponse({
+    required bool success,
+    required int count,
+    required List<SiteCategory> data,
+  }) = _SiteCategoriesResponse;
+
+  factory SiteCategoriesResponse.fromJson(Map<String, dynamic> json) =>
+      _$SiteCategoriesResponseFromJson(json);
 }
 
 // ============================================================================

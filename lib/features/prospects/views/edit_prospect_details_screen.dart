@@ -21,6 +21,11 @@ import 'package:sales_sphere/widget/location_picker_widget.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 import '../models/prospects.model.dart';
+import '../models/prospect_interest.model.dart';
+import '../models/prospect_images.model.dart';
+import '../widgets/prospect_interest_selector.dart';
+import '../vm/prospect_images.vm.dart';
+import '../views/prospect_images_screen.dart';
 
 // Google Places service provider
 final googlePlacesServiceProvider = Provider<GooglePlacesService>((ref) {
@@ -47,6 +52,9 @@ class _EditProspectDetailsScreenState
     extends ConsumerState<EditProspectDetailsScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isEditMode = false;
+
+  // Prospect interests state
+  List<ProspectInterest> _selectedInterests = [];
 
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
@@ -98,6 +106,9 @@ class _EditProspectDetailsScreenState
         prospect.dateJoined,
       );
 
+      // Initialize selected interests from prospect data
+      _selectedInterests = prospect.prospectInterest ?? [];
+
       // Set initial location for map if coordinates exist
       if (prospect.latitude != null && prospect.longitude != null) {
         _initialLocation = LatLng(prospect.latitude!, prospect.longitude!);
@@ -140,6 +151,7 @@ class _EditProspectDetailsScreenState
         notes: _notesController.text.trim().isEmpty
             ? null
             : _notesController.text.trim(),
+        prospectInterest: _selectedInterests.isEmpty ? null : _selectedInterests,
         updatedAt: DateTime.now(),
       );
 
@@ -599,6 +611,286 @@ class _EditProspectDetailsScreenState
     }
   }
 
+  // Navigate to photo gallery screen
+  void _navigateToPhotoGallery() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ProspectImagesScreen(
+          prospectId: widget.prospectId,
+          prospectName: _nameController.text.isEmpty
+              ? 'Prospect'
+              : _nameController.text,
+        ),
+      ),
+    );
+  }
+
+  // Photo Gallery Card Widget
+  Widget _buildPhotoGalleryCard() {
+    final imagesAsync = ref.watch(prospectImagesProvider(widget.prospectId));
+
+    return GestureDetector(
+      onTap: _navigateToPhotoGallery,
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.all(14.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.photo_library_outlined,
+                        size: 18.sp,
+                        color: AppColors.primary,
+                      ),
+                      SizedBox(width: 8.w),
+                      Text(
+                        'Photos',
+                        style: TextStyle(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textdark,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Manage button with arrow
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(20.r),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      imagesAsync.when(
+                        data: (images) {
+                          return Text(
+                            '${images.length}/5',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
+                            ),
+                          );
+                        },
+                        loading: () => Text(
+                          '...',
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        error: (_, __) => const SizedBox.shrink(),
+                      ),
+                      SizedBox(width: 4.w),
+                      Icon(
+                        Icons.arrow_forward_ios,
+                        size: 10.sp,
+                        color: AppColors.primary,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 12.h),
+            imagesAsync.when(
+              data: (images) {
+                if (images.isEmpty) {
+                  // Empty state - Add Photos button
+                  return Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.symmetric(vertical: 16.h),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(
+                        color: AppColors.primary.withOpacity(0.3),
+                        width: 1.5,
+                        style: BorderStyle.solid,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.add_a_photo_outlined,
+                          size: 20.sp,
+                          color: AppColors.primary,
+                        ),
+                        SizedBox(width: 8.w),
+                        Text(
+                          'Add Photos',
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.primary,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                // Show thumbnails
+                return Row(
+                  children: [
+                    // Thumbnails
+                    Expanded(
+                      child: SizedBox(
+                        height: 60.h,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: images.length > 3 ? 3 : images.length,
+                          separatorBuilder: (_, __) => SizedBox(width: 8.w),
+                          itemBuilder: (context, index) {
+                            final image = images[index];
+                            return Container(
+                              width: 60.h,
+                              height: 60.h,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8.r),
+                                border: Border.all(
+                                  color: AppColors.greyLight,
+                                  width: 1,
+                                ),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(7.r),
+                                child: Image.network(
+                                  image.imageUrl,
+                                  fit: BoxFit.cover,
+                                  loadingBuilder: (context, child, loadingProgress) {
+                                    if (loadingProgress == null) return child;
+                                    return Container(
+                                      color: Colors.grey.shade200,
+                                      child: Center(
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          value: loadingProgress.expectedTotalBytes != null
+                                              ? loadingProgress.cumulativeBytesLoaded /
+                                                  loadingProgress.expectedTotalBytes!
+                                              : null,
+                                          color: AppColors.primary,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      color: Colors.grey.shade200,
+                                      child: Icon(
+                                        Icons.broken_image,
+                                        size: 20.sp,
+                                        color: Colors.grey.shade400,
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                    // View All / Add More indicator
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      child: Row(
+                        children: [
+                          Text(
+                            images.length >= 5 ? 'Full' : 'Add',
+                            style: TextStyle(
+                              fontSize: 11.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          SizedBox(width: 4.w),
+                          Icon(
+                            images.length >= 5 ? Icons.check : Icons.add,
+                            size: 14.sp,
+                            color: AppColors.primary,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
+              loading: () => Container(
+                height: 60.h,
+                decoration: BoxDecoration(
+                  color: AppColors.greyLight.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                child: Center(
+                  child: SizedBox(
+                    width: 16.w,
+                    height: 16.w,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+              ),
+              error: (_, __) => Container(
+                height: 60.h,
+                decoration: BoxDecoration(
+                  color: AppColors.error.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                child: Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.error_outline, size: 16.sp, color: AppColors.error),
+                      SizedBox(width: 8.w),
+                      Text(
+                        'Failed to load photos',
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: AppColors.error,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // Helper method for the UI
   Widget _buildPageContent(ProspectDetails? prospect) {
     return Column(
@@ -699,6 +991,11 @@ class _EditProspectDetailsScreenState
                       ),
                     ),
                     SizedBox(height: 24.h),
+
+                    // Photo Gallery Card
+                    _buildPhotoGalleryCard(),
+                    SizedBox(height: 24.h),
+
                     Text(
                       'Prospect Details',
                       style: TextStyle(
@@ -725,6 +1022,21 @@ class _EditProspectDetailsScreenState
                       ),
                       child: Column(
                         children: [
+                          PrimaryTextField(
+                            hintText: "Prospect Name",
+                            controller: _nameController,
+                            prefixIcon: Icons.business_center_outlined,
+                            hasFocusBorder: true,
+                            enabled: _isEditMode,
+                            textInputAction: TextInputAction.next,
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Prospect name is required';
+                              }
+                              return null;
+                            },
+                          ),
+                          SizedBox(height: 16.h),
                           PrimaryTextField(
                             hintText: "Owner Name",
                             controller: _ownerNameController,
@@ -799,6 +1111,20 @@ class _EditProspectDetailsScreenState
                             minLines: 1,
                             maxLines: 5,
                             textInputAction: TextInputAction.newline,
+                          ),
+                          SizedBox(height: 16.h),
+
+                          // Prospect Interests (Optional)
+                          ProspectInterestSelector(
+                            initiallySelected: _selectedInterests,
+                            enabled: _isEditMode,
+                            onChanged: (interests) {
+                              if (mounted && _isEditMode) {
+                                setState(() {
+                                  _selectedInterests = interests;
+                                });
+                              }
+                            },
                           ),
                           SizedBox(height: 16.h),
 
