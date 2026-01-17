@@ -168,8 +168,8 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
       );
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Could not fetch location details'),
+        const SnackBar(
+          content: Text('Could not fetch location details'),
           backgroundColor: AppColors.error,
         ),
       );
@@ -490,7 +490,7 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
                 : null,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12.r),
-              borderSide: BorderSide(color: AppColors.secondary),
+              borderSide: const BorderSide(color: AppColors.secondary),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12.r),
@@ -498,7 +498,7 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12.r),
-              borderSide: BorderSide(color: AppColors.secondary, width: 2),
+              borderSide: const BorderSide(color: AppColors.secondary, width: 2),
             ),
             filled: true,
             fillColor: widget.enabled ? Colors.white : Colors.grey.shade100,

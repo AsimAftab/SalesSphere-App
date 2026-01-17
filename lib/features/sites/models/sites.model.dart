@@ -51,6 +51,8 @@ abstract class SiteDetails with _$SiteDetails {
     String? notes,
     @Default(true) bool isActive,
     String? dateJoined,
+    String? subOrganization,
+    @Default([]) List<SiteInterest> siteInterest,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) = _SiteDetails;
@@ -71,9 +73,32 @@ abstract class SiteDetails with _$SiteDetails {
       longitude: site.longitude,
       notes: site.notes,
       dateJoined: site.dateJoined,
+      subOrganization: null,
+      siteInterest: const [],
       isActive: site.isActive,
       createdAt: site.createdAt,
       updatedAt: site.updatedAt,
+    );
+  }
+
+  /// Convert from FetchSiteData model
+  factory SiteDetails.fromFetchSiteData(FetchSiteData data) {
+    return SiteDetails(
+      id: data.id,
+      name: data.siteName,
+      managerName: data.ownerName,
+      phoneNumber: data.contact.phone,
+      email: data.contact.email,
+      fullAddress: data.location.address,
+      latitude: data.location.latitude,
+      longitude: data.location.longitude,
+      notes: data.description,
+      dateJoined: data.dateJoined,
+      subOrganization: data.subOrganization,
+      siteInterest: data.siteInterest,
+      isActive: true,
+      createdAt: data.createdAt,
+      updatedAt: data.updatedAt,
     );
   }
 
@@ -208,12 +233,12 @@ abstract class CreateSiteRequest with _$CreateSiteRequest {
   const factory CreateSiteRequest({
     required String siteName,
     required String ownerName,
-    String? subOrganization,
+    @JsonKey(includeIfNull: false) String? subOrganization,
     required String dateJoined,
     required CreateSiteContact contact,
     required CreateSiteLocation location,
-    String? description,
-    @Default([]) List<SiteInterest> siteInterest,
+    @JsonKey(includeIfNull: false) String? description,
+    @Default([]) @JsonKey(includeIfNull: false) List<SiteInterest> siteInterest,
   }) = _CreateSiteRequest;
 
   factory CreateSiteRequest.fromJson(Map<String, dynamic> json) =>
@@ -275,12 +300,12 @@ abstract class UpdateSiteRequest with _$UpdateSiteRequest {
   const factory UpdateSiteRequest({
     required String siteName,
     required String ownerName,
-    String? subOrganization,
+    @JsonKey(includeIfNull: false) String? subOrganization,
     required String dateJoined,
     required CreateSiteContact contact,
     required CreateSiteLocation location,
-    String? description,
-    @Default([]) List<SiteInterest> siteInterest,
+    @JsonKey(includeIfNull: false) String? description,
+    @Default([]) @JsonKey(includeIfNull: false) List<SiteInterest> siteInterest,
   }) = _UpdateSiteRequest;
 
   factory UpdateSiteRequest.fromJson(Map<String, dynamic> json) =>
@@ -291,7 +316,7 @@ abstract class UpdateSiteRequest with _$UpdateSiteRequest {
     return UpdateSiteRequest(
       siteName: site.name,
       ownerName: site.managerName,
-      subOrganization: null,
+      subOrganization: site.subOrganization,
       dateJoined: site.dateJoined ?? '',
       contact: CreateSiteContact(
         phone: site.phoneNumber,
@@ -303,7 +328,7 @@ abstract class UpdateSiteRequest with _$UpdateSiteRequest {
         longitude: site.longitude ?? 0.0,
       ),
       description: site.notes,
-      siteInterest: [],
+      siteInterest: site.siteInterest,
     );
   }
 }
@@ -557,6 +582,8 @@ abstract class GetSiteResponse with _$GetSiteResponse {
       notes: data.description,
       isActive: true,
       dateJoined: data.dateJoined,
+      subOrganization: data.subOrganization,
+      siteInterest: data.siteInterest,
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
     );
@@ -616,6 +643,8 @@ abstract class UpdateSiteResponse with _$UpdateSiteResponse {
       notes: data.description,
       isActive: true,
       dateJoined: data.dateJoined,
+      subOrganization: data.subOrganization,
+      siteInterest: data.siteInterest,
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
     );
