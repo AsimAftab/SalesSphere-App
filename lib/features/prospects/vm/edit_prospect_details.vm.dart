@@ -60,14 +60,25 @@ class EditProspectViewModel extends _$EditProspectViewModel {
       final dio = ref.read(dioClientProvider);
       AppLogger.i('Updating prospect: ${updatedProspect.name} (ID: ${updatedProspect.id})');
 
-      // Create update request with editable fields
+      // Create update request with all editable fields
       final updateRequest = UpdateProspectRequest(
+        prospectName: updatedProspect.name,
         ownerName: updatedProspect.ownerName,
+        dateJoined: updatedProspect.dateJoined,
+        panVatNumber: updatedProspect.panVatNumber,
+        contact: updatedProspect.phoneNumber != null || updatedProspect.email != null
+            ? UpdateProspectContact(
+                phone: updatedProspect.phoneNumber,
+                email: updatedProspect.email,
+              )
+            : null,
         location: UpdateProspectLocation(
           address: updatedProspect.fullAddress,
-          latitude: updatedProspect.latitude ?? 0.0,
-          longitude: updatedProspect.longitude ?? 0.0,
+          latitude: updatedProspect.latitude,
+          longitude: updatedProspect.longitude,
         ),
+        description: updatedProspect.notes,
+        prospectInterest: updatedProspect.prospectInterest,
       );
 
       // Convert to JSON

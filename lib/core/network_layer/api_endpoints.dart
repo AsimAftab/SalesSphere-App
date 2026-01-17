@@ -46,6 +46,9 @@ class ApiEndpoints {
   static String updateProspects(String id) => '/api/v1/prospects/$id';
   static String deleteProspects(String id) => '/api/v1/prospects/$id';
   static String transferToProspect(String id) => '/api/v1/prospects/$id/transfer';
+  static const String prospectCategories = '/api/v1/prospects/categories';
+  static String uploadProspectImage(String prospectId) => '/api/v1/prospects/$prospectId/images';
+  static String deleteProspectImage(String prospectId, int imageNumber) => '/api/v1/prospects/$prospectId/images/$imageNumber';
 
   // Sites Endpoints (Final)
   static const String sites = '/api/v1/sites';
@@ -55,6 +58,8 @@ class ApiEndpoints {
   static String deleteSite(String id) => '/api/v1/sites/$id';
   static String uploadSiteImage(String siteId) => '/api/v1/sites/$siteId/images';
   static String deleteSiteImage(String siteId, int imageNumber) => '/api/v1/sites/$siteId/images/$imageNumber';
+  static const String siteSubOrganizations = '/api/v1/sites/sub-organizations';
+  static const String siteCategories = '/api/v1/sites/categories';
 
   // File Upload
   static const String uploadImage = '/api/v1/upload/image';

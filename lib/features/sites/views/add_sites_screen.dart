@@ -1,10 +1,8 @@
-
-
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
@@ -13,10 +11,11 @@ import 'package:sales_sphere/core/services/location_service.dart';
 import 'package:sales_sphere/core/utils/field_validators.dart';
 import 'package:sales_sphere/features/sites/models/sites.model.dart';
 import 'package:sales_sphere/features/sites/vm/add_sites.vm.dart';
+import 'package:sales_sphere/features/sites/vm/site_options.vm.dart';
 import 'package:sales_sphere/features/sites/vm/sites.vm.dart';
-import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
 import 'package:sales_sphere/widget/custom_date_picker.dart';
+import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/location_picker_widget.dart';
 
 // Google Places service provider
@@ -50,6 +49,10 @@ class _AddSitesScreenState extends ConsumerState<AddSitesScreen> {
   late TextEditingController _dateJoinedController;
   late TextEditingController _latitudeController;
   late TextEditingController _longitudeController;
+
+  // New fields for sub-organization and site interests
+  String? _selectedSubOrganization;
+  final List<SiteInterest> _selectedSiteInterests = [];
 
   // Default location (Bangalore, India)
   final LatLng _defaultLocation = const LatLng(13.1349646, 77.5668106);
@@ -90,7 +93,7 @@ class _AddSitesScreenState extends ConsumerState<AddSitesScreen> {
     super.dispose();
   }
 
-  // Save site (Local - No API)
+  // Save site (API Integration)
   Future<void> _handleSave() async {
     if (_formKey.currentState?.validate() ?? false) {
       // Validate latitude and longitude are set
@@ -147,6 +150,7 @@ class _AddSitesScreenState extends ConsumerState<AddSitesScreen> {
         final createRequest = CreateSiteRequest(
           siteName: _nameController.text.trim(),
           ownerName: _managerNameController.text.trim(),
+          subOrganization: _selectedSubOrganization,
           dateJoined: _dateJoinedController.text.trim().isEmpty
               ? DateFormat('yyyy-MM-dd').format(DateTime.now())
               : _dateJoinedController.text.trim(),
@@ -164,6 +168,7 @@ class _AddSitesScreenState extends ConsumerState<AddSitesScreen> {
           description: _notesController.text.trim().isEmpty
               ? null
               : _notesController.text.trim(),
+          siteInterest: _selectedSiteInterests,
         );
 
         // Call ViewModel and wait for completion
@@ -443,6 +448,10 @@ class _AddSitesScreenState extends ConsumerState<AddSitesScreen> {
                       ),
                       SizedBox(height: 16.h),
 
+                      // Sub-Organization Dropdown
+                      _buildSubOrganizationDropdown(),
+                      SizedBox(height: 16.h),
+
                       // Date Joined
                       CustomDatePicker(
                         hintText: "Date Joined",
@@ -462,6 +471,10 @@ class _AddSitesScreenState extends ConsumerState<AddSitesScreen> {
                         maxLines: 5,
                         textInputAction: TextInputAction.newline,
                       ),
+                      SizedBox(height: 16.h),
+
+                      // Site Interests Section
+                      _buildSiteInterestsSection(),
                       SizedBox(height: 16.h),
 
                       // Location Picker with Google Maps (includes address search)
@@ -485,10 +498,10 @@ class _AddSitesScreenState extends ConsumerState<AddSitesScreen> {
                             setState(() {
                               // Store the full formatted address for backend
                               _addressController.text = address;
-                              _latitudeController.text =
-                                  location.latitude.toStringAsFixed(6);
-                              _longitudeController.text =
-                                  location.longitude.toStringAsFixed(6);
+                              _latitudeController.text = location.latitude
+                                  .toStringAsFixed(6);
+                              _longitudeController.text = location.longitude
+                                  .toStringAsFixed(6);
                             });
                           }
                         },
@@ -561,6 +574,374 @@ class _AddSitesScreenState extends ConsumerState<AddSitesScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  // Build Sub-Organization Dropdown
+  Widget _buildSubOrganizationDropdown() {
+    final subOrgsAsync = ref.watch(subOrganizationsViewModelProvider);
+    return subOrgsAsync.when(
+      data: (subOrganizations) {
+        if (subOrganizations.isEmpty) {
+          return Container(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(color: Colors.grey.shade300),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  color: Colors.grey.shade400,
+                  size: 20.sp,
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Text(
+                    'No sub-organizations available',
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      color: Colors.grey.shade500,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        return InkWell(
+          onTap: () async {
+            // Show custom bottom sheet
+            final selected = await showModalBottomSheet<String>(
+              context: context,
+              backgroundColor: Colors.transparent,
+              isScrollControlled: true,
+              builder: (context) => Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(24.r),
+                    topRight: Radius.circular(24.r),
+                  ),
+                ),
+                padding: EdgeInsets.only(
+                  top: 20.h,
+                  left: 20.w,
+                  right: 20.w,
+                  bottom: MediaQuery.of(context).viewInsets.bottom + 20.h,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Handle bar
+                    Center(
+                      child: Container(
+                        width: 40.w,
+                        height: 4.h,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(2.r),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 20.h),
+                    // Title
+                    Row(
+                      children: [
+                        Icon(Icons.business_outlined, color: AppColors.primary, size: 24.sp),
+                        SizedBox(width: 12.w),
+                        Text(
+                          'Select Sub-Organization',
+                          style: TextStyle(
+                            fontSize: 18.sp,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Poppins',
+                            color: Colors.grey.shade800,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 8.h),
+                    Text(
+                      'Optional - Choose if applicable',
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: Colors.grey.shade500,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                    SizedBox(height: 20.h),
+                    // Clear option
+                    if (_selectedSubOrganization != null)
+                      ListTile(
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+                        leading: Icon(Icons.clear, color: Colors.red.shade400, size: 20.sp),
+                        title: Text(
+                          'Clear selection',
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontFamily: 'Poppins',
+                            color: Colors.red.shade400,
+                          ),
+                        ),
+                        onTap: () {
+                          Navigator.pop(context, '');
+                        },
+                      ),
+                    // List
+                    ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: subOrganizations.length,
+                      itemBuilder: (context, index) {
+                        final subOrg = subOrganizations[index];
+                        final isSelected = _selectedSubOrganization == subOrg.name;
+                        return ListTile(
+                          contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+                          tileColor: isSelected ? AppColors.primary.withValues(alpha: 0.1) : null,
+                          leading: Icon(
+                            isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
+                            color: isSelected ? AppColors.primary : Colors.grey.shade400,
+                            size: 20.sp,
+                          ),
+                          title: Text(
+                            subOrg.name,
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              fontFamily: 'Poppins',
+                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                              color: isSelected ? AppColors.primary : Colors.grey.shade800,
+                            ),
+                          ),
+                          onTap: () {
+                            Navigator.pop(context, subOrg.name);
+                          },
+                        );
+                      },
+                    ),
+                    SizedBox(height: 20.h),
+                  ],
+                ),
+              ),
+            );
+            if (selected != null) {
+              setState(() {
+                _selectedSubOrganization = selected.isEmpty ? null : selected;
+              });
+            }
+          },
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(
+                color: _selectedSubOrganization == null
+                    ? Colors.grey.shade300
+                    : AppColors.primary.withValues(alpha: 0.5),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.business_outlined,
+                  color: _selectedSubOrganization == null
+                      ? Colors.grey.shade400
+                      : AppColors.primary,
+                  size: 22.sp,
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Text(
+                    _selectedSubOrganization ?? 'Select sub-organization (Optional)',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontFamily: 'Poppins',
+                      color: _selectedSubOrganization == null
+                          ? Colors.grey.shade500
+                          : Colors.grey.shade800,
+                      fontWeight: _selectedSubOrganization == null
+                          ? FontWeight.w400
+                          : FontWeight.w500,
+                    ),
+                  ),
+                ),
+                Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: Colors.grey.shade400,
+                  size: 24.sp,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+      loading: () => Container(
+        height: 60.h,
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(12.r),
+        ),
+        child: Center(
+          child: SizedBox(
+            width: 20.w,
+            height: 20.h,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: AppColors.primary,
+            ),
+          ),
+        ),
+      ),
+      error: (error, stack) => Container(
+        padding: EdgeInsets.all(16.w),
+        decoration: BoxDecoration(
+          color: AppColors.error.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.error_outline, color: AppColors.error, size: 20.sp),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: Text(
+                'Failed to load sub-organizations',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  color: AppColors.error,
+                  fontFamily: 'Poppins',
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Build Site Interests Section
+  Widget _buildSiteInterestsSection() {
+    final categoriesAsync = ref.watch(siteCategoriesViewModelProvider);
+    return categoriesAsync.when(
+      data: (categories) {
+        if (categories.isEmpty) return const SizedBox.shrink();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Site Interests (Optional)',
+              style: TextStyle(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade700,
+                fontFamily: 'Poppins',
+              ),
+            ),
+            SizedBox(height: 12.h),
+            ...categories.map((category) {
+              final isSelected = _selectedSiteInterests.any(
+                (interest) => interest.category == category.name,
+              );
+              return Container(
+                margin: EdgeInsets.only(bottom: 12.h),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12.r),
+                  border: Border.all(
+                    color: isSelected
+                        ? AppColors.primary.withValues(alpha: 0.5)
+                        : Colors.grey.shade300,
+                  ),
+                ),
+                child: InkWell(
+                  onTap: () => setState(() {
+                    if (isSelected) {
+                      _selectedSiteInterests.removeWhere(
+                        (interest) => interest.category == category.name,
+                      );
+                    } else {
+                      _selectedSiteInterests.add(
+                        SiteInterest(
+                          category: category.name,
+                          brands: category.brands,
+                          technicians: category.technicians,
+                        ),
+                      );
+                    }
+                  }),
+                  borderRadius: BorderRadius.circular(12.r),
+                  child: Padding(
+                    padding: EdgeInsets.all(16.w),
+                    child: Row(
+                      children: [
+                        Icon(
+                          isSelected
+                              ? Icons.check_box
+                              : Icons.check_box_outline_blank,
+                          color: isSelected
+                              ? AppColors.primary
+                              : Colors.grey.shade400,
+                          size: 24.sp,
+                        ),
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                category.name,
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w600,
+                                  fontFamily: 'Poppins',
+                                ),
+                              ),
+                              if (category.brands.isNotEmpty) ...[
+                                SizedBox(height: 4.h),
+                                Text(
+                                  'Brands: ' + category.brands.join(', '),
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    color: Colors.grey.shade600,
+                                    fontFamily: 'Poppins',
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ],
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (error, stack) => const SizedBox.shrink(),
     );
   }
 }

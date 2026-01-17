@@ -16,6 +16,8 @@ import 'package:sales_sphere/widget/location_picker_widget.dart';
 import 'package:intl/intl.dart';
 
 import '../models/prospects.model.dart';
+import '../models/prospect_interest.model.dart';
+import '../widgets/prospect_interest_selector.dart';
 
 // Google Places service provider
 final googlePlacesServiceProvider = Provider<GooglePlacesService>((ref) {
@@ -37,6 +39,9 @@ class AddProspectScreen extends ConsumerStatefulWidget {
 
 class _AddProspectScreenState extends ConsumerState<AddProspectScreen> {
   final _formKey = GlobalKey<FormState>();
+
+  // Prospect interests state
+  List<ProspectInterest> _selectedInterests = [];
 
   // Controllers
   late TextEditingController _nameController;
@@ -168,6 +173,9 @@ class _AddProspectScreenState extends ConsumerState<AddProspectScreen> {
           notes: _notesController.text.trim().isEmpty
               ? null
               : _notesController.text.trim(),
+          prospectInterest: _selectedInterests.isEmpty
+              ? null
+              : _selectedInterests,
         );
 
         // Call ViewModel and wait for completion
@@ -487,6 +495,17 @@ class _AddProspectScreenState extends ConsumerState<AddProspectScreen> {
                         minLines: 1,
                         maxLines: 5,
                         textInputAction: TextInputAction.newline,
+                      ),
+                      SizedBox(height: 16.h),
+
+                      // Prospect Interests (Optional)
+                      ProspectInterestSelector(
+                        initiallySelected: _selectedInterests,
+                        onChanged: (interests) {
+                          setState(() {
+                            _selectedInterests = interests;
+                          });
+                        },
                       ),
                       SizedBox(height: 16.h),
 
