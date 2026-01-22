@@ -15,7 +15,7 @@ class AttendanceDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final recordDate = DateTime.parse(attendance.date);
+    final recordDate = DateTime.parse(attendance.date).toLocal();
     final dateStr = DateFormat('EEEE, MMM d, yyyy').format(recordDate);
 
     Color statusColor;
@@ -212,7 +212,7 @@ class AttendanceDetailScreen extends StatelessWidget {
   }
 
   Widget _buildCheckInCard(BuildContext context) {
-    final checkInTime = DateTime.parse(attendance.checkInTime!);
+    final checkInTime = DateTime.parse(attendance.checkInTime!).toLocal();
     final timeStr = DateFormat('hh:mm a').format(checkInTime);
 
     return Container(
@@ -282,7 +282,7 @@ class AttendanceDetailScreen extends StatelessWidget {
   }
 
   Widget _buildCheckOutCard(BuildContext context) {
-    final checkOutTime = DateTime.parse(attendance.checkOutTime!);
+    final checkOutTime = DateTime.parse(attendance.checkOutTime!).toLocal();
     final timeStr = DateFormat('hh:mm a').format(checkOutTime);
 
     return Container(

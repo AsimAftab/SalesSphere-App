@@ -289,8 +289,8 @@ class _AttendanceMonthlyDetailsScreenState
   }
 
   Widget _buildAttendanceCard(SearchedAttendance record) {
-    // Parse date string to DateTime
-    final recordDate = DateTime.parse(record.date);
+    // Parse date string to DateTime (convert UTC to local)
+    final recordDate = DateTime.parse(record.date).toLocal();
     final dateStr = DateFormat('MMM d, yyyy').format(recordDate);
 
     Color statusColor;
@@ -421,7 +421,7 @@ class _AttendanceMonthlyDetailsScreenState
                     'Check-in',
                     record.checkInTime != null
                         ? DateFormat('hh:mm a')
-                            .format(DateTime.parse(record.checkInTime!))
+                            .format(DateTime.parse(record.checkInTime!).toLocal())
                         : '--:--',
                     AppColors.success,
                   ),
@@ -433,7 +433,7 @@ class _AttendanceMonthlyDetailsScreenState
                     'Check-out',
                     record.checkOutTime != null
                         ? DateFormat('hh:mm a')
-                            .format(DateTime.parse(record.checkOutTime!))
+                            .format(DateTime.parse(record.checkOutTime!).toLocal())
                         : '--:--',
                     AppColors.error,
                   ),
