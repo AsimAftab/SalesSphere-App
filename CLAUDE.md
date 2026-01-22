@@ -352,6 +352,53 @@ WEBSOCKET_PATH=/live/tracking
 - **Error Handling**: Global Flutter error handler logs to AppLogger in main.dart, Sentry for crash reporting
 - **Network Calls**: Always use `dioClientProvider`, handle `NetworkException`
 
+### Navigation Conventions
+**CRITICAL: Always use GoRouter for navigation - never use imperative Navigator methods.**
+
+The app uses GoRouter (`go_router` package) for all navigation. Do NOT use:
+- `Navigator.push()`
+- `Navigator.pop()`
+- `Navigator.of(context).pop()`
+- `MaterialPageRoute` or `CupertinoPageRoute`
+
+**Instead, use GoRouter methods:**
+```dart
+import 'package:go_router/go_router.dart';
+
+// Navigate to a route
+context.push('/route-path');
+
+// Navigate with data (use extra parameter)
+context.push('/attendance-detail', extra: attendanceObject);
+
+// Go back
+context.pop();
+
+// Replace current route
+context.replace('/new-route');
+
+// Go to named route
+context.goNamed('route-name');
+```
+
+**Adding new routes:**
+1. Define the route in `lib/core/router/route_handler.dart`
+2. Import the screen widget at the top of the file
+3. Add a `GoRoute` entry with path, name, and builder
+4. For routes that receive data via `extra`, cast it appropriately in the builder
+
+Example route definition:
+```dart
+GoRoute(
+  path: '/attendance-detail',
+  name: 'attendance-detail',
+  builder: (context, state) {
+    final attendance = state.extra as SearchedAttendance;
+    return AttendanceDetailScreen(attendance: attendance);
+  },
+),
+```
+
 ## Module-Based Access Control
 
 The app uses a subscription-based module system to control feature access:

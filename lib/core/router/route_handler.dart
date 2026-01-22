@@ -29,7 +29,9 @@ import 'package:sales_sphere/features/parties/views/edit_party_details_screen.da
 import 'package:sales_sphere/features/parties/views/add_party_screen.dart';
 import 'package:sales_sphere/features/profile/view/profile_screen.dart';
 import 'package:sales_sphere/features/attendance/views/attendance_screen.dart';
+import 'package:sales_sphere/features/attendance/views/attendance_detail_screen.dart';
 import 'package:sales_sphere/features/attendance/views/attendance_monthly_details_screen.dart';
+import 'package:sales_sphere/features/attendance/models/attendance.models.dart';
 import 'package:sales_sphere/features/prospects/views/prospects_screen.dart';
 import 'package:sales_sphere/features/prospects/views/add_prospect_screen.dart';
 import 'package:sales_sphere/features/prospects/views/edit_prospect_details_screen.dart';
@@ -238,6 +240,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             initialMonth: month,
             filter: filter,
           );
+        },
+      ),
+      GoRoute(
+        path: '/attendance-detail',
+        name: 'attendance-detail',
+        builder: (context, state) {
+          final attendance = state.extra as SearchedAttendance;
+          return AttendanceDetailScreen(attendance: attendance);
         },
       ),
 

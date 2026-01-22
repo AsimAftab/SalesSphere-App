@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/attendance.models.dart';
@@ -15,7 +16,7 @@ class AttendanceDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final recordDate = DateTime.parse(attendance.date);
+    final recordDate = DateTime.parse(attendance.date).toLocal();
     final dateStr = DateFormat('EEEE, MMM d, yyyy').format(recordDate);
 
     Color statusColor;
@@ -62,7 +63,7 @@ class AttendanceDetailScreen extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => context.pop(),
         ),
         title: Text(
           'Attendance Details',
@@ -212,7 +213,7 @@ class AttendanceDetailScreen extends StatelessWidget {
   }
 
   Widget _buildCheckInCard(BuildContext context) {
-    final checkInTime = DateTime.parse(attendance.checkInTime!);
+    final checkInTime = DateTime.parse(attendance.checkInTime!).toLocal();
     final timeStr = DateFormat('hh:mm a').format(checkInTime);
 
     return Container(
@@ -282,7 +283,7 @@ class AttendanceDetailScreen extends StatelessWidget {
   }
 
   Widget _buildCheckOutCard(BuildContext context) {
-    final checkOutTime = DateTime.parse(attendance.checkOutTime!);
+    final checkOutTime = DateTime.parse(attendance.checkOutTime!).toLocal();
     final timeStr = DateFormat('hh:mm a').format(checkOutTime);
 
     return Container(
