@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:dio/dio.dart';
+import 'package:go_router/go_router.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/exceptions/offline_exception.dart';
 import 'package:sales_sphere/widget/no_internet_screen.dart';
@@ -161,7 +162,7 @@ class _AttendanceMonthlyDetailsScreenState
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => context.pop(),
         ),
         title: Text(
           'Attendance Details',
@@ -332,12 +333,7 @@ class _AttendanceMonthlyDetailsScreenState
 
     return GestureDetector(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => AttendanceDetailScreen(attendance: record),
-          ),
-        );
+        context.push('/attendance-detail', extra: record);
       },
       child: Container(
         margin: EdgeInsets.only(bottom: 12.h),
