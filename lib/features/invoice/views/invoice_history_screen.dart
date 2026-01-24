@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:open_file/open_file.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:sales_sphere/core/utils/snackbar_utils.dart';
@@ -445,63 +444,80 @@ class InvoiceHistoryScreen extends ConsumerWidget {
 
       AppLogger.d('Generating PDF for invoice: $invoiceNumber');
 
-      // Generate PDF
-      final file = await InvoicePdfService.generateInvoicePdf(detailsAsync);
-
-      AppLogger.d('PDF generated successfully: ${file.path}');
-
-      // Close loading dialog using root navigator
+      // Close loading dialog
       if (dialogShown && context.mounted) {
         Navigator.of(context, rootNavigator: true).pop();
         dialogShown = false;
       }
 
-      AppLogger.d('Dialog closed');
+      AppLogger.d('Dialog closed, saving to Downloads...');
 
-      // Show success message with option to open
-      if (context.mounted) {
-        // Extract user-friendly display path
-        String displayPath;
-        if (file.path.contains('/Download/SalesSphere/')) {
-          displayPath = 'Downloads/SalesSphere/Invoices';
-        } else if (file.path.contains('/SalesSphere/')) {
-          final pathParts = file.path.split('/');
-          final salesSphereIndex = pathParts.indexWhere((part) => part == 'SalesSphere');
-          displayPath = salesSphereIndex != -1
-              ? pathParts.sublist(salesSphereIndex).join('/')
-              : file.path;
-        } else {
-          displayPath = file.path;
-        }
+      // Save directly to Downloads folder (Google Play compliant)
+      final savedPath = await InvoicePdfService.saveToDownloads(detailsAsync);
 
-        SnackbarUtils.showSuccess(
-          context,
-          'Invoice saved to $displayPath',
-          duration: const Duration(seconds: 5),
+      if (savedPath != null && context.mounted) {
+        // Show snackbar with Open button (styled like SnackbarUtils)
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(24.w),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.check_circle_rounded,
+                    color: Colors.white,
+                    size: 20.sp,
+                  ),
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Text(
+                    'PDF saved to Downloads',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            action: SnackBarAction(
+              label: 'Open',
+              textColor: Colors.white,
+              onPressed: () async {
+                await InvoicePdfService.openPdf(savedPath);
+              },
+            ),
+            duration: const Duration(seconds: 5),
+            behavior: SnackBarBehavior.fixed,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
+            ),
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+            elevation: 4,
+          ),
         );
 
-        // Automatically attempt to open the PDF
-        try {
-          final result = await OpenFile.open(file.path);
-
-          // If opening failed, show the full file path
-          if (result.type != ResultType.done && context.mounted) {
-            SnackbarUtils.showWarning(
-              context,
-              'Could not open PDF. Location: ${file.path}',
-              duration: const Duration(seconds: 6),
-            );
-          }
-        } catch (e) {
-          AppLogger.e('Error opening PDF: $e');
+        // Auto-open after a short delay
+        Future.delayed(const Duration(milliseconds: 500), () async {
           if (context.mounted) {
-            SnackbarUtils.showWarning(
-              context,
-              'Could not open PDF. Location: ${file.path}',
-              duration: const Duration(seconds: 6),
-            );
+            await InvoicePdfService.openPdf(savedPath);
           }
-        }
+        });
+      } else if (context.mounted) {
+        SnackbarUtils.showError(
+          context,
+          'Failed to save PDF',
+          duration: const Duration(seconds: 3),
+        );
       }
     } catch (e, stackTrace) {
       AppLogger.e('Error in _downloadInvoicePdf: $e\n$stackTrace');
@@ -934,18 +950,13 @@ class InvoicePreviewSheet extends ConsumerWidget {
 
       AppLogger.d('Starting PDF generation for: $invoiceNumber');
 
-      // Generate PDF
-      final file = await InvoicePdfService.generateInvoicePdf(details);
-
-      AppLogger.d('PDF generated successfully: ${file.path}');
-
-      // Close loading dialog using root navigator
+      // Close loading dialog
       if (dialogShown && context.mounted) {
         Navigator.of(context, rootNavigator: true).pop();
         dialogShown = false;
       }
 
-      AppLogger.d('Dialog closed');
+      AppLogger.d('Dialog closed, saving to Downloads...');
 
       // Close preview sheet
       if (context.mounted) {
@@ -954,50 +965,72 @@ class InvoicePreviewSheet extends ConsumerWidget {
 
       AppLogger.d('Preview sheet closed');
 
-      // Show success message with option to open
-      if (context.mounted) {
-        // Extract user-friendly display path
-        String displayPath;
-        if (file.path.contains('/Download/SalesSphere/')) {
-          displayPath = 'Downloads/SalesSphere/Invoices';
-        } else if (file.path.contains('/SalesSphere/')) {
-          final pathParts = file.path.split('/');
-          final salesSphereIndex = pathParts.indexWhere((part) => part == 'SalesSphere');
-          displayPath = salesSphereIndex != -1
-              ? pathParts.sublist(salesSphereIndex).join('/')
-              : file.path;
-        } else {
-          displayPath = file.path;
-        }
+      // Save directly to Downloads folder (Google Play compliant)
+      final savedPath = await InvoicePdfService.saveToDownloads(details);
 
-        SnackbarUtils.showSuccess(
-          context,
-          'Invoice saved to $displayPath',
-          duration: const Duration(seconds: 5),
+      if (savedPath != null && context.mounted) {
+        // Show snackbar with Open button (styled like SnackbarUtils)
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(24.w),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.check_circle_rounded,
+                    color: Colors.white,
+                    size: 20.sp,
+                  ),
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Text(
+                    'PDF saved to Downloads',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            action: SnackBarAction(
+              label: 'Open',
+              textColor: Colors.white,
+              onPressed: () async {
+                await InvoicePdfService.openPdf(savedPath);
+              },
+            ),
+            duration: const Duration(seconds: 5),
+            behavior: SnackBarBehavior.fixed,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
+            ),
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+            elevation: 4,
+          ),
         );
 
-        // Automatically attempt to open the PDF
-        try {
-          final result = await OpenFile.open(file.path);
-
-          // If opening failed, show the full file path
-          if (result.type != ResultType.done && context.mounted) {
-            SnackbarUtils.showWarning(
-              context,
-              'Could not open PDF. Location: ${file.path}',
-              duration: const Duration(seconds: 6),
-            );
-          }
-        } catch (e) {
-          AppLogger.e('Error opening PDF: $e');
+        // Auto-open after a short delay
+        Future.delayed(const Duration(milliseconds: 500), () async {
           if (context.mounted) {
-            SnackbarUtils.showWarning(
-              context,
-              'Could not open PDF. Location: ${file.path}',
-              duration: const Duration(seconds: 6),
-            );
+            await InvoicePdfService.openPdf(savedPath);
           }
-        }
+        });
+      } else if (context.mounted) {
+        SnackbarUtils.showError(
+          context,
+          'Failed to save PDF',
+          duration: const Duration(seconds: 3),
+        );
       }
     } catch (e, stackTrace) {
       AppLogger.e('Error in _downloadPdf: $e\n$stackTrace');

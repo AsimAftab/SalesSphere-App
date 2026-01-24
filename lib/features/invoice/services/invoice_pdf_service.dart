@@ -1,35 +1,49 @@
 import 'dart:io';
+import 'package:intl/intl.dart';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:path_provider/path_provider.dart';
-import 'package:intl/intl.dart';
-import 'package:permission_handler/permission_handler.dart';
-import '../models/invoice.models.dart';
+
+import '../../../core/services/downloads_saver_service.dart';
 import '../../../core/utils/logger.dart';
+import '../models/invoice.models.dart';
 
 class InvoicePdfService {
   /// Generate a beautiful commercial invoice or estimate PDF
-  static Future<File> generateInvoicePdf(InvoiceDetailsData invoice) async {
+  /// Returns the PDF bytes for further processing
+  static Future<List<int>> generateInvoicePdfBytes(
+    InvoiceDetailsData invoice,
+  ) async {
     final pdf = pw.Document();
-    final deliveryDate = invoice.expectedDeliveryDate != null 
+    final deliveryDate = invoice.expectedDeliveryDate != null
         ? DateTime.parse(invoice.expectedDeliveryDate!)
         : null;
     final createdDate = DateTime.parse(invoice.createdAt);
     final dateFormat = DateFormat('dd MMM yyyy');
-    
+
     // Determine if this is an estimate
     final isEstimate = invoice.isEstimate ?? false;
 
     // Calculate totals
-    final subtotal = invoice.subtotal ?? invoice.items.fold<double>(0.0, (sum, item) => sum + item.total);
+    final subtotal =
+        invoice.subtotal ??
+        invoice.items.fold<double>(0.0, (sum, item) => sum + item.total);
     final discountPercent = invoice.discount ?? 0.0;
-    final discountAmount = invoice.discountAmount ?? (subtotal * discountPercent / 100);
+    final discountAmount =
+        invoice.discountAmount ?? (subtotal * discountPercent / 100);
     final total = invoice.totalAmount ?? (subtotal - discountAmount);
-    
+
     // Define colors based on type
-    final primaryColor = isEstimate ? PdfColor.fromHex('#F57C00') : PdfColor.fromHex('#1976D2');
-    final lightColor = isEstimate ? PdfColor.fromHex('#FFF3E0') : PdfColor.fromHex('#E3F2FD');
-    final borderColor = isEstimate ? PdfColor.fromHex('#FFB74D') : PdfColor.fromHex('#90CAF9');
+    final primaryColor = isEstimate
+        ? PdfColor.fromHex('#F57C00')
+        : PdfColor.fromHex('#1976D2');
+    final lightColor = isEstimate
+        ? PdfColor.fromHex('#FFF3E0')
+        : PdfColor.fromHex('#E3F2FD');
+    final borderColor = isEstimate
+        ? PdfColor.fromHex('#FFB74D')
+        : PdfColor.fromHex('#90CAF9');
 
     pdf.addPage(
       pw.MultiPage(
@@ -37,26 +51,35 @@ class InvoicePdfService {
         margin: const pw.EdgeInsets.all(32),
         build: (context) => [
           // Header
-          _buildHeader(invoice, createdDate, dateFormat, primaryColor, isEstimate),
+          _buildHeader(
+            invoice,
+            createdDate,
+            dateFormat,
+            primaryColor,
+            isEstimate,
+          ),
           pw.SizedBox(height: 30),
 
           // Organization and Party Details
           pw.Row(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              pw.Expanded(
-                child: _buildFromSection(invoice),
-              ),
+              pw.Expanded(child: _buildFromSection(invoice)),
               pw.SizedBox(width: 20),
-              pw.Expanded(
-                child: _buildToSection(invoice),
-              ),
+              pw.Expanded(child: _buildToSection(invoice)),
             ],
           ),
           pw.SizedBox(height: 30),
 
           // Invoice/Estimate Details
-          _buildInvoiceInfo(invoice, deliveryDate, dateFormat, lightColor, borderColor, isEstimate),
+          _buildInvoiceInfo(
+            invoice,
+            deliveryDate,
+            dateFormat,
+            lightColor,
+            borderColor,
+            isEstimate,
+          ),
           pw.SizedBox(height: 30),
 
           // Items Table
@@ -64,7 +87,13 @@ class InvoicePdfService {
           pw.SizedBox(height: 30),
 
           // Pricing Summary
-          _buildPricingSummary(subtotal, discountPercent, discountAmount, total, primaryColor),
+          _buildPricingSummary(
+            subtotal,
+            discountPercent,
+            discountAmount,
+            total,
+            primaryColor,
+          ),
           pw.SizedBox(height: 40),
 
           // Footer
@@ -73,169 +102,128 @@ class InvoicePdfService {
       ),
     );
 
-    // Save PDF to SalesSphere folder
-    final file = await _savePdfToSalesSpherFolder(
-        invoice.invoiceNumber ?? 'Invoice', 
-        await pdf.save()
-    );
-    return file;
+    return await pdf.save();
   }
 
-  /// Get or create the SalesSphere/Invoices folder and save the PDF
-  static Future<File> _savePdfToSalesSpherFolder(String invoiceNumber, List<int> pdfBytes) async {
+  /// Save PDF directly to Downloads folder (Google Play compliant)
+  /// Uses MediaStore API on Android 10+ - no special permissions needed
+  /// Returns the file path/URI if successful, null otherwise
+  static Future<String?> saveToDownloads(InvoiceDetailsData invoice) async {
     try {
-      Directory? baseDir;
+      AppLogger.i('Saving PDF to Downloads folder...');
 
-      // Get the appropriate base directory based on platform
-      if (Platform.isAndroid) {
-        // Request storage permission for Android
-        final hasPermission = await _requestStoragePermission();
+      // Generate PDF bytes
+      final pdfBytes = await generateInvoicePdfBytes(invoice);
 
-        if (hasPermission) {
-          // Try to save to Downloads/SalesSphere/Invoices (easily accessible)
-          try {
-            // Get external storage directory to navigate to Downloads
-            final externalDir = await getExternalStorageDirectory();
+      // Determine filename
+      final invoiceNumber = invoice.isEstimate ?? false
+          ? (invoice.estimateNumber ?? 'Estimate')
+          : (invoice.invoiceNumber ?? 'Invoice');
+      final fileName = '$invoiceNumber.pdf';
 
-            if (externalDir != null) {
-              // Navigate to the public Downloads directory
-              // From: /storage/emulated/0/Android/data/com.example.app/files
-              // To: /storage/emulated/0/Download
-              final pathSegments = externalDir.path.split('/');
-              final storageIndex = pathSegments.indexOf('Android');
+      // Save to Downloads using MediaStore API (Android) or app storage (other platforms)
+      final savedPath = await DownloadsSaverService.saveToDownloads(
+        fileName: fileName,
+        bytes: pdfBytes,
+        mimeType: 'application/pdf',
+      );
 
-              if (storageIndex > 0) {
-                final publicStoragePath = pathSegments.sublist(0, storageIndex).join('/');
-                final downloadsPath = '$publicStoragePath/Download/SalesSphere/Invoices';
-
-                final salesSphereDir = Directory(downloadsPath);
-
-                // Create the directory if it doesn't exist
-                if (!await salesSphereDir.exists()) {
-                  await salesSphereDir.create(recursive: true);
-                  AppLogger.d('Created SalesSphere/Invoices folder at: ${salesSphereDir.path}');
-                }
-
-                baseDir = salesSphereDir;
-                AppLogger.i('Using Downloads folder for PDF storage');
-              }
-            }
-          } catch (e) {
-            AppLogger.w('Could not access Downloads folder: $e');
-          }
-        } else {
-          AppLogger.w('Storage permission not granted, using app-specific directory');
-        }
-
-        // Fallback to external storage directory if Downloads is not accessible
-        if (baseDir == null) {
-          final externalDir = await getExternalStorageDirectory();
-          if (externalDir != null) {
-            final salesSphereDir = Directory('${externalDir.path}/SalesSphere/Invoices');
-
-            if (!await salesSphereDir.exists()) {
-              await salesSphereDir.create(recursive: true);
-              AppLogger.d('Created SalesSphere/Invoices folder at: ${salesSphereDir.path}');
-            }
-
-            baseDir = salesSphereDir;
-          }
-        }
-      } else if (Platform.isIOS) {
-        // For iOS, use documents directory
-        baseDir = await getApplicationDocumentsDirectory();
-
-        final salesSphereDir = Directory('${baseDir.path}/SalesSphere/Invoices');
-
-        if (!await salesSphereDir.exists()) {
-          await salesSphereDir.create(recursive: true);
-          AppLogger.d('Created SalesSphere/Invoices folder at: ${salesSphereDir.path}');
-        }
-
-        baseDir = salesSphereDir;
+      if (savedPath != null) {
+        AppLogger.i('PDF saved successfully to: $savedPath');
       } else {
-        // For other platforms (Web, Windows, macOS, Linux), use documents directory
-        baseDir = await getApplicationDocumentsDirectory();
-
-        final salesSphereDir = Directory('${baseDir.path}/SalesSphere/Invoices');
-
-        if (!await salesSphereDir.exists()) {
-          await salesSphereDir.create(recursive: true);
-          AppLogger.d('Created SalesSphere/Invoices folder at: ${salesSphereDir.path}');
-        }
-
-        baseDir = salesSphereDir;
+        AppLogger.w('Failed to save PDF to Downloads');
       }
 
-      // Fallback to temporary directory if all else fails
-      baseDir ??= await getTemporaryDirectory();
-
-      // Create the file
-      final file = File('${baseDir.path}/$invoiceNumber.pdf');
-      await file.writeAsBytes(pdfBytes);
-
-      AppLogger.d('PDF saved to: ${file.path}');
-
-      return file;
+      return savedPath;
     } catch (e) {
-      AppLogger.e('Error saving PDF to SalesSphere folder: $e');
-
-      // Fallback to temporary directory
-      final tempDir = await getTemporaryDirectory();
-      final file = File('${tempDir.path}/$invoiceNumber.pdf');
-      await file.writeAsBytes(pdfBytes);
-
-      AppLogger.w('PDF saved to temporary directory as fallback: ${file.path}');
-
-      return file;
+      AppLogger.e('Error saving PDF to Downloads: $e');
+      rethrow;
     }
   }
 
-  /// Request storage permission for Android
-  static Future<bool> _requestStoragePermission() async {
+  /// Share PDF using system share sheet
+  /// This allows users to save to Downloads, Drive, cloud storage, etc.
+  static Future<void> sharePdf(InvoiceDetailsData invoice) async {
     try {
-      // Check Android version
+      AppLogger.i('Sharing PDF...');
+
+      // Generate PDF bytes
+      final pdfBytes = await generateInvoicePdfBytes(invoice);
+
+      // Determine filename
+      final invoiceNumber = invoice.isEstimate ?? false
+          ? (invoice.estimateNumber ?? 'Estimate')
+          : (invoice.invoiceNumber ?? 'Invoice');
+      final fileName = '$invoiceNumber.pdf';
+
+      // Save and share
+      await DownloadsSaverService.saveAndShare(
+        fileName: fileName,
+        bytes: pdfBytes,
+      );
+
+      AppLogger.i('PDF shared successfully');
+    } catch (e) {
+      AppLogger.e('Error sharing PDF: $e');
+      rethrow;
+    }
+  }
+
+  /// Open a PDF file at the given path or URI
+  static Future<OpenResult> openPdf(String filePath) async {
+    return await OpenFile.open(filePath);
+  }
+
+  /// Legacy method: Generate and save PDF to app-specific storage
+  /// @deprecated Use saveToDownloads or sharePdf instead
+  static Future<File> generateInvoicePdf(InvoiceDetailsData invoice) async {
+    final pdfBytes = await generateInvoicePdfBytes(invoice);
+    final invoiceNumber = invoice.invoiceNumber ?? 'Invoice';
+    return await _saveToAppDirectory(invoiceNumber, pdfBytes);
+  }
+
+  /// Save PDF to app-specific directory (fallback)
+  static Future<File> _saveToAppDirectory(
+    String invoiceNumber,
+    List<int> pdfBytes,
+  ) async {
+    try {
+      Directory? baseDir;
+
       if (Platform.isAndroid) {
-        // For Android 13+ (API 33+), we might need MANAGE_EXTERNAL_STORAGE
-        // For Android 10-12, we need WRITE_EXTERNAL_STORAGE
-        // For Android < 10, we need WRITE_EXTERNAL_STORAGE
-
-        // First try with storage permission
-        var status = await Permission.storage.status;
-
-        if (status.isGranted) {
-          return true;
-        }
-
-        // Request permission
-        status = await Permission.storage.request();
-
-        if (status.isGranted) {
-          return true;
-        }
-
-        // For Android 11+ (API 30+), try manageExternalStorage if storage permission is denied
-        if (status.isDenied || status.isPermanentlyDenied) {
-          var manageStatus = await Permission.manageExternalStorage.status;
-
-          if (manageStatus.isGranted) {
-            return true;
+        final externalDir = await getExternalStorageDirectory();
+        if (externalDir != null) {
+          final salesSphereDir = Directory(
+            '${externalDir.path}/SalesSphere/Invoices',
+          );
+          if (!await salesSphereDir.exists()) {
+            await salesSphereDir.create(recursive: true);
           }
-
-          // Request manage external storage permission
-          manageStatus = await Permission.manageExternalStorage.request();
-
-          return manageStatus.isGranted;
+          baseDir = salesSphereDir;
         }
-
-        return false;
+      } else if (Platform.isIOS) {
+        baseDir = await getApplicationDocumentsDirectory();
+        final salesSphereDir = Directory(
+          '${baseDir.path}/SalesSphere/Invoices',
+        );
+        if (!await salesSphereDir.exists()) {
+          await salesSphereDir.create(recursive: true);
+        }
+        baseDir = salesSphereDir;
       }
 
-      // For non-Android platforms, no permission needed
-      return true;
+      baseDir ??= await getTemporaryDirectory();
+
+      final file = File('${baseDir.path}/$invoiceNumber.pdf');
+      await file.writeAsBytes(pdfBytes);
+      AppLogger.d('PDF saved to: ${file.path}');
+      return file;
     } catch (e) {
-      AppLogger.e('Error requesting storage permission: $e');
-      return false;
+      AppLogger.e('Error saving PDF to app directory: $e');
+      final tempDir = await getTemporaryDirectory();
+      final file = File('${tempDir.path}/$invoiceNumber.pdf');
+      await file.writeAsBytes(pdfBytes);
+      return file;
     }
   }
 
@@ -268,13 +256,10 @@ class InvoicePdfService {
               ),
               pw.SizedBox(height: 4),
               pw.Text(
-                isEstimate 
+                isEstimate
                     ? (invoice.estimateNumber ?? 'N/A')
                     : (invoice.invoiceNumber ?? 'N/A'),
-                style: const pw.TextStyle(
-                  fontSize: 18,
-                  color: PdfColors.white,
-                ),
+                style: const pw.TextStyle(fontSize: 18, color: PdfColors.white),
               ),
             ],
           ),
@@ -282,10 +267,15 @@ class InvoicePdfService {
             crossAxisAlignment: pw.CrossAxisAlignment.end,
             children: [
               pw.Container(
-                padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const pw.EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: pw.BoxDecoration(
                   color: _getStatusColor(invoice.status),
-                  borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
+                  borderRadius: const pw.BorderRadius.all(
+                    pw.Radius.circular(4),
+                  ),
                 ),
                 child: pw.Text(
                   invoice.status.displayName.toUpperCase(),
@@ -299,10 +289,7 @@ class InvoicePdfService {
               pw.SizedBox(height: 8),
               pw.Text(
                 'Date: ${dateFormat.format(createdDate)}',
-                style: const pw.TextStyle(
-                  fontSize: 12,
-                  color: PdfColors.white,
-                ),
+                style: const pw.TextStyle(fontSize: 12, color: PdfColors.white),
               ),
             ],
           ),
@@ -332,10 +319,7 @@ class InvoicePdfService {
           pw.SizedBox(height: 8),
           pw.Text(
             invoice.organizationName,
-            style: pw.TextStyle(
-              fontSize: 14,
-              fontWeight: pw.FontWeight.bold,
-            ),
+            style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 4),
           pw.Text(
@@ -378,10 +362,7 @@ class InvoicePdfService {
           pw.SizedBox(height: 8),
           pw.Text(
             invoice.partyName,
-            style: pw.TextStyle(
-              fontSize: 14,
-              fontWeight: pw.FontWeight.bold,
-            ),
+            style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 4),
           pw.Text(
@@ -431,7 +412,7 @@ class InvoicePdfService {
           ),
           pw.SizedBox(height: 6),
           pw.Text(
-            deliveryDate != null 
+            deliveryDate != null
                 ? DateFormat('EEEE, MMMM dd, yyyy').format(deliveryDate)
                 : 'Not set',
             style: pw.TextStyle(
@@ -445,15 +426,16 @@ class InvoicePdfService {
     );
   }
 
-  static pw.Widget _buildItemsTable(List<InvoiceItemData> items, PdfColor primaryColor) {
+  static pw.Widget _buildItemsTable(
+    List<InvoiceItemData> items,
+    PdfColor primaryColor,
+  ) {
     return pw.Table(
       border: pw.TableBorder.all(color: PdfColors.grey300),
       children: [
         // Header
         pw.TableRow(
-          decoration: pw.BoxDecoration(
-            color: primaryColor,
-          ),
+          decoration: pw.BoxDecoration(color: primaryColor),
           children: [
             _buildTableHeader('#'),
             _buildTableHeader('Item Description'),
@@ -475,9 +457,20 @@ class InvoicePdfService {
               _buildTableCell((index + 1).toString(), isCenter: true),
               _buildTableCell(item.productName),
               _buildTableCell(item.quantity.toString(), isCenter: true),
-              _buildTableCell('Rs. ${item.price.toStringAsFixed(2)}', isRight: true),
-              _buildTableCell(item.discount > 0 ? '${item.discount.toStringAsFixed(1)}%' : '-', isCenter: true),
-              _buildTableCell('Rs. ${item.total.toStringAsFixed(2)}', isRight: true),
+              _buildTableCell(
+                'Rs. ${item.price.toStringAsFixed(2)}',
+                isRight: true,
+              ),
+              _buildTableCell(
+                item.discount > 0
+                    ? '${item.discount.toStringAsFixed(1)}%'
+                    : '-',
+                isCenter: true,
+              ),
+              _buildTableCell(
+                'Rs. ${item.total.toStringAsFixed(2)}',
+                isRight: true,
+              ),
             ],
           );
         }),
@@ -513,8 +506,8 @@ class InvoicePdfService {
         textAlign: isCenter
             ? pw.TextAlign.center
             : isRight
-                ? pw.TextAlign.right
-                : pw.TextAlign.left,
+            ? pw.TextAlign.right
+            : pw.TextAlign.left,
       ),
     );
   }
@@ -526,10 +519,10 @@ class InvoicePdfService {
     double total,
     PdfColor primaryColor,
   ) {
-    final lightColor = primaryColor == PdfColor.fromHex('#F57C00') 
-        ? PdfColor.fromHex('#FFF3E0') 
+    final lightColor = primaryColor == PdfColor.fromHex('#F57C00')
+        ? PdfColor.fromHex('#FFF3E0')
         : PdfColor.fromHex('#E3F2FD');
-        
+
     return pw.Container(
       alignment: pw.Alignment.centerRight,
       child: pw.Container(
@@ -613,9 +606,7 @@ class InvoicePdfService {
       alignment: pw.Alignment.center,
       padding: const pw.EdgeInsets.only(top: 20),
       decoration: const pw.BoxDecoration(
-        border: pw.Border(
-          top: pw.BorderSide(color: PdfColors.grey300),
-        ),
+        border: pw.Border(top: pw.BorderSide(color: PdfColors.grey300)),
       ),
       child: pw.Column(
         children: [
@@ -630,18 +621,12 @@ class InvoicePdfService {
           pw.SizedBox(height: 8),
           pw.Text(
             'This is a computer-generated invoice and does not require a signature.',
-            style: const pw.TextStyle(
-              fontSize: 9,
-              color: PdfColors.grey600,
-            ),
+            style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey600),
           ),
           pw.SizedBox(height: 4),
           pw.Text(
             'Generated by SalesSphere',
-            style: const pw.TextStyle(
-              fontSize: 8,
-              color: PdfColors.grey500,
-            ),
+            style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey500),
           ),
         ],
       ),

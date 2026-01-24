@@ -66,7 +66,7 @@ abstract class CatalogItem with _$CatalogItem {
     @JsonKey(name: 'qty') int? quantity,
     @JsonKey(name: 'isActive') @Default(true) bool isActive,
     required String organizationId,
-    required String createdBy,
+    required CreatedByInfo createdBy,
     required DateTime createdAt,
     required DateTime updatedAt,
     @JsonKey(name: '__v') int? v,
@@ -86,4 +86,18 @@ abstract class CatalogItem with _$CatalogItem {
 
   factory CatalogItem.fromJson(Map<String, dynamic> json) =>
       _$CatalogItemFromJson(json);
+}
+
+// ========================================
+// CREATED BY INFO MODEL
+// ========================================
+@freezed
+abstract class CreatedByInfo with _$CreatedByInfo {
+  const factory CreatedByInfo({
+    @JsonKey(name: '_id') required String id,
+    required String name,
+  }) = _CreatedByInfo;
+
+  factory CreatedByInfo.fromJson(Map<String, dynamic> json) =>
+      _$CreatedByInfoFromJson(json);
 }
