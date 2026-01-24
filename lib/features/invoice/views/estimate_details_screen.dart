@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:open_file/open_file.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:sales_sphere/core/utils/snackbar_utils.dart';
@@ -541,14 +540,71 @@ class EstimateDetailsScreen extends ConsumerWidget {
     try {
       SnackbarUtils.showInfo(context, 'Generating PDF...');
 
-      final pdfFile = await InvoicePdfService.generateInvoicePdf(estimate);
+      // Save directly to Downloads folder (Google Play compliant)
+      final savedPath = await InvoicePdfService.saveToDownloads(estimate);
 
       if (!context.mounted) return;
 
-      SnackbarUtils.showSuccess(context, 'PDF saved to Downloads');
+      if (savedPath != null) {
+        // Show snackbar with Open button (styled like SnackbarUtils)
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(8.w),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.check_circle_rounded,
+                    color: Colors.white,
+                    size: 20.sp,
+                  ),
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Text(
+                    'PDF saved to Downloads',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            action: SnackBarAction(
+              label: 'Open',
+              textColor: Colors.white,
+              onPressed: () async {
+                await InvoicePdfService.openPdf(savedPath);
+              },
+            ),
+            duration: const Duration(seconds: 5),
+            behavior: SnackBarBehavior.fixed,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
+            ),
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+            elevation: 4,
+          ),
+        );
 
-      final result = await OpenFile.open(pdfFile.path);
-      AppLogger.d('Open file result: ${result.type} - ${result.message}');
+        // Auto-open after a short delay
+        Future.delayed(const Duration(milliseconds: 500), () async {
+          if (context.mounted) {
+            await InvoicePdfService.openPdf(savedPath);
+          }
+        });
+      } else {
+        SnackbarUtils.showError(context, 'Failed to save PDF');
+      }
     } catch (e) {
       AppLogger.e('Error generating PDF: $e');
       if (!context.mounted) return;
