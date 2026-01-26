@@ -290,8 +290,10 @@ class _EditTourDetailsScreenState extends ConsumerState<EditTourDetailsScreen> {
                       ),
                       child: Column(
                         children: [
+                          SizedBox(height: 8.h),
                           PrimaryTextField(
-                            hintText: "Place of visit",
+                            label: const Text("Place of Visit"),
+                            hintText: "Enter place of visit",
                             controller: _placeController,
                             prefixIcon: Icons.location_on_outlined,
                             enabled: isEditable,
@@ -320,7 +322,8 @@ class _EditTourDetailsScreenState extends ConsumerState<EditTourDetailsScreen> {
                           ),
                           SizedBox(height: 16.h),
                           PrimaryTextField(
-                            hintText: "Purpose of the visit",
+                            label: const Text("Purpose of Visit"),
+                            hintText: "Enter purpose of the visit",
                             controller: _purposeController,
                             prefixIcon: Icons.description_outlined,
                             enabled: isEditable,

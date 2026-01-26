@@ -183,7 +183,13 @@ class _EditNoteScreenState extends ConsumerState<EditNoteScreen> {
 
           if (imagesToUpload.isNotEmpty) {
             await vm.uploadNoteImages(widget.noteId, imagesToUpload);
+          } else {
+            // No new images to upload, release the provider
+            vm.release();
           }
+        } else {
+          // No new images at all, release the provider
+          vm.release();
         }
 
         if (mounted) {
@@ -582,9 +588,11 @@ class _EditNoteScreenState extends ConsumerState<EditNoteScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                SizedBox(height: 8.h),
                                 PrimaryTextField(
                                   controller: _titleController,
-                                  hintText: "Title",
+                                  label: const Text("Title"),
+                                  hintText: "Enter title",
                                   prefixIcon: Icons.title,
                                   enabled: _isEditMode && !_isSubmitting,
                                   validator: (v) =>
@@ -615,7 +623,8 @@ class _EditNoteScreenState extends ConsumerState<EditNoteScreen> {
                                 SizedBox(height: 16.h),
                                 PrimaryTextField(
                                   controller: _descriptionController,
-                                  hintText: "Description",
+                                  label: const Text("Description"),
+                                  hintText: "Enter description",
                                   prefixIcon: Icons.description_outlined,
                                   enabled: _isEditMode && !_isSubmitting,
                                   minLines: 1,

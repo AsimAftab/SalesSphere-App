@@ -135,6 +135,7 @@ class _ApplyLeaveRequestScreenState
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        SizedBox(height: 8.h),
                         CustomDatePicker(
                           controller: _startDateController,
                           hintText: "Start Date",
@@ -201,7 +202,8 @@ class _ApplyLeaveRequestScreenState
 
                         PrimaryTextField(
                           controller: _reasonController,
-                          hintText: "Reason",
+                          label: const Text("Reason"),
+                          hintText: "Enter reason for leave",
                           prefixIcon: Icons.description_outlined,
                           hasFocusBorder: true,
                           minLines: 1,

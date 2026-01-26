@@ -681,9 +681,11 @@ class _EditExpenseClaimScreenState
                             ),
                             child: Column(
                               children: [
+                                SizedBox(height: 8.h),
                                 // Title
                                 PrimaryTextField(
-                                  hintText: "Title",
+                                  label: const Text("Title"),
+                                  hintText: "Enter title",
                                   controller: _titleController,
                                   prefixIcon: Icons.title_outlined,
                                   hasFocusBorder: true,
@@ -697,7 +699,8 @@ class _EditExpenseClaimScreenState
 
                                 // Amount
                                 PrimaryTextField(
-                                  hintText: "Amount (INR)",
+                                  label: const Text("Amount"),
+                                  hintText: "Enter amount",
                                   controller: _amountController,
                                   prefixIcon: Icons.currency_rupee,
                                   hasFocusBorder: true,
@@ -885,7 +888,8 @@ class _EditExpenseClaimScreenState
 
                                 // Description
                                 PrimaryTextField(
-                                  hintText: "Description (Optional)",
+                                  label: const Text("Description"),
+                                  hintText: "Enter description (optional)",
                                   controller: _descriptionController,
                                   prefixIcon: Icons.description_outlined,
                                   hasFocusBorder: true,

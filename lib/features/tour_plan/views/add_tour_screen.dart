@@ -171,8 +171,10 @@ class _AddTourPlanScreenState extends ConsumerState<AddTourPlanScreen> {
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
+                      SizedBox(height: 8.h),
                       PrimaryTextField(
-                        hintText: "Place of visit",
+                        label: const Text("Place of Visit"),
+                        hintText: "Enter place of visit",
                         controller: _placeController,
                         prefixIcon: Icons.location_on_outlined,
                         validator: (v) => ref
@@ -197,7 +199,8 @@ class _AddTourPlanScreenState extends ConsumerState<AddTourPlanScreen> {
                       ),
                       SizedBox(height: 16.h),
                       PrimaryTextField(
-                        hintText: "Purpose of the visit",
+                        label: const Text("Purpose of Visit"),
+                        hintText: "Enter purpose of the visit",
                         controller: _purposeController,
                         prefixIcon: Icons.description_outlined,
                         hasFocusBorder: true,
