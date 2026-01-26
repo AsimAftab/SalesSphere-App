@@ -444,9 +444,11 @@ class _EditMiscellaneousWorkScreenState
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            SizedBox(height: 8.h),
                       // Nature of Work
                       PrimaryTextField(
-                        hintText: "Nature of Work",
+                        label: const Text("Nature of Work"),
+                        hintText: "Enter nature of work",
                         controller: _natureOfWorkController,
                         prefixIcon: Icons.work_outline,
                         hasFocusBorder: true,
@@ -462,7 +464,8 @@ class _EditMiscellaneousWorkScreenState
 
                       // Assigned By
                       PrimaryTextField(
-                        hintText: "Assigned By",
+                        label: const Text("Assigned By"),
+                        hintText: "Enter assigned by",
                         controller: _assignedByController,
                         prefixIcon: Icons.person_outline,
                         hasFocusBorder: true,
@@ -537,7 +540,8 @@ class _EditMiscellaneousWorkScreenState
 
                       // Latitude (Non-editable)
                       PrimaryTextField(
-                        hintText: "Latitude (Auto-generated)",
+                        label: const Text("Latitude"),
+                        hintText: "Auto-generated from map",
                         controller: _latitudeController,
                         prefixIcon: Icons.explore_outlined,
                         hasFocusBorder: true,
@@ -547,7 +551,8 @@ class _EditMiscellaneousWorkScreenState
 
                       // Longitude (Non-editable)
                       PrimaryTextField(
-                        hintText: "Longitude (Auto-generated)",
+                        label: const Text("Longitude"),
+                        hintText: "Auto-generated from map",
                         controller: _longitudeController,
                         prefixIcon: Icons.explore_outlined,
                         hasFocusBorder: true,

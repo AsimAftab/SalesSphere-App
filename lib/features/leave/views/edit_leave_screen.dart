@@ -363,6 +363,7 @@ class _EditLeaveScreenState extends ConsumerState<EditLeaveScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            SizedBox(height: 8.h),
                       CustomDatePicker(
                         controller: _startDateController,
                         hintText: "Start Date",
@@ -430,7 +431,8 @@ class _EditLeaveScreenState extends ConsumerState<EditLeaveScreen> {
 
                       PrimaryTextField(
                         controller: _reasonController,
-                        hintText: "Reason",
+                        label: const Text("Reason"),
+                        hintText: "Enter reason for leave",
                         prefixIcon: Icons.description_outlined,
                         hasFocusBorder: true,
                         enabled: _isEditMode,

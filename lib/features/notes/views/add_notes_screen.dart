@@ -197,6 +197,9 @@ class _AddNotesScreenState extends ConsumerState<AddNotesScreen> {
             noteId,
             _selectedImages.map((e) => File(e.path)).toList(),
           );
+        } else {
+          // No images to upload, release the provider manually
+          vm.release();
         }
 
         if (mounted) {
@@ -500,9 +503,11 @@ class _AddNotesScreenState extends ConsumerState<AddNotesScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      SizedBox(height: 8.h),
                       PrimaryTextField(
                         controller: _titleController,
-                        hintText: "Title",
+                        label: const Text("Title"),
+                        hintText: "Enter title",
                         prefixIcon: Icons.description_outlined,
                         hasFocusBorder: true,
                         enabled: !_isSubmitting,
@@ -535,7 +540,8 @@ class _AddNotesScreenState extends ConsumerState<AddNotesScreen> {
                       SizedBox(height: 20.h),
 
                       PrimaryTextField(
-                        hintText: "Description",
+                        label: const Text("Description"),
+                        hintText: "Enter description",
                         controller: _descriptionController,
                         prefixIcon: Icons.description_outlined,
                         hasFocusBorder: true,

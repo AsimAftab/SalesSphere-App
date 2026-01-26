@@ -434,9 +434,11 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      SizedBox(height: 8.h),
                       // 1. Title
                       PrimaryTextField(
-                        hintText: "Title",
+                        label: const Text("Title"),
+                        hintText: "Enter title",
                         controller: _titleController,
                         prefixIcon: Icons.title_outlined,
                         hasFocusBorder: true,
@@ -449,7 +451,8 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
 
                       // 2. Amount
                       PrimaryTextField(
-                        hintText: "Amount",
+                        label: const Text("Amount"),
+                        hintText: "Enter amount",
                         controller: _amountController,
                         prefixIcon: Icons.currency_rupee,
                         hasFocusBorder: true,
@@ -731,7 +734,8 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
 
                       // 6. Description
                       PrimaryTextField(
-                        hintText: "Description",
+                        label: const Text("Description"),
+                        hintText: "Enter description (optional)",
                         controller: _descriptionController,
                         prefixIcon: Icons.description_outlined,
                         hasFocusBorder: true,
