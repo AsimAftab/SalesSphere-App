@@ -333,8 +333,8 @@ class HalfDayWindowClosedException implements Exception {
 @freezed
 abstract class OrganizationLocation with _$OrganizationLocation {
   const factory OrganizationLocation({
-    required double latitude,
-    required double longitude,
+    double? latitude,
+    double? longitude,
     required String address,
   }) = _OrganizationLocation;
 
