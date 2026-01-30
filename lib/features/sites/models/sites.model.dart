@@ -238,7 +238,7 @@ abstract class CreateSiteRequest with _$CreateSiteRequest {
     required CreateSiteContact contact,
     required CreateSiteLocation location,
     @JsonKey(includeIfNull: false) String? description,
-    @Default([]) @JsonKey(includeIfNull: false) List<SiteInterest> siteInterest,
+    List<SiteInterest>? siteInterest,
   }) = _CreateSiteRequest;
 
   factory CreateSiteRequest.fromJson(Map<String, dynamic> json) =>
@@ -268,7 +268,7 @@ abstract class CreateSiteRequest with _$CreateSiteRequest {
 abstract class CreateSiteContact with _$CreateSiteContact {
   const factory CreateSiteContact({
     required String phone,
-    String? email,
+    @JsonKey(includeIfNull: false) String? email,
   }) = _CreateSiteContact;
 
   factory CreateSiteContact.fromJson(Map<String, dynamic> json) =>
@@ -305,7 +305,7 @@ abstract class UpdateSiteRequest with _$UpdateSiteRequest {
     required CreateSiteContact contact,
     required CreateSiteLocation location,
     @JsonKey(includeIfNull: false) String? description,
-    @Default([]) @JsonKey(includeIfNull: false) List<SiteInterest> siteInterest,
+    List<SiteInterest>? siteInterest,
   }) = _UpdateSiteRequest;
 
   factory UpdateSiteRequest.fromJson(Map<String, dynamic> json) =>

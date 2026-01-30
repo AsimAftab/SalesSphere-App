@@ -145,7 +145,14 @@ Available in `lib/core/utils/field_validators.dart`:
 - `validateGST()` - Indian GST format (15 characters)
 - `validateMatch(fieldToMatch, [fieldName])` - Field matching
 - `validateAge(minAge)` - Age validation from date of birth
+- `validateRegex(pattern, errorMessage)` - Custom regex validation
 - `combine(List<Validator>)` - Combine multiple validators
+
+### Other Utilities
+- `AppLogger` in `lib/core/utils/logger.dart` - Centralized logging with colored output
+- `DateFormatter` in `lib/core/utils/date_formatter.dart` - Date formatting helpers
+- `SnackbarUtils` in `lib/core/utils/snackbar_utils.dart` - Snackbar helpers
+- `ConnectivityUtils` in `lib/core/utils/connectivity_utils.dart` - Network status helpers
 
 ## Key Dependencies
 
@@ -163,6 +170,8 @@ Available in `lib/core/utils/field_validators.dart`:
 - **skeletonizer**: ^2.1.0+1 (loading skeletons)
 - **cached_network_image**: 3.4.1 (image caching)
 - **table_calendar**: ^3.1.2 (calendar widget)
+- **wechat_assets_picker**: ^9.5.0 (media selection - multiple images/files)
+- **photo_view**: ^0.15.0 (image zoom/pan viewer)
 
 ### Tracking & Location
 - **socket_io_client**: ^2.0.3+1 (WebSocket for real-time tracking)
@@ -181,12 +190,15 @@ Available in `lib/core/utils/field_validators.dart`:
 - **url_launcher**: ^6.3.2 (deep links)
 - **intl**: ^0.20.2 (date formatting)
 - **uuid**: ^4.5.1 (unique IDs)
-- **image_picker**: ^1.2.0 (photo selection)
+- **image_picker**: ^1.2.0 (photo selection - single images)
+- **wechat_assets_picker**: ^9.5.0 (media selection - multiple images/files)
 - **path_provider**: ^2.1.5 (file paths)
 - **pdf**: ^3.11.3 + open_file: ^3.5.9 (PDF generation)
 - **permission_handler**: ^11.3.1 (runtime permissions)
 - **sentry_flutter**: ^9.8.0 (error tracking)
 - **battery_plus**: ^5.0.2 (battery status)
+- **share_plus**: ^10.1.3 (content sharing)
+- **file_picker**: ^10.3.8 (file selection)
 
 ## Code Generation Workflow
 
@@ -352,6 +364,23 @@ WEBSOCKET_PATH=/live/tracking
 - **Error Handling**: Global Flutter error handler logs to AppLogger in main.dart, Sentry for crash reporting
 - **Network Calls**: Always use `dioClientProvider`, handle `NetworkException`
 
+### Shared Widgets
+Common reusable widgets in `lib/widget/`:
+- `CustomTextField` - Primary text input field with validation
+- `CustomButton` - Themed button variants
+- `CustomDropdownTextField` - Dropdown selection field
+- `PrimaryAsyncDropdown` - Async data loading dropdown
+- `PrimaryImagePicker` - Image selection widget
+- `CustomDatePicker` - Date selection widget
+- `LocationPickerWidget` - Location selection with map
+- `AsyncValueHandler` - Handles loading/error states for AsyncValue
+- `ErrorHandlerWidget` - Consistent error display
+- `PermissionDeniedWidget` - Permission request UI
+- `ConnectivityBanner` - Offline status banner
+- `UtilityCard` - Utility menu grid item
+- `UniversalListCard` - Generic list item card
+- `DirectoryOptionsSheet` - Bottom sheet for directory options (parties/prospects/sites)
+
 ### Navigation Conventions
 **CRITICAL: Always use GoRouter for navigation - never use imperative Navigator methods.**
 
@@ -411,11 +440,17 @@ The app uses a subscription-based module system to control feature access:
 - Access redirects to home with snackbar when attempting to access disabled modules
 
 **Navigation Tab Structure** (based on enabled modules):
-- Index 0: Home (dashboard)
+- Index 0: Home (dashboard) - always visible
 - Index 1: Catalog (products)
-- Index 2: Invoice (invoices) - with floating action button
-- Index 3: Directory (parties/prospects/sites)
-- Index 4: Utilities (collection, expense claims, etc.)
+- Index 2: Invoice (invoices) - with floating action button, includes Estimates
+- Index 3: Directory (parties/prospects/sites) - shows directory options sheet
+- Index 4: Utilities (collection, expense claims, etc.) - shows utilities grid
+
+**Available Modules** (from `ModuleConfig.modules`):
+- Core tabs: `dashboard`, `products`, `invoices`, `estimates`
+- Directory: `parties`, `prospects`, `sites`
+- Utilities: `attendance`, `leaves`, `odometer`, `expenses`, `notes`, `collections`, `tourPlan`, `miscellaneousWork`
+- Other: `beatPlan` (standalone, not in nav)
 
 **Usage in routes**:
 ```dart

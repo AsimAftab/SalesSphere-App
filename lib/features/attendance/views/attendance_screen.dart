@@ -158,13 +158,15 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
 
             SizedBox(height: 16.h),
 
-            // Geofence Status Indicator (only show when enabled)
+            // Geofence Status Indicator (only show when enabled with valid coordinates)
             if (todayAttendanceStatus?.enableGeoFencingAttendance == true &&
-                todayAttendanceStatus?.organizationLocation != null)
+                todayAttendanceStatus?.organizationLocation?.latitude != null &&
+                todayAttendanceStatus?.organizationLocation?.longitude != null)
               _buildGeofenceStatusIndicator(todayAttendanceStatus!),
 
             if (todayAttendanceStatus?.enableGeoFencingAttendance == true &&
-                todayAttendanceStatus?.organizationLocation != null)
+                todayAttendanceStatus?.organizationLocation?.latitude != null &&
+                todayAttendanceStatus?.organizationLocation?.longitude != null)
               SizedBox(height: 16.h)
             else
               SizedBox(height: 16.h),

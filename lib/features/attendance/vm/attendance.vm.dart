@@ -94,8 +94,11 @@ class TodayAttendanceViewModel extends _$TodayAttendanceViewModel {
   /// Check if geofencing is enabled for attendance
   bool isGeofencingEnabled(TodayAttendanceStatusResponse? statusResponse) {
     if (statusResponse == null) return false;
+    final orgLocation = statusResponse.organizationLocation;
     return statusResponse.enableGeoFencingAttendance &&
-        statusResponse.organizationLocation != null;
+        orgLocation != null &&
+        orgLocation.latitude != null &&
+        orgLocation.longitude != null;
   }
 
   /// Validate user location against geofence before check-in
@@ -118,8 +121,8 @@ class TodayAttendanceViewModel extends _$TodayAttendanceViewModel {
     final result = GeofencingService.instance.validateGeofence(
       userLat: userLat,
       userLng: userLng,
-      targetLat: orgLocation.latitude,
-      targetLng: orgLocation.longitude,
+      targetLat: orgLocation.latitude!,
+      targetLng: orgLocation.longitude!,
       radius: GeofencingService.attendanceGeofenceRadius,
     );
 
@@ -157,8 +160,8 @@ class TodayAttendanceViewModel extends _$TodayAttendanceViewModel {
     final result = GeofencingService.instance.validateGeofence(
       userLat: userLat,
       userLng: userLng,
-      targetLat: orgLocation.latitude,
-      targetLng: orgLocation.longitude,
+      targetLat: orgLocation.latitude!,
+      targetLng: orgLocation.longitude!,
       radius: GeofencingService.attendanceGeofenceRadius,
     );
 
