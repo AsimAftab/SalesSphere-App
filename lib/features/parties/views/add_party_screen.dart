@@ -19,10 +19,12 @@ import 'package:sales_sphere/widget/custom_button.dart';
 import 'package:sales_sphere/widget/custom_date_picker.dart';
 import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/location_picker_widget.dart';
-import 'package:sales_sphere/widget/primary_async_dropdown.dart';
 import 'package:sales_sphere/widget/primary_image_picker.dart';
 
 import '../../../core/utils/logger.dart';
+
+// Constant for "Add New..." option in party type dropdown
+const String _kAddNewPartyType = '__add_new_party_type__';
 
 // Google Places service provider
 final googlePlacesServiceProvider = Provider<GooglePlacesService>((ref) {
@@ -56,9 +58,13 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
   late TextEditingController _dateJoinedController;
   late TextEditingController _latitudeController;
   late TextEditingController _longitudeController;
+  late TextEditingController _newPartyTypeController;
 
   // Party type selection
   String? _selectedPartyType;
+
+  // Whether to show the "Add New Party Type" text field
+  bool _showNewPartyTypeField = false;
 
   // Image selection
   XFile? _selectedImage;
@@ -88,6 +94,7 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
     _dateJoinedController = TextEditingController();
     _latitudeController = TextEditingController();
     _longitudeController = TextEditingController();
+    _newPartyTypeController = TextEditingController();
   }
 
   @override
@@ -102,6 +109,7 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
     _dateJoinedController.dispose();
     _latitudeController.dispose();
     _longitudeController.dispose();
+    _newPartyTypeController.dispose();
     super.dispose();
   }
 
@@ -233,6 +241,13 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
         }
 
         // Create request object
+        // Use new party type from text field if "Add New" was selected
+        final partyTypeToSend = _selectedPartyType == _kAddNewPartyType
+            ? (_newPartyTypeController.text.trim().isEmpty
+                    ? null
+                    : _newPartyTypeController.text.trim())
+            : _selectedPartyType;
+
         final createRequest = CreatePartyRequest(
           partyName: _nameController.text.trim(),
           ownerName: _ownerNameController.text.trim(),
@@ -240,7 +255,7 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
               ? DateFormat('yyyy-MM-dd').format(DateTime.now())
               : _dateJoinedController.text.trim(),
           panVatNumber: _panVatController.text.trim(),
-          partyType: _selectedPartyType,
+          partyType: partyTypeToSend,
           contact: CreatePartyContact(
             phone: _phoneController.text.trim(),
             email: _emailController.text.trim().isEmpty
@@ -580,17 +595,40 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
                       SizedBox(height: 16.h),
 
                       // Party Type Dropdown
-                      PrimaryAsyncDropdown<PartyType>(
-                        itemsAsync: ref.watch(partyTypesViewModelProvider),
-                        initialValue: _selectedPartyType,
-                        onChanged: (val) =>
-                            setState(() => _selectedPartyType = val),
-                        itemLabel: (type) => type.name,
-                        hintText: 'Party Type',
-                        prefixIcon: Icons.category_outlined,
-                        title: 'Select Party Type',
+                      _PartyTypeDropdown(
+                        partyTypesAsync: ref.watch(partyTypesViewModelProvider),
+                        selectedType: _selectedPartyType,
+                        onTypeSelected: (type) {
+                          setState(() {
+                            _selectedPartyType = type;
+                            _showNewPartyTypeField = (type == _kAddNewPartyType);
+                          });
+                        },
                       ),
                       SizedBox(height: 16.h),
+
+                      // Show text field when "Add New..." is selected
+                      if (_showNewPartyTypeField)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            PrimaryTextField(
+                              hintText: "Enter New Party Type",
+                              controller: _newPartyTypeController,
+                              prefixIcon: Icons.edit_outlined,
+                              hasFocusBorder: true,
+                              textInputAction: TextInputAction.next,
+                              validator: (value) {
+                                if (_showNewPartyTypeField &&
+                                    (value == null || value.trim().isEmpty)) {
+                                  return 'Please enter a party type';
+                                }
+                                return null;
+                              },
+                            ),
+                            SizedBox(height: 16.h),
+                          ],
+                        ),
 
                       PrimaryTextField(
                         hintText: "Notes",
@@ -707,6 +745,323 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
               size: ButtonSize.medium,
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+// Custom widget for Party Type Dropdown with "Add New..." option
+class _PartyTypeDropdown extends ConsumerWidget {
+  final AsyncValue<List<PartyType>> partyTypesAsync;
+  final String? selectedType;
+  final ValueChanged<String?> onTypeSelected;
+
+  const _PartyTypeDropdown({
+    required this.partyTypesAsync,
+    required this.selectedType,
+    required this.onTypeSelected,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return partyTypesAsync.when(
+      data: (partyTypes) {
+        // Add "Add New..." option at the beginning
+        final displayValue = selectedType == _kAddNewPartyType
+            ? 'Add New...'
+            : selectedType;
+
+        return InkWell(
+          onTap: () => _showPartyTypeBottomSheet(context, partyTypes),
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(color: AppColors.border, width: 1.5),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  selectedType == _kAddNewPartyType
+                      ? Icons.add_circle_outline
+                      : Icons.category_outlined,
+                  color: AppColors.textSecondary,
+                  size: 20.sp,
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Text(
+                    displayValue ?? 'Party Type (Optional)',
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w400,
+                      color: selectedType != null
+                          ? AppColors.textPrimary
+                          : AppColors.textHint,
+                    ),
+                  ),
+                ),
+                Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: AppColors.textSecondary,
+                  size: 20.sp,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+      loading: () => Container(
+        height: 48.h,
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(color: AppColors.border, width: 1.5),
+        ),
+        child: Center(
+          child: SizedBox(
+            width: 16.w,
+            height: 16.h,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ),
+      ),
+      error: (_, __) => Container(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+        decoration: BoxDecoration(
+          color: AppColors.error.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(color: AppColors.error, width: 1.5),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.error_outline,
+              color: AppColors.error,
+              size: 20.sp,
+            ),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: Text(
+                'Failed to load party types',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  color: AppColors.error,
+                  fontFamily: 'Poppins',
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showPartyTypeBottomSheet(
+    BuildContext context,
+    List<PartyType> partyTypes,
+  ) async {
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => _PartyTypeBottomSheet(
+        partyTypes: partyTypes,
+        selectedType: selectedType,
+      ),
+    );
+
+    if (selected != null) {
+      onTypeSelected(selected.isEmpty ? null : selected);
+    }
+  }
+}
+
+class _PartyTypeBottomSheet extends StatelessWidget {
+  final List<PartyType> partyTypes;
+  final String? selectedType;
+
+  const _PartyTypeBottomSheet({
+    required this.partyTypes,
+    required this.selectedType,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(24.r),
+          topRight: Radius.circular(24.r),
+        ),
+      ),
+      padding: EdgeInsets.only(
+        top: 20.h,
+        left: 20.w,
+        right: 20.w,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20.h,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Handle bar
+          Center(
+            child: Container(
+              width: 40.w,
+              height: 4.h,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2.r),
+              ),
+            ),
+          ),
+          SizedBox(height: 20.h),
+
+          // Header
+          Row(
+            children: [
+              Icon(
+                Icons.category_outlined,
+                color: AppColors.primary,
+                size: 24.sp,
+              ),
+              SizedBox(width: 12.w),
+              Text(
+                'Select Party Type',
+                style: TextStyle(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'Poppins',
+                  color: Colors.grey.shade800,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            'Choose an existing type or create a new one',
+            style: TextStyle(
+              fontSize: 12.sp,
+              color: Colors.grey.shade500,
+              fontFamily: 'Poppins',
+            ),
+          ),
+          SizedBox(height: 20.h),
+
+          // Clear selection option
+          if (selectedType != null && selectedType!.isNotEmpty)
+            ListTile(
+              contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+              leading: Icon(
+                Icons.clear,
+                color: Colors.red.shade400,
+                size: 20.sp,
+              ),
+              title: Text(
+                'Clear selection',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontFamily: 'Poppins',
+                  color: Colors.red.shade400,
+                ),
+              ),
+              onTap: () => Navigator.pop(context, ''),
+            ),
+
+          // "Add New..." option at the top
+          ListTile(
+            contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8.r),
+            ),
+            tileColor: selectedType == _kAddNewPartyType
+                ? AppColors.primary.withValues(alpha: 0.1)
+                : null,
+            leading: Icon(
+              selectedType == _kAddNewPartyType
+                  ? Icons.check_circle
+                  : Icons.add_circle_outline,
+              color: selectedType == _kAddNewPartyType
+                  ? AppColors.primary
+                  : AppColors.success,
+              size: 20.sp,
+            ),
+            title: Text(
+              'Add New...',
+              style: TextStyle(
+                fontSize: 14.sp,
+                fontFamily: 'Poppins',
+                fontWeight: selectedType == _kAddNewPartyType
+                    ? FontWeight.w600
+                    : FontWeight.w400,
+                color: selectedType == _kAddNewPartyType
+                    ? AppColors.primary
+                    : AppColors.success,
+              ),
+            ),
+            onTap: () => Navigator.pop(context, _kAddNewPartyType),
+          ),
+
+          Divider(height: 16.h),
+
+          // List of existing party types
+          Text(
+            'Existing Types',
+            style: TextStyle(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey.shade500,
+              fontFamily: 'Poppins',
+            ),
+          ),
+          SizedBox(height: 8.h),
+
+          ListView.builder(
+            shrinkWrap: true,
+            itemCount: partyTypes.length,
+            itemBuilder: (context, index) {
+              final type = partyTypes[index];
+              final isSelected = selectedType == type.name;
+
+              return ListTile(
+                contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                tileColor: isSelected
+                    ? AppColors.primary.withValues(alpha: 0.1)
+                    : null,
+                leading: Icon(
+                  isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
+                  color: isSelected ? AppColors.primary : Colors.grey.shade400,
+                  size: 20.sp,
+                ),
+                title: Text(
+                  type.name,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontFamily: 'Poppins',
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                    color: isSelected ? AppColors.primary : Colors.grey.shade800,
+                  ),
+                ),
+                onTap: () => Navigator.pop(context, type.name),
+              );
+            },
+          ),
+          SizedBox(height: 20.h),
         ],
       ),
     );
