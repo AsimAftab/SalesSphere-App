@@ -22,11 +22,11 @@ class PartyTypesViewModel extends _$PartyTypesViewModel {
   Future<List<PartyType>> fetchPartyTypes() async {
     try {
       AppLogger.i('📋 Fetching party types');
-      
+
       final dio = ref.read(dioClientProvider);
-      
+
       final response = await dio.get(ApiEndpoints.partyTypes);
-      
+
       if (response.statusCode == 200) {
         final apiResponse = PartyTypesApiResponse.fromJson(response.data);
         AppLogger.i('✅ Fetched ${apiResponse.count} party types');

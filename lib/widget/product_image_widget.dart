@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:photo_view/photo_view.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:sales_sphere/features/catalog/models/catalog.models.dart';
 
@@ -11,7 +12,9 @@ import 'package:sales_sphere/features/catalog/models/catalog.models.dart';
 /// - Local asset image if available (item.imageAssetPath)
 /// - Product name initials with colored background if no image
 /// - Placeholder icon if no name or image
-class ProductImageWidget extends StatelessWidget {
+///
+/// Tap on image opens full-screen preview with zoom
+class ProductImageWidget extends StatefulWidget {
   final CatalogItem item;
   final BorderRadius? borderRadius;
   final BoxFit fit;
@@ -23,6 +26,11 @@ class ProductImageWidget extends StatelessWidget {
     this.fit = BoxFit.cover,
   });
 
+  @override
+  State<ProductImageWidget> createState() => _ProductImageWidgetState();
+}
+
+class _ProductImageWidgetState extends State<ProductImageWidget> {
   /// Extract initials from product name
   /// Examples: "Premium Cement" -> "PC", "shirt" -> "S", "Red T-Shirt" -> "RT"
   String _getInitials(String name) {
@@ -62,65 +70,101 @@ class ProductImageWidget extends StatelessWidget {
     return colors[index];
   }
 
+  /// Get the image URL or asset path
+  String? get _imageUrl {
+    if (widget.item.image?.url != null && widget.item.image!.url!.isNotEmpty) {
+      return widget.item.image!.url;
+    }
+    if (widget.item.imageAssetPath != null && widget.item.imageAssetPath!.isNotEmpty) {
+      return widget.item.imageAssetPath;
+    }
+    return null;
+  }
+
+  /// Check if image is available for preview
+  bool get _hasImage => _imageUrl != null;
+
+  /// Show full-screen image preview dialog
+  void _showImagePreview(BuildContext context) {
+    if (!_hasImage) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: Colors.black,
+      builder: (context) => _ImagePreviewDialog(
+        imageUrl: _imageUrl!,
+        isNetworkImage: widget.item.image?.url != null && widget.item.image!.url!.isNotEmpty,
+        productName: widget.item.name,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final effectiveBorderRadius = borderRadius ?? BorderRadius.circular(12.r);
+    final effectiveBorderRadius = widget.borderRadius ?? BorderRadius.circular(12.r);
 
     // Priority 1: Show Cloudinary image if available
-    if (item.image?.url != null && item.image!.url!.isNotEmpty) {
-      AppLogger.d('📷 Loading image for ${item.name}: ${item.image!.url}');
-      return ClipRRect(
-        borderRadius: effectiveBorderRadius,
-        child: SizedBox(
-          width: double.infinity,
-          child: Image.network(
-            item.image!.url!,
-            fit: fit,
-            loadingBuilder: (context, child, loadingProgress) {
-              if (loadingProgress == null) return child;
-              return Container(
-                color: Colors.grey.shade100,
-                child: Center(
-                  child: CircularProgressIndicator(
-                    value: loadingProgress.expectedTotalBytes != null
-                        ? loadingProgress.cumulativeBytesLoaded /
-                            loadingProgress.expectedTotalBytes!
-                        : null,
-                    strokeWidth: 2.5,
+    if (widget.item.image?.url != null && widget.item.image!.url!.isNotEmpty) {
+      AppLogger.d('📷 Loading image for ${widget.item.name}: ${widget.item.image!.url}');
+      return GestureDetector(
+        onTap: () => _showImagePreview(context),
+        child: ClipRRect(
+          borderRadius: effectiveBorderRadius,
+          child: SizedBox(
+            width: double.infinity,
+            child: Image.network(
+              widget.item.image!.url!,
+              fit: widget.fit,
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return Container(
+                  color: Colors.grey.shade100,
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      value: loadingProgress.expectedTotalBytes != null
+                          ? loadingProgress.cumulativeBytesLoaded /
+                              loadingProgress.expectedTotalBytes!
+                          : null,
+                      strokeWidth: 2.5,
+                    ),
                   ),
-                ),
-              );
-            },
-            errorBuilder: (context, error, stackTrace) {
-              AppLogger.e('❌ Error loading image for ${item.name}: $error');
-              return _buildInitialsWidget();
-            },
+                );
+              },
+              errorBuilder: (context, error, stackTrace) {
+                AppLogger.e('❌ Error loading image for ${widget.item.name}: $error');
+                return _buildInitialsWidget();
+              },
+            ),
           ),
         ),
       );
     }
 
     // Log when no image URL found
-    AppLogger.d('⚠️ No image URL for ${item.name}, image object: ${item.image}');
+    AppLogger.d('⚠️ No image URL for ${widget.item.name}, image object: ${widget.item.image}');
 
     // Priority 2: Show local asset image if available
-    if (item.imageAssetPath != null && item.imageAssetPath!.isNotEmpty) {
-      return ClipRRect(
-        borderRadius: effectiveBorderRadius,
-        child: SizedBox(
-          width: double.infinity,
-          child: item.imageAssetPath!.endsWith('.svg')
-              ? SvgPicture.asset(
-                  item.imageAssetPath!,
-                  fit: fit,
-                  placeholderBuilder: (context) => _buildInitialsWidget(),
-                )
-              : Image.asset(
-                  item.imageAssetPath!,
-                  fit: fit,
-                  errorBuilder: (context, error, stackTrace) =>
-                      _buildInitialsWidget(),
-                ),
+    if (widget.item.imageAssetPath != null && widget.item.imageAssetPath!.isNotEmpty) {
+      return GestureDetector(
+        onTap: () => _showImagePreview(context),
+        child: ClipRRect(
+          borderRadius: effectiveBorderRadius,
+          child: SizedBox(
+            width: double.infinity,
+            child: widget.item.imageAssetPath!.endsWith('.svg')
+                ? SvgPicture.asset(
+                    widget.item.imageAssetPath!,
+                    fit: widget.fit,
+                    placeholderBuilder: (context) => _buildInitialsWidget(),
+                  )
+                : Image.asset(
+                    widget.item.imageAssetPath!,
+                    fit: widget.fit,
+                    errorBuilder: (context, error, stackTrace) =>
+                        _buildInitialsWidget(),
+                  ),
+          ),
         ),
       );
     }
@@ -131,13 +175,13 @@ class ProductImageWidget extends StatelessWidget {
 
   /// Build widget showing product initials with colored background
   Widget _buildInitialsWidget() {
-    final initials = _getInitials(item.name);
-    final backgroundColor = _getColorFromName(item.name);
+    final initials = _getInitials(widget.item.name);
+    final backgroundColor = _getColorFromName(widget.item.name);
 
     return Container(
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: borderRadius ?? BorderRadius.circular(12.r),
+        borderRadius: widget.borderRadius ?? BorderRadius.circular(12.r),
       ),
       child: Center(
         child: Text(
@@ -151,6 +195,112 @@ class ProductImageWidget extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Full-screen image preview dialog with zoom support
+class _ImagePreviewDialog extends StatelessWidget {
+  final String imageUrl;
+  final bool isNetworkImage;
+  final String productName;
+
+  const _ImagePreviewDialog({
+    required this.imageUrl,
+    required this.isNetworkImage,
+    required this.productName,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        // Full-screen image viewer
+        Positioned.fill(
+          child: PhotoView(
+            imageProvider: isNetworkImage ? NetworkImage(imageUrl) : AssetImage(imageUrl) as ImageProvider,
+            initialScale: PhotoViewComputedScale.contained,
+            minScale: PhotoViewComputedScale.contained,
+            maxScale: PhotoViewComputedScale.covered * 4,
+            backgroundDecoration: const BoxDecoration(color: Colors.black),
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                color: Colors.black,
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.broken_image, size: 64.sp, color: Colors.white54),
+                      SizedBox(height: 16.h),
+                      Text(
+                        'Failed to load image',
+                        style: TextStyle(color: Colors.white54, fontSize: 14.sp),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+            loadingBuilder: (context, event) {
+              return Container(
+                color: Colors.black,
+                child: Center(
+                  child: CircularProgressIndicator(
+                    value: event == null
+                        ? 0
+                        : event.cumulativeBytesLoaded / event.expectedTotalBytes!,
+                    color: Colors.white,
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+
+        // Top bar with close button
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: SafeArea(
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.6),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.close, color: Colors.white, size: 28.sp),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                  SizedBox(width: 16.w),
+                  Expanded(
+                    child: Text(
+                      productName,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'Poppins',
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

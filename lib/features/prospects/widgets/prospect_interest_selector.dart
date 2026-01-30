@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
 import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/features/prospects/models/prospect_interest.model.dart';
+import 'package:uuid/uuid.dart';
 
 part 'prospect_interest_selector.g.dart';
 
@@ -67,13 +69,6 @@ class _ProspectInterestSelectorState
           _selectedBrands.remove(categoryName);
         }
       }
-      _notifyChanges();
-    });
-  }
-
-  void _removeCategory(String categoryName) {
-    setState(() {
-      _selectedBrands.remove(categoryName);
       _notifyChanges();
     });
   }
@@ -333,12 +328,65 @@ class _ProspectInterestBottomSheetState
   late Map<String, Set<String>> _selectedBrands;
   final Set<String> _expandedCategories = {};
 
+  // Custom categories added by user ( categoryName => Set<brands> )
+  final Map<String, Set<String>> _customCategories = {};
+
+  // Custom brands added to ANY category ( categoryName => Set<brands> )
+  // This includes brands added to existing API categories
+  final Map<String, Set<String>> _customBrands = {};
+
   @override
   void initState() {
     super.initState();
     _selectedBrands = Map.from(widget.initiallySelected);
     // Expand categories that have selections
     _expandedCategories.addAll(_selectedBrands.keys);
+  }
+
+  void _showAddCategoryDialog() {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => _AddCategoryDialog(
+        controller: controller,
+        onSave: () {
+          final categoryName = controller.text.trim();
+          if (categoryName.isNotEmpty) {
+            setState(() {
+              _customCategories.putIfAbsent(categoryName, () => {});
+              _expandedCategories.add(categoryName);
+            });
+          }
+        },
+      ),
+    );
+  }
+
+  void _showAddBrandDialog(String categoryName) {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => _AddBrandDialog(
+        categoryName: categoryName,
+        controller: controller,
+        onSave: (brandName) {
+          final brand = brandName.trim();
+          if (brand.isNotEmpty) {
+            setState(() {
+              // Add to custom brands for this category
+              _customBrands.putIfAbsent(categoryName, () => {});
+              _customBrands[categoryName]!.add(brand);
+
+              // Also add to selected brands so it's checked by default
+              if (!_selectedBrands.containsKey(categoryName)) {
+                _selectedBrands[categoryName] = {};
+              }
+              _selectedBrands[categoryName]!.add(brand);
+            });
+          }
+        },
+      ),
+    );
   }
 
   void _toggleBrand(String categoryName, String brand) {
@@ -378,7 +426,28 @@ class _ProspectInterestBottomSheetState
   }
 
   void _applySelection() {
-    Navigator.of(context).pop(_selectedBrands);
+    // Create selection from selected brands (already includes custom brands since they're auto-selected)
+    final finalSelection = Map<String, Set<String>>.from(_selectedBrands);
+
+    // Also include custom categories (for completeness)
+    _customCategories.forEach((category, brands) {
+      if (finalSelection.containsKey(category)) {
+        finalSelection[category]!.addAll(brands);
+      } else {
+        finalSelection[category] = Set.from(brands);
+      }
+    });
+
+    // Include any custom brands that might not be in selectedBrands
+    _customBrands.forEach((category, brands) {
+      if (finalSelection.containsKey(category)) {
+        finalSelection[category]!.addAll(brands);
+      } else {
+        finalSelection[category] = Set.from(brands);
+      }
+    });
+
+    Navigator.of(context).pop(finalSelection);
   }
 
   int _getTotalSelectionCount() {
@@ -452,7 +521,21 @@ class _ProspectInterestBottomSheetState
           Expanded(
             child: categoriesAsync.when(
               data: (categories) {
-                if (categories.isEmpty) {
+                // Combine API categories with custom categories
+                final allCategories = [
+                  ...categories,
+                  // Add custom categories that aren't in API response
+                  ..._customCategories.keys
+                      .where((customName) =>
+                          categories.every((c) => c.name != customName))
+                      .map((customName) => ProspectCategory(
+                            id: const Uuid().v4(),
+                            name: customName,
+                            brands: _customCategories[customName]!.toList(),
+                          )),
+                ];
+
+                if (allCategories.isEmpty) {
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -477,10 +560,17 @@ class _ProspectInterestBottomSheetState
 
                 return ListView.separated(
                   padding: EdgeInsets.symmetric(horizontal: 16.w),
-                  itemCount: categories.length,
+                  itemCount: allCategories.length + 1, // +1 for "Add New Category"
                   separatorBuilder: (_, __) => SizedBox(height: 8.h),
                   itemBuilder: (context, index) {
-                    final category = categories[index];
+                    // Add New Category button at the top
+                    if (index == 0) {
+                      return _buildAddNewCategoryCard();
+                    }
+
+                    // Adjust index for actual categories
+                    final categoryIndex = index - 1;
+                    final category = allCategories[categoryIndex];
                     final selectedCount = _getSelectedCountForCategory(
                       category.name,
                     );
@@ -567,11 +657,57 @@ class _ProspectInterestBottomSheetState
     );
   }
 
+  Widget _buildAddNewCategoryCard() {
+    return InkWell(
+      onTap: _showAddCategoryDialog,
+      borderRadius: BorderRadius.circular(12.r),
+      child: Container(
+        padding: EdgeInsets.all(16.w),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: AppColors.primary.withOpacity(0.5),
+            style: BorderStyle.solid,
+          ),
+          borderRadius: BorderRadius.circular(12.r),
+          color: AppColors.primary.withOpacity(0.03),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.add_circle_outline,
+              color: AppColors.primary,
+              size: 20.sp,
+            ),
+            SizedBox(width: 8.w),
+            Text(
+              'Add New Category',
+              style: TextStyle(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w500,
+                color: AppColors.primary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildCategoryCard({
     required ProspectCategory category,
     required bool isExpanded,
     required int selectedCount,
   }) {
+    // Check if this is a custom category
+    final isCustomCategory = _customCategories.containsKey(category.name);
+
+    // Get all brands: original category brands + custom added brands
+    final allBrands = {
+      ...category.brands,
+      if (_customBrands.containsKey(category.name)) ..._customBrands[category.name]!,
+    }.toList();
+
     return Container(
       decoration: BoxDecoration(
         border: Border.all(
@@ -618,21 +754,43 @@ class _ProspectInterestBottomSheetState
               ),
             ),
           ),
-          title: Text(
-            category.name,
-            style: TextStyle(
-              fontSize: 15.sp,
-              fontWeight: FontWeight.w500,
-              color: AppColors.textPrimary,
-            ),
+          title: Row(
+            children: [
+              Text(
+                category.name,
+                style: TextStyle(
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              if (isCustomCategory) ...[
+                SizedBox(width: 6.w),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(4.r),
+                  ),
+                  child: Text(
+                    'Custom',
+                    style: TextStyle(
+                      fontSize: 10.sp,
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 selectedCount == 0
-                    ? '${category.brands.length} brands'
-                    : '$selectedCount of ${category.brands.length}',
+                    ? '${allBrands.length} brands'
+                    : '$selectedCount of ${allBrands.length}',
                 style: TextStyle(
                   fontSize: 12.sp,
                   color: AppColors.textSecondary,
@@ -647,7 +805,7 @@ class _ProspectInterestBottomSheetState
             ],
           ),
           children: [
-            ...category.brands.map((brand) {
+            ...allBrands.map((brand) {
               final isSelected = _isBrandSelected(category.name, brand);
               return CheckboxListTile(
                 contentPadding: EdgeInsets.zero,
@@ -667,9 +825,232 @@ class _ProspectInterestBottomSheetState
                 dense: true,
               );
             }).toList(),
+            // Add Brand button
+            InkWell(
+              onTap: () => _showAddBrandDialog(category.name),
+              borderRadius: BorderRadius.circular(8.r),
+              child: Container(
+                margin: EdgeInsets.only(top: 4.h),
+                padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 12.w),
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: AppColors.primary.withOpacity(0.3),
+                    style: BorderStyle.solid,
+                  ),
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.add,
+                      color: AppColors.primary,
+                      size: 16.sp,
+                    ),
+                    SizedBox(width: 6.w),
+                    Text(
+                      'Add Brand',
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
+    );
+  }
+}
+
+// ============================================================================
+// ADD CATEGORY DIALOG
+// ============================================================================
+
+class _AddCategoryDialog extends StatefulWidget {
+  final TextEditingController controller;
+  final VoidCallback onSave;
+
+  const _AddCategoryDialog({
+    required this.controller,
+    required this.onSave,
+  });
+
+  @override
+  State<_AddCategoryDialog> createState() => _AddCategoryDialogState();
+}
+
+class _AddCategoryDialogState extends State<_AddCategoryDialog> {
+  @override
+  void dispose() {
+    widget.controller.dispose();
+    super.dispose();
+  }
+
+  void _handleSave() {
+    if (widget.controller.text.trim().isNotEmpty) {
+      widget.onSave();
+      context.pop();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(
+        'Add New Category',
+        style: TextStyle(
+          fontSize: 18.sp,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: widget.controller,
+            autofocus: true,
+            textCapitalization: TextCapitalization.words,
+            decoration: InputDecoration(
+              labelText: 'Category Name',
+              hintText: 'e.g., Electronics',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 12.w,
+                vertical: 12.h,
+              ),
+            ),
+            onSubmitted: (_) => _handleSave(),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => context.pop(),
+          child: Text(
+            'Cancel',
+            style: TextStyle(
+              fontSize: 14.sp,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ),
+        ElevatedButton(
+          onPressed: _handleSave,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+          ),
+          child: Text(
+            'Add',
+            style: TextStyle(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ============================================================================
+// ADD BRAND DIALOG
+// ============================================================================
+
+class _AddBrandDialog extends StatefulWidget {
+  final String categoryName;
+  final TextEditingController controller;
+  final Function(String) onSave;
+
+  const _AddBrandDialog({
+    required this.categoryName,
+    required this.controller,
+    required this.onSave,
+  });
+
+  @override
+  State<_AddBrandDialog> createState() => _AddBrandDialogState();
+}
+
+class _AddBrandDialogState extends State<_AddBrandDialog> {
+  @override
+  void dispose() {
+    widget.controller.dispose();
+    super.dispose();
+  }
+
+  void _handleSave() {
+    if (widget.controller.text.trim().isNotEmpty) {
+      widget.onSave(widget.controller.text.trim());
+      context.pop();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(
+        'Add Brand to ${widget.categoryName}',
+        style: TextStyle(
+          fontSize: 18.sp,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: widget.controller,
+            autofocus: true,
+            textCapitalization: TextCapitalization.words,
+            decoration: InputDecoration(
+              labelText: 'Brand Name',
+              hintText: 'e.g., Samsung',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 12.w,
+                vertical: 12.h,
+              ),
+            ),
+            onSubmitted: (_) => _handleSave(),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => context.pop(),
+          child: Text(
+            'Cancel',
+            style: TextStyle(
+              fontSize: 14.sp,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ),
+        ElevatedButton(
+          onPressed: _handleSave,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+          ),
+          child: Text(
+            'Add',
+            style: TextStyle(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
