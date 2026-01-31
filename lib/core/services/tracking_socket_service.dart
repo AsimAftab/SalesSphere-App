@@ -17,6 +17,12 @@ class TrackingSocketService {
   // Connection state
   bool _isConnected = false;
   bool _isConnecting = false;
+  bool _listenersSetup = false; // Track if event listeners are already set up
+
+  // Error tracking to prevent duplicate logging
+  String? _lastError;
+  DateTime? _lastErrorTime;
+  static const Duration _errorDeduplicationWindow = Duration(milliseconds: 500);
 
   // Reconnection state
   int _reconnectAttempts = 0;
@@ -67,6 +73,12 @@ class TrackingSocketService {
       return false;
     }
 
+    // Cancel any pending reconnect timer to prevent duplicate connection attempts
+    _reconnectTimer?.cancel();
+    if (_reconnectTimer != null) {
+      AppLogger.d('🔄 Cancelled pending reconnect timer for manual connect');
+    }
+
     try {
       _isConnecting = true;
       AppLogger.i('🔌 Connecting to tracking server...');
@@ -92,24 +104,29 @@ class TrackingSocketService {
         baseUrl,
         io.OptionBuilder()
             .setPath(socketPath) // e.g. /api/tracking (nginx proxies to backend /tracking)
-            .setTransports(['websocket', 'polling']) // Try WebSocket first, fallback to polling
+            .setTransports(['websocket']) // Use only WebSocket to avoid multiple transport attempts
             .setAuth({'token': token}) // JWT authentication
             .disableAutoConnect() // Manual connection control
+            .setReconnectionDelay(1000) // Delay between reconnection attempts
+            .setReconnectionDelayMax(5000) // Maximum delay between reconnections
+            .setReconnectionAttempts(0) // Disable automatic reconnection - we handle it manually
             .build(),
       );
 
-      // Setup event listeners
-      _setupEventListeners();
+      // Setup event listeners only once per socket instance
+      if (!_listenersSetup) {
+        _setupEventListeners();
+        _listenersSetup = true;
+      }
 
       // Connect
       _socket!.connect();
 
       // Wait for connection or timeout
+      // Note: _isConnected is set by the onConnect handler in _setupEventListeners
       final connected = await _waitForConnection();
 
       if (connected) {
-        _isConnected = true;
-        _reconnectAttempts = 0;
         AppLogger.i('✅ Connected to tracking server');
         return true;
       } else {
@@ -128,7 +145,7 @@ class TrackingSocketService {
 
   /// Disconnect from tracking server
   Future<void> disconnect() async {
-    if (!_isConnected) {
+    if (!_isConnected && _socket == null) {
       AppLogger.w('⚠️ Socket not connected');
       return;
     }
@@ -141,6 +158,8 @@ class TrackingSocketService {
       _socket?.dispose();
       _socket = null;
       _isConnected = false;
+      _isConnecting = false; // Also reset connecting state
+      _listenersSetup = false; // Reset flag so listeners are set up on next connect
       _reconnectAttempts = 0;
 
       AppLogger.i('✅ Disconnected from tracking server');
@@ -159,25 +178,52 @@ class TrackingSocketService {
     _socket!.onConnect((_) {
       AppLogger.i('✅ Socket connected successfully!');
       _isConnected = true;
+      _isConnecting = false; // Also reset connecting state
       _reconnectAttempts = 0;
+      // Reset error tracking on successful connection
+      _lastError = null;
+      _lastErrorTime = null;
     });
 
     _socket!.onDisconnect((reason) {
       AppLogger.w('⚠️ Socket disconnected. Reason: $reason');
       _isConnected = false;
+      _isConnecting = false; // Also reset connecting state
       _handleDisconnection();
     });
 
     _socket!.onConnectError((error) {
+      final errorMsg = 'Connection error: $error';
+      // Deduplicate errors within a short time window
+      final now = DateTime.now();
+      if (_lastError == errorMsg &&
+          _lastErrorTime != null &&
+          now.difference(_lastErrorTime!) < _errorDeduplicationWindow) {
+        return; // Skip duplicate error
+      }
+      _lastError = errorMsg;
+      _lastErrorTime = now;
+
       AppLogger.e('❌ Connection error: $error');
       AppLogger.e('❌ Error type: ${error.runtimeType}');
-      _errorController.add('Connection error: $error');
+      _errorController.add(errorMsg);
     });
 
     _socket!.onError((error) {
+      final errorMsg = 'Socket error: $error';
+      // Deduplicate errors within a short time window
+      final now = DateTime.now();
+      if (_lastError == errorMsg &&
+          _lastErrorTime != null &&
+          now.difference(_lastErrorTime!) < _errorDeduplicationWindow) {
+        return; // Skip duplicate error
+      }
+      _lastError = errorMsg;
+      _lastErrorTime = now;
+
       AppLogger.e('❌ Socket error: $error');
       AppLogger.e('❌ Error type: ${error.runtimeType}');
-      _errorController.add('Socket error: $error');
+      _errorController.add(errorMsg);
     });
 
     // Additional debugging events
@@ -222,27 +268,46 @@ class TrackingSocketService {
     final completer = Completer<bool>();
     Timer? timeoutTimer;
 
-    void onConnect(_) {
-      if (!completer.isCompleted) {
-        completer.complete(true);
-        timeoutTimer?.cancel();
-      }
-    }
+    // Define handlers that will be cleaned up
+    void Function(dynamic)? onConnect;
+    void Function(dynamic)? onError;
 
-    void onError(_) {
-      if (!completer.isCompleted) {
-        completer.complete(false);
-        timeoutTimer?.cancel();
-      }
-    }
+    onConnect = (_) {
+      // Only proceed if socket is still valid
+      if (_socket == null || completer.isCompleted) return;
+      completer.complete(true);
+      timeoutTimer?.cancel();
+      // Cleanup handlers using socket.off() with event names
+      try {
+        _socket?.off('connect', onConnect);
+        _socket?.off('connect_error', onError);
+      } catch (_) {}
+    };
 
-    _socket!.onConnect(onConnect);
-    _socket!.onConnectError(onError);
+    onError = (_) {
+      // Only proceed if socket is still valid
+      if (_socket == null || completer.isCompleted) return;
+      completer.complete(false);
+      timeoutTimer?.cancel();
+      // Cleanup handlers using socket.off() with event names
+      try {
+        _socket?.off('connect', onConnect);
+        _socket?.off('connect_error', onError);
+      } catch (_) {}
+    };
+
+    // Add one-time connection handlers
+    _socket?.onConnect(onConnect);
+    _socket?.onConnectError(onError);
 
     timeoutTimer = Timer(timeout, () {
-      if (!completer.isCompleted) {
-        completer.complete(false);
-      }
+      if (_socket == null || completer.isCompleted) return;
+      completer.complete(false);
+      // Cleanup handlers
+      try {
+        _socket?.off('connect', onConnect);
+        _socket?.off('connect_error', onError);
+      } catch (_) {}
     });
 
     return completer.future;

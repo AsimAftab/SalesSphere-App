@@ -36,9 +36,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             // Header Section
             _buildHeader(user),
 
-            // Main Content
+            // Main Content - BeatPlanSection handles its own scrolling
             Expanded(
-              child: SingleChildScrollView(
+              child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20.w),
                 child: const BeatPlanSection(),
               ),

@@ -118,19 +118,17 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
     final beatPlanAsync = ref.watch(beatPlanDetailViewModelProvider(widget.beatPlanId));
 
     // Listen for tracking force-stopped event
-    ref.listen<AsyncValue<TrackingState>>(trackingStateStreamProvider, (previous, next) {
-      next.whenData((state) {
-        if (state == TrackingState.forceStopped) {
-          // Show success snackbar when tracking is force-stopped
-          SnackbarUtils.showSuccess(
-            context,
-            'Beat plan completed! Tracking stopped automatically.',
-            duration: const Duration(seconds: 5),
-          );
+    ref.listen(trackingStateStreamProvider, (previous, next) {
+      if (next == TrackingState.forceStopped) {
+        // Show success snackbar when tracking is force-stopped
+        SnackbarUtils.showSuccess(
+          context,
+          'Beat plan completed! Tracking stopped automatically.',
+          duration: const Duration(seconds: 5),
+        );
 
-          AppLogger.i('🎉 Tracking force-stopped notification shown to user');
-        }
-      });
+        AppLogger.i('🎉 Tracking force-stopped notification shown to user');
+      }
     });
 
     return Scaffold(
@@ -141,10 +139,19 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
         ),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 16.0),
-            child: TrackingIndicatorWidget(),
+        actions: [
+          // Only show tracking indicator if beat plan is NOT completed
+          Builder(
+            builder: (context) {
+              final beatPlan = beatPlanAsync.value;
+              if (beatPlan != null && beatPlan.status.toLowerCase() != 'completed') {
+                return const Padding(
+                  padding: EdgeInsets.only(right: 16.0),
+                  child: TrackingIndicatorWidget(),
+                );
+              }
+              return const SizedBox.shrink();
+            },
           ),
         ],
       ),
@@ -229,10 +236,14 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
 
             SizedBox(height: 10.h),
 
-            // Tracking Status Card
-            const TrackingStatusCard(),
+            // Tracking Status Card - only show if beat plan is NOT completed
+            if (beatPlan.status.toLowerCase() != 'completed')
+              const TrackingStatusCard(),
 
-            SizedBox(height: 24.h),
+            if (beatPlan.status.toLowerCase() != 'completed')
+              SizedBox(height: 24.h)
+            else
+              SizedBox(height: 10.h),
 
             // Filter Tabs
             Row(

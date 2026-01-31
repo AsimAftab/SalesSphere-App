@@ -6,7 +6,6 @@ class AppAssets {
   static const String _images = 'assets/images';
   static const String _icons = 'assets/icons';
   static const String _animations = 'assets/animations';
-  static const String _fonts = 'assets/fonts';
 
   // Images
   static const String logo = '$_images/logo.png';
