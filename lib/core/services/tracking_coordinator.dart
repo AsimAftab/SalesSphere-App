@@ -31,6 +31,7 @@ class TrackingCoordinator {
   // Subscriptions
   StreamSubscription<LocationUpdate>? _locationSubscription;
   StreamSubscription<Map<String, dynamic>?>? _backgroundServiceSubscription;
+  StreamSubscription<TrackingStartedEvent>? _trackingStartedSubscription;
   StreamSubscription<TrackingStoppedEvent>? _trackingStoppedSubscription;
   StreamSubscription<TrackingForceStoppedEvent>? _trackingForceStoppedSubscription;
   StreamSubscription<String>? _socketErrorSubscription;
@@ -296,6 +297,9 @@ class TrackingCoordinator {
           },
         );
 
+        // Cancel any existing socket subscriptions before creating new ones
+        await _cancelSocketSubscriptions();
+
         // Subscribe to tracking stopped event
         _trackingStoppedSubscription = _socketService.onTrackingStopped.listen(
           _handleTrackingStopped,
@@ -418,8 +422,16 @@ class TrackingCoordinator {
               },
             );
 
+            // Cancel any existing socket subscriptions before creating new ones
+            await _cancelSocketSubscriptions();
+
             _trackingStoppedSubscription = _socketService.onTrackingStopped.listen(
               _handleTrackingStopped,
+            );
+
+            // Subscribe to tracking force-stopped event (when server stops tracking)
+            _trackingForceStoppedSubscription = _socketService.onTrackingForceStopped.listen(
+              _handleTrackingForceStopped,
             );
 
             _socketErrorSubscription = _socketService.onError.listen(
@@ -501,6 +513,20 @@ class TrackingCoordinator {
         if (connected) {
           AppLogger.i('✅ Socket connected, real-time streaming enabled');
           await _socketService.startTracking(beatPlanId);
+
+          // Subscribe to tracking-started event to capture sessionId
+          _trackingStartedSubscription = _socketService.onTrackingStarted.listen((event) {
+            if (event.success && event.trackingSessionId.isNotEmpty) {
+              _currentSessionId = event.trackingSessionId;
+              AppLogger.i('🔑 Session ID received: $_currentSessionId');
+
+              // Save sessionId to SharedPreferences for resume capability
+              SharedPreferences.getInstance().then((prefs) {
+                prefs.setString('sessionId', _currentSessionId!);
+                AppLogger.d('✅ Session ID saved to SharedPreferences');
+              });
+            }
+          });
         } else {
           AppLogger.w('⚠️ Socket connection failed, will queue locations offline');
         }
@@ -542,9 +568,17 @@ class TrackingCoordinator {
         },
       );
 
+      // Cancel any existing socket subscriptions before creating new ones
+      await _cancelSocketSubscriptions();
+
       // Subscribe to tracking stopped event
       _trackingStoppedSubscription = _socketService.onTrackingStopped.listen(
         _handleTrackingStopped,
+      );
+
+      // Subscribe to tracking force-stopped event (when server stops tracking)
+      _trackingForceStoppedSubscription = _socketService.onTrackingForceStopped.listen(
+        _handleTrackingForceStopped,
       );
 
       // Subscribe to socket errors
@@ -604,6 +638,7 @@ class TrackingCoordinator {
       // Cancel subscriptions
       await _locationSubscription?.cancel();
       await _backgroundServiceSubscription?.cancel();
+      await _trackingStartedSubscription?.cancel();
       await _trackingStoppedSubscription?.cancel();
       await _trackingForceStoppedSubscription?.cancel();
       await _socketErrorSubscription?.cancel();
@@ -612,6 +647,7 @@ class TrackingCoordinator {
       // Reset state
       _isTracking = false;
       _currentBeatPlanId = null;
+      _currentSessionId = null;
       _trackingStartTime = null;
       _totalDirectories = 0;
       _visitedDirectories = 0;
@@ -947,12 +983,30 @@ class TrackingCoordinator {
     _statsController.add(stats);
   }
 
+  /// Cancel existing socket subscriptions safely
+  /// Call this before creating new subscriptions to prevent duplicates
+  Future<void> _cancelSocketSubscriptions() async {
+    await _trackingStartedSubscription?.cancel();
+    _trackingStartedSubscription = null;
+
+    await _trackingStoppedSubscription?.cancel();
+    _trackingStoppedSubscription = null;
+
+    await _trackingForceStoppedSubscription?.cancel();
+    _trackingForceStoppedSubscription = null;
+
+    await _socketErrorSubscription?.cancel();
+    _socketErrorSubscription = null;
+  }
+
   /// Dispose resources
   Future<void> dispose() async {
     await stopTracking();
     await _locationSubscription?.cancel();
     await _backgroundServiceSubscription?.cancel();
+    await _trackingStartedSubscription?.cancel();
     await _trackingStoppedSubscription?.cancel();
+    await _trackingForceStoppedSubscription?.cancel();
     await _socketErrorSubscription?.cancel();
     await _connectivitySubscription?.cancel();
     await _stateController.close();

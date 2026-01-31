@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
@@ -9,7 +7,7 @@ import 'package:sales_sphere/features/beat_plan/models/beat_plan.models.dart';
 
 /// Beat Plan Summary Card
 /// Displays minimal beat plan information for list view with modern, clean design
-class BeatPlanSummaryCard extends StatefulWidget {
+class BeatPlanSummaryCard extends StatelessWidget {
   final BeatPlanSummary beatPlan;
   final VoidCallback? onTap;
   final VoidCallback? onStartBeatPlan;
@@ -24,38 +22,18 @@ class BeatPlanSummaryCard extends StatefulWidget {
   });
 
   @override
-  State<BeatPlanSummaryCard> createState() => _BeatPlanSummaryCardState();
-}
-
-class _BeatPlanSummaryCardState extends State<BeatPlanSummaryCard> {
-  StreamSubscription<TrackingState>? _trackingStateSubscription;
-
-  @override
-  void initState() {
-    super.initState();
-    // Listen to tracking state changes to hide/show button
-    _trackingStateSubscription = TrackingCoordinator.instance.onStateChanged.listen((_) {
-      if (mounted) setState(() {});
-    });
-  }
-
-  @override
-  void dispose() {
-    _trackingStateSubscription?.cancel();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     // Determine status and colors
-    final status = widget.beatPlan.status.toLowerCase();
+    final status = beatPlan.status.toLowerCase();
     final statusColor = _getStatusColor(status);
-    final progressColor = _getProgressColor(status, widget.beatPlan.progressPercentage);
+    final progressColor = _getProgressColor(status, beatPlan.progressPercentage);
     final statusText = _getStatusText(status);
 
     // Check if tracking is active for this beat plan
-    final isTrackingThisPlan = TrackingCoordinator.instance.isTracking &&
-        TrackingCoordinator.instance.currentBeatPlanId == widget.beatPlan.id;
+    // Ignore tracking state for completed beat plans (no tracking should be active)
+    final isTrackingThisPlan = status != 'completed' &&
+        TrackingCoordinator.instance.isTracking &&
+        TrackingCoordinator.instance.currentBeatPlanId == beatPlan.id;
 
     return Container(
       margin: EdgeInsets.only(bottom: 16.h),
@@ -76,7 +54,7 @@ class _BeatPlanSummaryCardState extends State<BeatPlanSummaryCard> {
         children: [
           // Wrap main content (not button) with GestureDetector for navigation
           GestureDetector(
-            onTap: widget.onTap,
+            onTap: onTap,
             behavior: HitTestBehavior.opaque,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -86,7 +64,7 @@ class _BeatPlanSummaryCardState extends State<BeatPlanSummaryCard> {
                   children: [
                     Expanded(
                       child: Text(
-                        widget.beatPlan.name,
+                        beatPlan.name,
                         style: TextStyle(
                           fontSize: 18.sp,
                           fontWeight: FontWeight.w500,
@@ -131,7 +109,7 @@ class _BeatPlanSummaryCardState extends State<BeatPlanSummaryCard> {
                     ),
                     SizedBox(width: 6.w),
                     Text(
-                      'Assigned: ${_formatDate(widget.beatPlan.assignedDate)}',
+                      'Assigned: ${_formatDate(beatPlan.assignedDate)}',
                       style: TextStyle(
                         fontSize: 13.sp,
                         color: AppColors.textSecondary,
@@ -142,7 +120,7 @@ class _BeatPlanSummaryCardState extends State<BeatPlanSummaryCard> {
                 ),
 
                 // Started time if available
-                if ((status == 'in-progress' || status == 'active') && widget.beatPlan.startedAt != null) ...[
+                if ((status == 'in-progress' || status == 'active') && beatPlan.startedAt != null) ...[
                   SizedBox(height: 6.h),
                   Row(
                     children: [
@@ -153,7 +131,7 @@ class _BeatPlanSummaryCardState extends State<BeatPlanSummaryCard> {
                       ),
                       SizedBox(width: 6.w),
                       Text(
-                        'Started: ${_formatDate(widget.beatPlan.startedAt!)}',
+                        'Started: ${_formatDate(beatPlan.startedAt!)}',
                         style: TextStyle(
                           fontSize: 13.sp,
                           color: AppColors.textSecondary,
@@ -179,7 +157,7 @@ class _BeatPlanSummaryCardState extends State<BeatPlanSummaryCard> {
                     ),
                     const Spacer(),
                     Text(
-                      '${widget.beatPlan.progressPercentage}%',
+                      '${beatPlan.progressPercentage}%',
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w700,
@@ -202,7 +180,7 @@ class _BeatPlanSummaryCardState extends State<BeatPlanSummaryCard> {
                     ),
                     // Progress
                     FractionallySizedBox(
-                      widthFactor: widget.beatPlan.progressPercentage / 100,
+                      widthFactor: beatPlan.progressPercentage / 100,
                       child: Container(
                         height: 6.h,
                         decoration: BoxDecoration(
@@ -230,16 +208,16 @@ class _BeatPlanSummaryCardState extends State<BeatPlanSummaryCard> {
                   children: [
                     _buildStat(
                       label: 'Total',
-                      value: widget.beatPlan.totalDirectories.toString(),
+                      value: beatPlan.totalDirectories.toString(),
                     ),
                     _buildStat(
                       label: 'Visited',
-                      value: widget.beatPlan.visitedDirectories.toString(),
+                      value: beatPlan.visitedDirectories.toString(),
                       valueColor: AppColors.success,
                     ),
                     _buildStat(
                       label: 'Pending',
-                      value: widget.beatPlan.unvisitedDirectories.toString(),
+                      value: beatPlan.unvisitedDirectories.toString(),
                       valueColor: AppColors.warning,
                     ),
                   ],
@@ -258,10 +236,10 @@ class _BeatPlanSummaryCardState extends State<BeatPlanSummaryCard> {
   /// Builds the action button based on the beat plan status
   /// Builds the action button based on the beat plan status
   Widget _buildActionButton(String status, Color statusColor) {
-    if (status == 'pending' && widget.onStartBeatPlan != null) {
+    if (status == 'pending' && onStartBeatPlan != null) {
       // "Start Beat Plan" Button
       return ElevatedButton(
-        onPressed: widget.isLoadingStart ? null : widget.onStartBeatPlan,
+        onPressed: isLoadingStart ? null : onStartBeatPlan,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.secondary,
           foregroundColor: Colors.white,
@@ -271,7 +249,7 @@ class _BeatPlanSummaryCardState extends State<BeatPlanSummaryCard> {
             borderRadius: BorderRadius.circular(10.r),
           ),
         ),
-        child: widget.isLoadingStart
+        child: isLoadingStart
             ? SizedBox(
           height: 20.h,
           width: 20.w,
@@ -291,7 +269,7 @@ class _BeatPlanSummaryCardState extends State<BeatPlanSummaryCard> {
     } else if (status == 'completed') {
       // "View Details" Button
       return OutlinedButton(
-        onPressed: widget.onTap,
+        onPressed: onTap,
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.textPrimary,
           side: BorderSide(
