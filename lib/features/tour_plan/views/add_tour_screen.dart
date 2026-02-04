@@ -9,6 +9,7 @@ import 'package:sales_sphere/widget/custom_button.dart';
 import 'package:sales_sphere/widget/custom_date_picker.dart';
 import '../models/tour_plan.model.dart';
 import '../vm/add_tour.vm.dart';
+import '../vm/tour_plan.vm.dart';
 
 class AddTourPlanScreen extends ConsumerStatefulWidget {
   const AddTourPlanScreen({super.key});
@@ -77,6 +78,59 @@ class _AddTourPlanScreenState extends ConsumerState<AddTourPlanScreen> {
     return DateFormat('yyyy-MM-dd').format(parsed);
   }
 
+  DateTime? _parseApiDate(String text) {
+    try {
+      return DateTime.parse(text);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  DateTime _dateOnly(DateTime date) => DateTime(date.year, date.month, date.day);
+
+  List<DateTimeRange> _buildBlockedRanges(List<TourPlanListItem> plans) {
+    final ranges = <DateTimeRange>[];
+    for (final plan in plans) {
+      final start = _parseApiDate(plan.startDate);
+      final end = _parseApiDate(plan.endDate);
+      if (start == null || end == null) {
+        continue;
+      }
+      final normalizedStart = _dateOnly(start);
+      final normalizedEnd = _dateOnly(end);
+      if (normalizedEnd.isBefore(normalizedStart)) {
+        continue;
+      }
+      ranges.add(DateTimeRange(start: normalizedStart, end: normalizedEnd));
+    }
+    return ranges;
+  }
+
+  bool _isDateBlocked(DateTime date, List<DateTimeRange> ranges) {
+    final target = _dateOnly(date);
+    for (final range in ranges) {
+      final start = _dateOnly(range.start);
+      final end = _dateOnly(range.end);
+      if (!target.isBefore(start) && !target.isAfter(end)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool _rangesOverlap(DateTime start, DateTime end, List<DateTimeRange> blocked) {
+    final normalizedStart = _dateOnly(start);
+    final normalizedEnd = _dateOnly(end);
+    for (final range in blocked) {
+      final rangeStart = _dateOnly(range.start);
+      final rangeEnd = _dateOnly(range.end);
+      if (!normalizedEnd.isBefore(rangeStart) && !normalizedStart.isAfter(rangeEnd)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   Future<void> _handleSave() async {
     if (_formKey.currentState?.validate() ?? false) {
       final request = CreateTourRequest(
@@ -131,6 +185,11 @@ class _AddTourPlanScreenState extends ConsumerState<AddTourPlanScreen> {
   Widget build(BuildContext context) {
     final addTourState = ref.watch(addTourViewModelProvider);
     final isLoading = addTourState.isLoading;
+    final tourPlansAsync = ref.watch(tourPlanViewModelProvider);
+    final blockedRanges = tourPlansAsync.maybeWhen(
+      data: _buildBlockedRanges,
+      orElse: () => const <DateTimeRange>[],
+    );
 
     return Scaffold(
       backgroundColor: const Color(0xFF2C435D),
@@ -188,6 +247,7 @@ class _AddTourPlanScreenState extends ConsumerState<AddTourPlanScreen> {
                         prefixIcon: Icons.calendar_today_outlined,
                         firstDate: DateTime.now(),
                         validator: _validateStartDate,
+                        selectableDayPredicate: (date) => !_isDateBlocked(date, blockedRanges),
                       ),
                       SizedBox(height: 16.h),
                       CustomDatePicker(
@@ -195,7 +255,26 @@ class _AddTourPlanScreenState extends ConsumerState<AddTourPlanScreen> {
                         controller: _endDateController,
                         prefixIcon: Icons.calendar_today_outlined,
                         firstDate: _selectedStartDate ?? DateTime.now(),
-                        validator: _validateEndDate,
+                        validator: (value) {
+                          final basic = _validateEndDate(value);
+                          if (basic != null) {
+                            return basic;
+                          }
+                          final startDate = _parseDisplayDate(_startDateController.text);
+                          final endDate = _parseDisplayDate(value ?? '');
+                          if (startDate != null &&
+                              endDate != null &&
+                              _rangesOverlap(startDate, endDate, blockedRanges)) {
+                            return 'Selected dates overlap with an existing tour plan';
+                          }
+                          return null;
+                        },
+                        selectableDayPredicate: (date) {
+                          if (_selectedStartDate != null && date.isBefore(_dateOnly(_selectedStartDate!))) {
+                            return false;
+                          }
+                          return !_isDateBlocked(date, blockedRanges);
+                        },
                       ),
                       SizedBox(height: 16.h),
                       PrimaryTextField(

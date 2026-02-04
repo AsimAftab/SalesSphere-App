@@ -13,6 +13,7 @@ class CustomDatePicker extends StatelessWidget {
   final DateTime? initialDate;
   final DateTime? firstDate;
   final DateTime? lastDate;
+  final bool Function(DateTime)? selectableDayPredicate;
 
   const CustomDatePicker({
     super.key,
@@ -24,6 +25,7 @@ class CustomDatePicker extends StatelessWidget {
     this.initialDate,
     this.firstDate,
     this.lastDate,
+    this.selectableDayPredicate,
   });
 
   Future<void> _selectDate(BuildContext context) async {
@@ -42,9 +44,14 @@ class CustomDatePicker extends StatelessWidget {
 
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: effectiveInitialDate,
+      initialDate: _ensureSelectableInitialDate(
+        effectiveInitialDate,
+        effectiveFirstDate,
+        effectiveLastDate,
+      ),
       firstDate: effectiveFirstDate,
       lastDate: effectiveLastDate,
+      selectableDayPredicate: selectableDayPredicate,
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -62,7 +69,8 @@ class CustomDatePicker extends StatelessWidget {
                   fontWeight: FontWeight.w400,
                 ),
               ),
-            ), dialogTheme: const DialogThemeData(backgroundColor: Colors.white),
+            ),
+            dialogTheme: const DialogThemeData(backgroundColor: Colors.white),
           ),
           child: child!,
         );
@@ -72,6 +80,37 @@ class CustomDatePicker extends StatelessWidget {
     if (picked != null) {
       controller.text = DateFormat('dd MMM yyyy').format(picked);
     }
+  }
+
+
+  DateTime _ensureSelectableInitialDate(
+    DateTime initial,
+    DateTime first,
+    DateTime last,
+  ) {
+    if (selectableDayPredicate == null) {
+      return initial;
+    }
+
+    if (selectableDayPredicate!(initial)) {
+      return initial;
+    }
+
+    // Find the next selectable date within range
+    DateTime current = initial.isBefore(first) ? first : initial;
+    if (current.isAfter(last)) {
+      current = last;
+    }
+
+    while (!current.isAfter(last)) {
+      if (selectableDayPredicate!(current)) {
+        return current;
+      }
+      current = current.add(const Duration(days: 1));
+    }
+
+    // Fallback to first date if no selectable date found
+    return first;
   }
 
   @override

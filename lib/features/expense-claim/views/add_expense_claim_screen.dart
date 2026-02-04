@@ -12,6 +12,7 @@ import 'package:sales_sphere/widget/custom_date_picker.dart';
 import 'package:sales_sphere/features/parties/vm/parties.vm.dart';
 import 'package:sales_sphere/features/expense-claim/vm/expense_claim_add.vm.dart';
 import 'package:sales_sphere/features/expense-claim/vm/expense_categories.vm.dart';
+import 'package:sales_sphere/features/expense-claim/vm/expense_claims.vm.dart';
 import 'package:sales_sphere/features/expense-claim/models/expense_claim.model.dart';
 
 class AddExpenseClaimScreen extends ConsumerStatefulWidget {
@@ -220,6 +221,8 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
               backgroundColor: AppColors.success,
             ),
           );
+          // Invalidate the list provider to refresh the expense claims list
+          ref.invalidate(expenseClaimsViewModelProvider);
           context.pop(); // Go back
         }
       } catch (e) {

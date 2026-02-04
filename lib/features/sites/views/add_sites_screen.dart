@@ -383,9 +383,11 @@ class _AddSitesScreenState extends ConsumerState<AddSitesScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
+                      SizedBox(height: 8.h),
                       // Site Name
                       PrimaryTextField(
-                        hintText: "Site Name",
+                        label: const Text("Site Name"),
+                        hintText: "Enter site name",
                         controller: _nameController,
                         prefixIcon: Icons.business_outlined,
                         hasFocusBorder: true,
@@ -401,7 +403,8 @@ class _AddSitesScreenState extends ConsumerState<AddSitesScreen> {
 
                       // Owner Name
                       PrimaryTextField(
-                        hintText: "Owner Name",
+                        label: const Text("Owner Name"),
+                        hintText: "Enter owner name",
                         controller: _managerNameController,
                         prefixIcon: Icons.person_outline,
                         hasFocusBorder: true,
@@ -417,7 +420,8 @@ class _AddSitesScreenState extends ConsumerState<AddSitesScreen> {
 
                       // Phone
                       PrimaryTextField(
-                        hintText: "Phone Number",
+                        label: const Text("Phone Number"),
+                        hintText: "Enter phone number",
                         controller: _phoneController,
                         prefixIcon: Icons.phone_outlined,
                         hasFocusBorder: true,
@@ -435,7 +439,8 @@ class _AddSitesScreenState extends ConsumerState<AddSitesScreen> {
 
                       // Email
                       PrimaryTextField(
-                        hintText: "Email Address (Optional)",
+                        label: const Text("Email Address"),
+                        hintText: "Enter email address (optional)",
                         controller: _emailController,
                         prefixIcon: Icons.email_outlined,
                         hasFocusBorder: true,
@@ -474,7 +479,8 @@ class _AddSitesScreenState extends ConsumerState<AddSitesScreen> {
 
                       // Notes
                       PrimaryTextField(
-                        hintText: "Notes (Optional)",
+                        label: const Text("Notes"),
+                        hintText: "Enter notes (optional)",
                         controller: _notesController,
                         prefixIcon: Icons.note_outlined,
                         hasFocusBorder: true,
@@ -540,7 +546,8 @@ class _AddSitesScreenState extends ConsumerState<AddSitesScreen> {
 
                       // Latitude (Non-editable)
                       PrimaryTextField(
-                        hintText: "Latitude (Auto-generated)",
+                        label: const Text("Latitude"),
+                        hintText: "Auto-generated from map",
                         controller: _latitudeController,
                         prefixIcon: Icons.explore_outlined,
                         hasFocusBorder: true,
@@ -550,7 +557,8 @@ class _AddSitesScreenState extends ConsumerState<AddSitesScreen> {
 
                       // Longitude (Non-editable)
                       PrimaryTextField(
-                        hintText: "Longitude (Auto-generated)",
+                        label: const Text("Longitude"),
+                        hintText: "Auto-generated from map",
                         controller: _longitudeController,
                         prefixIcon: Icons.explore_outlined,
                         hasFocusBorder: true,

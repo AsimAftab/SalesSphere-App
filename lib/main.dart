@@ -12,7 +12,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'app.dart';
 import 'core/utils/logger.dart';
 import 'core/services/offline_queue_service.dart';
-import 'core/services/tracking_coordinator.dart';
 import 'core/services/notification_permission_service.dart';
 import 'core/providers/shared_prefs_provider.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';

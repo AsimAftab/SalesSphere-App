@@ -5,6 +5,22 @@ part 'profile.model.freezed.dart';
 part 'profile.model.g.dart';
 
 // ============================================================================
+// CURRENT MONTH ATTENDANCE - Attendance stats for the current month
+// ============================================================================
+
+@freezed
+abstract class CurrentMonthAttendance with _$CurrentMonthAttendance {
+  const CurrentMonthAttendance._();
+
+  const factory CurrentMonthAttendance({
+    @JsonKey(name: 'attendancePercentage') required String attendancePercentage,
+  }) = _CurrentMonthAttendance;
+
+  factory CurrentMonthAttendance.fromJson(Map<String, dynamic> json) =>
+      _$CurrentMonthAttendanceFromJson(json);
+}
+
+// ============================================================================
 // PROFILE MODEL - User profile information from API
 // ============================================================================
 
@@ -37,6 +53,8 @@ abstract class Profile with _$Profile {
     List<String>? reportsTo,
     Map<String, dynamic>? permissions,
     Subscription? subscription,
+    CurrentMonthAttendance? currentMonthAttendance,
+    @JsonKey(name: 'currentMonthInvoiceCount') int? currentMonthInvoiceCount,
   }) = _Profile;
 
   factory Profile.fromJson(Map<String, dynamic> json) =>

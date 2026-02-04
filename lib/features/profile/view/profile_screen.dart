@@ -279,26 +279,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   /// Stats Cards Row
-  /// Note: Using mock data as these features are still in progress
+  /// Shows attendance percentage and orders count for current month
   Widget _buildStatsCards(Profile profile) {
-    // Mock data for stats (not yet available from API)
-    const int mockTotalVisits = 45;
-    const double mockAttendancePercentage = 92.5;
-    const int mockTotalOrders = 32;
+    // Get attendance percentage from API data
+    final attendancePercentage = profile.currentMonthAttendance?.attendancePercentage ?? '0';
+    final ordersCount = profile.currentMonthInvoiceCount ?? 0;
 
     return Row(
       children: [
         Expanded(
           child: _buildStatCard(
-            value: mockTotalVisits.toString(),
-            label: 'Visits',
-            valueColor: AppColors.secondary,
-          ),
-        ),
-        SizedBox(width: 12.w),
-        Expanded(
-          child: _buildStatCard(
-            value: '${mockAttendancePercentage.toStringAsFixed(0)}%',
+            value: '$attendancePercentage%',
             label: 'Attendance',
             valueColor: AppColors.success,
           ),
@@ -306,7 +297,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         SizedBox(width: 12.w),
         Expanded(
           child: _buildStatCard(
-            value: mockTotalOrders.toString(),
+            value: ordersCount.toString(),
             label: 'Orders',
             valueColor: AppColors.warning,
           ),

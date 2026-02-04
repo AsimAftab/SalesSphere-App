@@ -496,9 +496,11 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
+                      SizedBox(height: 8.h),
                       // Party Name
                       PrimaryTextField(
-                        hintText: "Party Name",
+                        label: const Text("Party Name"),
+                        hintText: "Enter party name",
                         controller: _nameController,
                         prefixIcon: Icons.business_outlined,
                         hasFocusBorder: true,
@@ -514,7 +516,8 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
 
                       // Owner Name
                       PrimaryTextField(
-                        hintText: "Owner Name",
+                        label: const Text("Owner Name"),
+                        hintText: "Enter owner name",
                         controller: _ownerNameController,
                         prefixIcon: Icons.person_outline,
                         hasFocusBorder: true,
@@ -530,7 +533,8 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
 
                       // PAN/VAT Number
                       PrimaryTextField(
-                        hintText: "PAN/VAT Number (Max 14 characters)",
+                        label: const Text("PAN/VAT Number"),
+                        hintText: "Enter PAN/VAT number (Max 14 characters)",
                         controller: _panVatController,
                         prefixIcon: Icons.receipt_long_outlined,
                         hasFocusBorder: true,
@@ -550,7 +554,8 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
 
                       // Phone
                       PrimaryTextField(
-                        hintText: "Phone Number (10 digits)",
+                        label: const Text("Phone Number"),
+                        hintText: "Enter phone number (10 digits)",
                         controller: _phoneController,
                         prefixIcon: Icons.phone_outlined,
                         hasFocusBorder: true,
@@ -576,7 +581,8 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
 
                       // Email
                       PrimaryTextField(
-                        hintText: "Email Address",
+                        label: const Text("Email Address"),
+                        hintText: "Enter email address",
                         controller: _emailController,
                         prefixIcon: Icons.email_outlined,
                         hasFocusBorder: true,
@@ -613,7 +619,8 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             PrimaryTextField(
-                              hintText: "Enter New Party Type",
+                              label: const Text("New Party Type"),
+                              hintText: "Enter new party type",
                               controller: _newPartyTypeController,
                               prefixIcon: Icons.edit_outlined,
                               hasFocusBorder: true,
@@ -631,7 +638,8 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
                         ),
 
                       PrimaryTextField(
-                        hintText: "Notes",
+                        label: const Text("Notes"),
+                        hintText: "Enter notes (optional)",
                         controller: _notesController,
                         prefixIcon: Icons.note_outlined,
                         hasFocusBorder: true,
@@ -686,7 +694,8 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
 
                       // Latitude (Non-editable)
                       PrimaryTextField(
-                        hintText: "Latitude (Auto-generated)",
+                        label: const Text("Latitude"),
+                        hintText: "Auto-generated from map",
                         controller: _latitudeController,
                         prefixIcon: Icons.explore_outlined,
                         hasFocusBorder: true,
@@ -696,7 +705,8 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
 
                       // Longitude (Non-editable)
                       PrimaryTextField(
-                        hintText: "Longitude (Auto-generated)",
+                        label: const Text("Longitude"),
+                        hintText: "Auto-generated from map",
                         controller: _longitudeController,
                         prefixIcon: Icons.explore_outlined,
                         hasFocusBorder: true,

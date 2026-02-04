@@ -1023,7 +1023,8 @@ class _EditProspectDetailsScreenState
                       child: Column(
                         children: [
                           PrimaryTextField(
-                            hintText: "Prospect Name",
+                            label: const Text("Prospect Name"),
+                            hintText: "Enter prospect name",
                             controller: _nameController,
                             prefixIcon: Icons.business_center_outlined,
                             hasFocusBorder: true,
@@ -1038,7 +1039,8 @@ class _EditProspectDetailsScreenState
                           ),
                           SizedBox(height: 16.h),
                           PrimaryTextField(
-                            hintText: "Owner Name",
+                            label: const Text("Owner Name"),
+                            hintText: "Enter owner name",
                             controller: _ownerNameController,
                             prefixIcon: Icons.person_outline,
                             hasFocusBorder: true,
@@ -1053,7 +1055,8 @@ class _EditProspectDetailsScreenState
                           ),
                           SizedBox(height: 16.h),
                           PrimaryTextField(
-                            hintText: "PAN/VAT Number (Optional)",
+                            label: const Text("PAN/VAT Number"),
+                            hintText: "Enter PAN/VAT number (optional)",
                             controller: _panVatNumberController,
                             prefixIcon: Icons.receipt_long_outlined,
                             hasFocusBorder: true,
@@ -1071,7 +1074,8 @@ class _EditProspectDetailsScreenState
                           ),
                           SizedBox(height: 16.h),
                           PrimaryTextField(
-                            hintText: "Phone/Mobile Number",
+                            label: const Text("Phone Number"),
+                            hintText: "Enter phone/mobile number",
                             controller: _phoneController,
                             prefixIcon: Icons.phone_outlined,
                             hasFocusBorder: true,
@@ -1087,7 +1091,8 @@ class _EditProspectDetailsScreenState
                           ),
                           SizedBox(height: 16.h),
                           PrimaryTextField(
-                            hintText: "Email Address (Optional)",
+                            label: const Text("Email Address"),
+                            hintText: "Enter email address (optional)",
                             controller: _emailController,
                             prefixIcon: Icons.email_outlined,
                             hasFocusBorder: true,
@@ -1103,7 +1108,8 @@ class _EditProspectDetailsScreenState
                           ),
                           SizedBox(height: 16.h),
                           PrimaryTextField(
-                            hintText: "Notes (Optional)",
+                            label: const Text("Notes"),
+                            hintText: "Enter notes (optional)",
                             controller: _notesController,
                             prefixIcon: Icons.note_outlined,
                             hasFocusBorder: true,
@@ -1173,7 +1179,8 @@ class _EditProspectDetailsScreenState
 
                           // Latitude (Non-editable)
                           PrimaryTextField(
-                            hintText: "Latitude (Auto-generated)",
+                            label: const Text("Latitude"),
+                            hintText: "Auto-generated from map",
                             controller: _latitudeController,
                             prefixIcon: Icons.explore_outlined,
                             hasFocusBorder: true,
@@ -1187,7 +1194,8 @@ class _EditProspectDetailsScreenState
 
                           // Longitude (Non-editable)
                           PrimaryTextField(
-                            hintText: "Longitude (Auto-generated)",
+                            label: const Text("Longitude"),
+                            hintText: "Auto-generated from map",
                             controller: _longitudeController,
                             prefixIcon: Icons.explore_outlined,
                             hasFocusBorder: true,
@@ -1197,7 +1205,8 @@ class _EditProspectDetailsScreenState
                           SizedBox(height: 16.h),
 
                           PrimaryTextField(
-                            hintText: "Date Joined",
+                            label: const Text("Date Joined"),
+                            hintText: "Date when prospect was added",
                             controller: _dateJoinedController,
                             prefixIcon: Icons.date_range_outlined,
                             hasFocusBorder: true,

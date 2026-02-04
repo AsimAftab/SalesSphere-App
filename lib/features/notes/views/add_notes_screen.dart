@@ -5,10 +5,13 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
+import 'package:sales_sphere/core/constants/module_config.dart';
+import 'package:sales_sphere/core/providers/permission_controller.dart';
 import 'package:sales_sphere/core/utils/snackbar_utils.dart';
 import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
 import 'package:sales_sphere/features/notes/vm/add_notes.vm.dart';
+import 'package:sales_sphere/features/notes/vm/notes.vm.dart';
 import 'package:sales_sphere/features/parties/vm/parties.vm.dart';
 import 'package:sales_sphere/features/prospects/vm/prospects.vm.dart';
 import 'package:sales_sphere/features/sites/vm/sites.vm.dart';
@@ -168,6 +171,21 @@ class _AddNotesScreenState extends ConsumerState<AddNotesScreen> {
   }
 
   Future<void> _handleSubmit() async {
+    // Check if any directory modules are enabled
+    final permissionController = ref.read(permissionControllerProvider);
+    final enabledDirectoryModules = ModuleConfig.getEnabledModules(
+      ModuleConfig.directoryModules,
+      permissionController.isModuleEnabled,
+    );
+
+    if (enabledDirectoryModules.isEmpty) {
+      SnackbarUtils.showError(
+        context,
+        'No directory modules enabled. Contact your administrator.',
+      );
+      return;
+    }
+
     if (!_hasEntitySelected) {
       SnackbarUtils.showError(
         context,
@@ -204,6 +222,8 @@ class _AddNotesScreenState extends ConsumerState<AddNotesScreen> {
 
         if (mounted) {
           SnackbarUtils.showSuccess(context, 'Note added successfully!');
+          // Invalidate the list provider to refresh the notes list
+          ref.invalidate(notesViewModelProvider);
           context.pop(true);
         }
       } catch (e) {
@@ -589,6 +609,51 @@ class _AddNotesScreenState extends ConsumerState<AddNotesScreen> {
   }
 
   Widget _buildEntityTypeSelector() {
+    final permissionController = ref.watch(permissionControllerProvider);
+
+    // Get enabled directory modules
+    final enabledDirectoryModules = ModuleConfig.getEnabledModules(
+      ModuleConfig.directoryModules,
+      permissionController.isModuleEnabled,
+    );
+
+    // Map module IDs to EntityType
+    final moduleToEntityType = {
+      'parties': EntityType.party,
+      'prospects': EntityType.prospect,
+      'sites': EntityType.site,
+    };
+
+    // If all directory modules are disabled, show message
+    if (enabledDirectoryModules.isEmpty) {
+      return Container(
+        padding: EdgeInsets.all(12.w),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              Icons.folder_off,
+              size: 32.sp,
+              color: Colors.grey.shade400,
+            ),
+            SizedBox(height: 8.h),
+            Text(
+              'No directory modules enabled',
+              style: TextStyle(
+                fontSize: 12.sp,
+                color: Colors.grey.shade600,
+                fontFamily: 'Poppins',
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
@@ -598,33 +663,39 @@ class _AddNotesScreenState extends ConsumerState<AddNotesScreen> {
       ),
       child: Column(
         children: [
-          // Entity type options
+          // Entity type options - only show enabled modules
           Row(
-            children: [
-              Expanded(
-                child: _buildEntityTypeChip(
-                  type: EntityType.party,
-                  label: 'Party',
-                  icon: Icons.store_outlined,
+            children: enabledDirectoryModules.map((moduleId) {
+              final entityType = moduleToEntityType[moduleId];
+              if (entityType == null) return const SizedBox.shrink();
+
+              final label = moduleId == 'parties'
+                  ? 'Party'
+                  : moduleId == 'prospects'
+                      ? 'Prospect'
+                      : 'Site';
+              final icon = moduleId == 'parties'
+                  ? Icons.store_outlined
+                  : moduleId == 'prospects'
+                      ? Icons.person_search_outlined
+                      : Icons.location_city_outlined;
+
+              return Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    right: enabledDirectoryModules.indexOf(moduleId) <
+                            enabledDirectoryModules.length - 1
+                        ? 8.w
+                        : 0,
+                  ),
+                  child: _buildEntityTypeChip(
+                    type: entityType,
+                    label: label,
+                    icon: icon,
+                  ),
                 ),
-              ),
-              SizedBox(width: 8.w),
-              Expanded(
-                child: _buildEntityTypeChip(
-                  type: EntityType.prospect,
-                  label: 'Prospect',
-                  icon: Icons.person_search_outlined,
-                ),
-              ),
-              SizedBox(width: 8.w),
-              Expanded(
-                child: _buildEntityTypeChip(
-                  type: EntityType.site,
-                  label: 'Site',
-                  icon: Icons.location_city_outlined,
-                ),
-              ),
-            ],
+              );
+            }).toList(),
           ),
 
           // Selected entity display
