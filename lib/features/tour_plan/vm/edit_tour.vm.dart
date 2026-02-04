@@ -27,16 +27,31 @@ class EditTourViewModel extends _$EditTourViewModel {
         data: request.toJson(),
       );
 
-      final updateResponse = UpdateTourResponse.fromJson(response.data);
+      final statusCode = response.statusCode ?? 0;
+      final responseData = response.data;
 
-      if (updateResponse.success) {
-        AppLogger.i('Tour plan updated successfully: ${updateResponse.data.id}');
-        state = const AsyncData(null);
-        return true;
-      } else {
-        state = AsyncError('Failed to update tour plan', StackTrace.current);
+      if (statusCode >= 400) {
+        final message = _extractMessage(responseData) ?? 'Failed to update tour plan';
+        state = AsyncError(message, StackTrace.current);
         return false;
       }
+
+      if (responseData is! Map<String, dynamic>) {
+        state = AsyncError('Invalid response from server', StackTrace.current);
+        return false;
+      }
+
+      final success = responseData['success'] == true;
+      if (!success) {
+        final message = _extractMessage(responseData) ?? 'Failed to update tour plan';
+        state = AsyncError(message, StackTrace.current);
+        return false;
+      }
+
+      final updateResponse = UpdateTourResponse.fromJson(responseData);
+      AppLogger.i('Tour plan updated successfully: ${updateResponse.data.id}');
+      state = const AsyncData(null);
+      return true;
     } on DioException catch (e, stack) {
       AppLogger.e('Failed to update tour plan', e, stack);
 
@@ -53,6 +68,24 @@ class EditTourViewModel extends _$EditTourViewModel {
       state = AsyncError(e.toString(), stack);
       return false;
     }
+  }
+
+  String? _extractMessage(dynamic responseData) {
+    if (responseData is Map<String, dynamic>) {
+      final message = responseData['message'];
+      if (message is String && message.trim().isNotEmpty) {
+        return message.trim();
+      }
+      final error = responseData['error'];
+      if (error is String && error.trim().isNotEmpty) {
+        return error.trim();
+      }
+      final detail = responseData['detail'];
+      if (detail is String && detail.trim().isNotEmpty) {
+        return detail.trim();
+      }
+    }
+    return null;
   }
 
   String? validateRequired(String? value, String fieldName) {

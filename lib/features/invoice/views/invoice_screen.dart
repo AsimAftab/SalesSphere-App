@@ -290,7 +290,7 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                             prefixIcon: Icons.local_shipping_rounded,
                             firstDate: DateTime.now(),
                             lastDate: DateTime.now().add(const Duration(days: 365)),
-                            initialDate: DateTime.now().add(const Duration(days: 7)),
+                            initialDate: DateTime.now(),
                           ),
                         ],
                       ),

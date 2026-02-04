@@ -9,6 +9,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:intl/intl.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/services/google_places_service.dart';
+import 'package:sales_sphere/core/utils/snackbar_utils.dart';
 import 'package:sales_sphere/core/services/location_service.dart';
 import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
@@ -54,6 +55,9 @@ class _AddMiscellaneousWorkScreenState
   final ImagePicker _picker = ImagePicker();
   final List<XFile> _selectedImages = [];
 
+  // Local loading state to cover work creation + image upload
+  bool _isSubmitting = false;
+
   final LatLng _defaultLocation = const LatLng(13.1349646, 77.5668106);
 
   @override
@@ -89,10 +93,9 @@ class _AddMiscellaneousWorkScreenState
   // IMAGE PICKER LOGIC
   // ---------------------------------------------------------------------------
   Future<void> _pickImage() async {
+    if (_isSubmitting) return;
     if (_selectedImages.length >= 2) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Maximum 2 images allowed")),
-      );
+      SnackbarUtils.showError(context, "Maximum 2 images allowed");
       return;
     }
 
@@ -153,29 +156,25 @@ class _AddMiscellaneousWorkScreenState
       if (_addressController.text
           .trim()
           .isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter an address')),
-        );
+        SnackbarUtils.showError(context, 'Please enter an address');
         return;
       }
 
       if (_latitudeController.text.isEmpty ||
           _longitudeController.text.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select a location on map')),
-        );
+        SnackbarUtils.showError(context, 'Please select a location on map');
         return;
       }
+
+      setState(() => _isSubmitting = true);
 
       try {
         // Show Loading
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Submitting work...'),
-              backgroundColor: AppColors.primary,
-              duration: const Duration(seconds: 30),
-            ),
+          SnackbarUtils.showInfo(
+            context,
+            'Submitting work...',
+            duration: const Duration(seconds: 30),
           );
         }
 
@@ -207,14 +206,10 @@ class _AddMiscellaneousWorkScreenState
         // Upload images if any
         if (_selectedImages.isNotEmpty) {
           if (mounted) {
-            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                    'Uploading ${_selectedImages.length} image(s)...'),
-                backgroundColor: AppColors.primary,
-                duration: const Duration(seconds: 30),
-              ),
+            SnackbarUtils.showInfo(
+              context,
+              'Uploading ${_selectedImages.length} image(s)...',
+              duration: const Duration(seconds: 30),
             );
           }
 
@@ -234,26 +229,21 @@ class _AddMiscellaneousWorkScreenState
         }
 
         if (mounted) {
-          ScaffoldMessenger.of(context).hideCurrentSnackBar();
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Work submitted successfully!'),
-              backgroundColor: AppColors.success,
-            ),
-          );
+          SnackbarUtils.showSuccess(context, 'Work submitted successfully!');
           // Refresh the list screen
           ref.invalidate(miscellaneousListViewModelProvider);
           context.pop(); // Go back
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).hideCurrentSnackBar();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(e.toString().replaceAll('Exception: ', '')),
-              backgroundColor: AppColors.error,
-            ),
+          SnackbarUtils.showError(
+            context,
+            e.toString().replaceAll('Exception: ', ''),
           );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isSubmitting = false);
         }
       }
     }
@@ -281,7 +271,7 @@ class _AddMiscellaneousWorkScreenState
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => context.pop(),
+          onPressed: _isSubmitting ? null : () => context.pop(),
         ),
       ),
       body: Column(
@@ -313,6 +303,7 @@ class _AddMiscellaneousWorkScreenState
                         controller: _natureOfWorkController,
                         prefixIcon: Icons.work_outline,
                         hasFocusBorder: true,
+                        enabled: !_isSubmitting,
                         validator: (value) =>
                         (value == null || value
                             .trim()
@@ -329,6 +320,7 @@ class _AddMiscellaneousWorkScreenState
                         controller: _assignedByController,
                         prefixIcon: Icons.person_outline,
                         hasFocusBorder: true,
+                        enabled: !_isSubmitting,
                         validator: (value) =>
                         (value == null || value
                             .trim()
@@ -345,6 +337,7 @@ class _AddMiscellaneousWorkScreenState
                         prefixIcon: Icons.event_outlined,
                         firstDate: DateTime(2020),
                         lastDate: DateTime(2030),
+                        enabled: !_isSubmitting,
                         validator: (value) =>
                         (value == null || value.trim().isEmpty)
                             ? 'Work date required'
@@ -360,7 +353,7 @@ class _AddMiscellaneousWorkScreenState
                         initialLocation: _defaultLocation,
                         placesService: ref.read(googlePlacesServiceProvider),
                         locationService: ref.read(locationServiceProvider),
-                        enabled: true,
+                        enabled: !_isSubmitting,
                         addressValidator: (value) =>
                         (value == null || value
                             .trim()
@@ -426,7 +419,13 @@ class _AddMiscellaneousWorkScreenState
                         ),
                       ),
                       SizedBox(height: 8.h),
-                      _buildImageUploadArea(),
+                      IgnorePointer(
+                        ignoring: _isSubmitting,
+                        child: Opacity(
+                          opacity: _isSubmitting ? 0.6 : 1.0,
+                          child: _buildImageUploadArea(),
+                        ),
+                      ),
 
                       SizedBox(height: 80.h), // Space for bottom button
                     ],
@@ -449,10 +448,10 @@ class _AddMiscellaneousWorkScreenState
             ),
             color: Colors.white,
             child: PrimaryButton(
-
-              label: 'Submit',
-              onPressed: _handleSubmit,
+              label: _isSubmitting ? "Submitting..." : "Submit",
+              onPressed: _isSubmitting ? null : _handleSubmit,
               size: ButtonSize.medium,
+              isLoading: _isSubmitting,
             ),
           ),
         ],

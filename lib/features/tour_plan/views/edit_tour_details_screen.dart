@@ -12,6 +12,7 @@ import 'package:sales_sphere/widget/custom_date_picker.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import '../models/tour_plan.model.dart';
 import '../vm/edit_tour.vm.dart';
+import '../vm/tour_plan.vm.dart';
 
 class EditTourDetailsScreen extends ConsumerStatefulWidget {
   final String tourId;
@@ -95,6 +96,54 @@ class _EditTourDetailsScreenState extends ConsumerState<EditTourDetailsScreen> {
     final parsed = _parseDisplayDate(displayDate);
     if (parsed == null) return displayDate;
     return DateFormat('yyyy-MM-dd').format(parsed);
+  }
+
+  DateTime _dateOnly(DateTime date) => DateTime(date.year, date.month, date.day);
+
+  List<DateTimeRange> _buildBlockedRanges(List<TourPlanListItem> plans, {String? excludeId}) {
+    final ranges = <DateTimeRange>[];
+    for (final plan in plans) {
+      if (excludeId != null && plan.id == excludeId) {
+        continue;
+      }
+      final start = _parseApiDate(plan.startDate);
+      final end = _parseApiDate(plan.endDate);
+      if (start == null || end == null) {
+        continue;
+      }
+      final normalizedStart = _dateOnly(start);
+      final normalizedEnd = _dateOnly(end);
+      if (normalizedEnd.isBefore(normalizedStart)) {
+        continue;
+      }
+      ranges.add(DateTimeRange(start: normalizedStart, end: normalizedEnd));
+    }
+    return ranges;
+  }
+
+  bool _isDateBlocked(DateTime date, List<DateTimeRange> ranges) {
+    final target = _dateOnly(date);
+    for (final range in ranges) {
+      final start = _dateOnly(range.start);
+      final end = _dateOnly(range.end);
+      if (!target.isBefore(start) && !target.isAfter(end)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool _rangesOverlap(DateTime start, DateTime end, List<DateTimeRange> blocked) {
+    final normalizedStart = _dateOnly(start);
+    final normalizedEnd = _dateOnly(end);
+    for (final range in blocked) {
+      final rangeStart = _dateOnly(range.start);
+      final rangeEnd = _dateOnly(range.end);
+      if (!normalizedEnd.isBefore(rangeStart) && !normalizedStart.isAfter(rangeEnd)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   void _populateFields(TourDetails tour) {
@@ -182,6 +231,11 @@ class _EditTourDetailsScreenState extends ConsumerState<EditTourDetailsScreen> {
     final tourAsync = ref.watch(tourByIdProvider(widget.tourId));
     final editState = ref.watch(editTourViewModelProvider);
     final isLoading = editState.isLoading;
+    final tourPlansAsync = ref.watch(tourPlanViewModelProvider);
+    final blockedRanges = tourPlansAsync.maybeWhen(
+      data: (plans) => _buildBlockedRanges(plans, excludeId: widget.tourId),
+      orElse: () => const <DateTimeRange>[],
+    );
 
     ref.listen(tourByIdProvider(widget.tourId), (prev, next) {
       if (next is AsyncData<TourDetails?> && next.value != null && !_isDataLoaded) {
@@ -248,8 +302,8 @@ class _EditTourDetailsScreenState extends ConsumerState<EditTourDetailsScreen> {
           tourAsync.when(
             data: (tour) => tour == null
                 ? const Center(child: Text("Tour not found"))
-                : _buildContent(tour, isLoading),
-            loading: () => Skeletonizer(enabled: true, child: _buildContent(null, false)),
+                : _buildContent(tour, isLoading, blockedRanges),
+            loading: () => Skeletonizer(enabled: true, child: _buildContent(null, false, blockedRanges)),
             error: (e, _) => Center(child: Text(e.toString())),
           ),
         ],
@@ -257,7 +311,7 @@ class _EditTourDetailsScreenState extends ConsumerState<EditTourDetailsScreen> {
     );
   }
 
-  Widget _buildContent(TourDetails? tour, bool isLoading) {
+  Widget _buildContent(TourDetails? tour, bool isLoading, List<DateTimeRange> blockedRanges) {
     final bool isPending = (tour?.status.toLowerCase() ?? 'pending') == 'pending';
     final bool isEditable = _isEditMode && isPending && !isLoading;
 
@@ -310,6 +364,9 @@ class _EditTourDetailsScreenState extends ConsumerState<EditTourDetailsScreen> {
                             enabled: isEditable,
                             firstDate: DateTime.now(),
                             validator: isEditable ? _validateStartDate : null,
+                            selectableDayPredicate: isEditable
+                                ? (date) => !_isDateBlocked(date, blockedRanges)
+                                : null,
                           ),
                           SizedBox(height: 16.h),
                           CustomDatePicker(
@@ -318,7 +375,31 @@ class _EditTourDetailsScreenState extends ConsumerState<EditTourDetailsScreen> {
                             prefixIcon: Icons.calendar_today_outlined,
                             enabled: isEditable,
                             firstDate: _selectedStartDate ?? DateTime.now(),
-                            validator: isEditable ? _validateEndDate : null,
+                            validator: isEditable
+                                ? (value) {
+                                    final basic = _validateEndDate(value);
+                                    if (basic != null) {
+                                      return basic;
+                                    }
+                                    final startDate = _parseDisplayDate(_startDateController.text);
+                                    final endDate = _parseDisplayDate(value ?? '');
+                                    if (startDate != null &&
+                                        endDate != null &&
+                                        _rangesOverlap(startDate, endDate, blockedRanges)) {
+                                      return 'Selected dates overlap with an existing tour plan';
+                                    }
+                                    return null;
+                                  }
+                                : null,
+                            selectableDayPredicate: isEditable
+                                ? (date) {
+                                    if (_selectedStartDate != null &&
+                                        date.isBefore(_dateOnly(_selectedStartDate!))) {
+                                      return false;
+                                    }
+                                    return !_isDateBlocked(date, blockedRanges);
+                                  }
+                                : null,
                           ),
                           SizedBox(height: 16.h),
                           PrimaryTextField(
