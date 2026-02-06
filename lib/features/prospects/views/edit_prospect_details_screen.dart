@@ -992,10 +992,6 @@ class _EditProspectDetailsScreenState
                     ),
                     SizedBox(height: 24.h),
 
-                    // Photo Gallery Card
-                    _buildPhotoGalleryCard(),
-                    SizedBox(height: 24.h),
-
                     Text(
                       'Prospect Details',
                       style: TextStyle(
@@ -1216,6 +1212,10 @@ class _EditProspectDetailsScreenState
                         ],
                       ),
                     ),
+                    SizedBox(height: 24.h),
+
+                    // Photo Gallery Card
+                    _buildPhotoGalleryCard(),
                     SizedBox(height: 80.h),
                   ],
                 ),

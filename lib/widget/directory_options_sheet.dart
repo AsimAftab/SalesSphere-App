@@ -188,7 +188,7 @@ class DirectoryOptionsSheet extends ConsumerWidget {
     switch (moduleId) {
       case 'parties':
         return const DirectoryModuleConfig(
-          icon: Icons.business,
+          icon: Icons.store,
           title: 'Parties',
           subtitle: 'Manage business partners',
           gradient: LinearGradient(
@@ -208,7 +208,7 @@ class DirectoryOptionsSheet extends ConsumerWidget {
         );
       case 'sites':
         return const DirectoryModuleConfig(
-          icon: Icons.location_on,
+          icon: Icons.location_city,
           title: 'Sites',
           subtitle: 'Manage business locations',
           gradient: LinearGradient(

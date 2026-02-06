@@ -206,7 +206,7 @@ abstract class UpdatePartyRequest with _$UpdatePartyRequest {
     @JsonKey(includeIfNull: false) String? partyType,
     required UpdatePartyContact contact,
     required UpdatePartyLocation location,
-    String? description,
+    @JsonKey(includeIfNull: false) String? description,
   }) = _UpdatePartyRequest;
 
   factory UpdatePartyRequest.fromJson(Map<String, dynamic> json) =>
@@ -233,7 +233,8 @@ abstract class UpdatePartyRequest with _$UpdatePartyRequest {
 /// Contact info for update request
 @freezed
 abstract class UpdatePartyContact with _$UpdatePartyContact {
-  const factory UpdatePartyContact({required String phone, String? email}) =
+  const factory UpdatePartyContact(
+      {required String phone, @JsonKey(includeIfNull: false) String? email}) =
       _UpdatePartyContact;
 
   factory UpdatePartyContact.fromJson(Map<String, dynamic> json) =>
@@ -268,7 +269,7 @@ abstract class CreatePartyRequest with _$CreatePartyRequest {
     @JsonKey(includeIfNull: false) String? partyType,
     required CreatePartyContact contact,
     required CreatePartyLocation location,
-    String? description,
+    @JsonKey(includeIfNull: false) String? description,
   }) = _CreatePartyRequest;
 
   factory CreatePartyRequest.fromJson(Map<String, dynamic> json) =>
@@ -278,7 +279,8 @@ abstract class CreatePartyRequest with _$CreatePartyRequest {
 /// Contact info for create request
 @freezed
 abstract class CreatePartyContact with _$CreatePartyContact {
-  const factory CreatePartyContact({required String phone, String? email}) =
+  const factory CreatePartyContact(
+      {required String phone, @JsonKey(includeIfNull: false) String? email}) =
       _CreatePartyContact;
 
   factory CreatePartyContact.fromJson(Map<String, dynamic> json) =>

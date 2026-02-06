@@ -3,6 +3,11 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'notes.model.freezed.dart';
 part 'notes.model.g.dart';
 
+Object? _readPartyName(Map json, String key) => json[key] ?? json['name'];
+Object? _readProspectName(Map json, String key) =>
+    json[key] ?? json['prospectName'];
+Object? _readSiteName(Map json, String key) => json[key] ?? json['siteName'];
+
 // ============================================================================
 // API Response Models
 // ============================================================================
@@ -115,6 +120,7 @@ abstract class CreateNoteData with _$CreateNoteData {
 abstract class NotePartyRef with _$NotePartyRef {
   const factory NotePartyRef({
     @JsonKey(name: '_id') required String id,
+    @JsonKey(readValue: _readPartyName)
     required String partyName,
   }) = _NotePartyRef;
 
@@ -127,6 +133,7 @@ abstract class NotePartyRef with _$NotePartyRef {
 abstract class NoteProspectRef with _$NoteProspectRef {
   const factory NoteProspectRef({
     @JsonKey(name: '_id') required String id,
+    @JsonKey(readValue: _readProspectName)
     required String name,
   }) = _NoteProspectRef;
 
@@ -139,6 +146,7 @@ abstract class NoteProspectRef with _$NoteProspectRef {
 abstract class NoteSiteRef with _$NoteSiteRef {
   const factory NoteSiteRef({
     @JsonKey(name: '_id') required String id,
+    @JsonKey(readValue: _readSiteName)
     required String name,
   }) = _NoteSiteRef;
 
@@ -196,9 +204,9 @@ abstract class UpdateNoteRequest with _$UpdateNoteRequest {
   const factory UpdateNoteRequest({
     required String title,
     required String description,
-    @JsonKey(includeIfNull: false) String? party,
-    @JsonKey(includeIfNull: false) String? prospect,
-    @JsonKey(includeIfNull: false) String? site,
+    String? party,
+    String? prospect,
+    String? site,
   }) = _UpdateNoteRequest;
 
   factory UpdateNoteRequest.fromJson(Map<String, dynamic> json) =>

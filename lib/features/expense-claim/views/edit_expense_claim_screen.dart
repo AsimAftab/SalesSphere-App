@@ -7,9 +7,11 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
+import 'package:sales_sphere/core/utils/snackbar_utils.dart';
 import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
 import 'package:sales_sphere/widget/custom_date_picker.dart';
+import 'package:sales_sphere/widget/primary_image_picker.dart';
 import 'package:sales_sphere/features/parties/vm/parties.vm.dart';
 import 'package:sales_sphere/features/expense-claim/models/expense_claim.model.dart';
 import 'package:sales_sphere/features/expense-claim/vm/expense_claim_edit.vm.dart';
@@ -50,7 +52,6 @@ class _EditExpenseClaimScreenState
   DateTime _selectedDate = DateTime.now();
 
   // Image Picking
-  final ImagePicker _picker = ImagePicker();
   XFile? _newImage;
   bool _hasExistingImage = false;
 
@@ -122,56 +123,16 @@ class _EditExpenseClaimScreenState
   // ---------------------------------------------------------------------------
   Future<void> _pickImage() async {
     try {
-      showModalBottomSheet(
-        context: context,
-        builder: (BuildContext context) {
-          return SafeArea(
-            child: Wrap(
-              children: <Widget>[
-                ListTile(
-                  leading: const Icon(Icons.photo_library),
-                  title: const Text('Gallery'),
-                  onTap: () async {
-                    context.pop();
-                    final XFile? image = await _picker.pickImage(
-                        source: ImageSource.gallery, imageQuality: 70);
-                    if (image != null) {
-                      setState(() {
-                        _newImage = image;
-                        _hasExistingImage = false;
-                      });
-                    }
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.photo_camera),
-                  title: const Text('Camera'),
-                  onTap: () async {
-                    context.pop();
-                    final XFile? image = await _picker.pickImage(
-                        source: ImageSource.camera, imageQuality: 70);
-                    if (image != null) {
-                      setState(() {
-                        _newImage = image;
-                        _hasExistingImage = false;
-                      });
-                    }
-                  },
-                ),
-              ],
-            ),
-          );
-        },
-      );
+      final image = await showImagePickerSheet(context);
+      if (image != null) {
+        setState(() {
+          _newImage = image;
+          _hasExistingImage = false;
+        });
+      }
     } catch (e) {
       debugPrint("Error picking image: $e");
     }
-  }
-
-  void _removeNewImage() {
-    setState(() {
-      _newImage = null;
-    });
   }
 
   // ---------------------------------------------------------------------------
@@ -183,11 +144,9 @@ class _EditExpenseClaimScreenState
 
     if (claim != null && claim.status != 'pending') {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Cannot edit ${claim.status} expense claims'),
-            backgroundColor: Colors.red,
-          ),
+        SnackbarUtils.showWarning(
+          context,
+          'Cannot edit ${claim.status} expense claims',
         );
       }
       return;
@@ -196,20 +155,16 @@ class _EditExpenseClaimScreenState
     if (_formKey.currentState?.validate() ?? false) {
       if (_selectedCategoryId == null &&
           (!_isAddingNewCategory || _newCategoryController.text.trim().isEmpty)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select or add a category')),
-        );
+        SnackbarUtils.showWarning(context, 'Please select or add a category');
         return;
       }
 
       try {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Updating expense claim...'),
-              backgroundColor: AppColors.primary,
-              duration: Duration(seconds: 30),
-            ),
+          SnackbarUtils.showInfo(
+            context,
+            'Updating expense claim...',
+            duration: const Duration(seconds: 30),
           );
         }
 
@@ -245,13 +200,10 @@ class _EditExpenseClaimScreenState
 
         if (_newImage != null) {
           if (mounted) {
-            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Uploading receipt...'),
-                backgroundColor: AppColors.primary,
-                duration: Duration(seconds: 30),
-              ),
+            SnackbarUtils.showInfo(
+              context,
+              'Uploading receipt...',
+              duration: const Duration(seconds: 30),
             );
           }
 
@@ -262,24 +214,15 @@ class _EditExpenseClaimScreenState
         }
 
         if (mounted) {
-          ScaffoldMessenger.of(context).hideCurrentSnackBar();
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Expense claim updated successfully!'),
-              backgroundColor: AppColors.success,
-            ),
-          );
+          SnackbarUtils.showSuccess(context, 'Expense claim updated successfully!');
           ref.invalidate(expenseClaimsViewModelProvider);
           context.pop();
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).hideCurrentSnackBar();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(e.toString().replaceAll('Exception: ', '')),
-              backgroundColor: AppColors.error,
-            ),
+          SnackbarUtils.showError(
+            context,
+            e.toString().replaceAll('Exception: ', ''),
           );
         }
       }
@@ -288,61 +231,143 @@ class _EditExpenseClaimScreenState
 
   void _showPartySearchDialog(List parties) {
     final searchController = TextEditingController();
-    List filteredParties = parties;
+    List _withSelectedFirst(List source) {
+      final selectedId = _selectedPartyId;
+      final sorted = List.of(source);
+      if (selectedId == null) return sorted;
+      sorted.sort((a, b) {
+        if (a.id == selectedId && b.id != selectedId) return -1;
+        if (a.id != selectedId && b.id == selectedId) return 1;
+        return 0;
+      });
+      return sorted;
+    }
 
-    showDialog(
+    List filteredParties = _withSelectedFirst(parties);
+
+    showModalBottomSheet(
       context: context,
-      builder: (BuildContext context) {
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
         return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: Text(
-                'Select Party',
-                style: TextStyle(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.w600,
+          builder: (context, setModalState) {
+            return Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(24.r),
+                  topRight: Radius.circular(24.r),
                 ),
               ),
-              content: SizedBox(
-                width: double.maxFinite,
+              padding: EdgeInsets.only(
+                top: 20.h,
+                left: 20.w,
+                right: 20.w,
+                bottom: 20.h,
+              ),
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.75,
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
+                  mainAxisSize: MainAxisSize.max,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    TextField(
-                      controller: searchController,
-                      decoration: InputDecoration(
-                        hintText: 'Search party...',
-                        prefixIcon: const Icon(Icons.search),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12.r),
-                        ),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 16.w,
-                          vertical: 12.h,
+                  Center(
+                    child: Container(
+                      width: 40.w,
+                      height: 4.h,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2.r),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 20.h),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.store_outlined,
+                        color: AppColors.primary,
+                        size: 24.sp,
+                      ),
+                      SizedBox(width: 12.w),
+                      Text(
+                        'Select Party',
+                        style: TextStyle(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'Poppins',
+                          color: Colors.grey.shade800,
                         ),
                       ),
-                      onChanged: (value) {
-                        setState(() {
-                          if (value.isEmpty) {
-                            filteredParties = parties;
-                          } else {
-                            filteredParties = parties
-                                .where((party) => party.name
-                                .toLowerCase()
-                                .contains(value.toLowerCase()))
-                                .toList();
-                          }
-                        });
-                      },
+                    ],
+                  ),
+                  SizedBox(height: 8.h),
+                  Text(
+                    'Choose an existing party',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: Colors.grey.shade500,
+                      fontFamily: 'Poppins',
                     ),
-                    SizedBox(height: 16.h),
+                  ),
+                  SizedBox(height: 16.h),
+                  TextField(
+                    controller: searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Search party...',
+                      prefixIcon: const Icon(Icons.search),
+                      filled: true,
+                      fillColor: Colors.white,
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                        borderSide: BorderSide(color: AppColors.primary),
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 16.w,
+                        vertical: 12.h,
+                      ),
+                    ),
+                    onChanged: (value) {
+                      setModalState(() {
+                        if (value.isEmpty) {
+                          filteredParties = _withSelectedFirst(parties);
+                        } else {
+                          final searched = parties
+                              .where((party) => party.name
+                                  .toLowerCase()
+                                  .contains(value.toLowerCase()))
+                              .toList();
+                          filteredParties = _withSelectedFirst(searched);
+                        }
+                      });
+                    },
+                  ),
+                  SizedBox(height: 12.h),
+                  if (_selectedPartyId != null)
                     ListTile(
-                      leading: const Icon(Icons.clear, color: AppColors.textSecondary),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      leading: Icon(
+                        Icons.clear,
+                        color: Colors.red.shade400,
+                        size: 20.sp,
+                      ),
                       title: Text(
-                        'None',
+                        'Clear selection',
                         style: TextStyle(
-                          color: AppColors.textSecondary,
                           fontSize: 14.sp,
+                          fontFamily: 'Poppins',
+                          color: Colors.red.shade400,
                         ),
                       ),
                       onTap: () {
@@ -352,63 +377,87 @@ class _EditExpenseClaimScreenState
                         context.pop();
                       },
                     ),
-                    const Divider(height: 1),
-                    Expanded(
-                      child: filteredParties.isEmpty
-                          ? Center(
-                        child: Text(
-                          'No parties found',
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 14.sp,
-                          ),
-                        ),
-                      )
-                          : ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: filteredParties.length,
-                        itemBuilder: (context, index) {
-                          final party = filteredParties[index];
-                          return ListTile(
-                            leading: const Icon(
-                              Icons.person_outline,
-                              color: AppColors.primary,
-                            ),
-                            title: Text(
-                              party.name,
-                              style: TextStyle(fontSize: 14.sp),
-                            ),
-                            subtitle: Text(
-                              party.fullAddress,
-                              style: TextStyle(
-                                fontSize: 12.sp,
-                                color: AppColors.textSecondary,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            selected: _selectedPartyId == party.id,
-                            selectedTileColor:
-                            AppColors.primary.withValues(alpha: 0.1),
-                            onTap: () {
-                              this.setState(() {
-                                _selectedPartyId = party.id;
-                              });
-                              context.pop();
-                            },
-                          );
-                        },
-                      ),
+                  Divider(height: 16.h),
+                  Text(
+                    'Existing Parties',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey.shade500,
+                      fontFamily: 'Poppins',
                     ),
-                  ],
+                  ),
+                  SizedBox(height: 8.h),
+                  Expanded(
+                    child: filteredParties.isEmpty
+                        ? Center(
+                            child: Text(
+                              'No parties found',
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 14.sp,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: filteredParties.length,
+                            itemBuilder: (context, index) {
+                              final party = filteredParties[index];
+                              final isSelected = _selectedPartyId == party.id;
+                              return ListTile(
+                                contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8.r),
+                                ),
+                                tileColor: isSelected
+                                    ? AppColors.primary.withValues(alpha: 0.1)
+                                    : null,
+                                leading: Icon(
+                                  isSelected
+                                      ? Icons.check_circle
+                                      : Icons.store_outlined,
+                                  color: isSelected
+                                      ? AppColors.primary
+                                      : Colors.grey.shade600,
+                                  size: 20.sp,
+                                ),
+                                title: Text(
+                                  party.name,
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    fontFamily: 'Poppins',
+                                    fontWeight: isSelected
+                                        ? FontWeight.w600
+                                        : FontWeight.w400,
+                                    color: isSelected
+                                        ? AppColors.primary
+                                        : Colors.grey.shade800,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  party.fullAddress,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    color: Colors.grey.shade500,
+                                    fontFamily: 'Poppins',
+                                  ),
+                                ),
+                                onTap: () {
+                                  this.setState(() {
+                                    _selectedPartyId = party.id;
+                                  });
+                                  context.pop();
+                                },
+                              );
+                            },
+                          ),
+                  ),
+                ],
                 ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => context.pop(),
-                  child: const Text('Cancel'),
-                ),
-              ],
             );
           },
         );
@@ -725,7 +774,7 @@ class _EditExpenseClaimScreenState
 
                                 // Category Dropdown
                                 categoriesAsync.when(
-                                  data: (categories) => GestureDetector(
+                                  data: (categories) => InkWell(
                                     onTap: isEditable ? () => _showCategoryDialog(categories) : null,
                                     child: Container(
                                       padding: EdgeInsets.symmetric(
@@ -733,7 +782,7 @@ class _EditExpenseClaimScreenState
                                         vertical: 14.h,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: isEditable ? Colors.white : Colors.grey.shade100,
+                                        color: isEditable ? AppColors.surface : Colors.grey.shade100,
                                         borderRadius: BorderRadius.circular(12.r),
                                         border: Border.all(
                                           color: isEditable
@@ -745,47 +794,103 @@ class _EditExpenseClaimScreenState
                                       child: Row(
                                         children: [
                                           Icon(
-                                            Icons.category_outlined,
-                                            color: Colors.grey.shade600,
+                                            _isAddingNewCategory
+                                                ? Icons.add_circle_outline
+                                                : Icons.category_outlined,
+                                            color: isEditable
+                                                ? AppColors.textSecondary
+                                                : AppColors.textSecondary.withValues(alpha: 0.6),
                                             size: 20.sp,
                                           ),
                                           SizedBox(width: 12.w),
                                           Expanded(
                                             child: Text(
                                               _isAddingNewCategory
-                                                  ? 'Add New Category'
+                                                  ? 'Add New...'
                                                   : (_selectedCategoryId == null
-                                                  ? 'Category'
-                                                  : categories
-                                                  .firstWhere((c) => c.id == _selectedCategoryId,
-                                                  orElse: () => const ExpenseCategory(id: '', name: 'Category'))
-                                                  .name),
+                                                      ? 'Select Category'
+                                                      : categories
+                                                          .firstWhere(
+                                                            (c) => c.id == _selectedCategoryId,
+                                                            orElse: () => const ExpenseCategory(id: '', name: 'Category'),
+                                                          )
+                                                          .name),
                                               style: TextStyle(
                                                 fontSize: 15.sp,
-                                                color: _isAddingNewCategory
-                                                    ? AppColors.primary
-                                                    : (_selectedCategoryId == null
-                                                    ? AppColors.textHint
-                                                    : (isEditable
+                                                color: (_isAddingNewCategory || _selectedCategoryId != null)
+                                                    ? (isEditable
                                                         ? AppColors.textPrimary
-                                                        : AppColors.textSecondary.withValues(alpha: 0.6))),
+                                                        : AppColors.textSecondary.withValues(alpha: 0.6))
+                                                    : AppColors.textHint,
                                                 fontFamily: 'Poppins',
                                                 fontWeight: FontWeight.w400,
                                               ),
                                             ),
                                           ),
-                                          const Spacer(),
                                           Icon(
-                                            Icons.arrow_drop_down,
-                                            color: Colors.grey.shade600,
-                                            size: 24.sp,
+                                            Icons.keyboard_arrow_down_rounded,
+                                            color: isEditable
+                                                ? AppColors.textSecondary
+                                                : AppColors.textSecondary.withValues(alpha: 0.6),
+                                            size: 20.sp,
                                           ),
                                         ],
                                       ),
                                     ),
                                   ),
-                                  loading: () => const SizedBox.shrink(),
-                                  error: (error, stack) => const SizedBox.shrink(),
+                                  loading: () => Container(
+                                    height: 48.h,
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 16.w,
+                                      vertical: 14.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.surface,
+                                      borderRadius: BorderRadius.circular(12.r),
+                                      border: Border.all(color: AppColors.border, width: 1.5),
+                                    ),
+                                    child: Center(
+                                      child: SizedBox(
+                                        width: 16.w,
+                                        height: 16.h,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  error: (error, stack) => Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 16.w,
+                                      vertical: 14.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.error.withValues(alpha: 0.05),
+                                      borderRadius: BorderRadius.circular(12.r),
+                                      border: Border.all(color: AppColors.error, width: 1.5),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.error_outline,
+                                          color: AppColors.error,
+                                          size: 20.sp,
+                                        ),
+                                        SizedBox(width: 12.w),
+                                        Expanded(
+                                          child: Text(
+                                            'Failed to load categories',
+                                            style: TextStyle(
+                                              fontSize: 14.sp,
+                                              color: AppColors.error,
+                                              fontFamily: 'Poppins',
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
                                 SizedBox(height: 16.h),
 
@@ -820,7 +925,7 @@ class _EditExpenseClaimScreenState
 
                                 // Party Dropdown
                                 partiesAsync.when(
-                                  data: (parties) => GestureDetector(
+                                  data: (parties) => InkWell(
                                     onTap: isEditable ? () => _showPartySearchDialog(parties) : null,
                                     child: Container(
                                       padding: EdgeInsets.symmetric(
@@ -828,7 +933,7 @@ class _EditExpenseClaimScreenState
                                         vertical: 14.h,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: isEditable ? Colors.white : Colors.grey.shade100,
+                                        color: isEditable ? AppColors.surface : Colors.grey.shade100,
                                         borderRadius: BorderRadius.circular(12.r),
                                         border: Border.all(
                                           color: isEditable
@@ -840,15 +945,17 @@ class _EditExpenseClaimScreenState
                                       child: Row(
                                         children: [
                                           Icon(
-                                            Icons.people_outline,
-                                            color: Colors.grey.shade600,
+                                            Icons.store_outlined,
+                                            color: isEditable
+                                                ? AppColors.textSecondary
+                                                : AppColors.textSecondary.withValues(alpha: 0.6),
                                             size: 20.sp,
                                           ),
                                           SizedBox(width: 12.w),
                                           Expanded(
                                             child: Text(
                                               _selectedPartyId == null
-                                                  ? 'Party (Optional)'
+                                                  ? 'Select Party (Optional)'
                                                   : parties
                                                   .firstWhere((p) => p.id == _selectedPartyId)
                                                   .name,
@@ -864,13 +971,70 @@ class _EditExpenseClaimScreenState
                                               ),
                                             ),
                                           ),
-                                          Icon(Icons.search, color: Colors.grey.shade600, size: 20.sp),
+                                          Icon(
+                                            Icons.keyboard_arrow_down_rounded,
+                                            color: isEditable
+                                                ? AppColors.textSecondary
+                                                : AppColors.textSecondary.withValues(alpha: 0.6),
+                                            size: 20.sp,
+                                          ),
                                         ],
                                       ),
                                     ),
                                   ),
-                                  loading: () => const SizedBox.shrink(),
-                                  error: (error, stack) => const SizedBox.shrink(),
+                                  loading: () => Container(
+                                    height: 48.h,
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 16.w,
+                                      vertical: 14.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.surface,
+                                      borderRadius: BorderRadius.circular(12.r),
+                                      border: Border.all(color: AppColors.border, width: 1.5),
+                                    ),
+                                    child: Center(
+                                      child: SizedBox(
+                                        width: 16.w,
+                                        height: 16.h,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  error: (error, stack) => Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 16.w,
+                                      vertical: 14.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.error.withValues(alpha: 0.05),
+                                      borderRadius: BorderRadius.circular(12.r),
+                                      border: Border.all(color: AppColors.error, width: 1.5),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.error_outline,
+                                          color: AppColors.error,
+                                          size: 20.sp,
+                                        ),
+                                        SizedBox(width: 12.w),
+                                        Expanded(
+                                          child: Text(
+                                            'Failed to load parties',
+                                            style: TextStyle(
+                                              fontSize: 14.sp,
+                                              color: AppColors.error,
+                                              fontFamily: 'Poppins',
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
                                 SizedBox(height: 16.h),
 
@@ -900,19 +1064,26 @@ class _EditExpenseClaimScreenState
                                 ),
                                 SizedBox(height: 24.h),
 
-                                // Image Picker Section - only show label if there's an image or in edit mode
+                                // Image Picker Section - show only if image exists or editable
                                 if (_hasExistingImage || _newImage != null || isEditable) ...[
-                                  Text(
-                                    "Receipt Image (Optional)",
-                                    style: TextStyle(
-                                      fontSize: 12.sp,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.grey.shade600,
-                                      fontFamily: 'Poppins',
-                                    ),
+                                  PrimaryImagePicker(
+                                    images: _newImage != null ? [_newImage!] : [],
+                                    networkImageUrl: (_newImage == null && _hasExistingImage)
+                                        ? claimData.receiptUrl
+                                        : null,
+                                    maxImages: 1,
+                                    label: 'Receipt Image (Optional)',
+                                    hintText: 'Tap to add receipt image',
+                                    enabled: isEditable,
+                                    onPick: _pickImage,
+                                    onReplace: isEditable ? _pickImage : null,
+                                    onRemove: (index) {
+                                      if (!isEditable) return;
+                                      setState(() {
+                                        _newImage = null;
+                                      });
+                                    },
                                   ),
-                                  SizedBox(height: 8.h),
-                                  _buildImageSection(claimData),
                                 ],
                               ],
                             ),
@@ -1071,69 +1242,185 @@ class _EditExpenseClaimScreenState
   }
 
   void _showCategoryDialog(List<ExpenseCategory> categories) {
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          surfaceTintColor: Colors.transparent,
-          title: Text(
-            'Select Category',
-            style: TextStyle(
-              fontSize: 18.sp,
-              fontWeight: FontWeight.w600,
-            ),
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(24.r),
+            topRight: Radius.circular(24.r),
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ...categories.map((category) {
-                return ListTile(
-                  leading: Icon(
-                    _getCategoryIcon(category.name),
-                    color: AppColors.primary,
-                  ),
-                  title: Text(
-                    category.name,
-                    style: TextStyle(fontSize: 14.sp),
-                  ),
-                  selected: _selectedCategoryId == category.id,
-                  selectedTileColor: AppColors.primary.withValues(alpha: 0.1),
-                  onTap: () {
-                    setState(() {
-                      _selectedCategoryId = category.id;
-                      _isAddingNewCategory = false;
-                    });
-                    context.pop();
-                  },
-                );
-              }),
-              Divider(height: 1.h, color: Colors.grey.shade300),
-              ListTile(
-                leading: const Icon(
-                  Icons.add_circle_outline,
+        ),
+        padding: EdgeInsets.only(
+          top: 20.h,
+          left: 20.w,
+          right: 20.w,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 20.h,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2.r),
+                ),
+              ),
+            ),
+            SizedBox(height: 20.h),
+            Row(
+              children: [
+                Icon(
+                  Icons.category_outlined,
                   color: AppColors.primary,
+                  size: 24.sp,
+                ),
+                SizedBox(width: 12.w),
+                Text(
+                  'Select Category',
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Poppins',
+                    color: Colors.grey.shade800,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 8.h),
+            Text(
+              'Choose an existing category or create a new one',
+              style: TextStyle(
+                fontSize: 12.sp,
+                color: Colors.grey.shade500,
+                fontFamily: 'Poppins',
+              ),
+            ),
+            SizedBox(height: 20.h),
+            if (_selectedCategoryId != null)
+              ListTile(
+                contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                leading: Icon(
+                  Icons.clear,
+                  color: Colors.red.shade400,
+                  size: 20.sp,
                 ),
                 title: Text(
-                  'Add New Category',
+                  'Clear selection',
                   style: TextStyle(
                     fontSize: 14.sp,
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w500,
+                    fontFamily: 'Poppins',
+                    color: Colors.red.shade400,
                   ),
                 ),
                 onTap: () {
                   setState(() {
-                    _isAddingNewCategory = true;
                     _selectedCategoryId = null;
+                    _isAddingNewCategory = false;
                   });
                   context.pop();
                 },
               ),
-            ],
-          ),
-        );
-      },
+            ListTile(
+              contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+              tileColor: _isAddingNewCategory
+                  ? AppColors.primary.withValues(alpha: 0.1)
+                  : null,
+              leading: Icon(
+                _isAddingNewCategory
+                    ? Icons.check_circle
+                    : Icons.add_circle_outline,
+                color: _isAddingNewCategory
+                    ? AppColors.primary
+                    : AppColors.success,
+                size: 20.sp,
+              ),
+              title: Text(
+                'Add New...',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontFamily: 'Poppins',
+                  fontWeight:
+                      _isAddingNewCategory ? FontWeight.w600 : FontWeight.w400,
+                  color: _isAddingNewCategory
+                      ? AppColors.primary
+                      : AppColors.success,
+                ),
+              ),
+              onTap: () {
+                setState(() {
+                  _isAddingNewCategory = true;
+                  _selectedCategoryId = null;
+                });
+                context.pop();
+              },
+            ),
+            Divider(height: 16.h),
+            Text(
+              'Existing Categories',
+              style: TextStyle(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey.shade500,
+                fontFamily: 'Poppins',
+              ),
+            ),
+            SizedBox(height: 8.h),
+            ListView.builder(
+              shrinkWrap: true,
+              itemCount: categories.length,
+              itemBuilder: (context, index) {
+                final category = categories[index];
+                final isSelected = _selectedCategoryId == category.id;
+                return ListTile(
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  tileColor:
+                      isSelected ? AppColors.primary.withValues(alpha: 0.1) : null,
+                  leading: Icon(
+                    isSelected ? Icons.check_circle : _getCategoryIcon(category.name),
+                    color: isSelected ? AppColors.primary : Colors.grey.shade600,
+                    size: 20.sp,
+                  ),
+                  title: Text(
+                    category.name,
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontFamily: 'Poppins',
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                      color: isSelected ? AppColors.primary : Colors.grey.shade800,
+                    ),
+                  ),
+                  onTap: () {
+                    setState(() {
+                      _selectedCategoryId = category.id;
+                      _isAddingNewCategory = false;
+                      _newCategoryController.clear();
+                    });
+                    context.pop();
+                  },
+                );
+              },
+            ),
+            SizedBox(height: 20.h),
+          ],
+        ),
+      ),
     );
   }
 
@@ -1148,236 +1435,4 @@ class _EditExpenseClaimScreenState
     }
   }
 
-  Widget _buildImageSection(ExpenseClaimDetailApiData claimData) {
-    final bool isEditable = claimData.status == 'pending' && _isEditMode;
-
-    if (_newImage != null) {
-      return _buildNewImagePreview(isEditable);
-    }
-
-    if (_hasExistingImage && claimData.receiptUrl != null) {
-      return _buildExistingImagePreview(claimData.receiptUrl!, isEditable);
-    }
-
-    if (isEditable) {
-      return _buildImageUploadArea();
-    }
-
-    return const SizedBox.shrink();
-  }
-
-  Widget _buildNewImagePreview(bool isEditable) {
-    return GestureDetector(
-      onTap: () => _showNewImagePreview(),
-      child: Container(
-        height: 200.h,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: const Color(0xFFF5F6FA),
-          borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(
-            color: const Color(0xFFE0E0E0),
-            style: BorderStyle.solid,
-          ),
-        ),
-        child: Stack(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12.r),
-              child: Image.file(
-                File(_newImage!.path),
-                width: double.infinity,
-                height: 200.h,
-                fit: BoxFit.cover,
-              ),
-            ),
-            Positioned(
-              bottom: 8.h,
-              right: 8.w,
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.6),
-                  borderRadius: BorderRadius.circular(20.r),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.zoom_in, color: Colors.white, size: 16.sp),
-                    SizedBox(width: 4.w),
-                    Text(
-                      'Tap to preview',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 10.sp,
-                        fontFamily: 'Poppins',
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            if (isEditable)
-              Positioned(
-                top: 8.h,
-                right: 8.w,
-                child: GestureDetector(
-                  onTap: _removeNewImage,
-                  child: Container(
-                    padding: EdgeInsets.all(6.w),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.6),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(Icons.close, color: Colors.white, size: 20.sp),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildExistingImagePreview(String imageUrl, bool isEditable) {
-    return GestureDetector(
-      onTap: () => _showNetworkImagePreview(imageUrl),
-      child: Stack(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12.r),
-            child: Image.network(
-              imageUrl,
-              height: 200.h,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  height: 200.h,
-                  color: Colors.grey[300],
-                  child: Center(
-                    child: Icon(Icons.error_outline, size: 48.sp, color: Colors.red),
-                  ),
-                );
-              },
-            ),
-          ),
-          Positioned(
-            bottom: 8.h,
-            left: 8.w,
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.6),
-                borderRadius: BorderRadius.circular(20.r),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.touch_app, color: Colors.white, size: 14.sp),
-                  SizedBox(width: 4.w),
-                  Text(
-                    'Tap to preview',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 11.sp,
-                      fontWeight: FontWeight.w500,
-                      fontFamily: 'Poppins',
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          if (isEditable)
-            Positioned(
-              top: 8.h,
-              right: 8.w,
-              child: GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _hasExistingImage = false;
-                  });
-                },
-                child: Container(
-                  padding: EdgeInsets.all(6.w),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.6),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.delete, color: Colors.white, size: 20.sp),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildImageUploadArea() {
-    return GestureDetector(
-      onTap: _pickImage,
-      child: Container(
-        height: 120.h,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: const Color(0xFFF5F6FA),
-          borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(
-            color: const Color(0xFFE0E0E0),
-            style: BorderStyle.solid,
-          ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.add_photo_alternate_outlined,
-              size: 40.sp,
-              color: Colors.grey.shade400,
-            ),
-            SizedBox(height: 8.h),
-            Text(
-              "Tap to add receipt image",
-              style: TextStyle(
-                fontSize: 12.sp,
-                color: Colors.grey.shade600,
-                fontFamily: 'Poppins',
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showNewImagePreview() {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: InteractiveViewer(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12.r),
-            child: Image.file(File(_newImage!.path)),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showNetworkImagePreview(String imageUrl) {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: InteractiveViewer(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12.r),
-            child: Image.network(imageUrl),
-          ),
-        ),
-      ),
-    );
-  }
 }

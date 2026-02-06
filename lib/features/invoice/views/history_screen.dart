@@ -831,8 +831,10 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Container(
+                width: double.infinity,
                 padding: EdgeInsets.all(24.w),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -1020,34 +1022,11 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
                       ),
                     ),
                     SizedBox(height: 20.h),
-                    Row(
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () => Navigator.of(context).pop(false),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.grey.shade700,
-                              side: BorderSide(
-                                color: Colors.grey.shade300,
-                                width: 1.5,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.r),
-                              ),
-                              padding: EdgeInsets.symmetric(vertical: 14.h),
-                            ),
-                            child: Text(
-                              'Cancel',
-                              style: TextStyle(
-                                fontSize: 15.sp,
-                                fontWeight: FontWeight.w600,
-                                fontFamily: 'Poppins',
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 12.w),
-                        Expanded(
+                        SizedBox(
+                          width: double.infinity,
                           child: ElevatedButton.icon(
                             onPressed: () => Navigator.of(context).pop(true),
                             icon: Icon(Icons.delete_rounded, size: 20.sp),
@@ -1068,6 +1047,32 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
                               padding: EdgeInsets.symmetric(vertical: 14.h),
                               elevation: 2,
                               shadowColor: Colors.red.withValues(alpha: 0.3),
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 10.h),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.of(context).pop(false),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.grey.shade700,
+                              side: BorderSide(
+                                color: Colors.grey.shade300,
+                                width: 1.5,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12.r),
+                              ),
+                              padding: EdgeInsets.symmetric(vertical: 14.h),
+                            ),
+                            child: Text(
+                              'Cancel',
+                              style: TextStyle(
+                                fontSize: 15.sp,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'Poppins',
+                              ),
                             ),
                           ),
                         ),

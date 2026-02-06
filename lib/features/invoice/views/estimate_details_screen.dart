@@ -652,7 +652,7 @@ class EstimateDetailsScreen extends ConsumerWidget {
                 onTap: () async {
                   final date = await showDatePicker(
                     context: context,
-                    initialDate: DateTime.now().add(const Duration(days: 7)),
+                    initialDate: DateTime.now(),
                     firstDate: DateTime.now(),
                     lastDate: DateTime.now().add(const Duration(days: 365)),
                     builder: (context, child) {

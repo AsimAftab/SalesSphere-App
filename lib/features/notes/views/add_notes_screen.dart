@@ -10,6 +10,7 @@ import 'package:sales_sphere/core/providers/permission_controller.dart';
 import 'package:sales_sphere/core/utils/snackbar_utils.dart';
 import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
+import 'package:sales_sphere/widget/primary_image_picker.dart';
 import 'package:sales_sphere/features/notes/vm/add_notes.vm.dart';
 import 'package:sales_sphere/features/notes/vm/notes.vm.dart';
 import 'package:sales_sphere/features/parties/vm/parties.vm.dart';
@@ -40,7 +41,6 @@ class _AddNotesScreenState extends ConsumerState<AddNotesScreen> {
 
   // Supports up to 2 images
   final List<XFile> _selectedImages = [];
-  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -86,88 +86,13 @@ class _AddNotesScreenState extends ConsumerState<AddNotesScreen> {
     if (_selectedImages.length >= 2) return;
 
     try {
-      showModalBottomSheet(
-        context: context,
-        builder: (BuildContext context) {
-          return SafeArea(
-            child: Wrap(
-              children: <Widget>[
-                ListTile(
-                  leading: const Icon(Icons.photo_library),
-                  title: const Text('Gallery'),
-                  onTap: () async {
-                    context.pop();
-                    final XFile? image = await _picker.pickImage(
-                        source: ImageSource.gallery, imageQuality: 70);
-                    if (image != null) {
-                      setState(() => _selectedImages.add(image));
-                    }
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.photo_camera),
-                  title: const Text('Camera'),
-                  onTap: () async {
-                    context.pop();
-                    final XFile? image = await _picker.pickImage(
-                        source: ImageSource.camera, imageQuality: 70);
-                    if (image != null) {
-                      setState(() => _selectedImages.add(image));
-                    }
-                  },
-                ),
-              ],
-            ),
-          );
-        },
-      );
+      final image = await showImagePickerSheet(context);
+      if (image != null) {
+        setState(() => _selectedImages.add(image));
+      }
     } catch (e) {
       debugPrint("Error picking image: $e");
     }
-  }
-
-  // --- IMAGE PREVIEW & ZOOM LOGIC ---
-  void _showImagePreview(XFile imageFile) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: EdgeInsets.all(16.w),
-          child: Stack(
-            children: [
-              Container(
-                constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height * 0.8,
-                  maxWidth: MediaQuery.of(context).size.width,
-                ),
-                child: InteractiveViewer(
-                  minScale: 0.5,
-                  maxScale: 4.0,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12.r),
-                    child: Image.file(File(imageFile.path), fit: BoxFit.contain),
-                  ),
-                ),
-              ),
-              Positioned(
-                top: 0,
-                right: 0,
-                child: GestureDetector(
-                  onTap: () => context.pop(),
-                  child: Container(
-                    padding: EdgeInsets.all(8.w),
-                    decoration: const BoxDecoration(
-                        color: Colors.black54, shape: BoxShape.circle),
-                    child: Icon(Icons.close, color: Colors.white, size: 24.sp),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
   }
 
   Future<void> _handleSubmit() async {
@@ -272,7 +197,7 @@ class _AddNotesScreenState extends ConsumerState<AddNotesScreen> {
                       ),
                       const Spacer(),
                       IconButton(
-                        onPressed: () => Navigator.pop(context),
+                        onPressed: () => context.pop(),
                         icon: const Icon(Icons.close),
                       ),
                     ],
@@ -312,6 +237,17 @@ class _AddNotesScreenState extends ConsumerState<AddNotesScreen> {
     }
   }
 
+  Color _getEntityColor(EntityType type) {
+    switch (type) {
+      case EntityType.party:
+        return AppColors.primary;
+      case EntityType.prospect:
+        return Colors.orange;
+      case EntityType.site:
+        return Colors.green;
+    }
+  }
+
   Widget _buildEntityList(EntityType type, ScrollController scrollController) {
     switch (type) {
       case EntityType.party:
@@ -337,10 +273,11 @@ class _AddNotesScreenState extends ConsumerState<AddNotesScreen> {
                       name: party.name,
                       subtitle: party.ownerName,
                       icon: Icons.store,
+                      selectedColor: _getEntityColor(EntityType.party),
                       isSelected: isSelected,
                       onTap: () {
                         _selectEntity(EntityType.party, party.id, party.name);
-                        Navigator.pop(context);
+                        context.pop();
                       },
                     );
                   },
@@ -375,11 +312,12 @@ class _AddNotesScreenState extends ConsumerState<AddNotesScreen> {
                       name: prospect.name,
                       subtitle: prospect.ownerName,
                       icon: Icons.person_search,
+                      selectedColor: _getEntityColor(EntityType.prospect),
                       isSelected: isSelected,
                       onTap: () {
                         _selectEntity(
                             EntityType.prospect, prospect.id, prospect.name);
-                        Navigator.pop(context);
+                        context.pop();
                       },
                     );
                   },
@@ -414,10 +352,11 @@ class _AddNotesScreenState extends ConsumerState<AddNotesScreen> {
                       name: site.name,
                       subtitle: site.location,
                       icon: Icons.location_city,
+                      selectedColor: _getEntityColor(EntityType.site),
                       isSelected: isSelected,
                       onTap: () {
                         _selectEntity(EntityType.site, site.id, site.name);
-                        Navigator.pop(context);
+                        context.pop();
                       },
                     );
                   },
@@ -449,12 +388,13 @@ class _AddNotesScreenState extends ConsumerState<AddNotesScreen> {
     required String name,
     required String subtitle,
     required IconData icon,
+    required Color selectedColor,
     required bool isSelected,
     required VoidCallback onTap,
   }) {
     return ListTile(
       leading: CircleAvatar(
-        backgroundColor: isSelected ? AppColors.primary : Colors.grey.shade200,
+        backgroundColor: isSelected ? selectedColor : Colors.grey.shade200,
         child: Icon(
           icon,
           color: isSelected ? Colors.white : Colors.grey,
@@ -480,7 +420,7 @@ class _AddNotesScreenState extends ConsumerState<AddNotesScreen> {
         overflow: TextOverflow.ellipsis,
       ),
       trailing:
-          isSelected ? Icon(Icons.check_circle, color: AppColors.primary) : null,
+          isSelected ? Icon(Icons.check_circle, color: selectedColor) : null,
       onTap: onTap,
     );
   }
@@ -701,62 +641,67 @@ class _AddNotesScreenState extends ConsumerState<AddNotesScreen> {
           // Selected entity display
           if (_hasEntitySelected) ...[
             SizedBox(height: 12.h),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12.r),
-                border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    _getEntityIcon(_selectedEntityType!),
-                    color: AppColors.primary,
-                    size: 20.sp,
+            Builder(
+              builder: (context) {
+                final selectedColor = _getEntityColor(_selectedEntityType!);
+                return Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                  decoration: BoxDecoration(
+                    color: selectedColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(color: selectedColor.withValues(alpha: 0.3)),
                   ),
-                  SizedBox(width: 12.w),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _selectedEntityName!,
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textdark,
-                            fontFamily: 'Poppins',
-                          ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        _getEntityIcon(_selectedEntityType!),
+                        color: selectedColor,
+                        size: 20.sp,
+                      ),
+                      SizedBox(width: 12.w),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _selectedEntityName!,
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textdark,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
+                            Text(
+                              _getEntityTypeName(_selectedEntityType!),
+                              style: TextStyle(
+                                fontSize: 11.sp,
+                                color: Colors.grey.shade600,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
+                          ],
                         ),
-                        Text(
-                          _getEntityTypeName(_selectedEntityType!),
-                          style: TextStyle(
-                            fontSize: 11.sp,
+                      ),
+                      GestureDetector(
+                        onTap: _clearSelection,
+                        child: Container(
+                          padding: EdgeInsets.all(6.w),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade200,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.close,
                             color: Colors.grey.shade600,
-                            fontFamily: 'Poppins',
+                            size: 16.sp,
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: _clearSelection,
-                    child: Container(
-                      padding: EdgeInsets.all(6.w),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade200,
-                        shape: BoxShape.circle,
                       ),
-                      child: Icon(
-                        Icons.close,
-                        color: Colors.grey.shade600,
-                        size: 16.sp,
-                      ),
-                    ),
+                    ],
                   ),
-                ],
-              ),
+                );
+              },
             ),
           ],
         ],
@@ -770,21 +715,22 @@ class _AddNotesScreenState extends ConsumerState<AddNotesScreen> {
     required IconData icon,
   }) {
     final isSelected = _selectedEntityType == type;
+    final selectedColor = _getEntityColor(type);
 
     return GestureDetector(
       onTap: () => _showEntitySelector(type),
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 12.h),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.white,
+          color: isSelected ? selectedColor : Colors.white,
           borderRadius: BorderRadius.circular(12.r),
           border: Border.all(
-            color: isSelected ? AppColors.primary : Colors.grey.shade300,
+            color: isSelected ? selectedColor : Colors.grey.shade300,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.3),
+                    color: selectedColor.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -816,98 +762,13 @@ class _AddNotesScreenState extends ConsumerState<AddNotesScreen> {
   }
 
   Widget _buildImageSection() {
-    return Column(
-      children: [
-        // List existing images
-        if (_selectedImages.isNotEmpty)
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _selectedImages.length,
-            itemBuilder: (context, index) {
-              return Padding(
-                padding: EdgeInsets.only(bottom: 12.h),
-                child: _buildImageThumbnail(_selectedImages[index], index),
-              );
-            },
-          ),
-
-        // Show Upload button if less than 2 images
-        if (_selectedImages.length < 2)
-          GestureDetector(
-            onTap: _pickImage,
-            child: Container(
-              height: 100.h,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF5F6FA),
-                borderRadius: BorderRadius.circular(12.r),
-                border: Border.all(color: const Color(0xFFE0E0E0)),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.add_photo_alternate_outlined,
-                      size: 32.sp, color: Colors.grey.shade400),
-                  SizedBox(height: 4.h),
-                  Text("Tap to add note image (${_selectedImages.length}/2)",
-                      style: TextStyle(
-                          fontSize: 12.sp,
-                          color: Colors.grey.shade600,
-                          fontFamily: 'Poppins')),
-                ],
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildImageThumbnail(XFile imageFile, int index) {
-    return GestureDetector(
-      onTap: () => _showImagePreview(imageFile),
-      child: Stack(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12.r),
-            child: Image.file(File(imageFile.path),
-                width: double.infinity, height: 140.h, fit: BoxFit.cover),
-          ),
-          // Preview Tag
-          Positioned(
-            bottom: 8.h,
-            right: 8.w,
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-              decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.6),
-                  borderRadius: BorderRadius.circular(20.r)),
-              child: Row(
-                children: [
-                  Icon(Icons.zoom_in, color: Colors.white, size: 14.sp),
-                  SizedBox(width: 4.w),
-                  Text('Preview',
-                      style: TextStyle(color: Colors.white, fontSize: 10.sp)),
-                ],
-              ),
-            ),
-          ),
-          // Remove Button
-          Positioned(
-            top: 8.h,
-            right: 8.w,
-            child: GestureDetector(
-              onTap: () => setState(() => _selectedImages.removeAt(index)),
-              child: Container(
-                padding: EdgeInsets.all(4.w),
-                decoration: const BoxDecoration(
-                    color: Colors.black54, shape: BoxShape.circle),
-                child: Icon(Icons.close, color: Colors.white, size: 16.sp),
-              ),
-            ),
-          ),
-        ],
-      ),
+    return PrimaryImagePicker(
+      images: _selectedImages,
+      maxImages: 2,
+      showLabel: false,
+      hintText: 'Tap to add note image (${_selectedImages.length}/2)',
+      onPick: _pickImage,
+      onRemove: (index) => setState(() => _selectedImages.removeAt(index)),
     );
   }
 }

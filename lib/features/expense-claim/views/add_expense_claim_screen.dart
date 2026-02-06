@@ -6,9 +6,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
+import 'package:sales_sphere/core/utils/snackbar_utils.dart';
 import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
 import 'package:sales_sphere/widget/custom_date_picker.dart';
+import 'package:sales_sphere/widget/primary_image_picker.dart';
 import 'package:sales_sphere/features/parties/vm/parties.vm.dart';
 import 'package:sales_sphere/features/expense-claim/vm/expense_claim_add.vm.dart';
 import 'package:sales_sphere/features/expense-claim/vm/expense_categories.vm.dart';
@@ -44,7 +46,6 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
   DateTime _selectedDate = DateTime.now();
 
   // Image Picking
-  final ImagePicker _picker = ImagePicker();
   XFile? _selectedImage;
 
   // Category options (now loaded from API)
@@ -78,47 +79,14 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
   // ---------------------------------------------------------------------------
   Future<void> _pickImage() async {
     try {
-      showModalBottomSheet(
-        context: context,
-        builder: (BuildContext context) {
-          return SafeArea(
-            child: Wrap(
-              children: <Widget>[
-                ListTile(
-                  leading: const Icon(Icons.photo_library),
-                  title: const Text('Gallery'),
-                  onTap: () async {
-                    context.pop();
-                    final XFile? image = await _picker.pickImage(
-                        source: ImageSource.gallery, imageQuality: 70);
-                    if (image != null) {
-                      setState(() {
-                        _selectedImage = image;
-                      });
-                    }
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.photo_camera),
-                  title: const Text('Camera'),
-                  onTap: () async {
-                    context.pop();
-                    final XFile? image = await _picker.pickImage(
-                        source: ImageSource.camera, imageQuality: 70);
-                    if (image != null) {
-                      setState(() {
-                        _selectedImage = image;
-                      });
-                    }
-                  },
-                ),
-              ],
-            ),
-          );
-        },
-      );
+      final image = await showImagePickerSheet(context);
+      if (image != null) {
+        setState(() {
+          _selectedImage = image;
+        });
+      }
     } catch (e) {
-      debugPrint("Error picking image: $e");
+      AppLogger.e("Error picking image", e);
     }
   }
 
@@ -135,28 +103,22 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
     if (_formKey.currentState?.validate() ?? false) {
       // Validate Category
       if (!_isAddingNewCategory && _selectedCategoryId == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select a category')),
-        );
+        SnackbarUtils.showWarning(context, 'Please select a category');
         return;
       }
 
       if (_isAddingNewCategory && _newCategoryController.text.trim().isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter new category name')),
-        );
+        SnackbarUtils.showWarning(context, 'Please enter new category name');
         return;
       }
 
       try {
         // Show Loading
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Submitting expense claim...'),
-              backgroundColor: AppColors.primary,
-              duration: const Duration(seconds: 30),
-            ),
+          SnackbarUtils.showInfo(
+            context,
+            'Submitting expense claim...',
+            duration: const Duration(seconds: 30),
           );
         }
 
@@ -197,13 +159,10 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
         // Step 2: Upload receipt image if selected
         if (_selectedImage != null) {
           if (mounted) {
-            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('Uploading receipt...'),
-                backgroundColor: AppColors.primary,
-                duration: const Duration(seconds: 30),
-              ),
+            SnackbarUtils.showInfo(
+              context,
+              'Uploading receipt...',
+              duration: const Duration(seconds: 30),
             );
           }
 
@@ -214,25 +173,16 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
         }
 
         if (mounted) {
-          ScaffoldMessenger.of(context).hideCurrentSnackBar();
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Expense claim submitted successfully!'),
-              backgroundColor: AppColors.success,
-            ),
-          );
+          SnackbarUtils.showSuccess(context, 'Expense claim submitted successfully!');
           // Invalidate the list provider to refresh the expense claims list
           ref.invalidate(expenseClaimsViewModelProvider);
           context.pop(); // Go back
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).hideCurrentSnackBar();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(e.toString().replaceAll('Exception: ', '')),
-              backgroundColor: AppColors.error,
-            ),
+          SnackbarUtils.showError(
+            context,
+            e.toString().replaceAll('Exception: ', ''),
           );
         }
       }
@@ -241,81 +191,143 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
 
   void _showPartySearchDialog(List parties) {
     final searchController = TextEditingController();
-    List filteredParties = parties;
+    List _withSelectedFirst(List source) {
+      final selectedId = _selectedPartyId;
+      final sorted = List.of(source);
+      if (selectedId == null) return sorted;
+      sorted.sort((a, b) {
+        if (a.id == selectedId && b.id != selectedId) return -1;
+        if (a.id != selectedId && b.id == selectedId) return 1;
+        return 0;
+      });
+      return sorted;
+    }
 
-    showDialog(
+    List filteredParties = _withSelectedFirst(parties);
+
+    showModalBottomSheet(
       context: context,
-      builder: (BuildContext context) {
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
         return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              backgroundColor: Colors.white,
-              surfaceTintColor: Colors.transparent,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16.r),
-              ),
-              title: Text(
-                'Select Party',
-                style: TextStyle(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.w600,
+          builder: (context, setModalState) {
+            return Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(24.r),
+                  topRight: Radius.circular(24.r),
                 ),
               ),
-              content: SizedBox(
-                width: double.maxFinite,
+              padding: EdgeInsets.only(
+                top: 20.h,
+                left: 20.w,
+                right: 20.w,
+                bottom: 20.h,
+              ),
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.75,
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
+                  mainAxisSize: MainAxisSize.max,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Search Field
-                    TextField(
-                      controller: searchController,
-                      decoration: InputDecoration(
-                        hintText: 'Search party...',
-                        prefixIcon: const Icon(Icons.search),
-                        filled: true,
-                        fillColor: Colors.white,
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12.r),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12.r),
-                          borderSide: BorderSide(color: AppColors.primary),
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12.r),
-                        ),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 16.w,
-                          vertical: 12.h,
+                  Center(
+                    child: Container(
+                      width: 40.w,
+                      height: 4.h,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2.r),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 20.h),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.store_outlined,
+                        color: AppColors.primary,
+                        size: 24.sp,
+                      ),
+                      SizedBox(width: 12.w),
+                      Text(
+                        'Select Party',
+                        style: TextStyle(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'Poppins',
+                          color: Colors.grey.shade800,
                         ),
                       ),
-                      onChanged: (value) {
-                        setState(() {
-                          if (value.isEmpty) {
-                            filteredParties = parties;
-                          } else {
-                            filteredParties = parties
-                                .where((party) => party.name
-                                .toLowerCase()
-                                .contains(value.toLowerCase()))
-                                .toList();
-                          }
-                        });
-                      },
+                    ],
+                  ),
+                  SizedBox(height: 8.h),
+                  Text(
+                    'Choose an existing party',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: Colors.grey.shade500,
+                      fontFamily: 'Poppins',
                     ),
-                    SizedBox(height: 16.h),
-                    // None Option
+                  ),
+                  SizedBox(height: 16.h),
+                  TextField(
+                    controller: searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Search party...',
+                      prefixIcon: const Icon(Icons.search),
+                      filled: true,
+                      fillColor: Colors.white,
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                        borderSide: BorderSide(color: AppColors.primary),
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 16.w,
+                        vertical: 12.h,
+                      ),
+                    ),
+                    onChanged: (value) {
+                      setModalState(() {
+                        if (value.isEmpty) {
+                          filteredParties = _withSelectedFirst(parties);
+                        } else {
+                          final searched = parties
+                              .where((party) => party.name
+                                  .toLowerCase()
+                                  .contains(value.toLowerCase()))
+                              .toList();
+                          filteredParties = _withSelectedFirst(searched);
+                        }
+                      });
+                    },
+                  ),
+                  SizedBox(height: 12.h),
+                  if (_selectedPartyId != null)
                     ListTile(
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
                       leading: Icon(
                         Icons.clear,
-                        color: AppColors.textSecondary,
+                        color: Colors.red.shade400,
+                        size: 20.sp,
                       ),
                       title: Text(
-                        'None',
+                        'Clear selection',
                         style: TextStyle(
-                          color: AppColors.textSecondary,
                           fontSize: 14.sp,
+                          fontFamily: 'Poppins',
+                          color: Colors.red.shade400,
                         ),
                       ),
                       onTap: () {
@@ -325,64 +337,87 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                         context.pop();
                       },
                     ),
-                    const Divider(height: 1),
-                    // Party List
-                    Expanded(
-                      child: filteredParties.isEmpty
-                          ? Center(
-                        child: Text(
-                          'No parties found',
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 14.sp,
-                          ),
-                        ),
-                      )
-                          : ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: filteredParties.length,
-                        itemBuilder: (context, index) {
-                          final party = filteredParties[index];
-                          return ListTile(
-                            leading: Icon(
-                              Icons.store_outlined,
-                              color: AppColors.primary,
-                            ),
-                            title: Text(
-                              party.name,
-                              style: TextStyle(fontSize: 14.sp),
-                            ),
-                            subtitle: Text(
-                              party.fullAddress,
-                              style: TextStyle(
-                                fontSize: 12.sp,
-                                color: AppColors.textSecondary,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            selected: _selectedPartyId == party.id,
-                            selectedTileColor:
-                            AppColors.primary.withValues(alpha: 0.1),
-                            onTap: () {
-                              this.setState(() {
-                                _selectedPartyId = party.id;
-                              });
-                              context.pop();
-                            },
-                          );
-                        },
-                      ),
+                  Divider(height: 16.h),
+                  Text(
+                    'Existing Parties',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey.shade500,
+                      fontFamily: 'Poppins',
                     ),
-                  ],
+                  ),
+                  SizedBox(height: 8.h),
+                  Expanded(
+                    child: filteredParties.isEmpty
+                        ? Center(
+                            child: Text(
+                              'No parties found',
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 14.sp,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: filteredParties.length,
+                            itemBuilder: (context, index) {
+                              final party = filteredParties[index];
+                              final isSelected = _selectedPartyId == party.id;
+                              return ListTile(
+                                contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8.r),
+                                ),
+                                tileColor: isSelected
+                                    ? AppColors.primary.withValues(alpha: 0.1)
+                                    : null,
+                                leading: Icon(
+                                  isSelected
+                                      ? Icons.check_circle
+                                      : Icons.store_outlined,
+                                  color: isSelected
+                                      ? AppColors.primary
+                                      : Colors.grey.shade600,
+                                  size: 20.sp,
+                                ),
+                                title: Text(
+                                  party.name,
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    fontFamily: 'Poppins',
+                                    fontWeight: isSelected
+                                        ? FontWeight.w600
+                                        : FontWeight.w400,
+                                    color: isSelected
+                                        ? AppColors.primary
+                                        : Colors.grey.shade800,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  party.fullAddress,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    color: Colors.grey.shade500,
+                                    fontFamily: 'Poppins',
+                                  ),
+                                ),
+                                onTap: () {
+                                  this.setState(() {
+                                    _selectedPartyId = party.id;
+                                  });
+                                  context.pop();
+                                },
+                              );
+                            },
+                          ),
+                  ),
+                ],
                 ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => context.pop(),
-                  child: const Text('Cancel'),
-                ),
-              ],
             );
           },
         );
@@ -493,7 +528,7 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                       categoriesAsync.when(
                         data: (categories) => Column(
                           children: [
-                            GestureDetector(
+                            InkWell(
                               onTap: () => _showCategoryDialog(categories),
                               child: Container(
                                 padding: EdgeInsets.symmetric(
@@ -501,41 +536,46 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                                   vertical: 14.h,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: AppColors.surface,
                                   borderRadius: BorderRadius.circular(12.r),
-                                  border: Border.all(color: const Color(0xFFE0E0E0)),
+                                  border: Border.all(color: AppColors.border, width: 1.5),
                                 ),
                                 child: Row(
                                   children: [
                                     Icon(
-                                      Icons.local_offer_outlined,
-                                      color: Colors.grey.shade600,
+                                      _isAddingNewCategory
+                                          ? Icons.add_circle_outline
+                                          : Icons.category_outlined,
+                                      color: AppColors.textSecondary,
                                       size: 20.sp,
                                     ),
                                     SizedBox(width: 12.w),
                                     Expanded(
                                       child: Text(
                                         _isAddingNewCategory
-                                            ? 'Add new category'
+                                            ? 'Add New...'
                                             : (_selectedCategoryId == null
                                                 ? 'Select Category'
                                                 : categories
                                                     .firstWhere(
                                                       (c) => c.id == _selectedCategoryId,
-                                                      orElse: () => ExpenseCategory(id: '', name: 'Category'),
+                                                      orElse: () => const ExpenseCategory(id: '', name: 'Category'),
                                                     )
                                                     .name),
                                         style: TextStyle(
                                           fontSize: 15.sp,
-                                          color: _isAddingNewCategory
-                                              ? AppColors.primary
-                                              : (_selectedCategoryId == null
-                                                  ? AppColors.textHint
-                                                  : AppColors.textPrimary),
                                           fontFamily: 'Poppins',
                                           fontWeight: FontWeight.w400,
+                                          color: (_isAddingNewCategory || _selectedCategoryId != null)
+                                              ? AppColors.textPrimary
+                                              : AppColors.textHint,
                                         ),
                                       ),
+                                    ),
+                                    Icon(
+                                      Icons.keyboard_arrow_down_rounded,
+                                      color: AppColors.textSecondary,
+                                      size: 20.sp,
                                     ),
                                   ],
                                 ),
@@ -558,31 +598,25 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                           ],
                         ),
                         loading: () => Container(
+                          height: 48.h,
                           padding: EdgeInsets.symmetric(
                             horizontal: 16.w,
                             vertical: 14.h,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppColors.surface,
                             borderRadius: BorderRadius.circular(12.r),
-                            border: Border.all(color: const Color(0xFFE0E0E0)),
+                            border: Border.all(color: AppColors.border, width: 1.5),
                           ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.local_offer_outlined,
-                                color: Colors.grey.shade600,
-                                size: 20.sp,
+                          child: Center(
+                            child: SizedBox(
+                              width: 16.w,
+                              height: 16.h,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.textSecondary,
                               ),
-                              SizedBox(width: 12.w),
-                              const Expanded(
-                                child: SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
                         ),
                         error: (error, stack) => Container(
@@ -591,9 +625,9 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                             vertical: 14.h,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppColors.error.withValues(alpha: 0.05),
                             borderRadius: BorderRadius.circular(12.r),
-                            border: Border.all(color: AppColors.error),
+                            border: Border.all(color: AppColors.error, width: 1.5),
                           ),
                           child: Row(
                             children: [
@@ -603,12 +637,14 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                                 size: 20.sp,
                               ),
                               SizedBox(width: 12.w),
-                              Text(
-                                'Failed to load categories',
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  color: AppColors.error,
-                                  fontFamily: 'Poppins',
+                              Expanded(
+                                child: Text(
+                                  'Failed to load categories',
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    color: AppColors.error,
+                                    fontFamily: 'Poppins',
+                                  ),
                                 ),
                               ),
                             ],
@@ -617,21 +653,9 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                       ),
                       SizedBox(height: 16.h),
 
-                      // Party (Optional) Label
-                      Text(
-                        "Party (Optional)",
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.grey.shade600,
-                          fontFamily: 'Poppins',
-                        ),
-                      ),
-                      SizedBox(height: 8.h),
-
                       // 5. Party Dropdown (Optional)
                       partiesAsync.when(
-                        data: (parties) => GestureDetector(
+                        data: (parties) => InkWell(
                           onTap: () => _showPartySearchDialog(parties),
                           child: Container(
                             padding: EdgeInsets.symmetric(
@@ -639,16 +663,15 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                               vertical: 14.h,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: AppColors.surface,
                               borderRadius: BorderRadius.circular(12.r),
-                              border:
-                              Border.all(color: const Color(0xFFE0E0E0)),
+                              border: Border.all(color: AppColors.border, width: 1.5),
                             ),
                             child: Row(
                               children: [
                                 Icon(
                                   Icons.store_outlined,
-                                  color: Colors.grey.shade600,
+                                  color: AppColors.textSecondary,
                                   size: 20.sp,
                                 ),
                                 SizedBox(width: 12.w),
@@ -670,37 +693,35 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                                     ),
                                   ),
                                 ),
+                                Icon(
+                                  Icons.keyboard_arrow_down_rounded,
+                                  color: AppColors.textSecondary,
+                                  size: 20.sp,
+                                ),
                               ],
                             ),
                           ),
                         ),
                         loading: () => Container(
+                          height: 48.h,
                           padding: EdgeInsets.symmetric(
                             horizontal: 16.w,
                             vertical: 14.h,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppColors.surface,
                             borderRadius: BorderRadius.circular(12.r),
-                            border: Border.all(color: const Color(0xFFE0E0E0)),
+                            border: Border.all(color: AppColors.border, width: 1.5),
                           ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.people_outline,
-                                color: Colors.grey.shade600,
-                                size: 20.sp,
+                          child: Center(
+                            child: SizedBox(
+                              width: 16.w,
+                              height: 16.h,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.textSecondary,
                               ),
-                              SizedBox(width: 12.w),
-                              const Expanded(
-                                child: SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                      strokeWidth: 2),
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
                         ),
                         error: (error, stack) => Container(
@@ -709,9 +730,9 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                             vertical: 14.h,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppColors.error.withValues(alpha: 0.05),
                             borderRadius: BorderRadius.circular(12.r),
-                            border: Border.all(color: AppColors.error),
+                            border: Border.all(color: AppColors.error, width: 1.5),
                           ),
                           child: Row(
                             children: [
@@ -721,12 +742,14 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                                 size: 20.sp,
                               ),
                               SizedBox(width: 12.w),
-                              Text(
-                                'Failed to load parties',
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  color: AppColors.error,
-                                  fontFamily: 'Poppins',
+                              Expanded(
+                                child: Text(
+                                  'Failed to load parties',
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    color: AppColors.error,
+                                    fontFamily: 'Poppins',
+                                  ),
                                 ),
                               ),
                             ],
@@ -749,17 +772,14 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                       SizedBox(height: 24.h),
 
                       // Image Picker Section
-                      Text(
-                        "Image (Optional)",
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.grey.shade600,
-                          fontFamily: 'Poppins',
-                        ),
+                      PrimaryImagePicker(
+                        images: _selectedImage != null ? [_selectedImage!] : [],
+                        maxImages: 1,
+                        label: 'Image (Optional)',
+                        hintText: 'Tap to add receipt image',
+                        onPick: _pickImage,
+                        onRemove: (index) => _removeImage(),
                       ),
-                      SizedBox(height: 8.h),
-                      _buildImageUploadArea(),
 
                       SizedBox(height: 80.h), // Space for bottom button
                     ],
@@ -790,72 +810,185 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
   }
 
   void _showCategoryDialog(List<ExpenseCategory> categories) {
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          surfaceTintColor: Colors.transparent,
-          title: Text(
-            'Select Category',
-            style: TextStyle(
-              fontSize: 18.sp,
-              fontWeight: FontWeight.w600,
-            ),
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(24.r),
+            topRight: Radius.circular(24.r),
           ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+        ),
+        padding: EdgeInsets.only(
+          top: 20.h,
+          left: 20.w,
+          right: 20.w,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 20.h,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2.r),
+                ),
+              ),
+            ),
+            SizedBox(height: 20.h),
+            Row(
               children: [
-                ...categories.map((category) {
-                  return ListTile(
-                    leading: Icon(
-                      _getCategoryIcon(category.name),
-                      color: AppColors.primary,
-                    ),
-                    title: Text(
-                      category.name,
-                      style: TextStyle(fontSize: 14.sp),
-                    ),
-                    selected: _selectedCategoryId == category.id,
-                    selectedTileColor: AppColors.primary.withValues(alpha: 0.1),
-                    onTap: () {
-                      setState(() {
-                        _selectedCategoryId = category.id;
-                        _isAddingNewCategory = false;
-                        _newCategoryController.clear();
-                      });
-                      context.pop();
-                    },
-                  );
-                }),
-                Divider(height: 1.h),
-                ListTile(
-                  leading: Icon(
-                    Icons.add_circle_outline,
-                    color: AppColors.primary,
+                Icon(
+                  Icons.category_outlined,
+                  color: AppColors.primary,
+                  size: 24.sp,
+                ),
+                SizedBox(width: 12.w),
+                Text(
+                  'Select Category',
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Poppins',
+                    color: Colors.grey.shade800,
                   ),
-                  title: Text(
-                    'Add new category',
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  onTap: () {
-                    context.pop();
-                    setState(() {
-                      _isAddingNewCategory = true;
-                      _selectedCategoryId = null;
-                    });
-                  },
                 ),
               ],
             ),
-          ),
-        );
-      },
+            SizedBox(height: 8.h),
+            Text(
+              'Choose an existing category or create a new one',
+              style: TextStyle(
+                fontSize: 12.sp,
+                color: Colors.grey.shade500,
+                fontFamily: 'Poppins',
+              ),
+            ),
+            SizedBox(height: 20.h),
+            if (_selectedCategoryId != null)
+              ListTile(
+                contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                leading: Icon(
+                  Icons.clear,
+                  color: Colors.red.shade400,
+                  size: 20.sp,
+                ),
+                title: Text(
+                  'Clear selection',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontFamily: 'Poppins',
+                    color: Colors.red.shade400,
+                  ),
+                ),
+                onTap: () {
+                  setState(() {
+                    _selectedCategoryId = null;
+                    _isAddingNewCategory = false;
+                  });
+                  context.pop();
+                },
+              ),
+            ListTile(
+              contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+              tileColor: _isAddingNewCategory
+                  ? AppColors.primary.withValues(alpha: 0.1)
+                  : null,
+              leading: Icon(
+                _isAddingNewCategory
+                    ? Icons.check_circle
+                    : Icons.add_circle_outline,
+                color: _isAddingNewCategory
+                    ? AppColors.primary
+                    : AppColors.success,
+                size: 20.sp,
+              ),
+              title: Text(
+                'Add New...',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontFamily: 'Poppins',
+                  fontWeight:
+                      _isAddingNewCategory ? FontWeight.w600 : FontWeight.w400,
+                  color: _isAddingNewCategory
+                      ? AppColors.primary
+                      : AppColors.success,
+                ),
+              ),
+              onTap: () {
+                context.pop();
+                setState(() {
+                  _isAddingNewCategory = true;
+                  _selectedCategoryId = null;
+                });
+              },
+            ),
+            Divider(height: 16.h),
+            Text(
+              'Existing Categories',
+              style: TextStyle(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey.shade500,
+                fontFamily: 'Poppins',
+              ),
+            ),
+            SizedBox(height: 8.h),
+            ListView.builder(
+              shrinkWrap: true,
+              itemCount: categories.length,
+              itemBuilder: (context, index) {
+                final category = categories[index];
+                final isSelected = _selectedCategoryId == category.id;
+                return ListTile(
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  tileColor:
+                      isSelected ? AppColors.primary.withValues(alpha: 0.1) : null,
+                  leading: Icon(
+                    isSelected ? Icons.check_circle : _getCategoryIcon(category.name),
+                    color: isSelected ? AppColors.primary : Colors.grey.shade600,
+                    size: 20.sp,
+                  ),
+                  title: Text(
+                    category.name,
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontFamily: 'Poppins',
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                      color: isSelected ? AppColors.primary : Colors.grey.shade800,
+                    ),
+                  ),
+                  onTap: () {
+                    setState(() {
+                      _selectedCategoryId = category.id;
+                      _isAddingNewCategory = false;
+                      _newCategoryController.clear();
+                    });
+                    context.pop();
+                  },
+                );
+              },
+            ),
+            SizedBox(height: 20.h),
+          ],
+        ),
+      ),
     );
   }
 
@@ -876,190 +1009,4 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
     }
   }
 
-  Widget _buildImageUploadArea() {
-    return GestureDetector(
-      onTap: _selectedImage == null ? _pickImage : () => _showImagePreview(),
-      child: Container(
-        height: _selectedImage == null ? 120.h : 200.h,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: const Color(0xFFF5F6FA),
-          borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(
-            color: const Color(0xFFE0E0E0),
-            style: BorderStyle.solid,
-          ),
-        ),
-        child: _selectedImage == null
-            ? Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.add_photo_alternate_outlined,
-              size: 40.sp,
-              color: Colors.grey.shade400,
-            ),
-            SizedBox(height: 8.h),
-            Text(
-              "Tap to add receipt image",
-              style: TextStyle(
-                fontSize: 12.sp,
-                color: Colors.grey.shade600,
-                fontFamily: 'Poppins',
-              ),
-            ),
-          ],
-        )
-            : Stack(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12.r),
-              child: Image.file(
-                File(_selectedImage!.path),
-                width: double.infinity,
-                height: 200.h,
-                fit: BoxFit.cover,
-              ),
-            ),
-            // Preview overlay indicator
-            Positioned(
-              bottom: 8.h,
-              right: 8.w,
-              child: Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 12.w,
-                  vertical: 6.h,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.6),
-                  borderRadius: BorderRadius.circular(20.r),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.zoom_in,
-                      color: Colors.white,
-                      size: 16.sp,
-                    ),
-                    SizedBox(width: 4.w),
-                    Text(
-                      'Tap to preview',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 10.sp,
-                        fontFamily: 'Poppins',
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            // Close button
-            Positioned(
-              top: 8.h,
-              right: 8.w,
-              child: GestureDetector(
-                onTap: () {
-                  _removeImage();
-                },
-                child: Container(
-                  padding: EdgeInsets.all(6.w),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.6),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.close,
-                    color: Colors.white,
-                    size: 20.sp,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showImagePreview() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: EdgeInsets.all(16.w),
-          child: Stack(
-            children: [
-              // Image container
-              Container(
-                constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height * 0.8,
-                  maxWidth: MediaQuery.of(context).size.width,
-                ),
-                child: InteractiveViewer(
-                  minScale: 0.5,
-                  maxScale: 4.0,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12.r),
-                    child: Image.file(
-                      File(_selectedImage!.path),
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                ),
-              ),
-              // Close button
-              Positioned(
-                top: 0,
-                right: 0,
-                child: GestureDetector(
-                  onTap: () => context.pop(),
-                  child: Container(
-                    padding: EdgeInsets.all(8.w),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.7),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.close,
-                      color: Colors.white,
-                      size: 24.sp,
-                    ),
-                  ),
-                ),
-              ),
-              // Info text at bottom
-              Positioned(
-                bottom: 16.h,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 16.w,
-                      vertical: 8.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.7),
-                      borderRadius: BorderRadius.circular(20.r),
-                    ),
-                    child: Text(
-                      'Pinch to zoom • Drag to pan',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12.sp,
-                        fontFamily: 'Poppins',
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
 }
