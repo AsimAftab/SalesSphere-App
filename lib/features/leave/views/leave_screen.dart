@@ -312,15 +312,13 @@ class _LeaveScreenState extends ConsumerState<LeaveScreen> {
     final isPending = item.status.toLowerCase() == 'pending';
 
     return InkWell(
-      onTap: isPending
-          ? () async {
-              await context.push('/edit-leave/${item.id}');
-              // Refresh the list when returning from edit leave screen
-              if (mounted) {
-                ref.invalidate(leaveViewModelProvider);
-              }
-            }
-          : null,
+      onTap: () async {
+        await context.push('/edit-leave/${item.id}');
+        // Refresh the list when returning from edit leave screen
+        if (mounted) {
+          ref.invalidate(leaveViewModelProvider);
+        }
+      },
       borderRadius: BorderRadius.circular(16.r),
       child: Container(
         padding: EdgeInsets.all(16.w),

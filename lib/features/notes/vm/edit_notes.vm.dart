@@ -85,17 +85,18 @@ class EditNoteViewModel extends _$EditNoteViewModel {
     try {
       final dio = ref.read(dioClientProvider);
 
-      final request = UpdateNoteRequest(
-        title: title,
-        description: description,
-        party: partyId,
-        prospect: prospectId,
-        site: siteId,
-      );
+      final request = <String, dynamic>{
+        'title': title,
+        'description': description,
+        // Send all link keys explicitly so backend clears stale relations.
+        'party': partyId,
+        'prospect': prospectId,
+        'site': siteId,
+      };
 
       final response = await dio.patch(
         ApiEndpoints.updateNote(noteId),
-        data: request.toJson(),
+        data: request,
       );
 
       final apiResponse = UpdateNoteApiResponse.fromJson(response.data);

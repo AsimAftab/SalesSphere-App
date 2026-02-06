@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
+import 'package:sales_sphere/features/settings/vm/settings.vm.dart';
 import '../models/profile.model.dart';
 import '../vm/profile.vm.dart';
 
@@ -45,6 +46,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             color: AppColors.textPrimary,
           ),
         ),
+        actions: [
+          Padding(
+            padding: EdgeInsets.only(right: 24.w),
+            child: IconButton(
+              icon: Icon(
+                Icons.logout,
+                color: AppColors.error,
+                size: 24.sp,
+              ),
+              onPressed: () => _handleLogout(context),
+            ),
+          ),
+        ],
       ),
       body: profileState.when(
         data: (profile) {
@@ -124,6 +138,41 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _handleLogout(BuildContext context) async {
+    final shouldSignOut = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Sign Out'),
+        content: const Text('Are you sure you want to sign out?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Sign Out'),
+          ),
+        ],
+      ),
+    );
+    if (shouldSignOut != true) return;
+    if (!context.mounted) return;
+    try {
+      await ref.read(settingsViewModelProvider.notifier).signOut();
+      if (!context.mounted) return;
+      context.go('/');
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error signing out: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   /// Profile Avatar with Camera Button
@@ -776,3 +825,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 }
+
+
+
+
+
