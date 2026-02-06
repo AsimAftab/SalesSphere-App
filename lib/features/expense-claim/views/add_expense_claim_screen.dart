@@ -86,7 +86,7 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
         });
       }
     } catch (e) {
-      debugPrint("Error picking image: $e");
+      AppLogger.e("Error picking image", e);
     }
   }
 
