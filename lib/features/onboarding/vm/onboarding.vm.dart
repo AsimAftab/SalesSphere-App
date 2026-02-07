@@ -1,9 +1,9 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sales_sphere/core/providers/shared_prefs_provider.dart';
 import 'package:sales_sphere/core/router/route_handler.dart';
-
 import 'package:sales_sphere/features/onboarding/models/onboarding.model.dart';
 
 part 'onboarding.vm.g.dart';
@@ -34,19 +34,19 @@ class OnboardingVM extends _$OnboardingVM {
         OnboardingModel(
           title: 'Welcome to SalesSphere!',
           description:
-          'Your complete platform to manage sales, track leads, and plan your day. This is your new all-in-one sales toolkit.',
+              'Your complete platform to manage sales, track leads, and plan your day. This is your new all-in-one sales toolkit.',
           imagePath: 'assets/images/onboarding_welcome.svg',
         ),
         OnboardingModel(
           title: 'Follow Your Beat Plan',
           description:
-          'Never miss a customer visit. Easily see your daily route, manage your meetings, and check in at every location.',
+              'Never miss a customer visit. Easily see your daily route, manage your meetings, and check in at every location.',
           imagePath: 'assets/images/onboarding_beat_plan.svg',
         ),
         OnboardingModel(
           title: 'Track Your Performance',
           description:
-          'Effortlessly log attendance and manage all your sales orders. Monitor your progress and achieve your goals with ease.',
+              'Effortlessly log attendance and manage all your sales orders. Monitor your progress and achieve your goals with ease.',
           imagePath: 'assets/images/onboarding_performance.svg',
         ),
       ],
@@ -83,7 +83,8 @@ class OnboardingVM extends _$OnboardingVM {
 
   // onNextPressed
   void onNextPressed() {
-    _autoAdvanceTimer?.cancel(); // Cancel auto-advance when user manually navigates
+    _autoAdvanceTimer
+        ?.cancel(); // Cancel auto-advance when user manually navigates
 
     if (state.currentPage < state.pages.length - 1) {
       state.pageController.nextPage(
@@ -103,7 +104,8 @@ class OnboardingVM extends _$OnboardingVM {
   }
 
   void goToPage(int pageIndex) {
-    _autoAdvanceTimer?.cancel(); // Cancel auto-advance when user manually navigates
+    _autoAdvanceTimer
+        ?.cancel(); // Cancel auto-advance when user manually navigates
 
     if (pageIndex >= 0 && pageIndex < state.pages.length) {
       state.pageController.animateToPage(

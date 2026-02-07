@@ -91,9 +91,8 @@ abstract class ProfileApiResponse with _$ProfileApiResponse {
 abstract class UploadProfileImageData with _$UploadProfileImageData {
   const UploadProfileImageData._(); // Private constructor for Freezed
 
-  const factory UploadProfileImageData({
-    required String avatarUrl,
-  }) = _UploadProfileImageData;
+  const factory UploadProfileImageData({required String avatarUrl}) =
+      _UploadProfileImageData;
 
   factory UploadProfileImageData.fromJson(Map<String, dynamic> json) =>
       _$UploadProfileImageDataFromJson(json);

@@ -1,15 +1,11 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:sales_sphere/core/providers/user_controller.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sales_sphere/core/constants/app_colors.dart';
+import 'package:sales_sphere/core/providers/user_controller.dart';
 import 'package:sales_sphere/features/beat_plan/widgets/beat_plan_section.dart';
-
-
-
-
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -25,7 +21,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(userControllerProvider);
-
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -49,9 +44,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildHeader(dynamic user) { // Assuming 'user' can be null
+  Widget _buildHeader(dynamic user) {
+    // Assuming 'user' can be null
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 16.h), // Adjusted padding
+      padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 16.h),
+      // Adjusted padding
       child: Row(
         children: [
           // Greeting and Name
@@ -91,8 +88,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           SvgPicture.asset(
                             'assets/images/dashboard_arc.svg',
                             width: 80.w, // Adjust as needed
-                            height: 8.h,  // Adjust as needed
-                            colorFilter: const ColorFilter.mode(AppColors.textOrange, BlendMode.srcIn), // Color the SVG
+                            height: 8.h, // Adjust as needed
+                            colorFilter: const ColorFilter.mode(
+                              AppColors.textOrange,
+                              BlendMode.srcIn,
+                            ), // Color the SVG
                           ),
                           // -----------------------------------
                         ],
@@ -103,31 +103,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     // --- RE-ADDED MISSING PADDING WIDGET ---
                     Padding(
                       padding: EdgeInsets.only(bottom: 5.h),
-                      child: Text(
-                        '👋',
-                        style: TextStyle(fontSize: 28.sp),
-                      ),
+                      child: Text('👋', style: TextStyle(fontSize: 28.sp)),
                     ),
                     // ----------------------------------------
                   ],
                 ),
               ],
-            ),
-          ),
-
-          SizedBox(width: 12.w),
-
-          // Notification Bell
-          Container(
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.background,
-            ),
-            padding: EdgeInsets.all(8.w),
-            child: Icon(
-              Icons.notifications_outlined,
-              size: 24.sp,
-              color: AppColors.textPrimary,
             ),
           ),
 
@@ -139,10 +120,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.textOrange,
-                  width: 2.5,
-                ),
+                border: Border.all(color: AppColors.textOrange, width: 2.5),
               ),
               child: CircleAvatar(
                 radius: 26.r,
@@ -152,13 +130,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     : null,
                 child: user?.avatarUrl == null
                     ? Text(
-                  _getInitials(user?.name ?? 'User'),
-                  style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textWhite,
-                  ),
-                )
+                        _getInitials(user?.name ?? 'User'),
+                        style: TextStyle(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textWhite,
+                        ),
+                      )
                     : null,
               ),
             ),
@@ -194,4 +172,3 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return 'U'; // Fallback
   }
 }
-

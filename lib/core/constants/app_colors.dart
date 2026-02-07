@@ -14,7 +14,6 @@ class AppColors {
   static const Color secondaryDark = Color(0xFF018786);
   static const Color secondaryLight = Color(0xFF66FFF9);
 
-
   // Background Colors
   static const Color background = Color(0xFFF1F4FC);
   static const Color backgroundDark = Color(0xFF121212);
@@ -31,9 +30,8 @@ class AppColors {
   static const Color textOrange = Color(0xFFFF7029);
   static const Color textdark = Color(0xDD000000);
 
-
   // Icons Colors
-  static const Color iconsColorSecondary =Color(0xFF999999);
+  static const Color iconsColorSecondary = Color(0xFF999999);
 
   // Status Colors
   static const Color success = Color(0xFF4CAF50);
@@ -42,11 +40,11 @@ class AppColors {
   static const Color info = Color(0xFF2196F3);
 
   // Attendance Status Colors (Tailwind-style)
-  static const Color green500 = Color(0xFF22C55E);    // Present (P)
-  static const Color red500 = Color(0xFFEF4444);      // Absent (A)
-  static const Color blue500 = Color(0xFF3B82F6);     // Weekly Off (W)
-  static const Color yellow500 = Color(0xFFEAB308);   // Leave (L)
-  static const Color purple500 = Color(0xFFA855F7);   // Half Day (H)
+  static const Color green500 = Color(0xFF22C55E); // Present (P)
+  static const Color red500 = Color(0xFFEF4444); // Absent (A)
+  static const Color blue500 = Color(0xFF3B82F6); // Weekly Off (W)
+  static const Color yellow500 = Color(0xFFEAB308); // Leave (L)
+  static const Color purple500 = Color(0xFFA855F7); // Half Day (H)
 
   // Border Colors
   static const Color border = Color(0xFFE0E0E0);

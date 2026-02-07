@@ -1,11 +1,11 @@
-
 import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
 import 'package:sales_sphere/core/network_layer/dio_client.dart';
-import 'package:sales_sphere/features/prospects/models/prospect_images.model.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
+import 'package:sales_sphere/features/prospects/models/prospect_images.model.dart';
 
 part 'prospect_images.vm.g.dart';
 
@@ -44,7 +44,8 @@ Future<List<ProspectImage>> prospectImages(Ref ref, String prospectId) async {
     final prospectImages = imagesData.map((json) {
       final imageJson = json as Map<String, dynamic>;
       return ProspectImage(
-        id: imageJson['_id']?.toString() ??
+        id:
+            imageJson['_id']?.toString() ??
             DateTime.now().millisecondsSinceEpoch.toString(),
         prospectId: prospectId,
         imageUrl: imageJson['imageUrl'] as String,
@@ -110,10 +111,14 @@ class ProspectImagesViewModel extends _$ProspectImagesViewModel {
       AppLogger.i('📸 Uploading new image for prospect: $prospectId');
 
       // Get existing images to determine next image number
-      final existingImages = await ref.read(prospectImagesProvider(prospectId).future);
+      final existingImages = await ref.read(
+        prospectImagesProvider(prospectId).future,
+      );
 
       if (existingImages.length >= 5) {
-        AppLogger.w('⚠️ Maximum 5 photos limit reached for prospect: $prospectId');
+        AppLogger.w(
+          '⚠️ Maximum 5 photos limit reached for prospect: $prospectId',
+        );
         throw Exception('Maximum 5 photos allowed per prospect');
       }
 
@@ -121,10 +126,8 @@ class ProspectImagesViewModel extends _$ProspectImagesViewModel {
       int nextImageNumber = 1;
       if (existingImages.isNotEmpty) {
         // Get list of existing image numbers
-        final existingNumbers = existingImages
-            .map((img) => img.imageOrder)
-            .toList()
-          ..sort();
+        final existingNumbers =
+            existingImages.map((img) => img.imageOrder).toList()..sort();
 
         // Find the first gap in the sequence (1, 2, 3, 4, 5)
         for (int i = 1; i <= 5; i++) {
@@ -182,7 +185,9 @@ class ProspectImagesViewModel extends _$ProspectImagesViewModel {
         isUploaded: true,
       );
 
-      AppLogger.i('✅ ${uploadResponse.message} - Image #${uploadResponse.data.imageNumber}');
+      AppLogger.i(
+        '✅ ${uploadResponse.message} - Image #${uploadResponse.data.imageNumber}',
+      );
       return newImage;
     } on DioException catch (e) {
       AppLogger.e('❌ DioException uploading image: ${e.message}');
@@ -195,11 +200,13 @@ class ProspectImagesViewModel extends _$ProspectImagesViewModel {
       if (e.response != null) {
         final statusCode = e.response!.statusCode;
 
-        if (e.response!.data != null && e.response!.data is Map<String, dynamic>) {
+        if (e.response!.data != null &&
+            e.response!.data is Map<String, dynamic>) {
           final data = e.response!.data as Map<String, dynamic>;
           errorMessage = data['message'] ?? errorMessage;
         } else if (statusCode == 400) {
-          errorMessage = 'Bad request - Please check image format and try again';
+          errorMessage =
+              'Bad request - Please check image format and try again';
         } else if (statusCode == 413) {
           errorMessage = 'Image file is too large';
         } else if (statusCode == 415) {
@@ -215,9 +222,15 @@ class ProspectImagesViewModel extends _$ProspectImagesViewModel {
   }
 
   /// Delete an image from a prospect
-  Future<void> deleteImage(String imageId, String prospectId, int imageNumber) async {
+  Future<void> deleteImage(
+    String imageId,
+    String prospectId,
+    int imageNumber,
+  ) async {
     try {
-      AppLogger.i('🗑️ Deleting image: $imageId (number: $imageNumber) from prospect: $prospectId');
+      AppLogger.i(
+        '🗑️ Deleting image: $imageId (number: $imageNumber) from prospect: $prospectId',
+      );
 
       // Get Dio instance
       final dio = ref.read(dioClientProvider);

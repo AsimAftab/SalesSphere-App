@@ -9,10 +9,7 @@ import 'package:sales_sphere/core/providers/app_startup.dart';
 class NoInternetScreen extends ConsumerWidget {
   final VoidCallback? onRetry;
 
-  const NoInternetScreen({
-    super.key,
-    this.onRetry,
-  });
+  const NoInternetScreen({super.key, this.onRetry});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

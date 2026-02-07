@@ -1,6 +1,7 @@
 // Update theme.dart
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/material.dart';
+
 import '../constants/app_colors.dart';
 import '../constants/app_sizes.dart';
 
@@ -21,7 +22,6 @@ class AppTheme {
         blendOnLevel: 10,
         inputDecoratorRadius: AppSizes.radiusM,
         elevatedButtonRadius: AppSizes.radiusM,
-
       ),
       visualDensity: FlexColorScheme.comfortablePlatformDensity,
       fontFamily: 'Poppins',
@@ -42,7 +42,6 @@ class AppTheme {
         blendOnLevel: 20,
         inputDecoratorRadius: AppSizes.radiusM,
         elevatedButtonRadius: AppSizes.radiusM,
-
       ),
       visualDensity: FlexColorScheme.comfortablePlatformDensity,
       fontFamily: 'Poppins',

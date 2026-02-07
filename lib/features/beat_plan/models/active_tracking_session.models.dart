@@ -5,7 +5,8 @@ part 'active_tracking_session.models.g.dart';
 
 /// Active Tracking Session Response
 @freezed
-abstract class ActiveTrackingSessionResponse with _$ActiveTrackingSessionResponse {
+abstract class ActiveTrackingSessionResponse
+    with _$ActiveTrackingSessionResponse {
   const factory ActiveTrackingSessionResponse({
     required bool success,
     required List<ActiveTrackingSession> data,

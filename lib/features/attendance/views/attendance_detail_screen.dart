@@ -1,18 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:url_launcher/url_launcher.dart';
+
 import '../models/attendance.models.dart';
 
 class AttendanceDetailScreen extends StatelessWidget {
   final SearchedAttendance attendance;
 
-  const AttendanceDetailScreen({
-    super.key,
-    required this.attendance,
-  });
+  const AttendanceDetailScreen({super.key, required this.attendance});
 
   @override
   Widget build(BuildContext context) {
@@ -109,9 +107,7 @@ class AttendanceDetailScreen extends StatelessWidget {
             ],
 
             // Marked by (if present)
-            if (attendance.markedBy != null) ...[
-              _buildMarkedByCard(),
-            ],
+            if (attendance.markedBy != null) ...[_buildMarkedByCard()],
           ],
         ),
       ),
@@ -119,13 +115,20 @@ class AttendanceDetailScreen extends StatelessWidget {
   }
 
   Widget _buildStatusCard(
-      String dateStr, String statusText, Color statusColor, IconData statusIcon) {
+    String dateStr,
+    String statusText,
+    Color statusColor,
+    IconData statusIcon,
+  ) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [statusColor.withValues(alpha: 0.1), statusColor.withValues(alpha: 0.05)],
+          colors: [
+            statusColor.withValues(alpha: 0.1),
+            statusColor.withValues(alpha: 0.05),
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -363,7 +366,11 @@ class AttendanceDetailScreen extends StatelessWidget {
       children: [
         Row(
           children: [
-            Icon(Icons.location_on, size: 16.sp, color: AppColors.textSecondary),
+            Icon(
+              Icons.location_on,
+              size: 16.sp,
+              color: AppColors.textSecondary,
+            ),
             SizedBox(width: 8.w),
             Text(
               title,

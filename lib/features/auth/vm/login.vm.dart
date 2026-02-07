@@ -1,12 +1,12 @@
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
 import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/network_layer/token_storage_service.dart';
-
-import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
-import 'package:sales_sphere/core/utils/logger.dart';
-import 'package:sales_sphere/core/providers/user_controller.dart';
 import 'package:sales_sphere/core/providers/permission_controller.dart';
+import 'package:sales_sphere/core/providers/user_controller.dart';
+import 'package:sales_sphere/core/utils/logger.dart';
+
 import '../models/login.models.dart';
 
 part 'login.vm.g.dart';
@@ -77,8 +77,12 @@ class LoginViewModel extends _$LoginViewModel {
 
         // Save session expiry date if present
         if (loginResponse.data.user.sessionExpiresAt != null) {
-          await tokenStorage.saveSessionExpiresAt(loginResponse.data.user.sessionExpiresAt!);
-          AppLogger.i('✅ Session expires at: ${loginResponse.data.user.sessionExpiresAt}');
+          await tokenStorage.saveSessionExpiresAt(
+            loginResponse.data.user.sessionExpiresAt!,
+          );
+          AppLogger.i(
+            '✅ Session expires at: ${loginResponse.data.user.sessionExpiresAt}',
+          );
         }
 
         // Save user data to SharedPreferences
@@ -94,14 +98,20 @@ class LoginViewModel extends _$LoginViewModel {
         Subscription? subscription = loginResponse.data.subscription;
         if (subscription == null) {
           // Extract enabledModules from organization if subscription is not directly provided
-          final orgEnabledModules = loginResponse.data.user.organizationId.enabledModules;
+          final orgEnabledModules =
+              loginResponse.data.user.organizationId.enabledModules;
           if (orgEnabledModules != null && orgEnabledModules.isNotEmpty) {
             subscription = Subscription(
-              planName: loginResponse.data.user.organizationId.subscriptionType ?? 'Unknown',
+              planName:
+                  loginResponse.data.user.organizationId.subscriptionType ??
+                  'Unknown',
               enabledModules: orgEnabledModules,
-              isActive: loginResponse.data.user.organizationId.isSubscriptionActive,
+              isActive:
+                  loginResponse.data.user.organizationId.isSubscriptionActive,
             );
-            AppLogger.i('✅ Subscription created from organization data: ${orgEnabledModules.length} modules');
+            AppLogger.i(
+              '✅ Subscription created from organization data: ${orgEnabledModules.length} modules',
+            );
           }
         }
 
@@ -111,7 +121,9 @@ class LoginViewModel extends _$LoginViewModel {
           AppLogger.i('✅ Subscription cached');
         }
 
-        AppLogger.i('✅ Tokens, user data, permissions, and subscription stored successfully');
+        AppLogger.i(
+          '✅ Tokens, user data, permissions, and subscription stored successfully',
+        );
 
         // Update global user state 👇
         ref
@@ -119,7 +131,9 @@ class LoginViewModel extends _$LoginViewModel {
             .setUser(loginResponse.data.user);
 
         // Update permission controller with cached data
-        ref.read(permissionControllerProvider.notifier).updateData(
+        ref
+            .read(permissionControllerProvider.notifier)
+            .updateData(
               permissions: loginResponse.data.permissions,
               subscription: subscription,
               mobileAppAccess: loginResponse.data.mobileAppAccess,

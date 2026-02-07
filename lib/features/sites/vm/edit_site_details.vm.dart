@@ -1,12 +1,11 @@
-
 import 'package:dio/dio.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
 import 'package:sales_sphere/core/network_layer/dio_client.dart';
+import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:sales_sphere/features/sites/models/sites.model.dart';
 import 'package:sales_sphere/features/sites/vm/sites.vm.dart';
-import 'package:sales_sphere/core/utils/logger.dart';
 
 part 'edit_site_details.vm.g.dart';
 
@@ -66,7 +65,9 @@ Future<SiteDetails?> siteById(Ref ref, String siteId) async {
 
 Future<void> updateSite(WidgetRef ref, SiteDetails updatedSiteDetails) async {
   try {
-    AppLogger.i('Updating site: ${updatedSiteDetails.name} (ID: ${updatedSiteDetails.id})');
+    AppLogger.i(
+      'Updating site: ${updatedSiteDetails.name} (ID: ${updatedSiteDetails.id})',
+    );
 
     // Get Dio instance
     final dio = ref.read(dioClientProvider);
@@ -156,7 +157,6 @@ class SiteValidators {
     }
     return null;
   }
-
 
   static String? validatePhoneNumber(String? value) {
     if (value == null || value.trim().isEmpty) {

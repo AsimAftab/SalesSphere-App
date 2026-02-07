@@ -161,7 +161,8 @@ abstract class TourDetails with _$TourDetails {
     String? updatedAt,
   }) = _TourDetails;
 
-  factory TourDetails.fromJson(Map<String, dynamic> json) => _$TourDetailsFromJson(json);
+  factory TourDetails.fromJson(Map<String, dynamic> json) =>
+      _$TourDetailsFromJson(json);
 
   factory TourDetails.fromApi(Map<String, dynamic> json) {
     return TourDetails(
@@ -197,7 +198,8 @@ abstract class UpdateTourRequest with _$UpdateTourRequest {
     required String purposeOfVisit,
   }) = _UpdateTourRequest;
 
-  factory UpdateTourRequest.fromJson(Map<String, dynamic> json) => _$UpdateTourRequestFromJson(json);
+  factory UpdateTourRequest.fromJson(Map<String, dynamic> json) =>
+      _$UpdateTourRequestFromJson(json);
 }
 
 @freezed

@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -8,14 +9,14 @@ import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/constants/module_config.dart';
 import 'package:sales_sphere/core/providers/permission_controller.dart';
 import 'package:sales_sphere/core/utils/snackbar_utils.dart';
-import 'package:sales_sphere/widget/custom_text_field.dart';
-import 'package:sales_sphere/widget/custom_button.dart';
-import 'package:sales_sphere/widget/primary_image_picker.dart';
 import 'package:sales_sphere/features/notes/vm/add_notes.vm.dart';
 import 'package:sales_sphere/features/notes/vm/notes.vm.dart';
 import 'package:sales_sphere/features/parties/vm/parties.vm.dart';
 import 'package:sales_sphere/features/prospects/vm/prospects.vm.dart';
 import 'package:sales_sphere/features/sites/vm/sites.vm.dart';
+import 'package:sales_sphere/widget/custom_button.dart';
+import 'package:sales_sphere/widget/custom_text_field.dart';
+import 'package:sales_sphere/widget/primary_image_picker.dart';
 
 enum EntityType { party, prospect, site }
 
@@ -76,8 +77,10 @@ class _AddNotesScreenState extends ConsumerState<AddNotesScreen> {
 
   String? get _partyId =>
       _selectedEntityType == EntityType.party ? _selectedEntityId : null;
+
   String? get _prospectId =>
       _selectedEntityType == EntityType.prospect ? _selectedEntityId : null;
+
   String? get _siteId =>
       _selectedEntityType == EntityType.site ? _selectedEntityId : null;
 
@@ -204,9 +207,7 @@ class _AddNotesScreenState extends ConsumerState<AddNotesScreen> {
                   ),
                 ),
                 const Divider(height: 1),
-                Expanded(
-                  child: _buildEntityList(type, scrollController),
-                ),
+                Expanded(child: _buildEntityList(type, scrollController)),
               ],
             );
           },
@@ -266,7 +267,8 @@ class _AddNotesScreenState extends ConsumerState<AddNotesScreen> {
                   separatorBuilder: (_, __) => const Divider(height: 1),
                   itemBuilder: (context, index) {
                     final party = parties[index];
-                    final isSelected = _selectedEntityId == party.id &&
+                    final isSelected =
+                        _selectedEntityId == party.id &&
                         _selectedEntityType == EntityType.party;
                     return _buildListTile(
                       id: party.id,
@@ -305,7 +307,8 @@ class _AddNotesScreenState extends ConsumerState<AddNotesScreen> {
                   separatorBuilder: (_, __) => const Divider(height: 1),
                   itemBuilder: (context, index) {
                     final prospect = prospects[index];
-                    final isSelected = _selectedEntityId == prospect.id &&
+                    final isSelected =
+                        _selectedEntityId == prospect.id &&
                         _selectedEntityType == EntityType.prospect;
                     return _buildListTile(
                       id: prospect.id,
@@ -316,7 +319,10 @@ class _AddNotesScreenState extends ConsumerState<AddNotesScreen> {
                       isSelected: isSelected,
                       onTap: () {
                         _selectEntity(
-                            EntityType.prospect, prospect.id, prospect.name);
+                          EntityType.prospect,
+                          prospect.id,
+                          prospect.name,
+                        );
                         context.pop();
                       },
                     );
@@ -345,7 +351,8 @@ class _AddNotesScreenState extends ConsumerState<AddNotesScreen> {
                   separatorBuilder: (_, __) => const Divider(height: 1),
                   itemBuilder: (context, index) {
                     final site = sites[index];
-                    final isSelected = _selectedEntityId == site.id &&
+                    final isSelected =
+                        _selectedEntityId == site.id &&
                         _selectedEntityType == EntityType.site;
                     return _buildListTile(
                       id: site.id,
@@ -419,8 +426,9 @@ class _AddNotesScreenState extends ConsumerState<AddNotesScreen> {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
-      trailing:
-          isSelected ? Icon(Icons.check_circle, color: selectedColor) : null,
+      trailing: isSelected
+          ? Icon(Icons.check_circle, color: selectedColor)
+          : null,
       onTap: onTap,
     );
   }
@@ -434,15 +442,19 @@ class _AddNotesScreenState extends ConsumerState<AddNotesScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        title: Text("Add Notes",
-            style: TextStyle(
-                color: Colors.white,
-                fontSize: 20.sp,
-                fontWeight: FontWeight.w600,
-                fontFamily: 'Poppins')),
+        title: Text(
+          "Add Notes",
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 20.sp,
+            fontWeight: FontWeight.w600,
+            fontFamily: 'Poppins',
+          ),
+        ),
         leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: _isSubmitting ? null : () => context.pop()),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: _isSubmitting ? null : () => context.pop(),
+        ),
       ),
       body: Column(
         children: [
@@ -454,8 +466,9 @@ class _AddNotesScreenState extends ConsumerState<AddNotesScreen> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(30.r),
-                    topRight: Radius.circular(30.r)),
+                  topLeft: Radius.circular(30.r),
+                  topRight: Radius.circular(30.r),
+                ),
               ),
               child: Form(
                 key: _formKey,
@@ -515,12 +528,15 @@ class _AddNotesScreenState extends ConsumerState<AddNotesScreen> {
                       SizedBox(height: 20.h),
 
                       // --- DYNAMIC IMAGE SECTION ---
-                      Text("Upload Images (Optional)",
-                          style: TextStyle(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.grey.shade600,
-                              fontFamily: 'Poppins')),
+                      Text(
+                        "Upload Images (Optional)",
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.grey.shade600,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
                       SizedBox(height: 8.h),
                       IgnorePointer(
                         ignoring: _isSubmitting,
@@ -575,11 +591,7 @@ class _AddNotesScreenState extends ConsumerState<AddNotesScreen> {
         ),
         child: Column(
           children: [
-            Icon(
-              Icons.folder_off,
-              size: 32.sp,
-              color: Colors.grey.shade400,
-            ),
+            Icon(Icons.folder_off, size: 32.sp, color: Colors.grey.shade400),
             SizedBox(height: 8.h),
             Text(
               'No directory modules enabled',
@@ -612,18 +624,19 @@ class _AddNotesScreenState extends ConsumerState<AddNotesScreen> {
               final label = moduleId == 'parties'
                   ? 'Party'
                   : moduleId == 'prospects'
-                      ? 'Prospect'
-                      : 'Site';
+                  ? 'Prospect'
+                  : 'Site';
               final icon = moduleId == 'parties'
                   ? Icons.store_outlined
                   : moduleId == 'prospects'
-                      ? Icons.person_search_outlined
-                      : Icons.location_city_outlined;
+                  ? Icons.person_search_outlined
+                  : Icons.location_city_outlined;
 
               return Expanded(
                 child: Padding(
                   padding: EdgeInsets.only(
-                    right: enabledDirectoryModules.indexOf(moduleId) <
+                    right:
+                        enabledDirectoryModules.indexOf(moduleId) <
                             enabledDirectoryModules.length - 1
                         ? 8.w
                         : 0,
@@ -645,11 +658,16 @@ class _AddNotesScreenState extends ConsumerState<AddNotesScreen> {
               builder: (context) {
                 final selectedColor = _getEntityColor(_selectedEntityType!);
                 return Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 12.h,
+                  ),
                   decoration: BoxDecoration(
                     color: selectedColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(color: selectedColor.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: selectedColor.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: Row(
                     children: [

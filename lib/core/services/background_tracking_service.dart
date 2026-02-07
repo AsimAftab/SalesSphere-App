@@ -1,13 +1,14 @@
 import 'dart:async';
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:sales_sphere/core/models/queued_location.dart';
 import 'package:sales_sphere/core/models/location_address.dart';
+import 'package:sales_sphere/core/models/queued_location.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -17,7 +18,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 @pragma('vm:entry-point')
 class BackgroundTrackingService {
   BackgroundTrackingService._();
-  static final BackgroundTrackingService instance = BackgroundTrackingService._();
+
+  static final BackgroundTrackingService instance =
+      BackgroundTrackingService._();
 
   // Service instance
   final FlutterBackgroundService _service = FlutterBackgroundService();
@@ -49,7 +52,8 @@ class BackgroundTrackingService {
           isForegroundMode: true,
           notificationChannelId: _channelId,
           initialNotificationTitle: 'Beat Plan Tracking Active',
-          initialNotificationContent: 'Your location is being tracked. Do not close this app until all visits are complete.',
+          initialNotificationContent:
+              'Your location is being tracked. Do not close this app until all visits are complete.',
           foregroundServiceNotificationId: _notificationId,
           autoStartOnBoot: false, // Don't start on device boot
         ),
@@ -69,7 +73,8 @@ class BackgroundTrackingService {
   }
 
   /// Start background tracking
-  Future<void> startTracking(String beatPlanId, {
+  Future<void> startTracking(
+    String beatPlanId, {
     int totalDirectories = 0,
     int visitedDirectories = 0,
   }) async {
@@ -79,7 +84,7 @@ class BackgroundTrackingService {
       // Store beat plan ID, tracking flag, and progress in SharedPreferences for background isolate
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_keyBeatPlanId, beatPlanId);
-      await prefs.setBool(_keyIsTracking, true);  // Set tracking flag!
+      await prefs.setBool(_keyIsTracking, true); // Set tracking flag!
       await prefs.setInt(_keyTotalDirectories, totalDirectories);
       await prefs.setInt(_keyVisitedDirectories, visitedDirectories);
 
@@ -185,16 +190,14 @@ class BackgroundTrackingService {
     required double longitude,
   }) async {
     try {
-      final placemarks = await placemarkFromCoordinates(
-        latitude,
-        longitude,
-      ).timeout(
-        const Duration(seconds: 5),
-        onTimeout: () {
-          AppLogger.w('⚠️ Reverse geocoding timeout');
-          return <Placemark>[];
-        },
-      );
+      final placemarks = await placemarkFromCoordinates(latitude, longitude)
+          .timeout(
+            const Duration(seconds: 5),
+            onTimeout: () {
+              AppLogger.w('⚠️ Reverse geocoding timeout');
+              return <Placemark>[];
+            },
+          );
 
       if (placemarks.isEmpty) {
         AppLogger.d('📍 No address found for location');
@@ -204,7 +207,9 @@ class BackgroundTrackingService {
       final placemark = placemarks.first;
       final address = LocationAddress.fromPlacemark(placemark);
 
-      AppLogger.d('📍 Reverse geocoded: ${address.formattedAddress ?? "Unknown"}');
+      AppLogger.d(
+        '📍 Reverse geocoded: ${address.formattedAddress ?? "Unknown"}',
+      );
 
       return address.toJson();
     } catch (e) {
@@ -273,7 +278,9 @@ class BackgroundTrackingService {
       return;
     }
 
-    AppLogger.i('📊 Starting tracking with progress: $visitedDirectories/$totalDirectories');
+    AppLogger.i(
+      '📊 Starting tracking with progress: $visitedDirectories/$totalDirectories',
+    );
 
     // Ensure tracking flag is set
     await prefs.setBool(_keyIsTracking, true);
@@ -283,98 +290,103 @@ class BackgroundTrackingService {
     isTracking = true;
 
     // Start location tracking (no timeout - runs continuously)
-    positionSubscription = Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 10,
-        // No timeLimit - tracking continues indefinitely until stopped
-      ),
-    ).listen(
-      (Position position) async {
-        if (!isTracking) return;
+    positionSubscription =
+        Geolocator.getPositionStream(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            distanceFilter: 10,
+            // No timeLimit - tracking continues indefinitely until stopped
+          ),
+        ).listen(
+          (Position position) async {
+            if (!isTracking) return;
 
-        // Calculate distance
-        if (lastPosition != null) {
-          final distance = Geolocator.distanceBetween(
-            lastPosition!.latitude,
-            lastPosition!.longitude,
-            position.latitude,
-            position.longitude,
-          );
-          totalDistance += distance;
-        }
-        lastPosition = position;
+            // Calculate distance
+            if (lastPosition != null) {
+              final distance = Geolocator.distanceBetween(
+                lastPosition!.latitude,
+                lastPosition!.longitude,
+                position.latitude,
+                position.longitude,
+              );
+              totalDistance += distance;
+            }
+            lastPosition = position;
 
-        // Calculate duration
-        final duration = DateTime.now().difference(startTime!);
+            // Calculate duration
+            final duration = DateTime.now().difference(startTime!);
 
-        // STEP 1: Reverse geocode to get address (non-blocking)
-        Map<String, dynamic>? address;
-        try {
-          address = await _reverseGeocode(
-            latitude: position.latitude,
-            longitude: position.longitude,
-          );
+            // STEP 1: Reverse geocode to get address (non-blocking)
+            Map<String, dynamic>? address;
+            try {
+              address = await _reverseGeocode(
+                latitude: position.latitude,
+                longitude: position.longitude,
+              );
 
-          // Update current address for notification
-          if (address != null && address['formattedAddress'] != null) {
-            currentAddress = address['formattedAddress'] as String;
-          }
-        } catch (e) {
-          AppLogger.w('⚠️ Skipping reverse geocoding: $e');
-          address = null; // Continue without address if geocoding fails
-        }
+              // Update current address for notification
+              if (address != null && address['formattedAddress'] != null) {
+                currentAddress = address['formattedAddress'] as String;
+              }
+            } catch (e) {
+              AppLogger.w('⚠️ Skipping reverse geocoding: $e');
+              address = null; // Continue without address if geocoding fails
+            }
 
-        // STEP 2: Save to Hive first (ALWAYS works, even offline)
-        try {
-          if (locationBox != null) {
-            final queuedLocation = QueuedLocation.fromLocationUpdate(
+            // STEP 2: Save to Hive first (ALWAYS works, even offline)
+            try {
+              if (locationBox != null) {
+                final queuedLocation = QueuedLocation.fromLocationUpdate(
+                  beatPlanId: beatPlanId!,
+                  latitude: position.latitude,
+                  longitude: position.longitude,
+                  accuracy: position.accuracy,
+                  speed: position.speed,
+                  heading: position.heading,
+                  address: address, // Include address
+                );
+                await locationBox.add(queuedLocation);
+                AppLogger.d(
+                  '💾 Location saved to Hive queue (with address: ${address != null})',
+                );
+              }
+            } catch (e) {
+              AppLogger.e('❌ Error saving to Hive: $e');
+            }
+
+            // STEP 3: Update notification with rich information (like Uber)
+            await _updateNotification(
+              notificationPlugin,
               beatPlanId: beatPlanId!,
-              latitude: position.latitude,
-              longitude: position.longitude,
-              accuracy: position.accuracy,
-              speed: position.speed,
-              heading: position.heading,
-              address: address, // Include address
+              distance: totalDistance,
+              duration: duration,
+              currentAddress: currentAddress,
+              totalDirectories: totalDirectories,
+              visitedDirectories: visitedDirectories,
             );
-            await locationBox.add(queuedLocation);
-            AppLogger.d('💾 Location saved to Hive queue (with address: ${address != null})');
-          }
-        } catch (e) {
-          AppLogger.e('❌ Error saving to Hive: $e');
-        }
 
-        // STEP 3: Update notification with rich information (like Uber)
-        await _updateNotification(
-          notificationPlugin,
-          beatPlanId: beatPlanId!,
-          distance: totalDistance,
-          duration: duration,
-          currentAddress: currentAddress,
-          totalDirectories: totalDirectories,
-          visitedDirectories: visitedDirectories,
+            // STEP 4: Send update to main app (will try to send to server)
+            service.invoke('update', {
+              'beatPlanId': beatPlanId,
+              'latitude': position.latitude,
+              'longitude': position.longitude,
+              'accuracy': position.accuracy,
+              'speed': position.speed,
+              'heading': position.heading,
+              'totalDistance': totalDistance,
+              'totalDuration': duration.inSeconds,
+              'timestamp': DateTime.now().toIso8601String(),
+              if (address != null) 'address': address, // Include address
+            });
+
+            AppLogger.d(
+              '📍 Background location: ${position.latitude}, ${position.longitude} ${address != null ? "(with address)" : ""}',
+            );
+          },
+          onError: (error) {
+            AppLogger.e('❌ Location stream error: $error');
+          },
         );
-
-        // STEP 4: Send update to main app (will try to send to server)
-        service.invoke('update', {
-          'beatPlanId': beatPlanId,
-          'latitude': position.latitude,
-          'longitude': position.longitude,
-          'accuracy': position.accuracy,
-          'speed': position.speed,
-          'heading': position.heading,
-          'totalDistance': totalDistance,
-          'totalDuration': duration.inSeconds,
-          'timestamp': DateTime.now().toIso8601String(),
-          if (address != null) 'address': address, // Include address
-        });
-
-        AppLogger.d('📍 Background location: ${position.latitude}, ${position.longitude} ${address != null ? "(with address)" : ""}');
-      },
-      onError: (error) {
-        AppLogger.e('❌ Location stream error: $error');
-      },
-    );
 
     // Listen for commands from main app
     service.on('stopTracking').listen((event) async {
@@ -420,7 +432,9 @@ class BackgroundTrackingService {
               visitedDirectories: visitedDirectories,
             );
 
-            AppLogger.i('✅ Notification updated with new progress: $visitedDirectories/$totalDirectories');
+            AppLogger.i(
+              '✅ Notification updated with new progress: $visitedDirectories/$totalDirectories',
+            );
           }
         }
       }
@@ -470,9 +484,7 @@ class BackgroundTrackingService {
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
     const InitializationSettings initializationSettings =
-        InitializationSettings(
-      android: initializationSettingsAndroid,
-    );
+        InitializationSettings(android: initializationSettingsAndroid);
 
     await plugin.initialize(initializationSettings);
 
@@ -481,13 +493,15 @@ class BackgroundTrackingService {
       _channelId,
       _channelName,
       description: 'Ongoing beat plan tracking notification',
-      importance: Importance.max,  // MAX importance - truly non-dismissible
+      importance: Importance.max, // MAX importance - truly non-dismissible
       playSound: false,
       enableVibration: false,
     );
 
     await plugin
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >()
         ?.createNotificationChannel(channel);
   }
 
@@ -522,7 +536,8 @@ class BackgroundTrackingService {
         : '📍 Tracking your location\n$distanceKm km • $durationStr';
 
     // Build expanded content with utilities details
-    final bigText = '''
+    final bigText =
+        '''
 📍 Current Location: ${currentAddress ?? 'Getting location...'}
 
 📊 Progress: $visitedDirectories/$totalDirectories directories visited ($progressPercent%)
@@ -533,49 +548,49 @@ class BackgroundTrackingService {
 Do not force close this app.
 ''';
 
-    final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      _channelId,
-      _channelName,
-      channelDescription: 'Real-time beat plan tracking - Keep this active',
-      importance: Importance.max, // MAX importance for Uber-like non-dismissible notification
-      priority: Priority.high, // High priority
-      ongoing: true, // Cannot be dismissed by user
-      autoCancel: false,
-      playSound: false,
-      enableVibration: false,
-      showWhen: true,
-      when: DateTime.now().millisecondsSinceEpoch,
-      usesChronometer: true, // Shows elapsed time
-      chronometerCountDown: false,
-      icon: '@mipmap/ic_launcher',
-      largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
-      styleInformation: BigTextStyleInformation(
-        bigText,
-        contentTitle: title,
-        summaryText: 'SalesSphere Location Tracking',
-        htmlFormatBigText: false,
-        htmlFormatContentTitle: false,
-      ),
-      // Show progress if available
-      showProgress: totalDirectories > 0,
-      maxProgress: totalDirectories,
-      progress: visitedDirectories,
-      indeterminate: false,
-      // Make it sticky and high priority
-      category: AndroidNotificationCategory.navigation,
-      visibility: NotificationVisibility.public,
-      ticker: 'Beat Plan Tracking Active',
-    );
+    final AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+          _channelId,
+          _channelName,
+          channelDescription: 'Real-time beat plan tracking - Keep this active',
+          importance: Importance.max,
+          // MAX importance for Uber-like non-dismissible notification
+          priority: Priority.high,
+          // High priority
+          ongoing: true,
+          // Cannot be dismissed by user
+          autoCancel: false,
+          playSound: false,
+          enableVibration: false,
+          showWhen: true,
+          when: DateTime.now().millisecondsSinceEpoch,
+          usesChronometer: true,
+          // Shows elapsed time
+          chronometerCountDown: false,
+          icon: '@mipmap/ic_launcher',
+          largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+          styleInformation: BigTextStyleInformation(
+            bigText,
+            contentTitle: title,
+            summaryText: 'SalesSphere Location Tracking',
+            htmlFormatBigText: false,
+            htmlFormatContentTitle: false,
+          ),
+          // Show progress if available
+          showProgress: totalDirectories > 0,
+          maxProgress: totalDirectories,
+          progress: visitedDirectories,
+          indeterminate: false,
+          // Make it sticky and high priority
+          category: AndroidNotificationCategory.navigation,
+          visibility: NotificationVisibility.public,
+          ticker: 'Beat Plan Tracking Active',
+        );
 
     final NotificationDetails notificationDetails = NotificationDetails(
       android: androidDetails,
     );
 
-    await plugin.show(
-      _notificationId,
-      title,
-      content,
-      notificationDetails,
-    );
+    await plugin.show(_notificationId, title, content, notificationDetails);
   }
 }

@@ -46,14 +46,14 @@ class AppConstants {
     'jpeg',
     'png',
     'gif',
-    'webp'
+    'webp',
   ];
   static const List<String> allowedDocExtensions = [
     'pdf',
     'doc',
     'docx',
     'xls',
-    'xlsx'
+    'xlsx',
   ];
 
   // Animation Durations

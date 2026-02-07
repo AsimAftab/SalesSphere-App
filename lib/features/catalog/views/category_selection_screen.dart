@@ -9,10 +9,12 @@ class CategorySelectionScreen extends ConsumerStatefulWidget {
   const CategorySelectionScreen({super.key});
 
   @override
-  ConsumerState<CategorySelectionScreen> createState() => _CategorySelectionScreenState();
+  ConsumerState<CategorySelectionScreen> createState() =>
+      _CategorySelectionScreenState();
 }
 
-class _CategorySelectionScreenState extends ConsumerState<CategorySelectionScreen> {
+class _CategorySelectionScreenState
+    extends ConsumerState<CategorySelectionScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
@@ -131,7 +133,10 @@ class _CategorySelectionScreenState extends ConsumerState<CategorySelectionScree
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12.r),
-                  borderSide: const BorderSide(color: Color(0xFF1C548C), width: 2),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF1C548C),
+                    width: 2,
+                  ),
                 ),
                 contentPadding: EdgeInsets.symmetric(
                   horizontal: 16.w,
@@ -149,8 +154,12 @@ class _CategorySelectionScreenState extends ConsumerState<CategorySelectionScree
                 final filteredCategories = _searchQuery.isEmpty
                     ? categories
                     : categories
-                        .where((c) => c.name.toLowerCase().contains(_searchQuery.toLowerCase()))
-                        .toList();
+                          .where(
+                            (c) => c.name.toLowerCase().contains(
+                              _searchQuery.toLowerCase(),
+                            ),
+                          )
+                          .toList();
 
                 if (filteredCategories.isEmpty && _searchQuery.isNotEmpty) {
                   return Center(
@@ -184,7 +193,8 @@ class _CategorySelectionScreenState extends ConsumerState<CategorySelectionScree
                     crossAxisSpacing: 16.w,
                     mainAxisSpacing: 16.h,
                   ),
-                  itemCount: filteredCategories.length + 1, // +1 for "All Products"
+                  itemCount: filteredCategories.length + 1,
+                  // +1 for "All Products"
                   itemBuilder: (context, index) {
                     if (index == 0) {
                       // "All Products" tile
@@ -197,7 +207,9 @@ class _CategorySelectionScreenState extends ConsumerState<CategorySelectionScree
                         imageAssetPath: null,
                         onTap: () {
                           FocusScope.of(context).unfocus();
-                          ref.read(selectedCategoryProvider.notifier).clearSelection();
+                          ref
+                              .read(selectedCategoryProvider.notifier)
+                              .clearSelection();
                           context.pop();
                         },
                       );
@@ -213,7 +225,9 @@ class _CategorySelectionScreenState extends ConsumerState<CategorySelectionScree
                       imageAssetPath: category.imageAssetPath,
                       onTap: () {
                         FocusScope.of(context).unfocus();
-                        ref.read(selectedCategoryProvider.notifier).selectCategory(category.id);
+                        ref
+                            .read(selectedCategoryProvider.notifier)
+                            .selectCategory(category.id);
                         context.pop();
                       },
                     );
@@ -282,27 +296,17 @@ class _CategorySelectionScreenState extends ConsumerState<CategorySelectionScree
                           ? SvgPicture.asset(
                               imageAssetPath,
                               fit: BoxFit.cover,
-                              placeholderBuilder: (context) => Icon(
-                                icon,
-                                size: 48.sp,
-                                color: color,
-                              ),
+                              placeholderBuilder: (context) =>
+                                  Icon(icon, size: 48.sp, color: color),
                             )
                           : Image.asset(
                               imageAssetPath,
                               fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) => Icon(
-                                icon,
-                                size: 48.sp,
-                                color: color,
-                              ),
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Icon(icon, size: 48.sp, color: color),
                             ),
                     )
-                  : Icon(
-                      icon,
-                      size: 48.sp,
-                      color: color,
-                    ),
+                  : Icon(icon, size: 48.sp, color: color),
             ),
             SizedBox(height: 12.h),
             // Category Name

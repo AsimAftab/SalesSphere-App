@@ -1,9 +1,11 @@
 import 'dart:convert';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../constants/storage_keys.dart';
-import '../utils/logger.dart';
 import '../providers/shared_prefs_provider.dart';
+import '../utils/logger.dart';
 
 part 'token_storage_service.g.dart';
 

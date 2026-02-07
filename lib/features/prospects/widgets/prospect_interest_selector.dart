@@ -205,18 +205,11 @@ class _ProspectInterestSelectorState
       padding: EdgeInsets.symmetric(vertical: 8.h),
       child: Row(
         children: [
-          Icon(
-            Icons.info_outline,
-            color: AppColors.greyMedium,
-            size: 16.sp,
-          ),
+          Icon(Icons.info_outline, color: AppColors.greyMedium, size: 16.sp),
           SizedBox(width: 8.w),
           Text(
             'No interests selected',
-            style: TextStyle(
-              fontSize: 13.sp,
-              color: AppColors.textSecondary,
-            ),
+            style: TextStyle(fontSize: 13.sp, color: AppColors.textSecondary),
           ),
         ],
       ),
@@ -235,7 +228,9 @@ class _ProspectInterestSelectorState
           return _BrandChip(
             category: categoryName,
             brand: brand,
-            onRemove: widget.enabled ? () => _removeBrand(categoryName, brand) : null,
+            onRemove: widget.enabled
+                ? () => _removeBrand(categoryName, brand)
+                : null,
           );
         });
       }).toList(),
@@ -282,10 +277,7 @@ class _BrandChip extends StatelessWidget {
           SizedBox(width: 2.w),
           Text(
             '($category)',
-            style: TextStyle(
-              fontSize: 11.sp,
-              color: AppColors.textSecondary,
-            ),
+            style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary),
           ),
           if (onRemove != null) ...[
             SizedBox(width: 4.w),
@@ -314,9 +306,7 @@ class _BrandChip extends StatelessWidget {
 class _ProspectInterestBottomSheet extends ConsumerStatefulWidget {
   final Map<String, Set<String>> initiallySelected;
 
-  const _ProspectInterestBottomSheet({
-    required this.initiallySelected,
-  });
+  const _ProspectInterestBottomSheet({required this.initiallySelected});
 
   @override
   ConsumerState<_ProspectInterestBottomSheet> createState() =>
@@ -526,13 +516,17 @@ class _ProspectInterestBottomSheetState
                   ...categories,
                   // Add custom categories that aren't in API response
                   ..._customCategories.keys
-                      .where((customName) =>
-                          categories.every((c) => c.name != customName))
-                      .map((customName) => ProspectCategory(
-                            id: const Uuid().v4(),
-                            name: customName,
-                            brands: _customCategories[customName]!.toList(),
-                          )),
+                      .where(
+                        (customName) =>
+                            categories.every((c) => c.name != customName),
+                      )
+                      .map(
+                        (customName) => ProspectCategory(
+                          id: const Uuid().v4(),
+                          name: customName,
+                          brands: _customCategories[customName]!.toList(),
+                        ),
+                      ),
                 ];
 
                 if (allCategories.isEmpty) {
@@ -560,7 +554,8 @@ class _ProspectInterestBottomSheetState
 
                 return ListView.separated(
                   padding: EdgeInsets.symmetric(horizontal: 16.w),
-                  itemCount: allCategories.length + 1, // +1 for "Add New Category"
+                  itemCount: allCategories.length + 1,
+                  // +1 for "Add New Category"
                   separatorBuilder: (_, __) => SizedBox(height: 8.h),
                   itemBuilder: (context, index) {
                     // Add New Category button at the top
@@ -574,8 +569,9 @@ class _ProspectInterestBottomSheetState
                     final selectedCount = _getSelectedCountForCategory(
                       category.name,
                     );
-                    final isExpanded =
-                        _expandedCategories.contains(category.name);
+                    final isExpanded = _expandedCategories.contains(
+                      category.name,
+                    );
 
                     return _buildCategoryCard(
                       category: category,
@@ -586,9 +582,7 @@ class _ProspectInterestBottomSheetState
                 );
               },
               loading: () => Center(
-                child: CircularProgressIndicator(
-                  color: AppColors.primary,
-                ),
+                child: CircularProgressIndicator(color: AppColors.primary),
               ),
               error: (_, error) => Center(
                 child: Column(
@@ -602,10 +596,7 @@ class _ProspectInterestBottomSheetState
                     SizedBox(height: 16.h),
                     Text(
                       'Failed to load categories',
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        color: AppColors.error,
-                      ),
+                      style: TextStyle(fontSize: 16.sp, color: AppColors.error),
                     ),
                   ],
                 ),
@@ -705,7 +696,8 @@ class _ProspectInterestBottomSheetState
     // Get all brands: original category brands + custom added brands
     final allBrands = {
       ...category.brands,
-      if (_customBrands.containsKey(category.name)) ..._customBrands[category.name]!,
+      if (_customBrands.containsKey(category.name))
+        ..._customBrands[category.name]!,
     }.toList();
 
     return Container(
@@ -749,7 +741,9 @@ class _ProspectInterestBottomSheetState
                 style: TextStyle(
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w600,
-                  color: selectedCount > 0 ? Colors.white : AppColors.greyMedium,
+                  color: selectedCount > 0
+                      ? Colors.white
+                      : AppColors.greyMedium,
                 ),
               ),
             ),
@@ -814,7 +808,9 @@ class _ProspectInterestBottomSheetState
                   style: TextStyle(
                     fontSize: 14.sp,
                     color: AppColors.textPrimary,
-                    fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
+                    fontWeight: isSelected
+                        ? FontWeight.w500
+                        : FontWeight.normal,
                   ),
                 ),
                 value: isSelected,
@@ -842,11 +838,7 @@ class _ProspectInterestBottomSheetState
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.add,
-                      color: AppColors.primary,
-                      size: 16.sp,
-                    ),
+                    Icon(Icons.add, color: AppColors.primary, size: 16.sp),
                     SizedBox(width: 6.w),
                     Text(
                       'Add Brand',
@@ -875,10 +867,7 @@ class _AddCategoryDialog extends StatefulWidget {
   final TextEditingController controller;
   final VoidCallback onSave;
 
-  const _AddCategoryDialog({
-    required this.controller,
-    required this.onSave,
-  });
+  const _AddCategoryDialog({required this.controller, required this.onSave});
 
   @override
   State<_AddCategoryDialog> createState() => _AddCategoryDialogState();
@@ -903,10 +892,7 @@ class _AddCategoryDialogState extends State<_AddCategoryDialog> {
     return AlertDialog(
       title: Text(
         'Add New Category',
-        style: TextStyle(
-          fontSize: 18.sp,
-          fontWeight: FontWeight.w600,
-        ),
+        style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600),
       ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -935,10 +921,7 @@ class _AddCategoryDialogState extends State<_AddCategoryDialog> {
           onPressed: () => context.pop(),
           child: Text(
             'Cancel',
-            style: TextStyle(
-              fontSize: 14.sp,
-              color: AppColors.textSecondary,
-            ),
+            style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
           ),
         ),
         ElevatedButton(
@@ -949,10 +932,7 @@ class _AddCategoryDialogState extends State<_AddCategoryDialog> {
           ),
           child: Text(
             'Add',
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w500,
-            ),
+            style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500),
           ),
         ),
       ],
@@ -998,10 +978,7 @@ class _AddBrandDialogState extends State<_AddBrandDialog> {
     return AlertDialog(
       title: Text(
         'Add Brand to ${widget.categoryName}',
-        style: TextStyle(
-          fontSize: 18.sp,
-          fontWeight: FontWeight.w600,
-        ),
+        style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600),
       ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1030,10 +1007,7 @@ class _AddBrandDialogState extends State<_AddBrandDialog> {
           onPressed: () => context.pop(),
           child: Text(
             'Cancel',
-            style: TextStyle(
-              fontSize: 14.sp,
-              color: AppColors.textSecondary,
-            ),
+            style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
           ),
         ),
         ElevatedButton(
@@ -1044,10 +1018,7 @@ class _AddBrandDialogState extends State<_AddBrandDialog> {
           ),
           child: Text(
             'Add',
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w500,
-            ),
+            style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500),
           ),
         ),
       ],

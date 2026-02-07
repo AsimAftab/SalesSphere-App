@@ -1,16 +1,18 @@
 import 'dart:io';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
 import 'package:sales_sphere/widget/custom_text_field.dart';
+
 import '../model/odometer.model.dart';
 import '../vm/odometer.vm.dart';
 
@@ -59,100 +61,107 @@ class _OdometerScreenState extends ConsumerState<OdometerScreen> {
       body: statusResponse == null
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildStatusHeader(hasActiveTrip, allTrips),
-                  SizedBox(height: 20.h),
-
-                  if (!hasActiveTrip)
-                    _buildAddTripButton(context)
-                  else if (allTrips.isNotEmpty)
-                    _buildActiveTripIndicator(
-                      allTrips.firstWhere(
-                        (t) => t.isInProgress,
-                        orElse: () => allTrips.first,
-                      ),
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 20.w,
+                      vertical: 10.h,
                     ),
+                    child: Column(
+                      children: [
+                        _buildStatusHeader(hasActiveTrip, allTrips),
+                        SizedBox(height: 20.h),
 
-                  SizedBox(height: 24.h),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.timeline_rounded, color: AppColors.secondary, size: 20.sp),
-                          SizedBox(width: 8.w),
-                          Text(
-                            "Today's Trips",
-                            style: TextStyle(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
+                        if (!hasActiveTrip)
+                          _buildAddTripButton(context)
+                        else if (allTrips.isNotEmpty)
+                          _buildActiveTripIndicator(
+                            allTrips.firstWhere(
+                              (t) => t.isInProgress,
+                              orElse: () => allTrips.first,
                             ),
                           ),
-                        ],
-                      ),
-                      Text(
-                        "${allTrips.where((t) => t.isCompleted).length} / ${allTrips.length}",
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          color: AppColors.textSecondary,
+
+                        SizedBox(height: 24.h),
+
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.timeline_rounded,
+                                  color: AppColors.secondary,
+                                  size: 20.sp,
+                                ),
+                                SizedBox(width: 8.w),
+                                Text(
+                                  "Today's Trips",
+                                  style: TextStyle(
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Text(
+                              "${allTrips.where((t) => t.isCompleted).length} / ${allTrips.length}",
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
                         ),
+                      ],
+                    ),
+                  ),
+
+                  if (allTrips.isEmpty)
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20.w),
+                      child: _buildEmptyState(),
+                    )
+                  else ...[
+                    SizedBox(
+                      height: 250.h,
+                      child: PageView.builder(
+                        controller: _pageController,
+                        itemCount: allTrips.length,
+                        onPageChanged: (index) {
+                          setState(() {
+                            _currentTripIndex = index;
+                          });
+                        },
+                        itemBuilder: (context, index) {
+                          final trip = allTrips[index];
+                          return Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 6.w),
+                            child: _buildTripCard(context, ref, trip),
+                          );
+                        },
                       ),
-                    ],
+                    ),
+                    SizedBox(height: 12.h),
+                    _buildPageIndicator(allTrips.length),
+                  ],
+
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20.w),
+                    child: Column(
+                      children: [
+                        SizedBox(height: 24.h),
+                        _buildMonthlySummary(context, ref),
+                        SizedBox(height: 30.h),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
-
-            if (allTrips.isEmpty)
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20.w),
-                child: _buildEmptyState(),
-              )
-            else ...[
-              SizedBox(
-                height: 250.h,
-                child: PageView.builder(
-                  controller: _pageController,
-                  itemCount: allTrips.length,
-                  onPageChanged: (index) {
-                    setState(() {
-                      _currentTripIndex = index;
-                    });
-                  },
-                  itemBuilder: (context, index) {
-                    final trip = allTrips[index];
-                    return Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 6.w),
-                      child: _buildTripCard(context, ref, trip),
-                    );
-                  },
-                ),
-              ),
-              SizedBox(height: 12.h),
-              _buildPageIndicator(allTrips.length),
-            ],
-
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20.w),
-              child: Column(
-                children: [
-                  SizedBox(height: 24.h),
-                  _buildMonthlySummary(context, ref),
-                  SizedBox(height: 30.h),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -168,7 +177,9 @@ class _OdometerScreenState extends ConsumerState<OdometerScreen> {
           height: 8.h,
           width: isActive ? 24.w : 8.w,
           decoration: BoxDecoration(
-            color: isActive ? AppColors.secondary : Colors.grey.withValues(alpha: 0.3),
+            color: isActive
+                ? AppColors.secondary
+                : Colors.grey.withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(4.r),
           ),
         );
@@ -185,7 +196,10 @@ class _OdometerScreenState extends ConsumerState<OdometerScreen> {
     if (isActive) {
       statusText = "On Trip";
       badgeColor = AppColors.secondary;
-      final activeTrip = allTrips.firstWhere((t) => t.isInProgress, orElse: () => allTrips.first);
+      final activeTrip = allTrips.firstWhere(
+        (t) => t.isInProgress,
+        orElse: () => allTrips.first,
+      );
       if (activeTrip.startTime != null) {
         final startTime = activeTrip.startTime!.toLocal();
         timeInfo = DateFormat('hh:mm a').format(startTime);
@@ -194,7 +208,8 @@ class _OdometerScreenState extends ConsumerState<OdometerScreen> {
       statusText = "Completed";
       badgeColor = AppColors.success;
       final completedCount = allTrips.where((t) => t.isCompleted).length;
-      timeInfo = "$completedCount trip${completedCount > 1 ? 's' : ''} completed";
+      timeInfo =
+          "$completedCount trip${completedCount > 1 ? 's' : ''} completed";
     } else {
       statusText = "Not Started";
       badgeColor = AppColors.textSecondary;
@@ -217,7 +232,11 @@ class _OdometerScreenState extends ConsumerState<OdometerScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.access_time, size: 20.sp, color: AppColors.textSecondary),
+              Icon(
+                Icons.access_time,
+                size: 20.sp,
+                color: AppColors.textSecondary,
+              ),
               SizedBox(width: 8.w),
               Text(
                 'Today\'s Status',
@@ -369,10 +388,16 @@ class _OdometerScreenState extends ConsumerState<OdometerScreen> {
     );
   }
 
-  Widget _buildTripCard(BuildContext context, WidgetRef ref, OdometerReading trip) {
+  Widget _buildTripCard(
+    BuildContext context,
+    WidgetRef ref,
+    OdometerReading trip,
+  ) {
     final unit = trip.unit.toUpperCase();
     final isCompleted = trip.isCompleted;
-    final distance = (trip.stopReading != null) ? (trip.stopReading! - trip.startReading) : 0;
+    final distance = (trip.stopReading != null)
+        ? (trip.stopReading! - trip.startReading)
+        : 0;
 
     return Container(
       margin: EdgeInsets.symmetric(vertical: 4.h),
@@ -416,7 +441,9 @@ class _OdometerScreenState extends ConsumerState<OdometerScreen> {
                     Icon(
                       isCompleted ? Icons.check_rounded : Icons.sync_rounded,
                       size: 14.sp,
-                      color: isCompleted ? AppColors.success : AppColors.secondary,
+                      color: isCompleted
+                          ? AppColors.success
+                          : AppColors.secondary,
                     ),
                     SizedBox(width: 4.w),
                     Text(
@@ -424,7 +451,9 @@ class _OdometerScreenState extends ConsumerState<OdometerScreen> {
                       style: TextStyle(
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w600,
-                        color: isCompleted ? AppColors.success : AppColors.secondary,
+                        color: isCompleted
+                            ? AppColors.success
+                            : AppColors.secondary,
                       ),
                     ),
                   ],
@@ -448,7 +477,9 @@ class _OdometerScreenState extends ConsumerState<OdometerScreen> {
               Expanded(
                 child: _buildReadingBox(
                   "Stop Reading",
-                  trip.stopReading != null ? trip.stopReading!.toInt().toString() : "---",
+                  trip.stopReading != null
+                      ? trip.stopReading!.toInt().toString()
+                      : "---",
                   unit,
                   AppColors.red500.withValues(alpha: 0.1),
                   AppColors.red500,
@@ -463,7 +494,9 @@ class _OdometerScreenState extends ConsumerState<OdometerScreen> {
             decoration: BoxDecoration(
               color: AppColors.success.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(color: AppColors.success.withValues(alpha: 0.2)),
+              border: Border.all(
+                color: AppColors.success.withValues(alpha: 0.2),
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -509,7 +542,13 @@ class _OdometerScreenState extends ConsumerState<OdometerScreen> {
     );
   }
 
-  Widget _buildReadingBox(String label, String value, String unit, Color bgColor, Color textColor) {
+  Widget _buildReadingBox(
+    String label,
+    String value,
+    String unit,
+    Color bgColor,
+    Color textColor,
+  ) {
     return Container(
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
@@ -520,10 +559,27 @@ class _OdometerScreenState extends ConsumerState<OdometerScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary)),
+          Text(
+            label,
+            style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary),
+          ),
           SizedBox(height: 4.h),
-          Text(value, style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-          Text(unit, style: TextStyle(fontSize: 10.sp, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 18.sp,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          Text(
+            unit,
+            style: TextStyle(
+              fontSize: 10.sp,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textSecondary,
+            ),
+          ),
         ],
       ),
     );
@@ -539,9 +595,16 @@ class _OdometerScreenState extends ConsumerState<OdometerScreen> {
       ),
       child: Column(
         children: [
-          Icon(Icons.directions_car_outlined, size: 40.sp, color: AppColors.textSecondary),
+          Icon(
+            Icons.directions_car_outlined,
+            size: 40.sp,
+            color: AppColors.textSecondary,
+          ),
           SizedBox(height: 10.h),
-          Text("No trips recorded today", style: TextStyle(color: AppColors.textSecondary, fontSize: 14.sp)),
+          Text(
+            "No trips recorded today",
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 14.sp),
+          ),
         ],
       ),
     );
@@ -576,7 +639,11 @@ class _OdometerScreenState extends ConsumerState<OdometerScreen> {
                       color: AppColors.secondary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8.r),
                     ),
-                    child: Icon(Icons.bar_chart_rounded, color: AppColors.secondary, size: 20.sp),
+                    child: Icon(
+                      Icons.bar_chart_rounded,
+                      color: AppColors.secondary,
+                      size: 20.sp,
+                    ),
                   ),
                   SizedBox(width: 12.w),
                   Text(
@@ -595,14 +662,20 @@ class _OdometerScreenState extends ConsumerState<OdometerScreen> {
                 children: [
                   _summaryStatItem("${summary.daysCompleted}", "Total Trips"),
                   Container(width: 1, height: 40.h, color: AppColors.border),
-                  _summaryStatItem("${summary.totalDistance.toStringAsFixed(0)} ${summary.unit}", "Total Distance"),
+                  _summaryStatItem(
+                    "${summary.totalDistance.toStringAsFixed(0)} ${summary.unit}",
+                    "Total Distance",
+                  ),
                 ],
               ),
               SizedBox(height: 24.h),
               PrimaryButton(
                 label: "View Details",
                 onPressed: () {
-                  context.push('/odometer-list', extra: {'month': DateTime.now(), 'filter': null});
+                  context.push(
+                    '/odometer-list',
+                    extra: {'month': DateTime.now(), 'filter': null},
+                  );
                 },
               ),
             ],
@@ -622,7 +695,11 @@ class _OdometerScreenState extends ConsumerState<OdometerScreen> {
             SizedBox(height: 12.h),
             Text(
               'Unable to load summary',
-              style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+              style: TextStyle(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
             ),
             SizedBox(height: 8.h),
             Text(
@@ -638,19 +715,35 @@ class _OdometerScreenState extends ConsumerState<OdometerScreen> {
   Widget _summaryStatItem(String value, String label) {
     return Column(
       children: [
-        Text(value, style: TextStyle(fontSize: 22.sp, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 22.sp,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
+        ),
         SizedBox(height: 4.h),
-        Text(label, style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary)),
+        Text(
+          label,
+          style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
+        ),
       ],
     );
   }
 
   void _showStartTripDialog(BuildContext context) {
-    showDialog(context: context, builder: (context) => const OdometerReadingForm(isStop: false));
+    showDialog(
+      context: context,
+      builder: (context) => const OdometerReadingForm(isStop: false),
+    );
   }
 
   void _showStopTripDialog(BuildContext context, OdometerReading trip) {
-    showDialog(context: context, builder: (context) => OdometerReadingForm(isStop: true, activeData: trip));
+    showDialog(
+      context: context,
+      builder: (context) => OdometerReadingForm(isStop: true, activeData: trip),
+    );
   }
 }
 
@@ -661,7 +754,8 @@ class OdometerReadingForm extends ConsumerStatefulWidget {
   const OdometerReadingForm({super.key, required this.isStop, this.activeData});
 
   @override
-  ConsumerState<OdometerReadingForm> createState() => _OdometerReadingFormState();
+  ConsumerState<OdometerReadingForm> createState() =>
+      _OdometerReadingFormState();
 }
 
 class _OdometerReadingFormState extends ConsumerState<OdometerReadingForm> {
@@ -678,7 +772,8 @@ class _OdometerReadingFormState extends ConsumerState<OdometerReadingForm> {
     super.initState();
     if (widget.isStop && widget.activeData != null) {
       unit = widget.activeData!.unit.toUpperCase();
-      _readingController.text = widget.activeData!.stopReading?.toStringAsFixed(0) ?? "";
+      _readingController.text =
+          widget.activeData!.stopReading?.toStringAsFixed(0) ?? "";
       _descriptionController.text = widget.activeData!.description ?? "";
     }
   }
@@ -695,7 +790,9 @@ class _OdometerReadingFormState extends ConsumerState<OdometerReadingForm> {
     double? currentVal = double.tryParse(_readingController.text);
     if (currentVal != null) {
       const double factor = 0.621371;
-      double converted = (newUnit == "MILES") ? currentVal * factor : currentVal / factor;
+      double converted = (newUnit == "MILES")
+          ? currentVal * factor
+          : currentVal / factor;
       _readingController.text = converted.toStringAsFixed(0);
     }
     setState(() => unit = newUnit);
@@ -720,12 +817,19 @@ class _OdometerReadingFormState extends ConsumerState<OdometerReadingForm> {
                 children: [
                   Text(
                     widget.isStop ? "Stop Trip" : "New Trip",
-                    style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                    style: TextStyle(
+                      fontSize: 20.sp,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, color: AppColors.textSecondary),
+                    icon: const Icon(
+                      Icons.close,
+                      color: AppColors.textSecondary,
+                    ),
                     onPressed: () => context.pop(),
-                  )
+                  ),
                 ],
               ),
               SizedBox(height: 20.h),
@@ -733,7 +837,13 @@ class _OdometerReadingFormState extends ConsumerState<OdometerReadingForm> {
               if (widget.isStop && widget.activeData != null)
                 _buildTripStartInfo(widget.activeData!),
 
-              const Text("Odometer Reading", style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+              const Text(
+                "Odometer Reading",
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
               SizedBox(height: 8.h),
               Row(
                 children: [
@@ -743,14 +853,18 @@ class _OdometerReadingFormState extends ConsumerState<OdometerReadingForm> {
                       hintText: "000000",
                       keyboardType: TextInputType.number,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      validator: (v) => (v == null || v.isEmpty) ? "Required" : null,
+                      validator: (v) =>
+                          (v == null || v.isEmpty) ? "Required" : null,
                     ),
                   ),
                   SizedBox(width: 10.w),
                   // Show unit toggle for new trip, or display locked unit for stop trip
                   widget.isStop
                       ? Container(
-                          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 16.w,
+                            vertical: 12.h,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.background,
                             borderRadius: BorderRadius.circular(8.r),
@@ -770,16 +884,31 @@ class _OdometerReadingFormState extends ConsumerState<OdometerReadingForm> {
               ),
               SizedBox(height: 20.h),
 
-              const Text("Photo Proof", style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+              const Text(
+                "Photo Proof",
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
               SizedBox(height: 8.h),
               _buildImagePicker(),
               if (_showValidationErrors && _image == null)
-                Text("Photo required", style: TextStyle(color: AppColors.error, fontSize: 12.sp)),
+                Text(
+                  "Photo required",
+                  style: TextStyle(color: AppColors.error, fontSize: 12.sp),
+                ),
 
               SizedBox(height: 20.h),
 
               // DESCRIPTION FIELD IS NOW REQUIRED
-              const Text("Description", style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+              const Text(
+                "Description",
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
               SizedBox(height: 8.h),
               PrimaryTextField(
                 controller: _descriptionController,
@@ -798,7 +927,7 @@ class _OdometerReadingFormState extends ConsumerState<OdometerReadingForm> {
                 label: widget.isStop ? "Complete Trip" : "Start Trip",
                 onPressed: _isSubmitting ? null : _handleSubmit,
                 isLoading: _isSubmitting,
-              )
+              ),
             ],
           ),
         ),
@@ -808,7 +937,10 @@ class _OdometerReadingFormState extends ConsumerState<OdometerReadingForm> {
 
   Widget _buildUnitToggle() {
     return Container(
-      decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(8.r)),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(8.r),
+      ),
       child: Row(children: [_unitBtn("KM"), _unitBtn("MILES")]),
     );
   }
@@ -819,8 +951,18 @@ class _OdometerReadingFormState extends ConsumerState<OdometerReadingForm> {
       onTap: () => _toggleUnit(u),
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
-        decoration: BoxDecoration(color: selected ? AppColors.secondary : Colors.transparent, borderRadius: BorderRadius.circular(8.r)),
-        child: Text(u, style: TextStyle(color: selected ? Colors.white : AppColors.textSecondary, fontWeight: FontWeight.bold, fontSize: 12.sp)),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.secondary : Colors.transparent,
+          borderRadius: BorderRadius.circular(8.r),
+        ),
+        child: Text(
+          u,
+          style: TextStyle(
+            color: selected ? Colors.white : AppColors.textSecondary,
+            fontWeight: FontWeight.bold,
+            fontSize: 12.sp,
+          ),
+        ),
       ),
     );
   }
@@ -828,7 +970,9 @@ class _OdometerReadingFormState extends ConsumerState<OdometerReadingForm> {
   Widget _buildImagePicker() {
     return GestureDetector(
       onTap: () async {
-        final x = await ref.read(odometerViewModelProvider.notifier).pickImage();
+        final x = await ref
+            .read(odometerViewModelProvider.notifier)
+            .pickImage();
         if (x != null) {
           setState(() {
             _image = File(x.path);
@@ -843,7 +987,9 @@ class _OdometerReadingFormState extends ConsumerState<OdometerReadingForm> {
           color: AppColors.background,
           borderRadius: BorderRadius.circular(12.r),
           border: Border.all(
-            color: _image == null ? AppColors.secondary.withValues(alpha: 0.5) : AppColors.border,
+            color: _image == null
+                ? AppColors.secondary.withValues(alpha: 0.5)
+                : AppColors.border,
             width: _image == null ? 1.5 : 1,
           ),
         ),
@@ -857,7 +1003,11 @@ class _OdometerReadingFormState extends ConsumerState<OdometerReadingForm> {
                       color: AppColors.secondary.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.camera_alt, color: AppColors.secondary, size: 28.sp),
+                    child: Icon(
+                      Icons.camera_alt,
+                      color: AppColors.secondary,
+                      size: 28.sp,
+                    ),
                   ),
                   SizedBox(height: 8.h),
                   Text(
@@ -874,7 +1024,12 @@ class _OdometerReadingFormState extends ConsumerState<OdometerReadingForm> {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12.r),
-                    child: Image.file(_image!, fit: BoxFit.cover, width: double.infinity, height: double.infinity),
+                    child: Image.file(
+                      _image!,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
+                    ),
                   ),
                   Positioned(
                     top: 8.h,
@@ -889,7 +1044,11 @@ class _OdometerReadingFormState extends ConsumerState<OdometerReadingForm> {
                           color: Colors.black.withValues(alpha: 0.6),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(Icons.close, color: Colors.white, size: 18.sp),
+                        child: Icon(
+                          Icons.close,
+                          color: Colors.white,
+                          size: 18.sp,
+                        ),
                       ),
                     ),
                   ),
@@ -900,7 +1059,9 @@ class _OdometerReadingFormState extends ConsumerState<OdometerReadingForm> {
   }
 
   Widget _buildTripStartInfo(OdometerReading tripData) {
-    AppLogger.d('📸 Trip data - startReadingImage: ${tripData.startReadingImage}, description: ${tripData.description}');
+    AppLogger.d(
+      '📸 Trip data - startReadingImage: ${tripData.startReadingImage}, description: ${tripData.description}',
+    );
 
     final dio = ref.read(dioClientProvider);
     final baseUrl = dio.options.baseUrl;
@@ -933,7 +1094,11 @@ class _OdometerReadingFormState extends ConsumerState<OdometerReadingForm> {
                   color: AppColors.secondary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8.r),
                 ),
-                child: Icon(Icons.info_outline, color: AppColors.secondary, size: 18.sp),
+                child: Icon(
+                  Icons.info_outline,
+                  color: AppColors.secondary,
+                  size: 18.sp,
+                ),
               ),
               SizedBox(width: 10.w),
               Text(
@@ -987,19 +1152,25 @@ class _OdometerReadingFormState extends ConsumerState<OdometerReadingForm> {
                 placeholder: (context, url) => Container(
                   height: 100.h,
                   color: AppColors.background,
-                  child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                  child: const Center(
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
                 ),
                 errorWidget: (context, url, error) => Container(
                   height: 100.h,
                   color: AppColors.background,
                   child: const Center(
-                    child: Icon(Icons.broken_image, color: AppColors.textSecondary),
+                    child: Icon(
+                      Icons.broken_image,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ),
               ),
             ),
           ],
-          if (tripData.description != null && tripData.description!.isNotEmpty) ...[
+          if (tripData.description != null &&
+              tripData.description!.isNotEmpty) ...[
             SizedBox(height: 12.h),
             Text(
               "Description",
@@ -1012,10 +1183,7 @@ class _OdometerReadingFormState extends ConsumerState<OdometerReadingForm> {
             SizedBox(height: 4.h),
             Text(
               tripData.description!,
-              style: TextStyle(
-                fontSize: 13.sp,
-                color: AppColors.textPrimary,
-              ),
+              style: TextStyle(fontSize: 13.sp, color: AppColors.textPrimary),
             ),
           ],
         ],
@@ -1063,18 +1231,22 @@ class _OdometerReadingFormState extends ConsumerState<OdometerReadingForm> {
       setState(() => _isSubmitting = true);
       try {
         if (widget.isStop) {
-          await ref.read(odometerViewModelProvider.notifier).stopTrip(
-            reading: val,
-            imagePath: _image!.path,
-            description: _descriptionController.text,
-          );
+          await ref
+              .read(odometerViewModelProvider.notifier)
+              .stopTrip(
+                reading: val,
+                imagePath: _image!.path,
+                description: _descriptionController.text,
+              );
         } else {
-          await ref.read(odometerViewModelProvider.notifier).startTrip(
-            reading: val,
-            unit: unit,
-            imagePath: _image!.path,
-            description: _descriptionController.text,
-          );
+          await ref
+              .read(odometerViewModelProvider.notifier)
+              .startTrip(
+                reading: val,
+                unit: unit,
+                imagePath: _image!.path,
+                description: _descriptionController.text,
+              );
         }
         if (mounted) context.pop();
       } catch (e) {

@@ -1,16 +1,17 @@
 import 'dart:async';
+
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
-import 'package:sales_sphere/core/services/location_tracking_service.dart';
-import 'package:sales_sphere/core/services/tracking_socket_service.dart';
-import 'package:sales_sphere/core/services/offline_queue_service.dart';
 import 'package:sales_sphere/core/services/background_tracking_service.dart';
+import 'package:sales_sphere/core/services/location_tracking_service.dart';
 import 'package:sales_sphere/core/services/notification_permission_service.dart';
+import 'package:sales_sphere/core/services/offline_queue_service.dart';
+import 'package:sales_sphere/core/services/tracking_socket_service.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:sales_sphere/features/beat_plan/models/active_tracking_session.models.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Tracking Coordinator
 /// Master service that orchestrates all tracking components:
@@ -20,20 +21,24 @@ import 'package:sales_sphere/features/beat_plan/models/active_tracking_session.m
 /// - Background service (keep alive)
 class TrackingCoordinator {
   TrackingCoordinator._();
+
   static final TrackingCoordinator instance = TrackingCoordinator._();
 
   // Service instances
-  final LocationTrackingService _locationService = LocationTrackingService.instance;
+  final LocationTrackingService _locationService =
+      LocationTrackingService.instance;
   final TrackingSocketService _socketService = TrackingSocketService.instance;
   final OfflineQueueService _queueService = OfflineQueueService.instance;
-  final BackgroundTrackingService _backgroundService = BackgroundTrackingService.instance;
+  final BackgroundTrackingService _backgroundService =
+      BackgroundTrackingService.instance;
 
   // Subscriptions
   StreamSubscription<LocationUpdate>? _locationSubscription;
   StreamSubscription<Map<String, dynamic>?>? _backgroundServiceSubscription;
   StreamSubscription<TrackingStartedEvent>? _trackingStartedSubscription;
   StreamSubscription<TrackingStoppedEvent>? _trackingStoppedSubscription;
-  StreamSubscription<TrackingForceStoppedEvent>? _trackingForceStoppedSubscription;
+  StreamSubscription<TrackingForceStoppedEvent>?
+  _trackingForceStoppedSubscription;
   StreamSubscription<String>? _socketErrorSubscription;
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
 
@@ -94,7 +99,9 @@ class TrackingCoordinator {
       await _backgroundService.initialize();
 
       // Listen to connectivity changes
-      _connectivitySubscription = Connectivity().onConnectivityChanged.listen(_handleConnectivityChange);
+      _connectivitySubscription = Connectivity().onConnectivityChanged.listen(
+        _handleConnectivityChange,
+      );
 
       // Check initial connectivity
       final connectivity = await Connectivity().checkConnectivity();
@@ -114,7 +121,9 @@ class TrackingCoordinator {
   /// Get Dio client instance
   Dio _getDioClient() {
     if (_dio == null) {
-      throw Exception('Dio client not initialized. Call initialize() with a Dio instance first.');
+      throw Exception(
+        'Dio client not initialized. Call initialize() with a Dio instance first.',
+      );
     }
     return _dio!;
   }
@@ -125,22 +134,29 @@ class TrackingCoordinator {
       AppLogger.i('🔍 Checking for active tracking sessions on server...');
 
       final dio = _getDioClient();
-      final response = await dio.get(ApiEndpoints.activeTrackingSessions).timeout(
-        const Duration(seconds: 10),
-        onTimeout: () {
-          AppLogger.w('⚠️ Active sessions API timeout');
-          throw TimeoutException('API timeout');
-        },
-      );
+      final response = await dio
+          .get(ApiEndpoints.activeTrackingSessions)
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () {
+              AppLogger.w('⚠️ Active sessions API timeout');
+              throw TimeoutException('API timeout');
+            },
+          );
 
       if (response.statusCode == 200) {
-        final sessionResponse = ActiveTrackingSessionResponse.fromJson(response.data);
+        final sessionResponse = ActiveTrackingSessionResponse.fromJson(
+          response.data,
+        );
 
         if (sessionResponse.data.isNotEmpty) {
-          final session = sessionResponse.data.first; // Get first active session
+          final session =
+              sessionResponse.data.first; // Get first active session
           AppLogger.i('✅ Found active tracking session:');
           AppLogger.i('   • Session ID: ${session.sessionId}');
-          AppLogger.i('   • Beat Plan: ${session.beatPlan.name} (${session.beatPlan.id})');
+          AppLogger.i(
+            '   • Beat Plan: ${session.beatPlan.name} (${session.beatPlan.id})',
+          );
           AppLogger.i('   • Status: ${session.beatPlan.status}');
           return session;
         } else {
@@ -148,7 +164,9 @@ class TrackingCoordinator {
           return null;
         }
       } else {
-        AppLogger.w('⚠️ Active sessions API returned status: ${response.statusCode}');
+        AppLogger.w(
+          '⚠️ Active sessions API returned status: ${response.statusCode}',
+        );
         return null;
       }
     } catch (e) {
@@ -165,56 +183,76 @@ class TrackingCoordinator {
       final activeSession = await _fetchActiveTrackingSession();
 
       if (activeSession != null) {
-        AppLogger.i('🔄 Detected active tracking session on server, resuming...');
+        AppLogger.i(
+          '🔄 Detected active tracking session on server, resuming...',
+        );
 
         final beatPlanId = activeSession.beatPlan.id;
         final sessionId = activeSession.sessionId;
 
-        AppLogger.i('📍 Resuming tracking for beat plan: ${activeSession.beatPlan.name}');
+        AppLogger.i(
+          '📍 Resuming tracking for beat plan: ${activeSession.beatPlan.name}',
+        );
         AppLogger.i('🔑 Session ID: $sessionId');
 
         // Get progress from server response
         // The active session endpoint might not include progress, so we need to check
         var totalDirectories = activeSession.beatPlan.progress.totalDirectories;
-        var visitedDirectories = activeSession.beatPlan.progress.visitedDirectories;
+        var visitedDirectories =
+            activeSession.beatPlan.progress.visitedDirectories;
 
-        AppLogger.i('📊 Active session progress: $visitedDirectories/$totalDirectories directories');
+        AppLogger.i(
+          '📊 Active session progress: $visitedDirectories/$totalDirectories directories',
+        );
 
         // If the active session endpoint doesn't return progress data, fetch from details endpoint
         if (totalDirectories <= 0) {
-          AppLogger.w('⚠️ Active session endpoint returned no progress, fetching from details endpoint...');
+          AppLogger.w(
+            '⚠️ Active session endpoint returned no progress, fetching from details endpoint...',
+          );
           try {
             final dio = _getDioClient();
-            final detailsResponse = await dio.get('/api/v1/beat-plans/$beatPlanId').timeout(
-              const Duration(seconds: 10),
-              onTimeout: () {
-                AppLogger.w('⚠️ Beat plan details API timeout');
-                throw TimeoutException('API timeout');
-              },
-            );
+            final detailsResponse = await dio
+                .get('/api/v1/beat-plans/$beatPlanId')
+                .timeout(
+                  const Duration(seconds: 10),
+                  onTimeout: () {
+                    AppLogger.w('⚠️ Beat plan details API timeout');
+                    throw TimeoutException('API timeout');
+                  },
+                );
 
-            if (detailsResponse.statusCode == 200 && detailsResponse.data['success'] == true) {
+            if (detailsResponse.statusCode == 200 &&
+                detailsResponse.data['success'] == true) {
               final data = detailsResponse.data['data'];
               final progress = data['progress'] as Map<String, dynamic>?;
               if (progress != null) {
                 totalDirectories = progress['totalDirectories'] ?? 0;
                 visitedDirectories = progress['visitedDirectories'] ?? 0;
-                AppLogger.i('📊 Details endpoint progress: $visitedDirectories/$totalDirectories directories');
+                AppLogger.i(
+                  '📊 Details endpoint progress: $visitedDirectories/$totalDirectories directories',
+                );
               }
             }
           } catch (e) {
-            AppLogger.w('⚠️ Could not fetch progress from details endpoint: $e');
+            AppLogger.w(
+              '⚠️ Could not fetch progress from details endpoint: $e',
+            );
             // Fall back to SharedPreferences if available
             final prefs = await SharedPreferences.getInstance();
             totalDirectories = prefs.getInt('totalDirectories') ?? 0;
             visitedDirectories = prefs.getInt('visitedDirectories') ?? 0;
-            AppLogger.i('📊 Fallback to SharedPreferences: $visitedDirectories/$totalDirectories directories');
+            AppLogger.i(
+              '📊 Fallback to SharedPreferences: $visitedDirectories/$totalDirectories directories',
+            );
           }
         }
 
         // Validate the progress data
         if (totalDirectories <= 0) {
-          AppLogger.w('⚠️ Could not get valid totalDirectories: $totalDirectories');
+          AppLogger.w(
+            '⚠️ Could not get valid totalDirectories: $totalDirectories',
+          );
           // Use 1 as minimum to prevent auto-stop
           totalDirectories = 1;
         }
@@ -225,7 +263,9 @@ class TrackingCoordinator {
         }
 
         if (visitedDirectories > totalDirectories && totalDirectories > 0) {
-          AppLogger.e('❌ Invalid progress: visited($visitedDirectories) > total($totalDirectories)');
+          AppLogger.e(
+            '❌ Invalid progress: visited($visitedDirectories) > total($totalDirectories)',
+          );
           // Reset visited to avoid auto-stop
           visitedDirectories = 0;
         }
@@ -248,7 +288,9 @@ class TrackingCoordinator {
         await prefs.setInt('totalDirectories', totalDirectories);
         await prefs.setInt('visitedDirectories', visitedDirectories);
 
-        AppLogger.i('📊 Final resumed progress: $visitedDirectories/$totalDirectories directories');
+        AppLogger.i(
+          '📊 Final resumed progress: $visitedDirectories/$totalDirectories directories',
+        );
 
         // Reconnect to socket with session ID
         try {
@@ -262,7 +304,10 @@ class TrackingCoordinator {
 
           if (connected) {
             AppLogger.i('✅ Socket reconnected');
-            await _socketService.startTracking(beatPlanId, sessionId: sessionId);
+            await _socketService.startTracking(
+              beatPlanId,
+              sessionId: sessionId,
+            );
           } else {
             AppLogger.w('⚠️ Socket reconnection failed, will queue offline');
           }
@@ -290,12 +335,13 @@ class TrackingCoordinator {
         }
 
         // Subscribe to background service updates
-        _backgroundServiceSubscription = _backgroundService.onServiceUpdate.listen(
-          _handleBackgroundServiceUpdate,
-          onError: (error) {
-            AppLogger.e('❌ Background service stream error: $error');
-          },
-        );
+        _backgroundServiceSubscription = _backgroundService.onServiceUpdate
+            .listen(
+              _handleBackgroundServiceUpdate,
+              onError: (error) {
+                AppLogger.e('❌ Background service stream error: $error');
+              },
+            );
 
         // Cancel any existing socket subscriptions before creating new ones
         await _cancelSocketSubscriptions();
@@ -306,9 +352,9 @@ class TrackingCoordinator {
         );
 
         // Subscribe to tracking force-stopped event (when server stops tracking)
-        _trackingForceStoppedSubscription = _socketService.onTrackingForceStopped.listen(
-          _handleTrackingForceStopped,
-        );
+        _trackingForceStoppedSubscription = _socketService
+            .onTrackingForceStopped
+            .listen(_handleTrackingForceStopped);
 
         // Subscribe to socket errors
         _socketErrorSubscription = _socketService.onError.listen(
@@ -326,130 +372,145 @@ class TrackingCoordinator {
 
         AppLogger.i('✅ Tracking session resumed successfully from server');
       } else {
-          // No active session on server, check local state as fallback
-          AppLogger.d('No active session on server, checking local state...');
+        // No active session on server, check local state as fallback
+        AppLogger.d('No active session on server, checking local state...');
 
-          final prefs = await SharedPreferences.getInstance();
-          final beatPlanId = prefs.getString('beatPlanId');
-          final sessionId = prefs.getString('sessionId');
-          final isTrackingFlag = prefs.getBool('isTracking') ?? false;
+        final prefs = await SharedPreferences.getInstance();
+        final beatPlanId = prefs.getString('beatPlanId');
+        final sessionId = prefs.getString('sessionId');
+        final isTrackingFlag = prefs.getBool('isTracking') ?? false;
 
-          // Check if background service is also running
-          final isBackgroundServiceRunning = await _backgroundService.isRunning();
+        // Check if background service is also running
+        final isBackgroundServiceRunning = await _backgroundService.isRunning();
 
-          if (beatPlanId != null && isTrackingFlag && isBackgroundServiceRunning) {
-            AppLogger.i('🔄 Found local tracking state, attempting to resume...');
-            AppLogger.i('📍 Beat plan ID: $beatPlanId');
-            if (sessionId != null) {
-              AppLogger.i('🔑 Session ID: $sessionId');
-            }
+        if (beatPlanId != null &&
+            isTrackingFlag &&
+            isBackgroundServiceRunning) {
+          AppLogger.i('🔄 Found local tracking state, attempting to resume...');
+          AppLogger.i('📍 Beat plan ID: $beatPlanId');
+          if (sessionId != null) {
+            AppLogger.i('🔑 Session ID: $sessionId');
+          }
 
-            // Load progress info from SharedPreferences
-            var totalDirectories = prefs.getInt('totalDirectories') ?? 0;
-            var visitedDirectories = prefs.getInt('visitedDirectories') ?? 0;
+          // Load progress info from SharedPreferences
+          var totalDirectories = prefs.getInt('totalDirectories') ?? 0;
+          var visitedDirectories = prefs.getInt('visitedDirectories') ?? 0;
 
-            // Validate the progress data from SharedPreferences
-            if (totalDirectories <= 0) {
-              AppLogger.w('⚠️ SharedPreferences has invalid totalDirectories: $totalDirectories');
-            }
+          // Validate the progress data from SharedPreferences
+          if (totalDirectories <= 0) {
+            AppLogger.w(
+              '⚠️ SharedPreferences has invalid totalDirectories: $totalDirectories',
+            );
+          }
 
-            if (visitedDirectories < 0) {
-              AppLogger.w('⚠️ SharedPreferences has invalid visitedDirectories: $visitedDirectories');
-              visitedDirectories = 0;
-            }
+          if (visitedDirectories < 0) {
+            AppLogger.w(
+              '⚠️ SharedPreferences has invalid visitedDirectories: $visitedDirectories',
+            );
+            visitedDirectories = 0;
+          }
 
-            if (visitedDirectories > totalDirectories && totalDirectories > 0) {
-              AppLogger.e('❌ Invalid progress in SharedPreferences: visited($visitedDirectories) > total($totalDirectories)');
-              // Reset visited to avoid auto-stop with stale data
-              AppLogger.w('⚠️ Resetting visitedDirectories to 0 due to stale data');
-              visitedDirectories = 0;
-              await prefs.setInt('visitedDirectories', 0);
-            }
+          if (visitedDirectories > totalDirectories && totalDirectories > 0) {
+            AppLogger.e(
+              '❌ Invalid progress in SharedPreferences: visited($visitedDirectories) > total($totalDirectories)',
+            );
+            // Reset visited to avoid auto-stop with stale data
+            AppLogger.w(
+              '⚠️ Resetting visitedDirectories to 0 due to stale data',
+            );
+            visitedDirectories = 0;
+            await prefs.setInt('visitedDirectories', 0);
+          }
 
-            // Set tracking state
-            _currentBeatPlanId = beatPlanId;
-            _currentSessionId = sessionId;
-            _isTracking = true;
-            _trackingStartTime = DateTime.now();
-            _totalDirectories = totalDirectories;
-            _visitedDirectories = visitedDirectories;
+          // Set tracking state
+          _currentBeatPlanId = beatPlanId;
+          _currentSessionId = sessionId;
+          _isTracking = true;
+          _trackingStartTime = DateTime.now();
+          _totalDirectories = totalDirectories;
+          _visitedDirectories = visitedDirectories;
 
-            AppLogger.i('📊 Resumed progress: $visitedDirectories/$totalDirectories directories');
+          AppLogger.i(
+            '📊 Resumed progress: $visitedDirectories/$totalDirectories directories',
+          );
 
-            // Try to reconnect to socket
-            try {
-              final connected = await _socketService.connect().timeout(
-                const Duration(seconds: 10),
-                onTimeout: () {
-                  AppLogger.w('⚠️ Socket reconnection timeout');
-                  return false;
-                },
-              );
-
-              if (connected) {
-                AppLogger.i('✅ Socket reconnected');
-                await _socketService.startTracking(beatPlanId, sessionId: sessionId);
-              } else {
-                AppLogger.w('⚠️ Socket reconnection failed, will queue offline');
-              }
-            } catch (e) {
-              AppLogger.e('❌ Socket reconnection error: $e');
-            }
-
-            // Start location tracking
-            try {
-              await _locationService.startTracking(
-                accuracy: LocationAccuracy.high,
-                distanceFilter: 10.0,
-                enableBackgroundUpdates: true,
-              );
-
-              _locationSubscription = _locationService.locationStream.listen(
-                _handleLocationUpdate,
-                onError: (error) {
-                  AppLogger.e('❌ Location stream error: $error');
-                },
-              );
-            } catch (e) {
-              AppLogger.w('⚠️ Could not start foreground location: $e');
-            }
-
-            // Subscribe to services
-            _backgroundServiceSubscription = _backgroundService.onServiceUpdate.listen(
-              _handleBackgroundServiceUpdate,
-              onError: (error) {
-                AppLogger.e('❌ Background service stream error: $error');
+          // Try to reconnect to socket
+          try {
+            final connected = await _socketService.connect().timeout(
+              const Duration(seconds: 10),
+              onTimeout: () {
+                AppLogger.w('⚠️ Socket reconnection timeout');
+                return false;
               },
             );
 
-            // Cancel any existing socket subscriptions before creating new ones
-            await _cancelSocketSubscriptions();
-
-            _trackingStoppedSubscription = _socketService.onTrackingStopped.listen(
-              _handleTrackingStopped,
-            );
-
-            // Subscribe to tracking force-stopped event (when server stops tracking)
-            _trackingForceStoppedSubscription = _socketService.onTrackingForceStopped.listen(
-              _handleTrackingForceStopped,
-            );
-
-            _socketErrorSubscription = _socketService.onError.listen(
-              _handleSocketError,
-            );
-
-            // Start sync timer
-            _startSyncTimer();
-
-            // Update state
-            _emitState(TrackingState.active);
-            _emitStats();
-
-            AppLogger.i('✅ Tracking session resumed from local state');
-          } else {
-            AppLogger.d('No active tracking session detected (local or server)');
+            if (connected) {
+              AppLogger.i('✅ Socket reconnected');
+              await _socketService.startTracking(
+                beatPlanId,
+                sessionId: sessionId,
+              );
+            } else {
+              AppLogger.w('⚠️ Socket reconnection failed, will queue offline');
+            }
+          } catch (e) {
+            AppLogger.e('❌ Socket reconnection error: $e');
           }
+
+          // Start location tracking
+          try {
+            await _locationService.startTracking(
+              accuracy: LocationAccuracy.high,
+              distanceFilter: 10.0,
+              enableBackgroundUpdates: true,
+            );
+
+            _locationSubscription = _locationService.locationStream.listen(
+              _handleLocationUpdate,
+              onError: (error) {
+                AppLogger.e('❌ Location stream error: $error');
+              },
+            );
+          } catch (e) {
+            AppLogger.w('⚠️ Could not start foreground location: $e');
+          }
+
+          // Subscribe to services
+          _backgroundServiceSubscription = _backgroundService.onServiceUpdate
+              .listen(
+                _handleBackgroundServiceUpdate,
+                onError: (error) {
+                  AppLogger.e('❌ Background service stream error: $error');
+                },
+              );
+
+          // Cancel any existing socket subscriptions before creating new ones
+          await _cancelSocketSubscriptions();
+
+          _trackingStoppedSubscription = _socketService.onTrackingStopped
+              .listen(_handleTrackingStopped);
+
+          // Subscribe to tracking force-stopped event (when server stops tracking)
+          _trackingForceStoppedSubscription = _socketService
+              .onTrackingForceStopped
+              .listen(_handleTrackingForceStopped);
+
+          _socketErrorSubscription = _socketService.onError.listen(
+            _handleSocketError,
+          );
+
+          // Start sync timer
+          _startSyncTimer();
+
+          // Update state
+          _emitState(TrackingState.active);
+          _emitStats();
+
+          AppLogger.i('✅ Tracking session resumed from local state');
+        } else {
+          AppLogger.d('No active tracking session detected (local or server)');
         }
+      }
     } catch (e, stack) {
       AppLogger.e('❌ Error checking/resuming tracking: $e');
       AppLogger.e('Stack trace: $stack');
@@ -469,7 +530,9 @@ class TrackingCoordinator {
 
     try {
       AppLogger.i('🎯 Starting tracking for beat plan: $beatPlanId');
-      AppLogger.i('📊 Progress: $visitedDirectories/$totalDirectories directories');
+      AppLogger.i(
+        '📊 Progress: $visitedDirectories/$totalDirectories directories',
+      );
 
       // Check notification permission (required for background service on Android 13+)
       final notificationPermission = NotificationPermissionService.instance;
@@ -480,7 +543,9 @@ class TrackingCoordinator {
         final granted = await notificationPermission.requestPermission();
 
         if (!granted) {
-          AppLogger.e('❌ Notification permission denied - tracking notifications will not work');
+          AppLogger.e(
+            '❌ Notification permission denied - tracking notifications will not work',
+          );
           // Continue anyway - tracking will still work, just no notifications
         }
       }
@@ -505,7 +570,9 @@ class TrackingCoordinator {
         connected = await _socketService.connect().timeout(
           const Duration(seconds: 10),
           onTimeout: () {
-            AppLogger.w('⚠️ Socket connection timeout, continuing in offline mode');
+            AppLogger.w(
+              '⚠️ Socket connection timeout, continuing in offline mode',
+            );
             return false;
           },
         );
@@ -515,20 +582,23 @@ class TrackingCoordinator {
           await _socketService.startTracking(beatPlanId);
 
           // Subscribe to tracking-started event to capture sessionId
-          _trackingStartedSubscription = _socketService.onTrackingStarted.listen((event) {
-            if (event.success && event.trackingSessionId.isNotEmpty) {
-              _currentSessionId = event.trackingSessionId;
-              AppLogger.i('🔑 Session ID received: $_currentSessionId');
+          _trackingStartedSubscription = _socketService.onTrackingStarted
+              .listen((event) {
+                if (event.success && event.trackingSessionId.isNotEmpty) {
+                  _currentSessionId = event.trackingSessionId;
+                  AppLogger.i('🔑 Session ID received: $_currentSessionId');
 
-              // Save sessionId to SharedPreferences for resume capability
-              SharedPreferences.getInstance().then((prefs) {
-                prefs.setString('sessionId', _currentSessionId!);
-                AppLogger.d('✅ Session ID saved to SharedPreferences');
+                  // Save sessionId to SharedPreferences for resume capability
+                  SharedPreferences.getInstance().then((prefs) {
+                    prefs.setString('sessionId', _currentSessionId!);
+                    AppLogger.d('✅ Session ID saved to SharedPreferences');
+                  });
+                }
               });
-            }
-          });
         } else {
-          AppLogger.w('⚠️ Socket connection failed, will queue locations offline');
+          AppLogger.w(
+            '⚠️ Socket connection failed, will queue locations offline',
+          );
         }
       } catch (e) {
         AppLogger.e('❌ Socket connection error: $e');
@@ -561,12 +631,13 @@ class TrackingCoordinator {
 
       // Subscribe to location updates from background service
       // This is the PRIMARY source of location data when app is backgrounded
-      _backgroundServiceSubscription = _backgroundService.onServiceUpdate.listen(
-        _handleBackgroundServiceUpdate,
-        onError: (error) {
-          AppLogger.e('❌ Background service stream error: $error');
-        },
-      );
+      _backgroundServiceSubscription = _backgroundService.onServiceUpdate
+          .listen(
+            _handleBackgroundServiceUpdate,
+            onError: (error) {
+              AppLogger.e('❌ Background service stream error: $error');
+            },
+          );
 
       // Cancel any existing socket subscriptions before creating new ones
       await _cancelSocketSubscriptions();
@@ -577,9 +648,8 @@ class TrackingCoordinator {
       );
 
       // Subscribe to tracking force-stopped event (when server stops tracking)
-      _trackingForceStoppedSubscription = _socketService.onTrackingForceStopped.listen(
-        _handleTrackingForceStopped,
-      );
+      _trackingForceStoppedSubscription = _socketService.onTrackingForceStopped
+          .listen(_handleTrackingForceStopped);
 
       // Subscribe to socket errors
       _socketErrorSubscription = _socketService.onError.listen(
@@ -744,17 +814,23 @@ class TrackingCoordinator {
     }
 
     try {
-      AppLogger.i('📊 Updating visit progress: $visitedDirectories/$_totalDirectories');
+      AppLogger.i(
+        '📊 Updating visit progress: $visitedDirectories/$_totalDirectories',
+      );
 
       // Validate input
       if (visitedDirectories < 0) {
-        AppLogger.e('❌ Invalid visitedDirectories: $visitedDirectories (negative)');
+        AppLogger.e(
+          '❌ Invalid visitedDirectories: $visitedDirectories (negative)',
+        );
         return;
       }
 
       // Check for stale data that would cause premature auto-stop
       if (visitedDirectories > _totalDirectories && _totalDirectories > 0) {
-        AppLogger.e('❌ Invalid progress: visited($visitedDirectories) > total($_totalDirectories)');
+        AppLogger.e(
+          '❌ Invalid progress: visited($visitedDirectories) > total($_totalDirectories)',
+        );
         AppLogger.w('⚠️ Skipping auto-stop check due to invalid data');
         // Still update the value and emit stats, but don't auto-stop
         _visitedDirectories = visitedDirectories;
@@ -783,7 +859,9 @@ class TrackingCoordinator {
       // Auto-stop when all directories are visited
       if (_totalDirectories > 0 && _visitedDirectories >= _totalDirectories) {
         AppLogger.i('🎉 All directories visited! Auto-stopping tracking...');
-        await Future.delayed(const Duration(seconds: 2)); // Brief delay for notification
+        await Future.delayed(
+          const Duration(seconds: 2),
+        ); // Brief delay for notification
         await stopTracking();
       }
     } catch (e, stack) {
@@ -797,7 +875,9 @@ class TrackingCoordinator {
     if (!_isTracking || _currentBeatPlanId == null) return;
 
     try {
-      AppLogger.d('📍 Foreground location update: ${update.latitude}, ${update.longitude}');
+      AppLogger.d(
+        '📍 Foreground location update: ${update.latitude}, ${update.longitude}',
+      );
 
       // Send to server if connected
       if (_socketService.isConnected) {
@@ -848,7 +928,9 @@ class TrackingCoordinator {
         return;
       }
 
-      AppLogger.d('📍 Background location update: $latitude, $longitude ${address != null ? "(with address)" : ""}');
+      AppLogger.d(
+        '📍 Background location update: $latitude, $longitude ${address != null ? "(with address)" : ""}',
+      );
 
       // Send to server if connected
       if (_socketService.isConnected) {
@@ -861,10 +943,14 @@ class TrackingCoordinator {
           heading: heading ?? 0.0,
           address: address, // Pass address to socket
         );
-        AppLogger.d('✅ Background location sent to server via socket ${address != null ? "(with address)" : ""}');
+        AppLogger.d(
+          '✅ Background location sent to server via socket ${address != null ? "(with address)" : ""}',
+        );
       } else {
         // Queue for later sync (though background service already saved to Hive)
-        AppLogger.d('📥 Socket not connected, background service has queued to Hive');
+        AppLogger.d(
+          '📥 Socket not connected, background service has queued to Hive',
+        );
       }
 
       // Emit stats update
@@ -927,7 +1013,9 @@ class TrackingCoordinator {
 
       // Sync queued locations
       if (_socketService.isConnected) {
-        final synced = await _queueService.syncQueue(socketService: _socketService);
+        final synced = await _queueService.syncQueue(
+          socketService: _socketService,
+        );
         AppLogger.i('✅ Synced $synced queued locations');
         await _queueService.clearSynced();
       }
@@ -948,7 +1036,9 @@ class TrackingCoordinator {
       // Attempt to sync queued locations
       if (_socketService.isConnected && _queueService.queueCount > 0) {
         AppLogger.d('🔄 Periodic sync: ${_queueService.queueCount} pending');
-        final synced = await _queueService.syncQueue(socketService: _socketService);
+        final synced = await _queueService.syncQueue(
+          socketService: _socketService,
+        );
         if (synced > 0) {
           AppLogger.i('✅ Synced $synced locations');
           await _queueService.clearSynced();

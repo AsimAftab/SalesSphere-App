@@ -71,8 +71,12 @@ class AboutScreen extends StatelessWidget {
 
             _buildSubsectionTitle('For Management:'),
             SizedBox(height: 8.h),
-            _buildBulletPoint('Comprehensive analytics and performance dashboards'),
-            _buildBulletPoint('Territory visibility and revenue trend analysis'),
+            _buildBulletPoint(
+              'Comprehensive analytics and performance dashboards',
+            ),
+            _buildBulletPoint(
+              'Territory visibility and revenue trend analysis',
+            ),
             _buildBulletPoint('Stock management and inventory reconciliation'),
             _buildBulletPoint('Role-based access control'),
             _buildBulletPoint('Data-driven insights for strategic decisions'),
@@ -111,22 +115,55 @@ class AboutScreen extends StatelessWidget {
             // Our Values Section
             _buildSectionTitle('Our Values', fontSize: 20),
             SizedBox(height: 12.h),
-            _buildValueItem('Innovation First', 'We continuously evolve our platform with cutting-edge technology to stay ahead of market needs.'),
-            _buildValueItem('Customer Success', 'Your growth is our success. We\'re committed to delivering measurable results and ROI.'),
-            _buildValueItem('Transparency', 'From pricing to data analytics, we believe in complete visibility and honest communication.'),
-            _buildValueItem('Simplicity', 'Powerful doesn\'t mean complicated. We design intuitive solutions that teams actually want to use.'),
-            _buildValueItem('Reliability', 'Your business can\'t afford downtime. We ensure 99.9% uptime with enterprise-grade infrastructure.'),
+            _buildValueItem(
+              'Innovation First',
+              'We continuously evolve our platform with cutting-edge technology to stay ahead of market needs.',
+            ),
+            _buildValueItem(
+              'Customer Success',
+              'Your growth is our success. We\'re committed to delivering measurable results and ROI.',
+            ),
+            _buildValueItem(
+              'Transparency',
+              'From pricing to data analytics, we believe in complete visibility and honest communication.',
+            ),
+            _buildValueItem(
+              'Simplicity',
+              'Powerful doesn\'t mean complicated. We design intuitive solutions that teams actually want to use.',
+            ),
+            _buildValueItem(
+              'Reliability',
+              'Your business can\'t afford downtime. We ensure 99.9% uptime with enterprise-grade infrastructure.',
+            ),
             SizedBox(height: 24.h),
 
             // Why SalesSphere Section
             _buildSectionTitle('Why SalesSphere?', fontSize: 20),
             SizedBox(height: 12.h),
-            _buildFeatureHighlight('Purpose-Built for Field Sales', 'Unlike generic CRM systems, SalesSphere is specifically engineered for the unique challenges of field operations.'),
-            _buildFeatureHighlight('Data-Driven Decisions', 'Turn field data into actionable insights with our intuitive analytics dashboard and AI-powered recommendations.'),
-            _buildFeatureHighlight('Quick Deployment', 'Get your team up and running in days, not months, with our streamlined onboarding process.'),
-            _buildFeatureHighlight('Mobile-First Design', 'Built for the field, optimized for mobile, with offline capabilities that keep your team productive anywhere.'),
-            _buildFeatureHighlight('Enterprise Security', 'Bank-level encryption, role-based access, and compliance with international data protection standards.'),
-            _buildFeatureHighlight('Dedicated Support', 'Our customer success team is with you every step of the way, from implementation to optimization.'),
+            _buildFeatureHighlight(
+              'Purpose-Built for Field Sales',
+              'Unlike generic CRM systems, SalesSphere is specifically engineered for the unique challenges of field operations.',
+            ),
+            _buildFeatureHighlight(
+              'Data-Driven Decisions',
+              'Turn field data into actionable insights with our intuitive analytics dashboard and AI-powered recommendations.',
+            ),
+            _buildFeatureHighlight(
+              'Quick Deployment',
+              'Get your team up and running in days, not months, with our streamlined onboarding process.',
+            ),
+            _buildFeatureHighlight(
+              'Mobile-First Design',
+              'Built for the field, optimized for mobile, with offline capabilities that keep your team productive anywhere.',
+            ),
+            _buildFeatureHighlight(
+              'Enterprise Security',
+              'Bank-level encryption, role-based access, and compliance with international data protection standards.',
+            ),
+            _buildFeatureHighlight(
+              'Dedicated Support',
+              'Our customer success team is with you every step of the way, from implementation to optimization.',
+            ),
             SizedBox(height: 24.h),
 
             // Our Impact Section
@@ -139,8 +176,14 @@ class AboutScreen extends StatelessWidget {
             _buildImpactStat('40% improvement', 'in field sales productivity'),
             _buildImpactStat('35% reduction', 'in operational costs'),
             _buildImpactStat('50% faster', 'order-to-delivery cycles'),
-            _buildImpactStat('99.9% system uptime', 'for uninterrupted operations'),
-            _buildImpactStat('Thousands of field representatives', 'empowered daily'),
+            _buildImpactStat(
+              '99.9% system uptime',
+              'for uninterrupted operations',
+            ),
+            _buildImpactStat(
+              'Thousands of field representatives',
+              'empowered daily',
+            ),
             SizedBox(height: 24.h),
 
             // Looking Forward Section
@@ -423,11 +466,7 @@ class AboutScreen extends StatelessWidget {
         padding: EdgeInsets.symmetric(vertical: 8.h),
         child: Row(
           children: [
-            Icon(
-              icon,
-              size: 20.sp,
-              color: AppColors.secondary,
-            ),
+            Icon(icon, size: 20.sp, color: AppColors.secondary),
             SizedBox(width: 12.w),
             Text(
               text,

@@ -4,6 +4,7 @@ import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
 import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/network_layer/network_exceptions.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
+
 import '../models/tour_plan.model.dart';
 
 part 'add_tour.vm.g.dart';
@@ -30,7 +31,8 @@ class AddTourViewModel extends _$AddTourViewModel {
       final responseData = response.data;
 
       if (statusCode >= 400) {
-        final message = _extractMessage(responseData) ?? 'Failed to create tour plan';
+        final message =
+            _extractMessage(responseData) ?? 'Failed to create tour plan';
         state = AsyncError(message, StackTrace.current);
         return false;
       }
@@ -42,7 +44,8 @@ class AddTourViewModel extends _$AddTourViewModel {
 
       final success = responseData['success'] == true;
       if (!success) {
-        final message = _extractMessage(responseData) ?? 'Failed to create tour plan';
+        final message =
+            _extractMessage(responseData) ?? 'Failed to create tour plan';
         state = AsyncError(message, StackTrace.current);
         return false;
       }

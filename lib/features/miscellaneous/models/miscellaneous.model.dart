@@ -1,4 +1,3 @@
-
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'miscellaneous.model.freezed.dart';
@@ -10,7 +9,8 @@ part 'miscellaneous.model.g.dart';
 
 /// Request model for creating miscellaneous work
 @freezed
-abstract class CreateMiscellaneousWorkRequest with _$CreateMiscellaneousWorkRequest {
+abstract class CreateMiscellaneousWorkRequest
+    with _$CreateMiscellaneousWorkRequest {
   const factory CreateMiscellaneousWorkRequest({
     required String natureOfWork,
     required String address,
@@ -173,7 +173,8 @@ abstract class MiscWorkListItem with _$MiscWorkListItem {
     return MiscWorkListItem(
       id: apiData.id,
       natureOfWork: apiData.natureOfWork,
-      assignedBy: apiData.assignedBy, // Now directly a string
+      assignedBy: apiData.assignedBy,
+      // Now directly a string
       address: apiData.address,
       workDate: apiData.workDate,
     );

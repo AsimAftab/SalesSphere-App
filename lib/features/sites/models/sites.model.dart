@@ -263,6 +263,7 @@ abstract class CreateSiteRequest with _$CreateSiteRequest {
     );
   }
 }
+
 /// Contact info for create site request
 @freezed
 abstract class CreateSiteContact with _$CreateSiteContact {
@@ -318,10 +319,7 @@ abstract class UpdateSiteRequest with _$UpdateSiteRequest {
       ownerName: site.managerName,
       subOrganization: site.subOrganization,
       dateJoined: site.dateJoined ?? '',
-      contact: CreateSiteContact(
-        phone: site.phoneNumber,
-        email: site.email,
-      ),
+      contact: CreateSiteContact(phone: site.phoneNumber, email: site.email),
       location: CreateSiteLocation(
         address: site.fullAddress,
         latitude: site.latitude ?? 0.0,

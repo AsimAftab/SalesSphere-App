@@ -1,8 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
+import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
+
 import '../models/forgot_password.models.dart';
 
 part 'forgot_password.vm.g.dart';
@@ -31,9 +32,7 @@ class ForgotPasswordViewModel extends _$ForgotPasswordViewModel {
     final emailError = validateEmailLocally(email);
 
     if (emailError != null) {
-      state = AsyncError({
-        'email': emailError,
-      }, StackTrace.empty);
+      state = AsyncError({'email': emailError}, StackTrace.empty);
       return false;
     }
 
@@ -51,7 +50,9 @@ class ForgotPasswordViewModel extends _$ForgotPasswordViewModel {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final forgotPasswordResponse = ForgotPasswordResponse.fromJson(response.data);
+        final forgotPasswordResponse = ForgotPasswordResponse.fromJson(
+          response.data,
+        );
 
         AppLogger.i('✅ Password reset email sent successfully');
 
@@ -74,7 +75,8 @@ class ForgotPasswordViewModel extends _$ForgotPasswordViewModel {
         state = AsyncError({'general': message}, StackTrace.empty);
       } else if (e.response != null) {
         // Server responded with an error
-        final message = e.response?.data['message'] ?? 'Failed to send reset email.';
+        final message =
+            e.response?.data['message'] ?? 'Failed to send reset email.';
         state = AsyncError({'general': message}, StackTrace.empty);
       } else {
         // Network error (no response from server)

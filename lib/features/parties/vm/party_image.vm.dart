@@ -1,10 +1,11 @@
 import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
 import 'package:sales_sphere/core/network_layer/dio_client.dart';
-import 'package:sales_sphere/features/parties/models/parties.model.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
+import 'package:sales_sphere/features/parties/models/parties.model.dart';
 
 part 'party_image.vm.g.dart';
 
@@ -79,7 +80,8 @@ class PartyImageViewModel extends _$PartyImageViewModel {
           final data = e.response!.data as Map<String, dynamic>;
           errorMessage = data['message'] ?? errorMessage;
         } else if (statusCode == 400) {
-          errorMessage = 'Bad request - Please check image format and try again';
+          errorMessage =
+              'Bad request - Please check image format and try again';
         } else if (statusCode == 413) {
           errorMessage = 'Image file is too large';
         } else if (statusCode == 415) {

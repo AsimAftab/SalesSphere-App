@@ -9,7 +9,6 @@ import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/exceptions/offline_exception.dart';
-import 'package:sales_sphere/core/providers/user_controller.dart';
 import 'package:sales_sphere/core/services/geofencing_service.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:sales_sphere/widget/no_internet_screen.dart';
@@ -33,7 +32,6 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
   @override
   Widget build(BuildContext context) {
     final todayAttendanceAsync = ref.watch(todayAttendanceViewModelProvider);
-    final user = ref.watch(userControllerProvider);
 
     // Fetch monthly attendance report from API
     final monthlyReportAsync = ref.watch(
@@ -46,12 +44,8 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
     return todayAttendanceAsync.when(
       data: (todayAttendanceStatus) {
         return monthlyReportAsync.when(
-          data: (monthlyReport) => _buildContent(
-            context,
-            todayAttendanceStatus,
-            user,
-            monthlyReport,
-          ),
+          data: (monthlyReport) =>
+              _buildContent(context, todayAttendanceStatus, monthlyReport),
           loading: () => _buildLoading(),
           error: (error, stack) => _buildError(error),
         );
@@ -64,7 +58,6 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
   Widget _buildContent(
     BuildContext context,
     TodayAttendanceStatusResponse? todayAttendanceStatus,
-    dynamic user,
     MonthlyAttendanceReport monthlyReport,
   ) {
     final todayAttendance = todayAttendanceStatus?.data;
@@ -93,61 +86,6 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
             color: AppColors.textPrimary,
           ),
         ),
-        actions: [
-          IconButton(
-            icon: Stack(
-              children: [
-                Icon(
-                  Icons.notifications_outlined,
-                  size: 26.sp,
-                  color: AppColors.textPrimary,
-                ),
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  child: Container(
-                    width: 8.w,
-                    height: 8.h,
-                    decoration: const BoxDecoration(
-                      color: AppColors.error,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            onPressed: () {},
-          ),
-          Padding(
-            padding: EdgeInsets.only(right: 12.w, left: 8.w),
-            child: GestureDetector(
-              onTap: () => context.push('/profile'),
-              child: Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.textOrange, width: 2.5),
-                ),
-                child: CircleAvatar(
-                  radius: 18.r,
-                  backgroundColor: AppColors.primary,
-                  backgroundImage: user?.avatarUrl != null
-                      ? NetworkImage(user!.avatarUrl!)
-                      : null,
-                  child: user?.avatarUrl == null
-                      ? Text(
-                          _getInitials(user?.name ?? 'User'),
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textWhite,
-                          ),
-                        )
-                      : null,
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),

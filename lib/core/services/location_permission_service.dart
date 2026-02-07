@@ -7,7 +7,9 @@ import 'package:sales_sphere/core/utils/logger.dart';
 /// Handles all location permission requests and checks for real-time tracking
 class LocationPermissionService {
   LocationPermissionService._();
-  static final LocationPermissionService instance = LocationPermissionService._();
+
+  static final LocationPermissionService instance =
+      LocationPermissionService._();
 
   /// Check if location services are enabled on device
   Future<bool> isLocationServiceEnabled() async {
@@ -78,7 +80,8 @@ class LocationPermissionService {
     try {
       final permission = await checkPermission();
 
-      final hasPermission = permission == LocationPermission.whileInUse ||
+      final hasPermission =
+          permission == LocationPermission.whileInUse ||
           permission == LocationPermission.always;
 
       AppLogger.d('Has tracking permission: $hasPermission');
@@ -137,7 +140,8 @@ class LocationPermissionService {
         return LocationPermissionResult(
           success: false,
           error: LocationPermissionError.deniedForever,
-          message: 'Location permission is permanently denied. Please enable it in app settings.',
+          message:
+              'Location permission is permanently denied. Please enable it in app settings.',
         );
       }
 
@@ -160,7 +164,9 @@ class LocationPermissionService {
         hasBackground = await requestBackgroundPermission();
 
         if (!hasBackground) {
-          AppLogger.w('Background permission not granted, tracking may stop when app is backgrounded');
+          AppLogger.w(
+            'Background permission not granted, tracking may stop when app is backgrounded',
+          );
         }
       }
 
@@ -274,9 +280,4 @@ class LocationPermissionResult {
 }
 
 /// Location permission error types
-enum LocationPermissionError {
-  serviceDisabled,
-  denied,
-  deniedForever,
-  unknown,
-}
+enum LocationPermissionError { serviceDisabled, denied, deniedForever, unknown }

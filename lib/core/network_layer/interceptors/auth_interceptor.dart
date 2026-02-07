@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+
 import '../../utils/logger.dart';
 import '../token_storage_service.dart';
 
@@ -10,10 +11,7 @@ class AuthInterceptor extends Interceptor {
   AuthInterceptor(this.tokenStorage);
 
   @override
-  void onRequest(
-      RequestOptions options,
-      RequestInterceptorHandler handler,
-      ) {
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     // Get token from storage (now synchronous)
     final token = tokenStorage.getToken();
 
@@ -30,10 +28,7 @@ class AuthInterceptor extends Interceptor {
   }
 
   @override
-  void onResponse(
-      Response response,
-      ResponseInterceptorHandler handler,
-      ) {
+  void onResponse(Response response, ResponseInterceptorHandler handler) {
     // Check if response contains a new token
     final newToken = _extractTokenFromResponse(response);
     if (newToken != null) {
@@ -45,10 +40,7 @@ class AuthInterceptor extends Interceptor {
   }
 
   @override
-  void onError(
-      DioException err,
-      ErrorInterceptorHandler handler,
-      ) async {
+  void onError(DioException err, ErrorInterceptorHandler handler) async {
     // Handle 401 Unauthorized (token expired or invalid)
     if (err.response?.statusCode == 401) {
       AppLogger.w('⚠️ Unauthorized (401) on ${err.requestOptions.path}');
@@ -67,7 +59,9 @@ class AuthInterceptor extends Interceptor {
       final refreshed = await _attemptTokenRefresh(err.requestOptions);
 
       if (refreshed) {
-        AppLogger.i('✅ Token refreshed successfully. Retrying original request...');
+        AppLogger.i(
+          '✅ Token refreshed successfully. Retrying original request...',
+        );
         // Retry the original request with new token
         try {
           final response = await _retry(err.requestOptions);
@@ -151,39 +145,44 @@ class AuthInterceptor extends Interceptor {
       final refreshToken = tokenStorage.getRefreshToken();
 
       if (refreshToken == null || refreshToken.isEmpty) {
-        AppLogger.w('⚠️ No refresh token available. Cannot refresh access token.');
+        AppLogger.w(
+          '⚠️ No refresh token available. Cannot refresh access token.',
+        );
         return false;
       }
 
       // ✅ REMOVED: Premature session expiry check
       // Let the backend decide if the session is expired!
 
-      AppLogger.i('🔄 Attempting to refresh access token using refresh token...');
+      AppLogger.i(
+        '🔄 Attempting to refresh access token using refresh token...',
+      );
 
       // Create a new Dio instance to avoid interceptor loops
-      final dio = Dio(BaseOptions(
-        baseUrl: requestOptions.baseUrl,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-Client-Type': 'mobile',
-        },
-      ));
+      final dio = Dio(
+        BaseOptions(
+          baseUrl: requestOptions.baseUrl,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-Client-Type': 'mobile',
+          },
+        ),
+      );
 
       // Make refresh token API call
       AppLogger.d('📡 Calling refresh token endpoint: /api/v1/auth/refresh');
-      final response = await dio.post(
-        '/api/v1/auth/refresh',
-        data: {'refreshToken': refreshToken},
-      ).timeout(
-        const Duration(seconds: 10),
-        onTimeout: () {
-          throw DioException(
-            requestOptions: RequestOptions(path: '/api/v1/auth/refresh'),
-            error: 'Token refresh timeout',
+      final response = await dio
+          .post('/api/v1/auth/refresh', data: {'refreshToken': refreshToken})
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () {
+              throw DioException(
+                requestOptions: RequestOptions(path: '/api/v1/auth/refresh'),
+                error: 'Token refresh timeout',
+              );
+            },
           );
-        },
-      );
 
       AppLogger.d('📡 Refresh token response status: ${response.statusCode}');
 
@@ -200,13 +199,16 @@ class AuthInterceptor extends Interceptor {
         newRefreshToken = data['refreshToken'] as String?;
 
         // Check nested data object as fallback
-        if (newAccessToken == null && data.containsKey('data') && data['data'] is Map<String, dynamic>) {
+        if (newAccessToken == null &&
+            data.containsKey('data') &&
+            data['data'] is Map<String, dynamic>) {
           final nestedData = data['data'] as Map<String, dynamic>;
           newAccessToken = nestedData['accessToken'] as String?;
           newRefreshToken = nestedData['refreshToken'] as String?;
 
           // Extract sessionExpiresAt from user object if present
-          if (nestedData.containsKey('user') && nestedData['user'] is Map<String, dynamic>) {
+          if (nestedData.containsKey('user') &&
+              nestedData['user'] is Map<String, dynamic>) {
             final user = nestedData['user'] as Map<String, dynamic>;
             sessionExpiresAt = user['sessionExpiresAt'] as String?;
           }
@@ -234,13 +236,17 @@ class AuthInterceptor extends Interceptor {
           return false;
         }
       } else {
-        AppLogger.w('⚠️ Token refresh failed with status: ${response.statusCode}');
+        AppLogger.w(
+          '⚠️ Token refresh failed with status: ${response.statusCode}',
+        );
         return false;
       }
     } on DioException catch (e) {
       // ✅ FIX: Check if it's a 401 from refresh endpoint (session expired)
       if (e.response?.statusCode == 401) {
-        AppLogger.w('⚠️ Refresh token is invalid or session expired (401 from backend)');
+        AppLogger.w(
+          '⚠️ Refresh token is invalid or session expired (401 from backend)',
+        );
         final errorData = e.response?.data;
         if (errorData is Map) {
           AppLogger.w('   Backend message: ${errorData['message']}');
@@ -265,16 +271,18 @@ class AuthInterceptor extends Interceptor {
     AppLogger.i('🔄 Retrying request: ${requestOptions.path}');
 
     // Create a new Dio instance with proper base URL to avoid interceptor loops
-    final dio = Dio(BaseOptions(
-      baseUrl: requestOptions.baseUrl,
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 30),
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'X-Client-Type': 'mobile', // ✅ FIX: Add mobile client header
-      },
-    ));
+    final dio = Dio(
+      BaseOptions(
+        baseUrl: requestOptions.baseUrl,
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 30),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-Client-Type': 'mobile', // ✅ FIX: Add mobile client header
+        },
+      ),
+    );
 
     return await dio.fetch(requestOptions);
   }

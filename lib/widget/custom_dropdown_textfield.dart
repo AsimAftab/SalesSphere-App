@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import '../core/constants/app_colors.dart';
 
 /// Custom Dropdown TextField Component
@@ -94,7 +95,7 @@ class _CustomDropdownTextFieldState<T>
     if (!widget.enabled || !mounted) return;
 
     _hideDropdown();
-    
+
     // Scroll field into view if it has search functionality
     if (widget.searchHint != null && _fieldKey.currentContext != null) {
       Future.delayed(const Duration(milliseconds: 100), () {
@@ -106,7 +107,7 @@ class _CustomDropdownTextFieldState<T>
         );
       });
     }
-    
+
     setState(() => _isDropdownOpen = true);
 
     _overlayEntry = OverlayEntry(
@@ -125,10 +126,12 @@ class _CustomDropdownTextFieldState<T>
               offset: Offset(0, 68.h),
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+                  final keyboardHeight = MediaQuery.of(
+                    context,
+                  ).viewInsets.bottom;
                   final screenHeight = MediaQuery.of(context).size.height;
                   final maxHeight = screenHeight - keyboardHeight - 200.h;
-                  
+
                   return Material(
                     elevation: 12,
                     borderRadius: BorderRadius.circular(12.r),
@@ -136,7 +139,8 @@ class _CustomDropdownTextFieldState<T>
                     child: StatefulBuilder(
                       builder: (context, setOverlayState) {
                         final filteredList = widget.items.where((item) {
-                          if (widget.searchHint == null || searchQuery.isEmpty) {
+                          if (widget.searchHint == null ||
+                              searchQuery.isEmpty) {
                             return true;
                           }
                           return item.label.toLowerCase().contains(
@@ -155,142 +159,155 @@ class _CustomDropdownTextFieldState<T>
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                          if (widget.searchHint != null)
-                            Padding(
-                              padding: EdgeInsets.all(12.w),
-                              child: TextField(
-                                controller: _searchController,
-                                autofocus: true,
-                                style: TextStyle(
-                                  fontFamily: 'Poppins',
-                                  fontSize: 14.sp,
-                                ),
-                                decoration: InputDecoration(
-                                  hintText: widget.searchHint,
-                                  hintStyle: TextStyle(
-                                    fontFamily: 'Poppins',
-                                    fontSize: 14.sp,
-                                    color: Colors.grey.shade400,
-                                  ),
-                                  prefixIcon: Icon(Icons.search, size: 20.sp),
-                                  suffixIcon: searchQuery.isNotEmpty
-                                      ? IconButton(
-                                          icon: Icon(
-                                            Icons.clear,
-                                            size: 18.sp,
-                                            color: Colors.grey,
-                                          ),
-                                          onPressed: () {
-                                            setOverlayState(() {
-                                              searchQuery = "";
-                                              _searchController.clear();
-                                            });
-                                          },
-                                        )
-                                      : null,
-                                  isDense: true,
-                                  contentPadding: EdgeInsets.symmetric(
-                                    vertical: 8.h,
-                                  ),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8.r),
-                                  ),
-                                ),
-                                onChanged: (val) {
-                                  setOverlayState(() => searchQuery = val);
-                                },
-                              ),
-                            ),
-
-                          if (filteredList.isEmpty && searchQuery.isNotEmpty)
-                            Padding(
-                              padding: EdgeInsets.symmetric(vertical: 20.h),
-                              child: Column(
-                                children: [
-                                  Icon(
-                                    Icons.search_off,
-                                    size: 40.sp,
-                                    color: Colors.grey.shade300,
-                                  ),
-                                  SizedBox(height: 8.h),
-                                  Text(
-                                    "No results found",
+                              if (widget.searchHint != null)
+                                Padding(
+                                  padding: EdgeInsets.all(12.w),
+                                  child: TextField(
+                                    controller: _searchController,
+                                    autofocus: true,
                                     style: TextStyle(
                                       fontFamily: 'Poppins',
                                       fontSize: 14.sp,
-                                      color: Colors.grey.shade500,
                                     ),
-                                  ),
-                                ],
-                              ),
-                            )
-                          else
-                            Flexible(
-                              child: ListView.separated(
-                                padding: EdgeInsets.symmetric(vertical: 8.h),
-                                shrinkWrap: true,
-                                itemCount: filteredList.length,
-                                separatorBuilder: (context, index) => Divider(
-                                  height: 1,
-                                  color: Colors.grey.shade50,
-                                ),
-                                itemBuilder: (context, index) {
-                                  final item = filteredList[index];
-                                  final isSelected = widget.value == item.value;
-
-                                  return ListTile(
-                                    dense: true,
-                                    leading: item.icon != null
-                                        ? (item.icon is IconData
-                                              ? Icon(
-                                                  item.icon as IconData,
-                                                  color: Colors.black87,
-                                                  size: 20.sp,
-                                                )
-                                              : ColorFiltered(
-                                                  colorFilter:
-                                                      ColorFilter.matrix(
-                                                        _greyscaleMatrix,
-                                                      ),
-                                                  child: Text(
-                                                    item.icon as String,
-                                                    style: TextStyle(
-                                                      fontSize: 20.sp,
-                                                    ),
-                                                  ),
-                                                ))
-                                        : null,
-                                    title: Text(
-                                      item.label,
-                                      style: TextStyle(
+                                    decoration: InputDecoration(
+                                      hintText: widget.searchHint,
+                                      hintStyle: TextStyle(
                                         fontFamily: 'Poppins',
                                         fontSize: 14.sp,
-                                        color: AppColors.textPrimary,
+                                        color: Colors.grey.shade400,
+                                      ),
+                                      prefixIcon: Icon(
+                                        Icons.search,
+                                        size: 20.sp,
+                                      ),
+                                      suffixIcon: searchQuery.isNotEmpty
+                                          ? IconButton(
+                                              icon: Icon(
+                                                Icons.clear,
+                                                size: 18.sp,
+                                                color: Colors.grey,
+                                              ),
+                                              onPressed: () {
+                                                setOverlayState(() {
+                                                  searchQuery = "";
+                                                  _searchController.clear();
+                                                });
+                                              },
+                                            )
+                                          : null,
+                                      isDense: true,
+                                      contentPadding: EdgeInsets.symmetric(
+                                        vertical: 8.h,
+                                      ),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          8.r,
+                                        ),
                                       ),
                                     ),
-                                    trailing: isSelected
-                                        ? Icon(
-                                            Icons.check,
-                                            color: AppColors.secondary,
-                                            size: 20.sp,
-                                          )
-                                        : null,
-                                    onTap: () {
-                                      widget.onChanged(item.value);
-                                      if (_validatorError != null && mounted) {
-                                        setState(() => _validatorError = null);
-                                      }
-                                      _hideDropdown();
+                                    onChanged: (val) {
+                                      setOverlayState(() => searchQuery = val);
                                     },
-                                  );
-                                },
-                              ),
-                            ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+                                  ),
+                                ),
+
+                              if (filteredList.isEmpty &&
+                                  searchQuery.isNotEmpty)
+                                Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 20.h),
+                                  child: Column(
+                                    children: [
+                                      Icon(
+                                        Icons.search_off,
+                                        size: 40.sp,
+                                        color: Colors.grey.shade300,
+                                      ),
+                                      SizedBox(height: 8.h),
+                                      Text(
+                                        "No results found",
+                                        style: TextStyle(
+                                          fontFamily: 'Poppins',
+                                          fontSize: 14.sp,
+                                          color: Colors.grey.shade500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              else
+                                Flexible(
+                                  child: ListView.separated(
+                                    padding: EdgeInsets.symmetric(
+                                      vertical: 8.h,
+                                    ),
+                                    shrinkWrap: true,
+                                    itemCount: filteredList.length,
+                                    separatorBuilder: (context, index) =>
+                                        Divider(
+                                          height: 1,
+                                          color: Colors.grey.shade50,
+                                        ),
+                                    itemBuilder: (context, index) {
+                                      final item = filteredList[index];
+                                      final isSelected =
+                                          widget.value == item.value;
+
+                                      return ListTile(
+                                        dense: true,
+                                        leading: item.icon != null
+                                            ? (item.icon is IconData
+                                                  ? Icon(
+                                                      item.icon as IconData,
+                                                      color: Colors.black87,
+                                                      size: 20.sp,
+                                                    )
+                                                  : ColorFiltered(
+                                                      colorFilter:
+                                                          ColorFilter.matrix(
+                                                            _greyscaleMatrix,
+                                                          ),
+                                                      child: Text(
+                                                        item.icon as String,
+                                                        style: TextStyle(
+                                                          fontSize: 20.sp,
+                                                        ),
+                                                      ),
+                                                    ))
+                                            : null,
+                                        title: Text(
+                                          item.label,
+                                          style: TextStyle(
+                                            fontFamily: 'Poppins',
+                                            fontSize: 14.sp,
+                                            color: AppColors.textPrimary,
+                                          ),
+                                        ),
+                                        trailing: isSelected
+                                            ? Icon(
+                                                Icons.check,
+                                                color: AppColors.secondary,
+                                                size: 20.sp,
+                                              )
+                                            : null,
+                                        onTap: () {
+                                          widget.onChanged(item.value);
+                                          if (_validatorError != null &&
+                                              mounted) {
+                                            setState(
+                                              () => _validatorError = null,
+                                            );
+                                          }
+                                          _hideDropdown();
+                                        },
+                                      );
+                                    },
+                                  ),
+                                ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
                   );
                 },
               ),

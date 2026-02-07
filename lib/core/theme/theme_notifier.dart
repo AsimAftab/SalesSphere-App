@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../constants/storage_keys.dart';
 
 part 'theme_notifier.g.dart';
@@ -67,7 +68,7 @@ class ThemeNotifier extends _$ThemeNotifier {
 
       if (savedTheme != null) {
         state = ThemeModeOption.values.firstWhere(
-              (e) => e.name == savedTheme,
+          (e) => e.name == savedTheme,
           orElse: () => ThemeModeOption.light,
         );
       }

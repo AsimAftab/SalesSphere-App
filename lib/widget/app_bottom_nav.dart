@@ -51,9 +51,7 @@ class AppBottomNav extends ConsumerWidget {
             // Bottom Navigation Bar
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 8.w),
-              child: Row(
-                children: visibleNavItems,
-              ),
+              child: Row(children: visibleNavItems),
             ),
 
             // Floating Invoice Button (only show if invoice or estimates enabled)
@@ -71,15 +69,34 @@ class AppBottomNav extends ConsumerWidget {
   }
 
   /// Build the list of visible navigation items with correct indices
-  List<Widget> _buildVisibleNavItems(BuildContext context, PermissionState permissionState) {
+  List<Widget> _buildVisibleNavItems(
+    BuildContext context,
+    PermissionState permissionState,
+  ) {
     final items = <Widget>[];
     int logicalIndex = 0;
 
     // Helper to add a nav item
-    void addItem(String moduleId, IconData icon, IconData activeIcon, String label, {bool isDirectory = false}) {
+    void addItem(
+      String moduleId,
+      IconData icon,
+      IconData activeIcon,
+      String label, {
+      bool isDirectory = false,
+    }) {
       // Always show if module is enabled OR if it's an always-available module (e.g., Home)
-      if (permissionState.isModuleEnabled(moduleId) || ModuleConfig.isAlwaysAvailableModule(moduleId)) {
-        items.add(_buildNavItem(context, logicalIndex, icon, activeIcon, label, isDirectory: isDirectory));
+      if (permissionState.isModuleEnabled(moduleId) ||
+          ModuleConfig.isAlwaysAvailableModule(moduleId)) {
+        items.add(
+          _buildNavItem(
+            context,
+            logicalIndex,
+            icon,
+            activeIcon,
+            label,
+            isDirectory: isDirectory,
+          ),
+        );
         logicalIndex++;
       }
     }
@@ -88,10 +105,16 @@ class AppBottomNav extends ConsumerWidget {
     addItem('dashboard', Icons.home_outlined, Icons.home, 'Home');
 
     // Catalog tab - index 1
-    addItem('products', Icons.shopping_bag_outlined, Icons.shopping_bag, 'Catalog');
+    addItem(
+      'products',
+      Icons.shopping_bag_outlined,
+      Icons.shopping_bag,
+      'Catalog',
+    );
 
     // Spacer for floating invoice button (if enabled) - Invoice button uses index 2
-    if (permissionState.isModuleEnabled('invoices') || permissionState.isModuleEnabled('estimates')) {
+    if (permissionState.isModuleEnabled('invoices') ||
+        permissionState.isModuleEnabled('estimates')) {
       items.add(Expanded(child: SizedBox(height: 75.h)));
       // Spacer doesn't increment logicalIndex, but the next tab will be at index 3
       // since invoice "occupies" index 2 in the navigation
@@ -99,14 +122,37 @@ class AppBottomNav extends ConsumerWidget {
     }
 
     // Directory tab (show if any directory module enabled) - index 3
-    if (ModuleConfig.isAnyModuleEnabled(ModuleConfig.directoryModules, permissionState.isModuleEnabled)) {
-      items.add(_buildNavItem(context, logicalIndex, Icons.folder_shared_outlined, Icons.people, 'Directory', isDirectory: true));
+    if (ModuleConfig.isAnyModuleEnabled(
+      ModuleConfig.directoryModules,
+      permissionState.isModuleEnabled,
+    )) {
+      items.add(
+        _buildNavItem(
+          context,
+          logicalIndex,
+          Icons.folder_shared_outlined,
+          Icons.people,
+          'Directory',
+          isDirectory: true,
+        ),
+      );
       logicalIndex++;
     }
 
     // Utilities tab (show if any utility module enabled) - index 4
-    if (ModuleConfig.isAnyModuleEnabled(ModuleConfig.utilityModules, permissionState.isModuleEnabled)) {
-      items.add(_buildNavItem(context, logicalIndex, Icons.read_more_outlined, Icons.read_more, 'Utilities'));
+    if (ModuleConfig.isAnyModuleEnabled(
+      ModuleConfig.utilityModules,
+      permissionState.isModuleEnabled,
+    )) {
+      items.add(
+        _buildNavItem(
+          context,
+          logicalIndex,
+          Icons.read_more_outlined,
+          Icons.read_more,
+          'Utilities',
+        ),
+      );
       logicalIndex++;
     }
 
@@ -116,9 +162,9 @@ class AppBottomNav extends ConsumerWidget {
   // Responsive sizing based on screen height
   double _verticalPadding(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-    if (screenHeight < 700) return 3.h;  // Small screens (POCO X3 Pro, etc.)
-    if (screenHeight < 850) return 5.h;  // Medium screens
-    return 8.h;  // Large screens (OnePlus 12, etc.)
+    if (screenHeight < 700) return 3.h; // Small screens (POCO X3 Pro, etc.)
+    if (screenHeight < 850) return 5.h; // Medium screens
+    return 8.h; // Large screens (OnePlus 12, etc.)
   }
 
   double _iconPadding(BuildContext context) {
@@ -175,7 +221,9 @@ class AppBottomNav extends ConsumerWidget {
             highlightColor: AppColors.secondary.withValues(alpha: 0.05),
             child: Container(
               height: double.infinity,
-              padding: EdgeInsets.symmetric(vertical: _verticalPadding(context)),
+              padding: EdgeInsets.symmetric(
+                vertical: _verticalPadding(context),
+              ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
@@ -183,7 +231,9 @@ class AppBottomNav extends ConsumerWidget {
                   AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     curve: Curves.easeInOut,
-                    padding: EdgeInsets.all(isActive ? _iconPadding(context) : 0),
+                    padding: EdgeInsets.all(
+                      isActive ? _iconPadding(context) : 0,
+                    ),
                     decoration: BoxDecoration(
                       color: isActive
                           ? AppColors.secondary.withValues(alpha: 0.12)
@@ -244,50 +294,50 @@ class AppBottomNav extends ConsumerWidget {
         child: GestureDetector(
           onTap: () => onTap(invoiceIndex),
           child: Container(
-          width: 70.w,
-          height: 70.h,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: const LinearGradient(
-              colors: [AppColors.secondary, AppColors.primary],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.secondary.withValues(alpha: 0.35),
-                blurRadius: 24,
-                spreadRadius: 0,
-                offset: const Offset(0, 8),
+            width: 70.w,
+            height: 70.h,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: const LinearGradient(
+                colors: [AppColors.secondary, AppColors.primary],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.25),
-                blurRadius: 16,
-                spreadRadius: -4,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.description, color: Colors.white, size: 30.sp),
-              SizedBox(height: 2.h),
-              Text(
-                'Invoice',
-                style: TextStyle(
-                  fontSize: 8.sp,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                  fontFamily: 'Poppins',
-                  letterSpacing: 0.3,
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.secondary.withValues(alpha: 0.35),
+                  blurRadius: 24,
+                  spreadRadius: 0,
+                  offset: const Offset(0, 8),
                 ),
-              ),
-            ],
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.25),
+                  blurRadius: 16,
+                  spreadRadius: -4,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.description, color: Colors.white, size: 30.sp),
+                SizedBox(height: 2.h),
+                Text(
+                  'Invoice',
+                  style: TextStyle(
+                    fontSize: 8.sp,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                    fontFamily: 'Poppins',
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
-    ),
     );
   }
 

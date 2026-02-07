@@ -1,10 +1,10 @@
+import 'dart:async';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
 import 'package:sales_sphere/core/network_layer/dio_client.dart';
-import 'package:sales_sphere/features/leave/models/leave.model.dart';
-import 'dart:async';
 import 'package:sales_sphere/core/utils/logger.dart';
+import 'package:sales_sphere/features/leave/models/leave.model.dart';
 
 part 'leave.vm.g.dart';
 
@@ -18,13 +18,15 @@ class LeaveViewModel extends _$LeaveViewModel {
 
   Future<List<LeaveListItem>> _fetchLeaves() async {
     try {
-      AppLogger.i('📡 Fetching leave requests: ${ApiEndpoints.myLeaveRequests}');
-      
+      AppLogger.i(
+        '📡 Fetching leave requests: ${ApiEndpoints.myLeaveRequests}',
+      );
+
       final dio = ref.read(dioClientProvider);
       final response = await dio.get(ApiEndpoints.myLeaveRequests);
 
       AppLogger.d('📡 Response Code: ${response.statusCode}');
-      
+
       if (response.data == null) {
         AppLogger.w('⚠️ Null response data from leave API');
         return [];
@@ -43,7 +45,9 @@ class LeaveViewModel extends _$LeaveViewModel {
         throw Exception('API error occurred');
       }
 
-      final list = apiResponse.data.map((e) => LeaveListItem.fromApiData(e)).toList();
+      final list = apiResponse.data
+          .map((e) => LeaveListItem.fromApiData(e))
+          .toList();
       AppLogger.i('✅ Fetched ${list.length} items');
       return list;
     } catch (e, stack) {
@@ -63,6 +67,7 @@ class LeaveViewModel extends _$LeaveViewModel {
 class LeaveSearchQuery extends _$LeaveSearchQuery {
   @override
   String build() => '';
+
   void updateQuery(String query) => state = query;
 }
 
@@ -70,6 +75,7 @@ class LeaveSearchQuery extends _$LeaveSearchQuery {
 class LeaveFilterNotifier extends _$LeaveFilterNotifier {
   @override
   LeaveFilter build() => LeaveFilter.all;
+
   void setFilter(LeaveFilter filter) => state = filter;
 }
 
@@ -83,18 +89,21 @@ AsyncValue<List<LeaveListItem>> filteredLeaves(Ref ref) {
     // Apply search filter
     var result = leaves;
     if (query.isNotEmpty) {
-      result = result.where((l) =>
-        l.displayLeaveType.toLowerCase().contains(query) ||
-        l.leaveType.toLowerCase().contains(query) ||
-        (l.reason?.toLowerCase().contains(query) ?? false)
-      ).toList();
+      result = result
+          .where(
+            (l) =>
+                l.displayLeaveType.toLowerCase().contains(query) ||
+                l.leaveType.toLowerCase().contains(query) ||
+                (l.reason?.toLowerCase().contains(query) ?? false),
+          )
+          .toList();
     }
 
     // Apply status filter
     if (filter != LeaveFilter.all) {
-      result = result.where((l) => 
-        l.status.toLowerCase() == filter.name.toLowerCase()
-      ).toList();
+      result = result
+          .where((l) => l.status.toLowerCase() == filter.name.toLowerCase())
+          .toList();
     }
 
     return result;

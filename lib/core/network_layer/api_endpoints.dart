@@ -12,7 +12,8 @@ class ApiEndpoints {
   static const String resetPassword = '/api/v1/auth/resetpassword';
 
   /// Get active tracking sessions for current user
-  static const String activeTrackingSessions = '/api/v1/beat-plans/tracking/active';
+  static const String activeTrackingSessions =
+      '/api/v1/beat-plans/tracking/active';
 
   // User Endpoints
   static const String profile = '/api/v1/users/me';
@@ -21,9 +22,11 @@ class ApiEndpoints {
 
   // Catalog Endpoints (Final)
   static const String categories = '/api/v1/categories';
+
   static String categoryById(String id) => '/api/v1/categories/$id';
 
   static const String products = '/api/v1/products';
+
   static String productById(String id) => '/api/v1/products/$id';
   static const String createProduct = '/api/v1/products';
   static const String updateProduct = '/api/v1/products';
@@ -31,33 +34,54 @@ class ApiEndpoints {
 
   // Parties Endpoints (Final)
   static const String parties = '/api/v1/parties';
+
   static String partyById(String id) => '/api/v1/parties/$id';
   static const String createParty = '/api/v1/parties';
+
   static String updateParty(String id) => '/api/v1/parties/$id';
+
   static String deleteParty(String id) => '/api/v1/parties/$id';
   static const String myAssignedParties = '/api/v1/parties/my-assigned';
   static const String partyTypes = '/api/v1/parties/types';
-  static String uploadPartyImage(String partyId) => '/api/v1/parties/$partyId/image';
+
+  static String uploadPartyImage(String partyId) =>
+      '/api/v1/parties/$partyId/image';
 
   //Prospects EndPoints (Final)
   static const String prospects = '/api/v1/prospects';
+
   static String prospectsById(String id) => '/api/v1/prospects/$id';
   static const String createProspects = '/api/v1/prospects';
+
   static String updateProspects(String id) => '/api/v1/prospects/$id';
+
   static String deleteProspects(String id) => '/api/v1/prospects/$id';
-  static String transferToProspect(String id) => '/api/v1/prospects/$id/transfer';
+
+  static String transferToProspect(String id) =>
+      '/api/v1/prospects/$id/transfer';
   static const String prospectCategories = '/api/v1/prospects/categories';
-  static String uploadProspectImage(String prospectId) => '/api/v1/prospects/$prospectId/images';
-  static String deleteProspectImage(String prospectId, int imageNumber) => '/api/v1/prospects/$prospectId/images/$imageNumber';
+
+  static String uploadProspectImage(String prospectId) =>
+      '/api/v1/prospects/$prospectId/images';
+
+  static String deleteProspectImage(String prospectId, int imageNumber) =>
+      '/api/v1/prospects/$prospectId/images/$imageNumber';
 
   // Sites Endpoints (Final)
   static const String sites = '/api/v1/sites';
+
   static String siteById(String id) => '/api/v1/sites/$id';
   static const String createSite = '/api/v1/sites';
+
   static String updateSite(String id) => '/api/v1/sites/$id';
+
   static String deleteSite(String id) => '/api/v1/sites/$id';
-  static String uploadSiteImage(String siteId) => '/api/v1/sites/$siteId/images';
-  static String deleteSiteImage(String siteId, int imageNumber) => '/api/v1/sites/$siteId/images/$imageNumber';
+
+  static String uploadSiteImage(String siteId) =>
+      '/api/v1/sites/$siteId/images';
+
+  static String deleteSiteImage(String siteId, int imageNumber) =>
+      '/api/v1/sites/$siteId/images/$imageNumber';
   static const String siteSubOrganizations = '/api/v1/sites/sub-organizations';
   static const String siteCategories = '/api/v1/sites/categories';
 
@@ -74,17 +98,24 @@ class ApiEndpoints {
 
   // Invoice Endpoints (Final)
   static const String invoices = '/api/v1/invoices';
+
   static String invoiceById(String id) => '/api/v1/invoices/$id';
   static const String createInvoice = '/api/v1/invoices';
+
   static String updateInvoice(String id) => '/api/v1/invoices/$id';
+
   static String deleteInvoice(String id) => '/api/v1/invoices/$id';
 
   // Estimate Endpoints
   static const String createEstimate = '/api/v1/invoices/estimates';
   static const String estimatesHistory = '/api/v1/invoices/estimates';
+
   static String estimateDetails(String id) => '/api/v1/invoices/estimates/$id';
+
   static String deleteEstimate(String id) => '/api/v1/invoices/estimates/$id';
-  static String convertEstimateToInvoice(String id) => '/api/v1/invoices/estimates/$id/convert';
+
+  static String convertEstimateToInvoice(String id) =>
+      '/api/v1/invoices/estimates/$id/convert';
 
   // Leave Requests Endpoints
   static const String myLeaveRequests = '/api/v1/leave-requests/my-requests';
@@ -100,8 +131,7 @@ class ApiEndpoints {
   static String monthlyAttendanceReport({
     required int month,
     required int year,
-  }) =>
-      '/api/v1/attendance/my-monthly-report?month=$month&year=$year';
+  }) => '/api/v1/attendance/my-monthly-report?month=$month&year=$year';
 
   /// Search attendance records with filters
   /// Example: /api/v1/attendance/search?status=P&month=11&year=2025&page=1&limit=20
@@ -138,6 +168,7 @@ class ApiEndpoints {
   // Tour Plans Endpoints
   static const String myTourPlans = '/api/v1/tour-plans/my-tour-plans';
   static const String createTourPlan = '/api/v1/tour-plans';
+
   static String updateTourPlan(String id) => '/api/v1/tour-plans/$id';
 
   // Beat Plan Endpoints
@@ -167,22 +198,27 @@ class ApiEndpoints {
 
   // Miscellaneous Work Endpoints (Final)
   /// Get all miscellaneous works for current user
-  static const String myMiscellaneousWorks = '/api/v1/miscellaneous-work/my-work';
-  
+  static const String myMiscellaneousWorks =
+      '/api/v1/miscellaneous-work/my-work';
+
   /// Create new miscellaneous work
   static const String createMiscellaneousWork = '/api/v1/miscellaneous-work';
-  
+
   /// Get miscellaneous work by ID
-  static String miscellaneousWorkById(String id) => '/api/v1/miscellaneous-work/$id';
-  
+  static String miscellaneousWorkById(String id) =>
+      '/api/v1/miscellaneous-work/$id';
+
   /// Update miscellaneous work
-  static String updateMiscellaneousWork(String id) => '/api/v1/miscellaneous-work/$id';
-  
+  static String updateMiscellaneousWork(String id) =>
+      '/api/v1/miscellaneous-work/$id';
+
   /// Delete miscellaneous work
-  static String deleteMiscellaneousWork(String id) => '/api/v1/miscellaneous-work/$id';
-  
+  static String deleteMiscellaneousWork(String id) =>
+      '/api/v1/miscellaneous-work/$id';
+
   /// Upload image to miscellaneous work
-  static String uploadMiscellaneousWorkImage(String workId) => '/api/v1/miscellaneous-work/$workId/images';
+  static String uploadMiscellaneousWorkImage(String workId) =>
+      '/api/v1/miscellaneous-work/$workId/images';
 
   // Notes Endpoints
   /// Get all notes for current user
@@ -198,37 +234,40 @@ class ApiEndpoints {
   static String updateNote(String id) => '/api/v1/notes/$id';
 
   /// Upload images to note
-  static String uploadNoteImages(String noteId) => '/api/v1/notes/$noteId/images';
+  static String uploadNoteImages(String noteId) =>
+      '/api/v1/notes/$noteId/images';
 
   /// Delete image from note
   static String deleteNoteImage(String noteId, int imageNumber) =>
       '/api/v1/notes/$noteId/images/$imageNumber';
-  
+
   /// Delete image from miscellaneous work
-  static String deleteMiscellaneousWorkImage(String workId, int imageNumber) => 
+  static String deleteMiscellaneousWorkImage(String workId, int imageNumber) =>
       '/api/v1/miscellaneous-work/$workId/images/$imageNumber';
 
   // Expense Claim Endpoints
   /// Get all expense claims for current user
   static const String expenseClaims = '/api/v1/expense-claims';
-  
+
   /// Get expense claim by ID
   static String expenseClaimById(String id) => '/api/v1/expense-claims/$id';
-  
+
   /// Create new expense claim
   static const String createExpenseClaim = '/api/v1/expense-claims';
-  
+
   /// Update expense claim
   static String updateExpenseClaim(String id) => '/api/v1/expense-claims/$id';
-  
+
   /// Delete expense claim
   static String deleteExpenseClaim(String id) => '/api/v1/expense-claims/$id';
 
   /// Upload receipt image to expense claim
-  static String uploadExpenseClaimReceipt(String id) => '/api/v1/expense-claims/$id/receipt';
+  static String uploadExpenseClaimReceipt(String id) =>
+      '/api/v1/expense-claims/$id/receipt';
 
   /// Get expense claim categories
-  static const String expenseClaimCategories = '/api/v1/expense-claims/categories';
+  static const String expenseClaimCategories =
+      '/api/v1/expense-claims/categories';
 
   // Collection Endpoints
   /// Get all collections for current user
@@ -244,7 +283,8 @@ class ApiEndpoints {
   static String updateCollection(String id) => '/api/v1/collections/$id';
 
   /// Upload image to collection
-  static String uploadCollectionImage(String collectionId) => '/api/v1/collections/$collectionId/images';
+  static String uploadCollectionImage(String collectionId) =>
+      '/api/v1/collections/$collectionId/images';
 
   /// Get bank names for collections
   static const String bankNames = '/api/v1/collections/utils/bank-names';

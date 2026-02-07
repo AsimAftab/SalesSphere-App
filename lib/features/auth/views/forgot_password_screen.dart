@@ -5,15 +5,16 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/utils/field_validators.dart';
-import 'package:sales_sphere/widget/custom_text_field.dart';
-import 'package:sales_sphere/widget/custom_button.dart';
 import 'package:sales_sphere/features/auth/vm/forgot_password.vm.dart';
+import 'package:sales_sphere/widget/custom_button.dart';
+import 'package:sales_sphere/widget/custom_text_field.dart';
 
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
 
   @override
-  ConsumerState<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
+  ConsumerState<ForgotPasswordScreen> createState() =>
+      _ForgotPasswordScreenState();
 }
 
 class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
@@ -31,7 +32,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     if (_formKey.currentState?.validate() ?? false) {
       // Call the ViewModel to send the reset email
       final viewModel = ref.read(forgotPasswordViewModelProvider.notifier);
-      final success = await viewModel.sendResetEmail(_emailController.text.trim());
+      final success = await viewModel.sendResetEmail(
+        _emailController.text.trim(),
+      );
 
       if (success) {
         // Always show success - backend returns same response for security
@@ -46,7 +49,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(errorMessage ?? 'Failed to send reset email. Please try again.'),
+              content: Text(
+                errorMessage ?? 'Failed to send reset email. Please try again.',
+              ),
               backgroundColor: Colors.red,
               duration: const Duration(seconds: 4),
             ),
@@ -83,11 +88,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                 color: Colors.green.shade50,
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                Icons.check_circle,
-                color: Colors.green,
-                size: 40.sp,
-              ),
+              child: Icon(Icons.check_circle, color: Colors.green, size: 40.sp),
             ),
 
             SizedBox(height: 20.h),
@@ -161,10 +162,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [
-                    AppColors.primary,
-                    AppColors.secondary,
-                  ],
+                  colors: [AppColors.primary, AppColors.secondary],
                 ),
               ),
             ),
@@ -285,7 +283,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                         // Submit Button
                         Consumer(
                           builder: (context, ref, child) {
-                            final state = ref.watch(forgotPasswordViewModelProvider);
+                            final state = ref.watch(
+                              forgotPasswordViewModelProvider,
+                            );
                             final isLoading = state.isLoading;
 
                             return PrimaryButton(

@@ -1,11 +1,11 @@
-
-import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'dart:async';
-import 'package:sales_sphere/features/expense-claim/models/expense_claim.model.dart';
-import 'package:sales_sphere/core/network_layer/dio_client.dart';
-import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
+
 import 'package:dio/dio.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
+import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
+import 'package:sales_sphere/features/expense-claim/models/expense_claim.model.dart';
 
 part 'expense_claims.vm.g.dart';
 
@@ -31,17 +31,18 @@ class ExpenseClaimsViewModel extends _$ExpenseClaimsViewModel {
   Future<List<ExpenseClaimDetails>> _fetchExpenseClaims() async {
     if (_isFetching) {
       AppLogger.w(
-          '⚠️ Already fetching expense claims, skipping duplicate request');
+        '⚠️ Already fetching expense claims, skipping duplicate request',
+      );
       throw Exception('Fetch already in progress');
     }
 
     _isFetching = true;
     try {
       AppLogger.i('📝 Fetching expense claims from API');
-      
+
       final dio = ref.read(dioClientProvider);
       final response = await dio.get(ApiEndpoints.expenseClaims);
-      
+
       if (response.statusCode == 200) {
         final apiResponse = ExpenseClaimsApiResponse.fromJson(response.data);
         final claims = apiResponse.data.map((apiData) {
@@ -54,16 +55,18 @@ class ExpenseClaimsViewModel extends _$ExpenseClaimsViewModel {
             status: apiData.status,
             description: apiData.description,
             receiptUrl: null,
-            createdAt: apiData.createdAt != null 
+            createdAt: apiData.createdAt != null
                 ? DateTime.tryParse(apiData.createdAt!)
                 : null,
           );
         }).toList();
-        
+
         AppLogger.i('✅ Fetched ${claims.length} expense claims');
         return claims;
       } else {
-        throw Exception('Failed to fetch expense claims: ${response.statusMessage}');
+        throw Exception(
+          'Failed to fetch expense claims: ${response.statusMessage}',
+        );
       }
     } on DioException catch (e) {
       AppLogger.e('❌ Dio error fetching expense claims: ${e.message}');
@@ -93,7 +96,8 @@ class ExpenseClaimsViewModel extends _$ExpenseClaimsViewModel {
         });
       } else {
         throw Exception(
-            'Failed to delete expense claim: ${response.statusMessage}');
+          'Failed to delete expense claim: ${response.statusMessage}',
+        );
       }
     } on DioException catch (e) {
       AppLogger.e('❌ Dio error deleting expense claim: ${e.message}');
@@ -216,10 +220,10 @@ Future<ExpenseClaimDetailApiData> expenseClaimById(
 ) async {
   try {
     AppLogger.i('📝 Fetching expense claim by ID: $claimId');
-    
+
     final dio = ref.read(dioClientProvider);
     final response = await dio.get(ApiEndpoints.expenseClaimById(claimId));
-    
+
     if (response.statusCode == 200) {
       final apiResponse = ExpenseClaimDetailApiResponse.fromJson(response.data);
       AppLogger.i('✅ Fetched expense claim: ${apiResponse.data.title}');

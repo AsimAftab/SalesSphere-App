@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -6,9 +5,9 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/utils/field_validators.dart';
-import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
-import 'package:sentry_flutter/sentry_flutter.dart';
+import 'package:sales_sphere/widget/custom_text_field.dart';
+
 import '../vm/login.vm.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -53,7 +52,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     context.go('/forgot-password');
   }
 
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -97,10 +95,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  AppColors.primary,
-                  AppColors.secondary,
-                ],
+                colors: [AppColors.primary, AppColors.secondary],
               ),
             ),
             child: Stack(
@@ -161,15 +156,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           children: const [
                             TextSpan(
                               text: 'Sales\n',
-                              style: TextStyle(
-                                color: Colors.white,
-                              ),
+                              style: TextStyle(color: Colors.white),
                             ),
                             TextSpan(
                               text: 'Sphere',
-                              style: TextStyle(
-                                color: Colors.white,
-                              ),
+                              style: TextStyle(color: Colors.white),
                             ),
                           ],
                         ),
@@ -233,7 +224,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       // --- General Error Message ---
                       if (generalError != null) ...[
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12.w,
+                            vertical: 12.h,
+                          ),
                           decoration: BoxDecoration(
                             color: colorScheme.error.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12.r),
@@ -296,10 +290,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         enabled: !isLoading,
                         autofillHints: const [AutofillHints.password],
                         textInputAction: TextInputAction.done,
-                        onFieldSubmitted: (_) => isLoading ? null : _handleLogin(vm),
+                        onFieldSubmitted: (_) =>
+                            isLoading ? null : _handleLogin(vm),
                         obscureText: !_isPasswordVisible,
                         suffixWidget: IconButton(
-                          onPressed: isLoading ? null : _togglePasswordVisibility,
+                          onPressed: isLoading
+                              ? null
+                              : _togglePasswordVisibility,
                           icon: Icon(
                             _isPasswordVisible
                                 ? Icons.visibility_outlined

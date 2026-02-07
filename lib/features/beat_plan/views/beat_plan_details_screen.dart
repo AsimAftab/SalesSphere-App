@@ -4,31 +4,29 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
+import 'package:sales_sphere/core/providers/tracking_coordinator_provider.dart';
 import 'package:sales_sphere/core/services/geofencing_service.dart';
 import 'package:sales_sphere/core/services/location_permission_service.dart';
 import 'package:sales_sphere/core/services/tracking_coordinator.dart';
-import 'package:sales_sphere/core/providers/tracking_coordinator_provider.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:sales_sphere/core/utils/snackbar_utils.dart';
 import 'package:sales_sphere/features/beat_plan/models/beat_plan.models.dart';
 import 'package:sales_sphere/features/beat_plan/vm/beat_plan.vm.dart';
-import 'package:sales_sphere/features/beat_plan/widgets/route_progress_card.dart';
 import 'package:sales_sphere/features/beat_plan/widgets/directory_visit_card.dart';
-import 'package:sales_sphere/features/beat_plan/widgets/tracking_status_card.dart';
+import 'package:sales_sphere/features/beat_plan/widgets/route_progress_card.dart';
 import 'package:sales_sphere/features/beat_plan/widgets/tracking_indicator_widget.dart';
+import 'package:sales_sphere/features/beat_plan/widgets/tracking_status_card.dart';
 
 /// Beat Plan Details Screen
 /// Shows detailed beat plan with route progress, filter tabs, and party visit cards
 class BeatPlanDetailsScreen extends ConsumerStatefulWidget {
   final String beatPlanId;
 
-  const BeatPlanDetailsScreen({
-    super.key,
-    required this.beatPlanId,
-  });
+  const BeatPlanDetailsScreen({super.key, required this.beatPlanId});
 
   @override
-  ConsumerState<BeatPlanDetailsScreen> createState() => _BeatPlanDetailsScreenState();
+  ConsumerState<BeatPlanDetailsScreen> createState() =>
+      _BeatPlanDetailsScreenState();
 }
 
 class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
@@ -67,7 +65,9 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('Location permission required for geofencing'),
+              content: const Text(
+                'Location permission required for geofencing',
+              ),
               backgroundColor: AppColors.warning,
               action: SnackBarAction(
                 label: 'Settings',
@@ -95,7 +95,9 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
         _currentLocation = position;
       });
 
-      AppLogger.i('📍 Current location: ${position.latitude}, ${position.longitude}');
+      AppLogger.i(
+        '📍 Current location: ${position.latitude}, ${position.longitude}',
+      );
     } catch (e) {
       AppLogger.e('❌ Error getting current location: $e');
       if (mounted) {
@@ -115,7 +117,9 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final beatPlanAsync = ref.watch(beatPlanDetailViewModelProvider(widget.beatPlanId));
+    final beatPlanAsync = ref.watch(
+      beatPlanDetailViewModelProvider(widget.beatPlanId),
+    );
 
     // Listen for tracking force-stopped event
     ref.listen(trackingStateStreamProvider, (previous, next) {
@@ -144,7 +148,8 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
           Builder(
             builder: (context) {
               final beatPlan = beatPlanAsync.value;
-              if (beatPlan != null && beatPlan.status.toLowerCase() != 'completed') {
+              if (beatPlan != null &&
+                  beatPlan.status.toLowerCase() != 'completed') {
                 return const Padding(
                   padding: EdgeInsets.only(right: 16.0),
                   child: TrackingIndicatorWidget(),
@@ -184,7 +189,9 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
 
     return RefreshIndicator(
       onRefresh: () async {
-        await ref.read(beatPlanDetailViewModelProvider(widget.beatPlanId).notifier).refresh(widget.beatPlanId);
+        await ref
+            .read(beatPlanDetailViewModelProvider(widget.beatPlanId).notifier)
+            .refresh(widget.beatPlanId);
       },
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -206,10 +213,7 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
 
             // Status badge
             Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: 12.w,
-                vertical: 6.h,
-              ),
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
               decoration: BoxDecoration(
                 color: _getStatusColor(beatPlan.status).withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(20.r),
@@ -230,7 +234,9 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
             RouteProgressCard(
               totalParties: beatPlan.progress.totalDirectories,
               visitedParties: beatPlan.progress.visitedDirectories,
-              pendingParties: beatPlan.progress.totalDirectories - beatPlan.progress.visitedDirectories,
+              pendingParties:
+                  beatPlan.progress.totalDirectories -
+                  beatPlan.progress.visitedDirectories,
               progressPercentage: beatPlan.progress.percentage,
             ),
 
@@ -289,14 +295,10 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
                     directory: directory,
                     isLoading: isLoading,
                     currentLocation: _currentLocation,
-                    onMarkComplete: () => _handleMarkVisitComplete(
-                      beatPlan.id,
-                      directory,
-                    ),
-                    onMarkPending: () => _handleMarkVisitPending(
-                      beatPlan.id,
-                      directory.id,
-                    ),
+                    onMarkComplete: () =>
+                        _handleMarkVisitComplete(beatPlan.id, directory),
+                    onMarkPending: () =>
+                        _handleMarkVisitPending(beatPlan.id, directory.id),
                   );
                 },
               ),
@@ -333,18 +335,16 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
             // --- START: Gradient Logic (from your original code) ---
             gradient: isSelected
                 ? LinearGradient(
-              colors: [
-                color,
-                color.withValues(alpha: 0.8),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            )
+                    colors: [color, color.withValues(alpha: 0.8)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  )
                 : null,
             color: isSelected ? null : AppColors.cardBackground,
-            // --- END: Gradient Logic ---
 
-            borderRadius: BorderRadius.circular(14.r), // Using your original 14.r
+            // --- END: Gradient Logic ---
+            borderRadius: BorderRadius.circular(14.r),
+            // Using your original 14.r
 
             // Using your original border logic
             border: Border.all(
@@ -355,12 +355,12 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
             // Using your original shadow logic
             boxShadow: isSelected
                 ? [
-              BoxShadow(
-                color: color.withValues(alpha: 0.3),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
-            ]
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
                 : null,
           ),
           child: Center(
@@ -385,9 +385,13 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
     if (_selectedFilter == 'all') {
       return directories;
     } else if (_selectedFilter == 'pending') {
-      return directories.where((p) => p.visitStatus.status.toLowerCase() == 'pending').toList();
+      return directories
+          .where((p) => p.visitStatus.status.toLowerCase() == 'pending')
+          .toList();
     } else {
-      return directories.where((p) => p.visitStatus.status.toLowerCase() == 'visited').toList();
+      return directories
+          .where((p) => p.visitStatus.status.toLowerCase() == 'visited')
+          .toList();
     }
   }
 
@@ -450,13 +454,15 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
     setState(() => _loadingVisitId = directory.id);
     try {
       // Pass current location and directory type to API
-      final success = await ref.read(beatPlanDetailViewModelProvider(beatPlanId).notifier).markVisitComplete(
-        beatPlanId,
-        directory.id,
-        directoryType: directory.type,
-        userLatitude: _currentLocation!.latitude,
-        userLongitude: _currentLocation!.longitude,
-      );
+      final success = await ref
+          .read(beatPlanDetailViewModelProvider(beatPlanId).notifier)
+          .markVisitComplete(
+            beatPlanId,
+            directory.id,
+            directoryType: directory.type,
+            userLatitude: _currentLocation!.latitude,
+            userLongitude: _currentLocation!.longitude,
+          );
 
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -487,10 +493,15 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
     }
   }
 
-  Future<void> _handleMarkVisitPending(String beatPlanId, String visitId) async {
+  Future<void> _handleMarkVisitPending(
+    String beatPlanId,
+    String visitId,
+  ) async {
     setState(() => _loadingVisitId = visitId);
     try {
-      final success = await ref.read(beatPlanDetailViewModelProvider(beatPlanId).notifier).markVisitPending(beatPlanId, visitId);
+      final success = await ref
+          .read(beatPlanDetailViewModelProvider(beatPlanId).notifier)
+          .markVisitPending(beatPlanId, visitId);
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -560,10 +571,7 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
             SizedBox(height: 12.h),
             Text(
               'No directories in this filter',
-              style: TextStyle(
-                fontSize: 14.sp,
-                color: AppColors.textSecondary,
-              ),
+              style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
             ),
           ],
         ),
@@ -576,11 +584,7 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.route_outlined,
-            size: 64.sp,
-            color: AppColors.greyMedium,
-          ),
+          Icon(Icons.route_outlined, size: 64.sp, color: AppColors.greyMedium),
           SizedBox(height: 16.h),
           Text(
             'Beat Plan Not Found',
@@ -600,16 +604,11 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const CircularProgressIndicator(
-            color: AppColors.primary,
-          ),
+          const CircularProgressIndicator(color: AppColors.primary),
           SizedBox(height: 16.h),
           Text(
             'Loading beat plan details...',
-            style: TextStyle(
-              fontSize: 14.sp,
-              color: AppColors.textSecondary,
-            ),
+            style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
           ),
         ],
       ),
@@ -623,11 +622,7 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 64.sp,
-              color: AppColors.error,
-            ),
+            Icon(Icons.error_outline, size: 64.sp, color: AppColors.error),
             SizedBox(height: 16.h),
             Text(
               'Failed to load beat plan',
@@ -640,16 +635,15 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
             SizedBox(height: 8.h),
             Text(
               error,
-              style: TextStyle(
-                fontSize: 12.sp,
-                color: AppColors.textSecondary,
-              ),
+              style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
               textAlign: TextAlign.center,
             ),
             SizedBox(height: 20.h),
             ElevatedButton.icon(
               onPressed: () {
-                ref.invalidate(beatPlanDetailViewModelProvider(widget.beatPlanId));
+                ref.invalidate(
+                  beatPlanDetailViewModelProvider(widget.beatPlanId),
+                );
               },
               icon: const Icon(Icons.refresh),
               label: const Text('Retry'),

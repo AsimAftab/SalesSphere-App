@@ -1,5 +1,5 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:flutter/material.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'invoice.models.freezed.dart';
 part 'invoice.models.g.dart';
@@ -325,9 +325,8 @@ abstract class InvoiceDetailsData with _$InvoiceDetailsData {
 // ========================================
 @freezed
 abstract class ConvertEstimateRequest with _$ConvertEstimateRequest {
-  const factory ConvertEstimateRequest({
-    required String expectedDeliveryDate,
-  }) = _ConvertEstimateRequest;
+  const factory ConvertEstimateRequest({required String expectedDeliveryDate}) =
+      _ConvertEstimateRequest;
 
   factory ConvertEstimateRequest.fromJson(Map<String, dynamic> json) =>
       _$ConvertEstimateRequestFromJson(json);

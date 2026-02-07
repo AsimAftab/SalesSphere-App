@@ -1,12 +1,11 @@
 import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:sales_sphere/features/catalog/models/catalog.models.dart';
-import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
+import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
-import 'package:sales_sphere/core/providers/connectivity_provider.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:sales_sphere/features/catalog/models/catalog.models.dart';
 
 part 'catalog_item.vm.g.dart';
 
@@ -43,16 +42,22 @@ class CategoryItemListViewModel extends _$CategoryItemListViewModel {
             .where((item) => item.category.id == categoryId)
             .toList();
 
-        AppLogger.i('✅ Fetched ${categoryProducts.length} products for category $categoryId');
+        AppLogger.i(
+          '✅ Fetched ${categoryProducts.length} products for category $categoryId',
+        );
         return categoryProducts;
       } else {
         throw Exception('API returned unsuccessful response');
       }
     } on DioException catch (e) {
-      AppLogger.e('Failed to fetch products for category $categoryId: ${e.message}');
+      AppLogger.e(
+        'Failed to fetch products for category $categoryId: ${e.message}',
+      );
       throw Exception('Failed to fetch products: ${e.message}');
     } catch (e) {
-      AppLogger.e('Unexpected error fetching products for category $categoryId: $e');
+      AppLogger.e(
+        'Unexpected error fetching products for category $categoryId: $e',
+      );
       throw Exception('Failed to fetch products: $e');
     }
   }
@@ -83,13 +88,14 @@ class ItemListSearchQuery extends _$ItemListSearchQuery {
 /// --- Filtered / Searched Items Provider ---
 @riverpod
 Future<List<CatalogItem>> searchedCategoryItems(
-    Ref ref,
-    String categoryId,
-    ) async {
-
+  Ref ref,
+  String categoryId,
+) async {
   final searchQuery = ref.watch(itemListSearchQueryProvider);
 
-  final allItems = await ref.watch(categoryItemListViewModelProvider(categoryId).future);
+  final allItems = await ref.watch(
+    categoryItemListViewModelProvider(categoryId).future,
+  );
 
   if (searchQuery.isEmpty) return allItems;
 

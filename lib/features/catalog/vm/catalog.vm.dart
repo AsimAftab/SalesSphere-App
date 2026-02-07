@@ -1,13 +1,12 @@
 import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:sales_sphere/features/catalog/models/catalog.models.dart';
-import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
+import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
+import 'package:sales_sphere/features/catalog/models/catalog.models.dart';
 import 'package:sales_sphere/features/catalog/vm/catalog_item.vm.dart';
-import 'package:sales_sphere/core/providers/connectivity_provider.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 
 part 'catalog.vm.g.dart';
 

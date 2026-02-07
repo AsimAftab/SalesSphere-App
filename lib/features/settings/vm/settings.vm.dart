@@ -1,8 +1,9 @@
 import 'dart:async';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sales_sphere/core/network_layer/token_storage_service.dart';
-import 'package:sales_sphere/core/providers/user_controller.dart';
 import 'package:sales_sphere/core/providers/permission_controller.dart';
+import 'package:sales_sphere/core/providers/user_controller.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 
 part 'settings.vm.g.dart';
@@ -28,5 +29,4 @@ class SettingsViewModel extends _$SettingsViewModel {
       rethrow;
     }
   }
-
 }

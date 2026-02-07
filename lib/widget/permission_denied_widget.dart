@@ -17,7 +17,8 @@ class PermissionDeniedWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final displayMessage = message ??
+    final displayMessage =
+        message ??
         'You don\'t have permission to access ${feature ?? 'this feature'}';
 
     return Center(

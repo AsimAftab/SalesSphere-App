@@ -2,11 +2,11 @@
 
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
+import 'package:sales_sphere/core/network_layer/dio_client.dart';
+import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:sales_sphere/features/prospects/models/prospects.model.dart';
 import 'package:sales_sphere/features/prospects/vm/prospects.vm.dart';
-import 'package:sales_sphere/core/utils/logger.dart';
 
 part 'edit_prospect_details.vm.g.dart';
 
@@ -38,7 +38,9 @@ class EditProspectViewModel extends _$EditProspectViewModel {
         final prospect = ProspectDetails.fromApiDetail(apiResponse.data);
 
         AppLogger.i('✅ Fetched prospect details for: ${prospect.name}');
-        AppLogger.d('Prospect details: Phone: ${prospect.phoneNumber}, Email: ${prospect.email}, Address: ${prospect.fullAddress}');
+        AppLogger.d(
+          'Prospect details: Phone: ${prospect.phoneNumber}, Email: ${prospect.email}, Address: ${prospect.fullAddress}',
+        );
 
         return prospect;
       } else {
@@ -58,7 +60,9 @@ class EditProspectViewModel extends _$EditProspectViewModel {
   Future<void> updateProspect(ProspectDetails updatedProspect) async {
     try {
       final dio = ref.read(dioClientProvider);
-      AppLogger.i('Updating prospect: ${updatedProspect.name} (ID: ${updatedProspect.id})');
+      AppLogger.i(
+        'Updating prospect: ${updatedProspect.name} (ID: ${updatedProspect.id})',
+      );
 
       // Create update request with all editable fields
       final updateRequest = UpdateProspectRequest(
@@ -66,7 +70,8 @@ class EditProspectViewModel extends _$EditProspectViewModel {
         ownerName: updatedProspect.ownerName,
         dateJoined: updatedProspect.dateJoined,
         panVatNumber: updatedProspect.panVatNumber,
-        contact: updatedProspect.phoneNumber != null || updatedProspect.email != null
+        contact:
+            updatedProspect.phoneNumber != null || updatedProspect.email != null
             ? UpdateProspectContact(
                 phone: updatedProspect.phoneNumber,
                 email: updatedProspect.email,
@@ -116,7 +121,9 @@ class EditProspectViewModel extends _$EditProspectViewModel {
   }
 
   // TRANSFER PROSPECT TO PARTY VIA API
-  Future<TransferProspectToPartyResponse> transferProspectToParty(String prospectId) async {
+  Future<TransferProspectToPartyResponse> transferProspectToParty(
+    String prospectId,
+  ) async {
     try {
       final dio = ref.read(dioClientProvider);
       AppLogger.i('Transferring prospect to party: $prospectId');
@@ -126,13 +133,19 @@ class EditProspectViewModel extends _$EditProspectViewModel {
         ApiEndpoints.transferToProspect(prospectId),
       );
 
-      if (response.statusCode != null && response.statusCode! >= 200 && response.statusCode! < 300)  {
+      if (response.statusCode != null &&
+          response.statusCode! >= 200 &&
+          response.statusCode! < 300) {
         AppLogger.i('✅ Prospect transferred to party successfully');
 
         // Parse the API response
-        final transferResponse = TransferProspectToPartyResponse.fromJson(response.data);
+        final transferResponse = TransferProspectToPartyResponse.fromJson(
+          response.data,
+        );
 
-        AppLogger.d('Transferred party name: ${transferResponse.data.partyName}');
+        AppLogger.d(
+          'Transferred party name: ${transferResponse.data.partyName}',
+        );
         AppLogger.d('Transfer message: ${transferResponse.message}');
 
         // Invalidate the prospects list to refresh it (only if ref is still mounted)
@@ -142,7 +155,9 @@ class EditProspectViewModel extends _$EditProspectViewModel {
 
         return transferResponse;
       } else {
-        throw Exception('Failed to transfer prospect: ${response.statusMessage}');
+        throw Exception(
+          'Failed to transfer prospect: ${response.statusMessage}',
+        );
       }
     } on DioException catch (e) {
       AppLogger.e('❌ Dio error transferring prospect: ${e.message}');

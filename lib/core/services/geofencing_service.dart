@@ -6,6 +6,7 @@ import 'package:sales_sphere/core/utils/logger.dart';
 /// Ensures users can only mark directories as visited when within the geofence radius
 class GeofencingService {
   GeofencingService._();
+
   static final GeofencingService instance = GeofencingService._();
 
   /// Default geofence radius in meters

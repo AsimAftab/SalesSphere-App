@@ -118,11 +118,11 @@ class FieldValidators {
 
   // Min/Max length validation
   static String? validateLength(
-      String? value, {
-        int? minLength,
-        int? maxLength,
-        String? fieldName,
-      }) {
+    String? value, {
+    int? minLength,
+    int? maxLength,
+    String? fieldName,
+  }) {
     if (value == null || value.isEmpty) {
       return '${fieldName ?? 'This field'} is required';
     }
@@ -172,10 +172,10 @@ class FieldValidators {
 
   // Match validation (e.g., confirm password)
   static String? validateMatch(
-      String? value,
-      String? matchValue, {
-        String? fieldName,
-      }) {
+    String? value,
+    String? matchValue, {
+    String? fieldName,
+  }) {
     if (value == null || value.isEmpty) {
       return '${fieldName ?? 'This field'} is required';
     }
@@ -205,10 +205,10 @@ class FieldValidators {
 
   // Custom regex validation
   static String? validateRegex(
-      String? value,
-      String pattern,
-      String errorMessage,
-      ) {
+    String? value,
+    String pattern,
+    String errorMessage,
+  ) {
     if (value == null || value.isEmpty) {
       return 'This field is required';
     }
@@ -224,8 +224,8 @@ class FieldValidators {
 
   // Combine multiple validators
   static String? Function(String?) combine(
-      List<String? Function(String?)> validators,
-      ) {
+    List<String? Function(String?)> validators,
+  ) {
     return (String? value) {
       for (final validator in validators) {
         final error = validator(value);

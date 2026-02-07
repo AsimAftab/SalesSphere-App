@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:geolocator/geolocator.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 
@@ -6,6 +7,7 @@ import 'package:sales_sphere/core/utils/logger.dart';
 /// Handles GPS location tracking with battery optimization for real-time beat plan tracking
 class LocationTrackingService {
   LocationTrackingService._();
+
   static final LocationTrackingService instance = LocationTrackingService._();
 
   // Position stream subscription
@@ -22,9 +24,11 @@ class LocationTrackingService {
 
   // Configuration
   static const int _normalUpdateInterval = 10; // seconds
-  static const int _stationaryUpdateInterval = 30; // seconds (reduced for testing - was 30)
+  static const int _stationaryUpdateInterval =
+      30; // seconds (reduced for testing - was 30)
   static const double _stationarySpeedThreshold = 0.5; // m/s (~1.8 km/h)
-  static const double _minDistanceFilter = 10.0; // meters (reduced for testing - was 10.0)
+  static const double _minDistanceFilter =
+      10.0; // meters (reduced for testing - was 10.0)
 
   /// Get location update stream
   Stream<LocationUpdate> get locationStream => _locationController.stream;
@@ -62,13 +66,14 @@ class LocationTrackingService {
       );
 
       // Start position stream
-      _positionSubscription = Geolocator.getPositionStream(
-        locationSettings: locationSettings,
-      ).listen(
-        _handlePositionUpdate,
-        onError: _handlePositionError,
-        cancelOnError: false,
-      );
+      _positionSubscription =
+          Geolocator.getPositionStream(
+            locationSettings: locationSettings,
+          ).listen(
+            _handlePositionUpdate,
+            onError: _handlePositionError,
+            cancelOnError: false,
+          );
 
       _isTracking = true;
       AppLogger.i('✅ Location tracking started successfully');
@@ -134,7 +139,9 @@ class LocationTrackingService {
     bool enableBackgroundUpdates = true,
   }) async {
     if (!_isTracking) {
-      AppLogger.w('⚠️ Location tracking not active, use startTracking() instead');
+      AppLogger.w(
+        '⚠️ Location tracking not active, use startTracking() instead',
+      );
       return;
     }
 
@@ -154,13 +161,14 @@ class LocationTrackingService {
       );
 
       // Restart position stream
-      _positionSubscription = Geolocator.getPositionStream(
-        locationSettings: locationSettings,
-      ).listen(
-        _handlePositionUpdate,
-        onError: _handlePositionError,
-        cancelOnError: false,
-      );
+      _positionSubscription =
+          Geolocator.getPositionStream(
+            locationSettings: locationSettings,
+          ).listen(
+            _handlePositionUpdate,
+            onError: _handlePositionError,
+            cancelOnError: false,
+          );
 
       AppLogger.i('✅ Location tracking resumed');
     } catch (e, stack) {
@@ -184,7 +192,9 @@ class LocationTrackingService {
         ),
       );
 
-      AppLogger.d('✅ Current location: ${position.latitude}, ${position.longitude}');
+      AppLogger.d(
+        '✅ Current location: ${position.latitude}, ${position.longitude}',
+      );
       return position;
     } catch (e) {
       AppLogger.e('❌ Error getting current location: $e');
@@ -336,7 +346,8 @@ class LocationTrackingService {
     required double lat2,
     required double lon2,
   }) {
-    return calculateDistance(lat1: lat1, lon1: lon1, lat2: lat2, lon2: lon2) / 1000;
+    return calculateDistance(lat1: lat1, lon1: lon1, lat2: lat2, lon2: lon2) /
+        1000;
   }
 
   /// Convert speed from m/s to km/h

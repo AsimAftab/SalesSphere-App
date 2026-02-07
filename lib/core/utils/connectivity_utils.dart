@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sales_sphere/core/providers/connectivity_provider.dart';
 import 'package:sales_sphere/widget/no_internet_screen.dart';

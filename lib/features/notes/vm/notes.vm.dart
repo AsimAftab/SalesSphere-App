@@ -1,11 +1,12 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'dart:async';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
 import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/network_layer/network_exceptions.dart';
-import 'package:sales_sphere/features/notes/models/notes.model.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
+import 'package:sales_sphere/features/notes/models/notes.model.dart';
 
 part 'notes.vm.g.dart';
 
@@ -25,7 +26,9 @@ class NotesViewModel extends _$NotesViewModel {
 
       if (apiResponse.success) {
         AppLogger.i('Fetched ${apiResponse.count} notes');
-        return apiResponse.data.map((e) => NoteListItem.fromApiData(e)).toList();
+        return apiResponse.data
+            .map((e) => NoteListItem.fromApiData(e))
+            .toList();
       } else {
         throw Exception('Failed to fetch notes');
       }
@@ -54,6 +57,7 @@ class NotesViewModel extends _$NotesViewModel {
 class NoteSearchQuery extends _$NoteSearchQuery {
   @override
   String build() => '';
+
   void updateQuery(String query) => state = query;
 }
 
@@ -64,8 +68,11 @@ Future<List<NoteListItem>> searchedNotes(Ref ref) async {
 
   if (query.isEmpty) return allNotes;
 
-  return allNotes.where((note) =>
-    note.title.toLowerCase().contains(query) ||
-    note.name.toLowerCase().contains(query)
-  ).toList();
+  return allNotes
+      .where(
+        (note) =>
+            note.title.toLowerCase().contains(query) ||
+            note.name.toLowerCase().contains(query),
+      )
+      .toList();
 }

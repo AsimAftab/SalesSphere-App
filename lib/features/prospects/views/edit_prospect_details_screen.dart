@@ -1,31 +1,29 @@
 // lib/features/prospects/views/edit_prospect_details_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:sales_sphere/core/utils/date_formatter.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/services/google_places_service.dart';
 import 'package:sales_sphere/core/services/location_service.dart';
+import 'package:sales_sphere/core/utils/date_formatter.dart';
 import 'package:sales_sphere/core/utils/field_validators.dart';
-
 import 'package:sales_sphere/features/prospects/vm/edit_prospect_details.vm.dart';
-import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
+import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/location_picker_widget.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-import '../models/prospects.model.dart';
 import '../models/prospect_interest.model.dart';
-import '../models/prospect_images.model.dart';
-import '../widgets/prospect_interest_selector.dart';
-import '../vm/prospect_images.vm.dart';
+import '../models/prospects.model.dart';
 import '../views/prospect_images_screen.dart';
+import '../vm/prospect_images.vm.dart';
+import '../widgets/prospect_interest_selector.dart';
 
 // Google Places service provider
 final googlePlacesServiceProvider = Provider<GooglePlacesService>((ref) {
@@ -151,7 +149,9 @@ class _EditProspectDetailsScreenState
         notes: _notesController.text.trim().isEmpty
             ? null
             : _notesController.text.trim(),
-        prospectInterest: _selectedInterests.isEmpty ? null : _selectedInterests,
+        prospectInterest: _selectedInterests.isEmpty
+            ? null
+            : _selectedInterests,
         updatedAt: DateTime.now(),
       );
 
@@ -356,10 +356,7 @@ class _EditProspectDetailsScreenState
         ),
         content: Text(
           'Are you sure you want to transfer "${_currentProspect!.name}" to a party? This action cannot be undone.',
-          style: TextStyle(
-            fontSize: 14.sp,
-            fontFamily: 'Poppins',
-          ),
+          style: TextStyle(fontSize: 14.sp, fontFamily: 'Poppins'),
         ),
         actions: [
           TextButton(
@@ -674,7 +671,10 @@ class _EditProspectDetailsScreenState
                 ),
                 // Manage button with arrow
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 4.h,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.primary.withOpacity(0.08),
                     borderRadius: BorderRadius.circular(20.r),
@@ -782,22 +782,29 @@ class _EditProspectDetailsScreenState
                                 child: Image.network(
                                   image.imageUrl,
                                   fit: BoxFit.cover,
-                                  loadingBuilder: (context, child, loadingProgress) {
-                                    if (loadingProgress == null) return child;
-                                    return Container(
-                                      color: Colors.grey.shade200,
-                                      child: Center(
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          value: loadingProgress.expectedTotalBytes != null
-                                              ? loadingProgress.cumulativeBytesLoaded /
-                                                  loadingProgress.expectedTotalBytes!
-                                              : null,
-                                          color: AppColors.primary,
-                                        ),
-                                      ),
-                                    );
-                                  },
+                                  loadingBuilder:
+                                      (context, child, loadingProgress) {
+                                        if (loadingProgress == null)
+                                          return child;
+                                        return Container(
+                                          color: Colors.grey.shade200,
+                                          child: Center(
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              value:
+                                                  loadingProgress
+                                                          .expectedTotalBytes !=
+                                                      null
+                                                  ? loadingProgress
+                                                            .cumulativeBytesLoaded /
+                                                        loadingProgress
+                                                            .expectedTotalBytes!
+                                                  : null,
+                                              color: AppColors.primary,
+                                            ),
+                                          ),
+                                        );
+                                      },
                                   errorBuilder: (context, error, stackTrace) {
                                     return Container(
                                       color: Colors.grey.shade200,
@@ -817,7 +824,10 @@ class _EditProspectDetailsScreenState
                     ),
                     // View All / Add More indicator
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10.w,
+                        vertical: 6.h,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.primary.withOpacity(0.08),
                         borderRadius: BorderRadius.circular(8.r),
@@ -871,7 +881,11 @@ class _EditProspectDetailsScreenState
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.error_outline, size: 16.sp, color: AppColors.error),
+                      Icon(
+                        Icons.error_outline,
+                        size: 16.sp,
+                        color: AppColors.error,
+                      ),
                       SizedBox(width: 8.w),
                       Text(
                         'Failed to load photos',

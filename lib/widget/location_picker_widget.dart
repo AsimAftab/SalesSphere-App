@@ -1,11 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/services/google_places_service.dart';
 import 'package:sales_sphere/core/services/location_service.dart';
-import 'dart:async';
 
 /// Reusable Location Picker Widget with Google Maps
 /// Supports: Address search, Current location, Map tap selection
@@ -440,9 +441,12 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
       }
 
       // ✅ Update lat/long controllers
-      if (widget.latitudeController != null && widget.longitudeController != null) {
+      if (widget.latitudeController != null &&
+          widget.longitudeController != null) {
         widget.latitudeController!.text = location.latitude.toStringAsFixed(6);
-        widget.longitudeController!.text = location.longitude.toStringAsFixed(6);
+        widget.longitudeController!.text = location.longitude.toStringAsFixed(
+          6,
+        );
       }
 
       // ✅ Update map marker
@@ -463,7 +467,6 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
       widget.onLocationSelected?.call(location, _fullFormattedAddress!);
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -494,11 +497,14 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12.r),
-              borderSide: BorderSide(color: Colors.grey.shade300,width: 1.5),
+              borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12.r),
-              borderSide: const BorderSide(color: AppColors.secondary, width: 2),
+              borderSide: const BorderSide(
+                color: AppColors.secondary,
+                width: 2,
+              ),
             ),
             filled: true,
             fillColor: widget.enabled ? Colors.white : Colors.grey.shade100,

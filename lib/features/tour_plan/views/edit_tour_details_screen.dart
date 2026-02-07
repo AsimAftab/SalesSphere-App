@@ -6,10 +6,11 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/utils/snackbar_utils.dart';
-import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
 import 'package:sales_sphere/widget/custom_date_picker.dart';
+import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+
 import '../models/tour_plan.model.dart';
 import '../vm/edit_tour.vm.dart';
 import '../vm/tour_plan.vm.dart';
@@ -17,13 +18,11 @@ import '../vm/tour_plan.vm.dart';
 class EditTourDetailsScreen extends ConsumerStatefulWidget {
   final String tourId;
 
-  const EditTourDetailsScreen({
-    super.key,
-    required this.tourId,
-  });
+  const EditTourDetailsScreen({super.key, required this.tourId});
 
   @override
-  ConsumerState<EditTourDetailsScreen> createState() => _EditTourDetailsScreenState();
+  ConsumerState<EditTourDetailsScreen> createState() =>
+      _EditTourDetailsScreenState();
 }
 
 class _EditTourDetailsScreenState extends ConsumerState<EditTourDetailsScreen> {
@@ -98,9 +97,13 @@ class _EditTourDetailsScreenState extends ConsumerState<EditTourDetailsScreen> {
     return DateFormat('yyyy-MM-dd').format(parsed);
   }
 
-  DateTime _dateOnly(DateTime date) => DateTime(date.year, date.month, date.day);
+  DateTime _dateOnly(DateTime date) =>
+      DateTime(date.year, date.month, date.day);
 
-  List<DateTimeRange> _buildBlockedRanges(List<TourPlanListItem> plans, {String? excludeId}) {
+  List<DateTimeRange> _buildBlockedRanges(
+    List<TourPlanListItem> plans, {
+    String? excludeId,
+  }) {
     final ranges = <DateTimeRange>[];
     for (final plan in plans) {
       if (excludeId != null && plan.id == excludeId) {
@@ -133,13 +136,18 @@ class _EditTourDetailsScreenState extends ConsumerState<EditTourDetailsScreen> {
     return false;
   }
 
-  bool _rangesOverlap(DateTime start, DateTime end, List<DateTimeRange> blocked) {
+  bool _rangesOverlap(
+    DateTime start,
+    DateTime end,
+    List<DateTimeRange> blocked,
+  ) {
     final normalizedStart = _dateOnly(start);
     final normalizedEnd = _dateOnly(end);
     for (final range in blocked) {
       final rangeStart = _dateOnly(range.start);
       final rangeEnd = _dateOnly(range.end);
-      if (!normalizedEnd.isBefore(rangeStart) && !normalizedStart.isAfter(rangeEnd)) {
+      if (!normalizedEnd.isBefore(rangeStart) &&
+          !normalizedStart.isAfter(rangeEnd)) {
         return true;
       }
     }
@@ -205,10 +213,9 @@ class _EditTourDetailsScreenState extends ConsumerState<EditTourDetailsScreen> {
         purposeOfVisit: _purposeController.text.trim(),
       );
 
-      final success = await ref.read(editTourViewModelProvider.notifier).updateTourPlan(
-            tourId: widget.tourId,
-            request: request,
-          );
+      final success = await ref
+          .read(editTourViewModelProvider.notifier)
+          .updateTourPlan(tourId: widget.tourId, request: request);
 
       if (mounted) {
         if (success) {
@@ -238,7 +245,9 @@ class _EditTourDetailsScreenState extends ConsumerState<EditTourDetailsScreen> {
     );
 
     ref.listen(tourByIdProvider(widget.tourId), (prev, next) {
-      if (next is AsyncData<TourDetails?> && next.value != null && !_isDataLoaded) {
+      if (next is AsyncData<TourDetails?> &&
+          next.value != null &&
+          !_isDataLoaded) {
         _populateFields(next.value!);
         _isDataLoaded = true;
       }
@@ -273,7 +282,8 @@ class _EditTourDetailsScreenState extends ConsumerState<EditTourDetailsScreen> {
                   : () {
                       setState(() {
                         _isEditMode = false;
-                        if (_currentTour != null) _populateFields(_currentTour!);
+                        if (_currentTour != null)
+                          _populateFields(_currentTour!);
                       });
                     },
               child: Text(
@@ -303,7 +313,10 @@ class _EditTourDetailsScreenState extends ConsumerState<EditTourDetailsScreen> {
             data: (tour) => tour == null
                 ? const Center(child: Text("Tour not found"))
                 : _buildContent(tour, isLoading, blockedRanges),
-            loading: () => Skeletonizer(enabled: true, child: _buildContent(null, false, blockedRanges)),
+            loading: () => Skeletonizer(
+              enabled: true,
+              child: _buildContent(null, false, blockedRanges),
+            ),
             error: (e, _) => Center(child: Text(e.toString())),
           ),
         ],
@@ -311,8 +324,13 @@ class _EditTourDetailsScreenState extends ConsumerState<EditTourDetailsScreen> {
     );
   }
 
-  Widget _buildContent(TourDetails? tour, bool isLoading, List<DateTimeRange> blockedRanges) {
-    final bool isPending = (tour?.status.toLowerCase() ?? 'pending') == 'pending';
+  Widget _buildContent(
+    TourDetails? tour,
+    bool isLoading,
+    List<DateTimeRange> blockedRanges,
+  ) {
+    final bool isPending =
+        (tour?.status.toLowerCase() ?? 'pending') == 'pending';
     final bool isEditable = _isEditMode && isPending && !isLoading;
 
     return Column(
@@ -353,7 +371,9 @@ class _EditTourDetailsScreenState extends ConsumerState<EditTourDetailsScreen> {
                             enabled: isEditable,
                             hasFocusBorder: true,
                             validator: isEditable
-                                ? (v) => ref.read(editTourViewModelProvider.notifier).validateRequired(v, "Place")
+                                ? (v) => ref
+                                      .read(editTourViewModelProvider.notifier)
+                                      .validateRequired(v, "Place")
                                 : null,
                           ),
                           SizedBox(height: 16.h),
@@ -381,11 +401,19 @@ class _EditTourDetailsScreenState extends ConsumerState<EditTourDetailsScreen> {
                                     if (basic != null) {
                                       return basic;
                                     }
-                                    final startDate = _parseDisplayDate(_startDateController.text);
-                                    final endDate = _parseDisplayDate(value ?? '');
+                                    final startDate = _parseDisplayDate(
+                                      _startDateController.text,
+                                    );
+                                    final endDate = _parseDisplayDate(
+                                      value ?? '',
+                                    );
                                     if (startDate != null &&
                                         endDate != null &&
-                                        _rangesOverlap(startDate, endDate, blockedRanges)) {
+                                        _rangesOverlap(
+                                          startDate,
+                                          endDate,
+                                          blockedRanges,
+                                        )) {
                                       return 'Selected dates overlap with an existing tour plan';
                                     }
                                     return null;
@@ -394,7 +422,9 @@ class _EditTourDetailsScreenState extends ConsumerState<EditTourDetailsScreen> {
                             selectableDayPredicate: isEditable
                                 ? (date) {
                                     if (_selectedStartDate != null &&
-                                        date.isBefore(_dateOnly(_selectedStartDate!))) {
+                                        date.isBefore(
+                                          _dateOnly(_selectedStartDate!),
+                                        )) {
                                       return false;
                                     }
                                     return !_isDateBlocked(date, blockedRanges);
@@ -423,7 +453,12 @@ class _EditTourDetailsScreenState extends ConsumerState<EditTourDetailsScreen> {
         ),
         if (isPending)
           Container(
-            padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, MediaQuery.of(context).padding.bottom + 16.h),
+            padding: EdgeInsets.fromLTRB(
+              16.w,
+              16.h,
+              16.w,
+              MediaQuery.of(context).padding.bottom + 16.h,
+            ),
             decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [
@@ -436,8 +471,12 @@ class _EditTourDetailsScreenState extends ConsumerState<EditTourDetailsScreen> {
             ),
             child: PrimaryButton(
               label: _isEditMode ? 'Save Changes' : 'Edit Detail',
-              onPressed: isLoading ? null : (_isEditMode ? _handleSave : _toggleEditMode),
-              leadingIcon: _isEditMode ? Icons.check_rounded : Icons.edit_outlined,
+              onPressed: isLoading
+                  ? null
+                  : (_isEditMode ? _handleSave : _toggleEditMode),
+              leadingIcon: _isEditMode
+                  ? Icons.check_rounded
+                  : Icons.edit_outlined,
               size: ButtonSize.medium,
               isLoading: isLoading,
             ),
@@ -483,11 +522,19 @@ class _EditTourDetailsScreenState extends ConsumerState<EditTourDetailsScreen> {
               children: [
                 Text(
                   "Tour Plan Status",
-                  style: TextStyle(fontSize: 11.sp, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+                  style: TextStyle(
+                    fontSize: 11.sp,
+                    color: Colors.grey.shade600,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
                 Text(
                   status,
-                  style: TextStyle(fontSize: 16.sp, color: textColor, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    color: textColor,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),
@@ -495,8 +542,17 @@ class _EditTourDetailsScreenState extends ConsumerState<EditTourDetailsScreen> {
           if (status.toLowerCase() != 'pending')
             Container(
               padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.5), borderRadius: BorderRadius.circular(8.r)),
-              child: Text("Read Only", style: TextStyle(fontSize: 10.sp, color: textColor.withValues(alpha: 0.7))),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+              child: Text(
+                "Read Only",
+                style: TextStyle(
+                  fontSize: 10.sp,
+                  color: textColor.withValues(alpha: 0.7),
+                ),
+              ),
             ),
         ],
       ),

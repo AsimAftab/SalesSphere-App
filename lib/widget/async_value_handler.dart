@@ -27,7 +27,8 @@ class AsyncValueHandler<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     return asyncValue.when(
       data: data,
-      loading: loading ?? () => const Center(child: CircularProgressIndicator()),
+      loading:
+          loading ?? () => const Center(child: CircularProgressIndicator()),
       error: (e, stack) {
         // Check if error is permission denied (403)
         if (_isPermissionDenied(e)) {
@@ -61,9 +62,9 @@ class AsyncValueHandler<T> extends StatelessWidget {
     if (error is Exception) {
       final errorStr = error.toString();
       // Check if it's wrapped in DioException
-      return errorStr.contains('403') || 
-             errorStr.contains('Forbidden') ||
-             errorStr.contains('FEATURE_ACCESS_DENIED');
+      return errorStr.contains('403') ||
+          errorStr.contains('Forbidden') ||
+          errorStr.contains('FEATURE_ACCESS_DENIED');
     }
 
     return false;
@@ -86,18 +87,11 @@ class AsyncValueHandler<T> extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Colors.red,
-            ),
+            const Icon(Icons.error_outline, size: 64, color: Colors.red),
             const SizedBox(height: 16),
             const Text(
               'Something went wrong',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
             Text(

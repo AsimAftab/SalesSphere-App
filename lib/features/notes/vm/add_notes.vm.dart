@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
@@ -123,12 +124,11 @@ class AddNoteViewModel extends _$AddNoteViewModel {
           ),
         });
 
-        await dio.post(
-          ApiEndpoints.uploadNoteImages(noteId),
-          data: formData,
-        );
+        await dio.post(ApiEndpoints.uploadNoteImages(noteId), data: formData);
 
-        AppLogger.i('Uploaded image $imageNumber/${images.length} for note $noteId');
+        AppLogger.i(
+          'Uploaded image $imageNumber/${images.length} for note $noteId',
+        );
       }
 
       // Release after all images uploaded

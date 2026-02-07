@@ -2,7 +2,6 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
 import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/network_layer/token_storage_service.dart';
-import 'package:sales_sphere/core/providers/connectivity_provider.dart';
 import 'package:sales_sphere/core/providers/user_controller.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:sales_sphere/features/auth/models/login.models.dart';
@@ -15,10 +14,7 @@ class AppStartupState {
   final bool hasInternet;
   final User? user;
 
-  const AppStartupState({
-    required this.hasInternet,
-    this.user,
-  });
+  const AppStartupState({required this.hasInternet, this.user});
 }
 
 /// App Startup Provider
@@ -90,8 +86,11 @@ class AppStartup extends _$AppStartup {
         final response = await dio.get(ApiEndpoints.checkStatus);
 
         // Check-status endpoint returns: {status: "success", message: "Token is valid.", data: {user}}
-        if (response.statusCode == 200 && response.data['status'] == 'success') {
-          final checkStatusResponse = CheckStatusResponse.fromJson(response.data);
+        if (response.statusCode == 200 &&
+            response.data['status'] == 'success') {
+          final checkStatusResponse = CheckStatusResponse.fromJson(
+            response.data,
+          );
           final user = checkStatusResponse.data.user;
 
           // Save session expiry date if present

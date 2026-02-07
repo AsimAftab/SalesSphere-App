@@ -47,11 +47,7 @@ class RouteProgressCard extends StatelessWidget {
           // Header section (Icon, Title, Percentage)
           Row(
             children: [
-              Icon(
-                Icons.navigation_outlined,
-                color: Colors.white,
-                size: 24.sp,
-              ),
+              Icon(Icons.navigation_outlined, color: Colors.white, size: 24.sp),
               SizedBox(width: 12.w),
               Text(
                 'Route Progress',
@@ -65,7 +61,8 @@ class RouteProgressCard extends StatelessWidget {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15), // Light pill background
+                  color: Colors.white.withValues(alpha: 0.15),
+                  // Light pill background
                   borderRadius: BorderRadius.circular(20.r),
                 ),
                 child: Text(
@@ -112,10 +109,7 @@ class RouteProgressCard extends StatelessWidget {
           // Statistics row
           Row(
             children: [
-              _buildStatColumn(
-                label: 'Total',
-                value: totalParties.toString(),
-              ),
+              _buildStatColumn(label: 'Total', value: totalParties.toString()),
               _buildStatColumn(
                 label: 'Visited',
                 value: visitedParties.toString(),
@@ -142,11 +136,7 @@ class RouteProgressCard extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(
-                  Icons.info_outline,
-                  size: 18.sp,
-                  color: Colors.white,
-                ),
+                Icon(Icons.info_outline, size: 18.sp, color: Colors.white),
                 SizedBox(width: 8.w),
                 Expanded(
                   child: Text(
@@ -170,10 +160,7 @@ class RouteProgressCard extends StatelessWidget {
   }
 
   // Simplified helper widget for stats, matching the modern gradient design
-  Widget _buildStatColumn({
-    required String label,
-    required String value,
-  }) {
+  Widget _buildStatColumn({required String label, required String value}) {
     return Expanded(
       child: Column(
         children: [
@@ -190,7 +177,8 @@ class RouteProgressCard extends StatelessWidget {
             label,
             style: TextStyle(
               fontSize: 11.sp,
-              color: Colors.white.withValues(alpha: 0.7), // Lighter white for label
+              color: Colors.white.withValues(alpha: 0.7),
+              // Lighter white for label
               fontWeight: FontWeight.w700,
             ),
           ),

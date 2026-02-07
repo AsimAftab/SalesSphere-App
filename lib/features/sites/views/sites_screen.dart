@@ -1,14 +1,12 @@
-
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
-import 'package:skeletonizer/skeletonizer.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/features/sites/vm/sites.vm.dart';
 import 'package:sales_sphere/widget/universal_list_card.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class SitesScreen extends ConsumerStatefulWidget {
   const SitesScreen({super.key});
@@ -74,10 +72,7 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
           ),
           Column(
             children: [
-              Container(
-                height: 120.h,
-                color: Colors.transparent,
-              ),
+              Container(height: 120.h, color: Colors.transparent),
               // Search Bar Section
               Container(
                 color: Colors.transparent,
@@ -99,16 +94,16 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
                     ),
                     suffixIcon: searchQuery.isNotEmpty
                         ? IconButton(
-                      icon: Icon(
-                        Icons.clear,
-                        color: Colors.grey.shade400,
-                        size: 20.sp,
-                      ),
-                      onPressed: () {
-                        _searchController.clear();
-                        _onSearchChanged('');
-                      },
-                    )
+                            icon: Icon(
+                              Icons.clear,
+                              color: Colors.grey.shade400,
+                              size: 20.sp,
+                            ),
+                            onPressed: () {
+                              _searchController.clear();
+                              _onSearchChanged('');
+                            },
+                          )
                         : null,
                     filled: true,
                     fillColor: Colors.white,
@@ -122,7 +117,10 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.r),
-                      borderSide: BorderSide(color: AppColors.primary, width: 2),
+                      borderSide: BorderSide(
+                        color: AppColors.primary,
+                        width: 2,
+                      ),
                     ),
                     contentPadding: EdgeInsets.symmetric(
                       horizontal: 16.w,
@@ -181,7 +179,9 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
                     }
                     return RefreshIndicator(
                       onRefresh: () async {
-                        await ref.read(siteViewModelProvider.notifier).refresh();
+                        await ref
+                            .read(siteViewModelProvider.notifier)
+                            .refresh();
                       },
                       color: AppColors.primary,
                       child: ListView.separated(
@@ -286,11 +286,7 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
         onPressed: _navigateToAddSite,
         backgroundColor: AppColors.primary,
         elevation: 4,
-        icon: Icon(
-          Icons.add,
-          color: Colors.white,
-          size: 20.sp,
-        ),
+        icon: Icon(Icons.add, color: Colors.white, size: 20.sp),
         label: Text(
           'Add Site',
           style: TextStyle(

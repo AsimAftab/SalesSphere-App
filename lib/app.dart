@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'core/router/route_handler.dart';
-import 'core/theme/theme.dart';
+
+import 'core/network_layer/dio_client.dart';
 import 'core/providers/app_startup.dart';
 import 'core/providers/provider_registry.dart';
-import 'core/utils/connectivity_utils.dart';
-import 'core/network_layer/dio_client.dart';
+import 'core/router/route_handler.dart';
 import 'core/services/tracking_coordinator.dart';
+import 'core/theme/theme.dart';
+import 'core/utils/connectivity_utils.dart';
 import 'core/utils/logger.dart';
 
 /// Provider to initialize TrackingCoordinator with Dio client

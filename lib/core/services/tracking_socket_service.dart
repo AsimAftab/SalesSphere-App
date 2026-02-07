@@ -1,14 +1,16 @@
 import 'dart:async';
+
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:socket_io_client/socket_io_client.dart' as io;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sales_sphere/core/constants/storage_keys.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:socket_io_client/socket_io_client.dart' as io;
 
 /// Tracking Socket Service
 /// Handles WebSocket connection for real-time beat plan tracking
 class TrackingSocketService {
   TrackingSocketService._();
+
   static final TrackingSocketService instance = TrackingSocketService._();
 
   // Socket instance
@@ -39,26 +41,33 @@ class TrackingSocketService {
       StreamController<TrackingStatusUpdateEvent>.broadcast();
   final StreamController<TrackingStoppedEvent> _trackingStoppedController =
       StreamController<TrackingStoppedEvent>.broadcast();
-  final StreamController<TrackingForceStoppedEvent> _trackingForceStoppedController =
+  final StreamController<TrackingForceStoppedEvent>
+  _trackingForceStoppedController =
       StreamController<TrackingForceStoppedEvent>.broadcast();
   final StreamController<String> _errorController =
       StreamController<String>.broadcast();
 
   // Getters
   bool get isConnected => _isConnected;
+
   io.Socket? get socket => _socket;
 
   // Event streams
   Stream<TrackingStartedEvent> get onTrackingStarted =>
       _trackingStartedController.stream;
+
   Stream<LocationUpdateEvent> get onLocationUpdate =>
       _locationUpdateController.stream;
+
   Stream<TrackingStatusUpdateEvent> get onStatusUpdate =>
       _statusUpdateController.stream;
+
   Stream<TrackingStoppedEvent> get onTrackingStopped =>
       _trackingStoppedController.stream;
+
   Stream<TrackingForceStoppedEvent> get onTrackingForceStopped =>
       _trackingForceStoppedController.stream;
+
   Stream<String> get onError => _errorController.stream;
 
   /// Connect to tracking server
@@ -103,13 +112,21 @@ class TrackingSocketService {
       _socket = io.io(
         baseUrl,
         io.OptionBuilder()
-            .setPath(socketPath) // e.g. /api/tracking (nginx proxies to backend /tracking)
-            .setTransports(['websocket']) // Use only WebSocket to avoid multiple transport attempts
+            .setPath(
+              socketPath,
+            ) // e.g. /api/tracking (nginx proxies to backend /tracking)
+            .setTransports([
+              'websocket',
+            ]) // Use only WebSocket to avoid multiple transport attempts
             .setAuth({'token': token}) // JWT authentication
             .disableAutoConnect() // Manual connection control
             .setReconnectionDelay(1000) // Delay between reconnection attempts
-            .setReconnectionDelayMax(5000) // Maximum delay between reconnections
-            .setReconnectionAttempts(0) // Disable automatic reconnection - we handle it manually
+            .setReconnectionDelayMax(
+              5000,
+            ) // Maximum delay between reconnections
+            .setReconnectionAttempts(
+              0,
+            ) // Disable automatic reconnection - we handle it manually
             .build(),
       );
 
@@ -159,7 +176,8 @@ class TrackingSocketService {
       _socket = null;
       _isConnected = false;
       _isConnecting = false; // Also reset connecting state
-      _listenersSetup = false; // Reset flag so listeners are set up on next connect
+      _listenersSetup =
+          false; // Reset flag so listeners are set up on next connect
       _reconnectAttempts = 0;
 
       AppLogger.i('✅ Disconnected from tracking server');
@@ -264,7 +282,9 @@ class TrackingSocketService {
   }
 
   /// Wait for socket connection (with timeout)
-  Future<bool> _waitForConnection({Duration timeout = const Duration(seconds: 10)}) async {
+  Future<bool> _waitForConnection({
+    Duration timeout = const Duration(seconds: 10),
+  }) async {
     final completer = Completer<bool>();
     Timer? timeoutTimer;
 
@@ -325,7 +345,9 @@ class TrackingSocketService {
     final delay = _baseReconnectDelay * (1 << _reconnectAttempts);
     _reconnectAttempts++;
 
-    AppLogger.i('🔄 Reconnecting in ${delay}ms (attempt $_reconnectAttempts/$_maxReconnectAttempts)');
+    AppLogger.i(
+      '🔄 Reconnecting in ${delay}ms (attempt $_reconnectAttempts/$_maxReconnectAttempts)',
+    );
 
     _reconnectTimer = Timer(Duration(milliseconds: delay), () {
       connect();
@@ -384,7 +406,9 @@ class TrackingSocketService {
 
       _socket!.emit('update-location', payload);
 
-      AppLogger.d('📍 Location update sent: $latitude, $longitude ${address != null ? "(with address)" : ""}');
+      AppLogger.d(
+        '📍 Location update sent: $latitude, $longitude ${address != null ? "(with address)" : ""}',
+      );
     } catch (e) {
       AppLogger.e('❌ Error updating location: $e');
     }
@@ -657,14 +681,21 @@ class LocationUpdateEvent {
   });
 
   double? get latitude => location['latitude'];
+
   double? get longitude => location['longitude'];
+
   double? get accuracy => location['accuracy'];
+
   double? get speed => location['speed'];
+
   String? get timestamp => location['timestamp'];
 
   String? get nearestDirectoryId => nearestDirectory?['id'];
+
   String? get nearestDirectoryType => nearestDirectory?['type'];
+
   String? get nearestDirectoryName => nearestDirectory?['name'];
+
   double? get distanceToNearest => nearestDirectory?['distance'];
 
   @override
@@ -704,8 +735,11 @@ class TrackingStoppedEvent {
   });
 
   double? get totalDistance => summary['totalDistance'];
+
   double? get totalDuration => summary['totalDuration'];
+
   double? get averageSpeed => summary['averageSpeed'];
+
   int? get directoriesVisited => summary['directoriesVisited'];
 
   @override
@@ -735,8 +769,11 @@ class TrackingForceStoppedEvent {
   });
 
   double? get totalDistance => summary['totalDistance'];
+
   double? get totalDuration => summary['totalDuration'];
+
   double? get averageSpeed => summary['averageSpeed'];
+
   int? get directoriesVisited => summary['directoriesVisited'];
 
   @override

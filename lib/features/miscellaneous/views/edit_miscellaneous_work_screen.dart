@@ -1,24 +1,25 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:intl/intl.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
+import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/services/google_places_service.dart';
 import 'package:sales_sphere/core/services/location_service.dart';
-import 'package:sales_sphere/widget/custom_text_field.dart';
-import 'package:sales_sphere/widget/custom_button.dart';
-import 'package:sales_sphere/widget/custom_date_picker.dart';
-import 'package:sales_sphere/widget/location_picker_widget.dart';
 import 'package:sales_sphere/features/miscellaneous/models/miscellaneous.model.dart';
 import 'package:sales_sphere/features/miscellaneous/vm/miscellaneous_edit.vm.dart';
 import 'package:sales_sphere/features/miscellaneous/vm/miscellaneous_list.vm.dart';
-import 'package:sales_sphere/core/network_layer/dio_client.dart';
+import 'package:sales_sphere/widget/custom_button.dart';
+import 'package:sales_sphere/widget/custom_date_picker.dart';
+import 'package:sales_sphere/widget/custom_text_field.dart';
+import 'package:sales_sphere/widget/location_picker_widget.dart';
 
 final googlePlacesServiceProvider = Provider<GooglePlacesService>((ref) {
   final apiKey = dotenv.env['GOOGLE_MAPS_API_KEY'] ?? '';
@@ -32,10 +33,7 @@ final locationServiceProvider = Provider<LocationService>((ref) {
 class EditMiscellaneousWorkScreen extends ConsumerStatefulWidget {
   final MiscWorkData workData;
 
-  const EditMiscellaneousWorkScreen({
-    super.key,
-    required this.workData,
-  });
+  const EditMiscellaneousWorkScreen({super.key, required this.workData});
 
   @override
   ConsumerState<EditMiscellaneousWorkScreen> createState() =>
@@ -62,7 +60,7 @@ class _EditMiscellaneousWorkScreenState
   // Image Picking
   final ImagePicker _picker = ImagePicker();
   final List<XFile> _selectedImages = [];
-  
+
   // Track deleted existing images
   final List<int> _deletedImageNumbers = [];
 
@@ -93,7 +91,9 @@ class _EditMiscellaneousWorkScreenState
     // Parse work date
     if (widget.workData.workDate != null) {
       _selectedDate = DateTime.parse(widget.workData.workDate!);
-      _workDateController.text = DateFormat('dd MMM yyyy').format(_selectedDate);
+      _workDateController.text = DateFormat(
+        'dd MMM yyyy',
+      ).format(_selectedDate);
     } else {
       _selectedDate = DateTime.now();
     }
@@ -132,7 +132,8 @@ class _EditMiscellaneousWorkScreenState
   }
 
   int _getTotalImagesCount() {
-    final existingCount = widget.workData.images.length - _deletedImageNumbers.length;
+    final existingCount =
+        widget.workData.images.length - _deletedImageNumbers.length;
     return existingCount + _selectedImages.length;
   }
 
@@ -186,7 +187,9 @@ class _EditMiscellaneousWorkScreenState
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Maximum 2 images allowed. Selected first $remaining.'),
+                content: Text(
+                  'Maximum 2 images allowed. Selected first $remaining.',
+                ),
                 backgroundColor: AppColors.warning,
               ),
             );
@@ -223,7 +226,8 @@ class _EditMiscellaneousWorkScreenState
         return;
       }
 
-      if (_latitudeController.text.isEmpty || _longitudeController.text.isEmpty) {
+      if (_latitudeController.text.isEmpty ||
+          _longitudeController.text.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Please select a location on map')),
         );
@@ -235,9 +239,8 @@ class _EditMiscellaneousWorkScreenState
         showDialog(
           context: context,
           barrierDismissible: false,
-          builder: (context) => const Center(
-            child: CircularProgressIndicator(),
-          ),
+          builder: (context) =>
+              const Center(child: CircularProgressIndicator()),
         );
       }
 
@@ -259,7 +262,9 @@ class _EditMiscellaneousWorkScreenState
                 // Log but continue with other operations
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Failed to delete image $imageNumber')),
+                    SnackBar(
+                      content: Text('Failed to delete image $imageNumber'),
+                    ),
                   );
                 }
               }
@@ -285,7 +290,11 @@ class _EditMiscellaneousWorkScreenState
                 // Log but continue with other operations
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Failed to upload image ${availableNumbers[i]}')),
+                    SnackBar(
+                      content: Text(
+                        'Failed to upload image ${availableNumbers[i]}',
+                      ),
+                    ),
                   );
                 }
               }
@@ -299,12 +308,15 @@ class _EditMiscellaneousWorkScreenState
         DateTime dateToSubmit = _selectedDate;
         if (_workDateController.text.isNotEmpty) {
           try {
-            dateToSubmit = DateFormat('dd MMM yyyy').parse(_workDateController.text);
+            dateToSubmit = DateFormat(
+              'dd MMM yyyy',
+            ).parse(_workDateController.text);
           } catch (e) {
             dateToSubmit = _selectedDate;
           }
         }
-        final formattedDate = '${dateToSubmit.year}-${dateToSubmit.month.toString().padLeft(2, '0')}-${dateToSubmit.day.toString().padLeft(2, '0')}';
+        final formattedDate =
+            '${dateToSubmit.year}-${dateToSubmit.month.toString().padLeft(2, '0')}-${dateToSubmit.day.toString().padLeft(2, '0')}';
 
         final updateRequest = CreateMiscellaneousWorkRequest(
           natureOfWork: _natureOfWorkController.text.trim(),
@@ -354,8 +366,6 @@ class _EditMiscellaneousWorkScreenState
       }
     }
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -415,10 +425,7 @@ class _EditMiscellaneousWorkScreenState
           ),
           Column(
             children: [
-              Container(
-                height: 120.h,
-                color: Colors.transparent,
-              ),
+              Container(height: 120.h, color: Colors.transparent),
               // White Card Container
               Expanded(
                 child: SingleChildScrollView(
@@ -445,383 +452,447 @@ class _EditMiscellaneousWorkScreenState
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             SizedBox(height: 8.h),
-                      // Nature of Work
-                      PrimaryTextField(
-                        label: const Text("Nature of Work"),
-                        hintText: "Enter nature of work",
-                        controller: _natureOfWorkController,
-                        prefixIcon: Icons.work_outline,
-                        hasFocusBorder: true,
-                        enabled: _isEditMode,
-                        validator: _isEditMode
-                            ? (value) =>
-                                (value == null || value.trim().isEmpty)
-                                    ? 'Required'
-                                    : null
-                            : null,
-                      ),
-                      SizedBox(height: 16.h),
+                            // Nature of Work
+                            PrimaryTextField(
+                              label: const Text("Nature of Work"),
+                              hintText: "Enter nature of work",
+                              controller: _natureOfWorkController,
+                              prefixIcon: Icons.work_outline,
+                              hasFocusBorder: true,
+                              enabled: _isEditMode,
+                              validator: _isEditMode
+                                  ? (value) =>
+                                        (value == null || value.trim().isEmpty)
+                                        ? 'Required'
+                                        : null
+                                  : null,
+                            ),
+                            SizedBox(height: 16.h),
 
-                      // Assigned By
-                      PrimaryTextField(
-                        label: const Text("Assigned By"),
-                        hintText: "Enter assigned by",
-                        controller: _assignedByController,
-                        prefixIcon: Icons.person_outline,
-                        hasFocusBorder: true,
-                        enabled: _isEditMode,
-                        validator: _isEditMode
-                            ? (value) =>
-                                (value == null || value.trim().isEmpty)
-                                    ? 'Required'
-                                    : null
-                            : null,
-                      ),
-                      SizedBox(height: 16.h),
+                            // Assigned By
+                            PrimaryTextField(
+                              label: const Text("Assigned By"),
+                              hintText: "Enter assigned by",
+                              controller: _assignedByController,
+                              prefixIcon: Icons.person_outline,
+                              hasFocusBorder: true,
+                              enabled: _isEditMode,
+                              validator: _isEditMode
+                                  ? (value) =>
+                                        (value == null || value.trim().isEmpty)
+                                        ? 'Required'
+                                        : null
+                                  : null,
+                            ),
+                            SizedBox(height: 16.h),
 
-                      // Work Date Picker
-                      CustomDatePicker(
-                        hintText: "Work Date",
-                        controller: _workDateController,
-                        prefixIcon: Icons.event_outlined,
-                        initialDate: _selectedDate,
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime(2030),
-                        enabled: _isEditMode,
-                        validator: _isEditMode
-                            ? (value) =>
-                                (value == null || value.trim().isEmpty)
-                                    ? 'Work date required'
-                                    : null
-                            : null,
-                      ),
-                      SizedBox(height: 16.h),
+                            // Work Date Picker
+                            CustomDatePicker(
+                              hintText: "Work Date",
+                              controller: _workDateController,
+                              prefixIcon: Icons.event_outlined,
+                              initialDate: _selectedDate,
+                              firstDate: DateTime(2020),
+                              lastDate: DateTime(2030),
+                              enabled: _isEditMode,
+                              validator: _isEditMode
+                                  ? (value) =>
+                                        (value == null || value.trim().isEmpty)
+                                        ? 'Work date required'
+                                        : null
+                                  : null,
+                            ),
+                            SizedBox(height: 16.h),
 
-                      // Location Picker
-                      LocationPickerWidget(
-                        addressController: _addressController,
-                        latitudeController: _latitudeController,
-                        longitudeController: _longitudeController,
-                        initialLocation: _defaultLocation,
-                        placesService: ref.read(googlePlacesServiceProvider),
-                        locationService: ref.read(locationServiceProvider),
-                        enabled: _isEditMode,
-                        addressValidator: _isEditMode
-                            ? (value) =>
-                                (value == null || value.trim().isEmpty)
-                                    ? 'Address required'
-                                    : null
-                            : null,
-                        onLocationSelected: (location, address) {
-                          if (mounted) {
-                            setState(() {
-                              _addressController.text = address;
-                              _latitudeController.text =
-                                  location.latitude.toStringAsFixed(6);
-                              _longitudeController.text =
-                                  location.longitude.toStringAsFixed(6);
-                            });
-                          }
-                        },
-                      ),
-                      SizedBox(height: 16.h),
+                            // Location Picker
+                            LocationPickerWidget(
+                              addressController: _addressController,
+                              latitudeController: _latitudeController,
+                              longitudeController: _longitudeController,
+                              initialLocation: _defaultLocation,
+                              placesService: ref.read(
+                                googlePlacesServiceProvider,
+                              ),
+                              locationService: ref.read(
+                                locationServiceProvider,
+                              ),
+                              enabled: _isEditMode,
+                              addressValidator: _isEditMode
+                                  ? (value) =>
+                                        (value == null || value.trim().isEmpty)
+                                        ? 'Address required'
+                                        : null
+                                  : null,
+                              onLocationSelected: (location, address) {
+                                if (mounted) {
+                                  setState(() {
+                                    _addressController.text = address;
+                                    _latitudeController.text = location.latitude
+                                        .toStringAsFixed(6);
+                                    _longitudeController.text = location
+                                        .longitude
+                                        .toStringAsFixed(6);
+                                  });
+                                }
+                              },
+                            ),
+                            SizedBox(height: 16.h),
 
-                      // Location Details Section
-                      Text(
-                        "Location Details (Auto-generated from map)",
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.grey.shade600,
-                          fontFamily: 'Poppins',
-                        ),
-                      ),
-                      SizedBox(height: 12.h),
+                            // Location Details Section
+                            Text(
+                              "Location Details (Auto-generated from map)",
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.grey.shade600,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
+                            SizedBox(height: 12.h),
 
-                      // Latitude (Non-editable)
-                      PrimaryTextField(
-                        label: const Text("Latitude"),
-                        hintText: "Auto-generated from map",
-                        controller: _latitudeController,
-                        prefixIcon: Icons.explore_outlined,
-                        hasFocusBorder: true,
-                        enabled: false,
-                      ),
-                      SizedBox(height: 16.h),
+                            // Latitude (Non-editable)
+                            PrimaryTextField(
+                              label: const Text("Latitude"),
+                              hintText: "Auto-generated from map",
+                              controller: _latitudeController,
+                              prefixIcon: Icons.explore_outlined,
+                              hasFocusBorder: true,
+                              enabled: false,
+                            ),
+                            SizedBox(height: 16.h),
 
-                      // Longitude (Non-editable)
-                      PrimaryTextField(
-                        label: const Text("Longitude"),
-                        hintText: "Auto-generated from map",
-                        controller: _longitudeController,
-                        prefixIcon: Icons.explore_outlined,
-                        hasFocusBorder: true,
-                        enabled: false,
-                      ),
-                      SizedBox(height: 16.h),
+                            // Longitude (Non-editable)
+                            PrimaryTextField(
+                              label: const Text("Longitude"),
+                              hintText: "Auto-generated from map",
+                              controller: _longitudeController,
+                              prefixIcon: Icons.explore_outlined,
+                              hasFocusBorder: true,
+                              enabled: false,
+                            ),
+                            SizedBox(height: 16.h),
 
-                      // Existing Images Section
-                      if (widget.workData.images.isNotEmpty) ...[
-                        Text(
-                          "Images",
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.grey.shade600,
-                            fontFamily: 'Poppins',
-                          ),
-                        ),
-                        SizedBox(height: 8.h),
-                        ListView.builder(
-                          padding: EdgeInsets.zero,
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: widget.workData.images.length,
-                          itemBuilder: (context, index) {
-                            final image = widget.workData.images[index];
-                            final isDeleted = _deletedImageNumbers.contains(image.imageNumber);
-                            
-                            // Don't show deleted images
-                            if (isDeleted) return const SizedBox.shrink();
-                            
-                            return Padding(
-                              padding: EdgeInsets.only(bottom: 6.h),
-                              child: GestureDetector(
-                                onTap: () {
-                                  // Show preview dialog
-                                  showDialog(
-                                    context: context,
-                                    builder: (BuildContext context) {
-                                      return Dialog(
-                                        backgroundColor: Colors.transparent,
-                                        child: InteractiveViewer(
-                                          child: ClipRRect(
-                                            borderRadius: BorderRadius.circular(12.r),
-                                            child: Image.network(image.imageUrl),
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  );
-                                },
-                                child: Stack(
-                                  children: [
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(12.r),
-                                      child: Image.network(
-                                        image.imageUrl,
-                                        width: double.infinity,
-                                        height: 200.h,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) {
-                                          return Container(
-                                            width: double.infinity,
-                                            height: 200.h,
-                                            color: Colors.grey.shade300,
-                                            child: Icon(
-                                              Icons.broken_image,
-                                              color: Colors.grey.shade600,
-                                              size: 48.sp,
+                            // Existing Images Section
+                            if (widget.workData.images.isNotEmpty) ...[
+                              Text(
+                                "Images",
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.grey.shade600,
+                                  fontFamily: 'Poppins',
+                                ),
+                              ),
+                              SizedBox(height: 8.h),
+                              ListView.builder(
+                                padding: EdgeInsets.zero,
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: widget.workData.images.length,
+                                itemBuilder: (context, index) {
+                                  final image = widget.workData.images[index];
+                                  final isDeleted = _deletedImageNumbers
+                                      .contains(image.imageNumber);
+
+                                  // Don't show deleted images
+                                  if (isDeleted) return const SizedBox.shrink();
+
+                                  return Padding(
+                                    padding: EdgeInsets.only(bottom: 6.h),
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        // Show preview dialog
+                                        showDialog(
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            return Dialog(
+                                              backgroundColor:
+                                                  Colors.transparent,
+                                              child: InteractiveViewer(
+                                                child: ClipRRect(
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                        12.r,
+                                                      ),
+                                                  child: Image.network(
+                                                    image.imageUrl,
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        );
+                                      },
+                                      child: Stack(
+                                        children: [
+                                          ClipRRect(
+                                            borderRadius: BorderRadius.circular(
+                                              12.r,
                                             ),
-                                          );
-                                        },
+                                            child: Image.network(
+                                              image.imageUrl,
+                                              width: double.infinity,
+                                              height: 200.h,
+                                              fit: BoxFit.cover,
+                                              errorBuilder:
+                                                  (context, error, stackTrace) {
+                                                    return Container(
+                                                      width: double.infinity,
+                                                      height: 200.h,
+                                                      color:
+                                                          Colors.grey.shade300,
+                                                      child: Icon(
+                                                        Icons.broken_image,
+                                                        color: Colors
+                                                            .grey
+                                                            .shade600,
+                                                        size: 48.sp,
+                                                      ),
+                                                    );
+                                                  },
+                                            ),
+                                          ),
+                                          Positioned(
+                                            bottom: 8.h,
+                                            left: 8.w,
+                                            child: Container(
+                                              padding: EdgeInsets.symmetric(
+                                                horizontal: 12.w,
+                                                vertical: 6.h,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: Colors.black.withValues(
+                                                  alpha: 0.6,
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(20.r),
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Icon(
+                                                    Icons.touch_app,
+                                                    color: Colors.white,
+                                                    size: 14.sp,
+                                                  ),
+                                                  SizedBox(width: 4.w),
+                                                  Text(
+                                                    'Tap to preview',
+                                                    style: TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 11.sp,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                      fontFamily: 'Poppins',
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                          if (_isEditMode)
+                                            Positioned(
+                                              top: 8.h,
+                                              right: 8.w,
+                                              child: GestureDetector(
+                                                onTap: () {
+                                                  setState(() {
+                                                    _deletedImageNumbers.add(
+                                                      image.imageNumber,
+                                                    );
+                                                  });
+                                                },
+                                                child: Container(
+                                                  padding: EdgeInsets.all(6.w),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.black
+                                                        .withValues(alpha: 0.6),
+                                                    shape: BoxShape.circle,
+                                                  ),
+                                                  child: Icon(
+                                                    Icons.close,
+                                                    color: Colors.white,
+                                                    size: 20.sp,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                        ],
                                       ),
                                     ),
-                                    Positioned(
-                                      bottom: 8.h,
-                                      left: 8.w,
-                                      child: Container(
-                                        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                                        decoration: BoxDecoration(
-                                          color: Colors.black.withValues(alpha: 0.6),
-                                          borderRadius: BorderRadius.circular(20.r),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
+                                  );
+                                },
+                              ),
+                            ],
+
+                            // Add New Images Section (only in edit mode)
+                            if (_isEditMode) ...[
+                              if (widget.workData.images.isEmpty)
+                                Text(
+                                  "Images (Max 2 images allowed)",
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.grey.shade600,
+                                    fontFamily: 'Poppins',
+                                  ),
+                                ),
+                              if (widget.workData.images.isEmpty)
+                                SizedBox(height: 8.h),
+
+                              if (_selectedImages.isNotEmpty)
+                                ListView.builder(
+                                  padding: EdgeInsets.zero,
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  itemCount: _selectedImages.length,
+                                  itemBuilder: (context, index) {
+                                    return Padding(
+                                      padding: EdgeInsets.only(bottom: 12.h),
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          // Show preview dialog
+                                          showDialog(
+                                            context: context,
+                                            builder: (BuildContext context) {
+                                              return Dialog(
+                                                backgroundColor:
+                                                    Colors.transparent,
+                                                child: InteractiveViewer(
+                                                  child: ClipRRect(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          12.r,
+                                                        ),
+                                                    child: Image.file(
+                                                      File(
+                                                        _selectedImages[index]
+                                                            .path,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          );
+                                        },
+                                        child: Stack(
                                           children: [
-                                            Icon(Icons.touch_app, color: Colors.white, size: 14.sp),
-                                            SizedBox(width: 4.w),
-                                            Text(
-                                              'Tap to preview',
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 11.sp,
-                                                fontWeight: FontWeight.w500,
-                                                fontFamily: 'Poppins',
+                                            ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(12.r),
+                                              child: Image.file(
+                                                File(
+                                                  _selectedImages[index].path,
+                                                ),
+                                                width: double.infinity,
+                                                height: 200.h,
+                                                fit: BoxFit.cover,
+                                              ),
+                                            ),
+                                            Positioned(
+                                              bottom: 8.h,
+                                              right: 8.w,
+                                              child: Container(
+                                                padding: EdgeInsets.symmetric(
+                                                  horizontal: 12.w,
+                                                  vertical: 6.h,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.black
+                                                      .withValues(alpha: 0.6),
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                        20.r,
+                                                      ),
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    Icon(
+                                                      Icons.zoom_in,
+                                                      color: Colors.white,
+                                                      size: 16.sp,
+                                                    ),
+                                                    SizedBox(width: 4.w),
+                                                    Text(
+                                                      'Tap to preview',
+                                                      style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: 10.sp,
+                                                        fontFamily: 'Poppins',
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                            Positioned(
+                                              top: 8.h,
+                                              right: 8.w,
+                                              child: GestureDetector(
+                                                onTap: () =>
+                                                    _removeNewImage(index),
+                                                child: Container(
+                                                  padding: EdgeInsets.all(6.w),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.black
+                                                        .withValues(alpha: 0.6),
+                                                    shape: BoxShape.circle,
+                                                  ),
+                                                  child: Icon(
+                                                    Icons.close,
+                                                    color: Colors.white,
+                                                    size: 20.sp,
+                                                  ),
+                                                ),
                                               ),
                                             ),
                                           ],
                                         ),
                                       ),
-                                    ),
-                                    if (_isEditMode)
-                                      Positioned(
-                                        top: 8.h,
-                                        right: 8.w,
-                                        child: GestureDetector(
-                                          onTap: () {
-                                            setState(() {
-                                              _deletedImageNumbers.add(image.imageNumber);
-                                            });
-                                          },
-                                          child: Container(
-                                            padding: EdgeInsets.all(6.w),
-                                            decoration: BoxDecoration(
-                                              color: Colors.black.withValues(alpha: 0.6),
-                                              shape: BoxShape.circle,
-                                            ),
-                                            child: Icon(
-                                              Icons.close,
-                                              color: Colors.white,
-                                              size: 20.sp,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-
-                      // Add New Images Section (only in edit mode)
-                      if (_isEditMode) ...[
-                        if (widget.workData.images.isEmpty)
-                          Text(
-                            "Images (Max 2 images allowed)",
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.grey.shade600,
-                              fontFamily: 'Poppins',
-                            ),
-                          ),
-                        if (widget.workData.images.isEmpty)
-                          SizedBox(height: 8.h),
-                        
-                        if (_selectedImages.isNotEmpty)
-                          ListView.builder(
-                            padding: EdgeInsets.zero,
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: _selectedImages.length,
-                            itemBuilder: (context, index) {
-                              return Padding(
-                                padding: EdgeInsets.only(bottom: 12.h),
-                                child: GestureDetector(
-                                  onTap: () {
-                                    // Show preview dialog
-                                    showDialog(
-                                      context: context,
-                                      builder: (BuildContext context) {
-                                        return Dialog(
-                                          backgroundColor: Colors.transparent,
-                                          child: InteractiveViewer(
-                                            child: ClipRRect(
-                                              borderRadius: BorderRadius.circular(12.r),
-                                              child: Image.file(File(_selectedImages[index].path)),
-                                            ),
-                                          ),
-                                        );
-                                      },
                                     );
                                   },
-                                  child: Stack(
-                                    children: [
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(12.r),
-                                        child: Image.file(
-                                          File(_selectedImages[index].path),
-                                          width: double.infinity,
-                                          height: 200.h,
-                                          fit: BoxFit.cover,
-                                        ),
-                                      ),
-                                      Positioned(
-                                        bottom: 8.h,
-                                        right: 8.w,
-                                        child: Container(
-                                          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                                          decoration: BoxDecoration(
-                                            color: Colors.black.withValues(alpha: 0.6),
-                                            borderRadius: BorderRadius.circular(20.r),
-                                          ),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Icon(Icons.zoom_in, color: Colors.white, size: 16.sp),
-                                              SizedBox(width: 4.w),
-                                              Text(
-                                                'Tap to preview',
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 10.sp,
-                                                  fontFamily: 'Poppins',
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                      Positioned(
-                                        top: 8.h,
-                                        right: 8.w,
-                                        child: GestureDetector(
-                                          onTap: () => _removeNewImage(index),
-                                          child: Container(
-                                            padding: EdgeInsets.all(6.w),
-                                            decoration: BoxDecoration(
-                                              color: Colors.black.withValues(alpha: 0.6),
-                                              shape: BoxShape.circle,
-                                            ),
-                                            child: Icon(
-                                              Icons.close,
-                                              color: Colors.white,
-                                              size: 20.sp,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
                                 ),
-                              );
-                            },
-                          ),
 
-                        // Upload button
-                        if (_getTotalImagesCount() < 2)
-                          GestureDetector(
-                            onTap: _pickImages,
-                            child: Container(
-                              width: double.infinity,
-                              height: 120.h,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF5F6FA),
-                                borderRadius: BorderRadius.circular(12.r),
-                                border: Border.all(color: const Color(0xFFE0E0E0)),
-                              ),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.add_photo_alternate_outlined,
-                                      color: Colors.grey.shade400, size: 40.sp),
-                                  SizedBox(height: 8.h),
-                                  Text(
-                                    "Tap to add image",
-                                    style: TextStyle(
-                                      color: Colors.grey.shade600,
-                                      fontSize: 12.sp,
-                                      fontFamily: 'Poppins',
+                              // Upload button
+                              if (_getTotalImagesCount() < 2)
+                                GestureDetector(
+                                  onTap: _pickImages,
+                                  child: Container(
+                                    width: double.infinity,
+                                    height: 120.h,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF5F6FA),
+                                      borderRadius: BorderRadius.circular(12.r),
+                                      border: Border.all(
+                                        color: const Color(0xFFE0E0E0),
+                                      ),
+                                    ),
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.add_photo_alternate_outlined,
+                                          color: Colors.grey.shade400,
+                                          size: 40.sp,
+                                        ),
+                                        SizedBox(height: 8.h),
+                                        Text(
+                                          "Tap to add image",
+                                          style: TextStyle(
+                                            color: Colors.grey.shade600,
+                                            fontSize: 12.sp,
+                                            fontFamily: 'Poppins',
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                ],
-                              ),
-                            ),
-                          ),
-                      ],
+                                ),
+                            ],
                           ],
                         ),
                       ),
@@ -829,7 +900,7 @@ class _EditMiscellaneousWorkScreenState
                   ),
                 ),
               ),
-              
+
               // Bottom Button
               Container(
                 padding: EdgeInsets.fromLTRB(
@@ -851,7 +922,9 @@ class _EditMiscellaneousWorkScreenState
                 child: PrimaryButton(
                   label: _isEditMode ? 'Save Changes' : 'Edit Detail',
                   onPressed: _isEditMode ? _handleUpdate : _toggleEditMode,
-                  leadingIcon: _isEditMode ? Icons.check_rounded : Icons.edit_outlined,
+                  leadingIcon: _isEditMode
+                      ? Icons.check_rounded
+                      : Icons.edit_outlined,
                   size: ButtonSize.medium,
                 ),
               ),

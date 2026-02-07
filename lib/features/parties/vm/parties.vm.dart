@@ -1,15 +1,16 @@
+import 'dart:async';
+
+import 'package:dio/dio.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'dart:async';
-import 'package:sales_sphere/features/parties/models/parties.model.dart';
-import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
+import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/network_layer/network_exceptions.dart';
-import 'package:dio/dio.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
+import 'package:sales_sphere/features/parties/models/parties.model.dart';
 
-part 'parties.vm.g.dart';
 part 'parties.vm.freezed.dart';
+part 'parties.vm.g.dart';
 
 // ============================================================================
 // MAIN PARTIES LIST VIEW MODEL
@@ -58,8 +59,10 @@ class PartiesViewModel extends _$PartiesViewModel {
             id: apiData.id,
             name: apiData.partyName,
             ownerName: apiData.ownerName,
-            panVatNumber: '', // Not available in list API
-            phoneNumber: '', // Not available in list API
+            panVatNumber: '',
+            // Not available in list API
+            phoneNumber: '',
+            // Not available in list API
             fullAddress: apiData.location?.address ?? '',
             isActive: true,
           );

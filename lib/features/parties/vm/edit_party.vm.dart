@@ -1,10 +1,10 @@
-import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:sales_sphere/features/parties/models/parties.model.dart';
-import 'package:sales_sphere/core/network_layer/dio_client.dart';
-import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
-import 'package:sales_sphere/features/parties/vm/parties.vm.dart';
 import 'package:dio/dio.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
+import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
+import 'package:sales_sphere/features/parties/models/parties.model.dart';
+import 'package:sales_sphere/features/parties/vm/parties.vm.dart';
 
 part 'edit_party.vm.g.dart';
 
@@ -36,7 +36,9 @@ class EditPartyViewModel extends _$EditPartyViewModel {
         final party = PartyDetails.fromApiDetail(apiResponse.data);
 
         AppLogger.i('✅ Fetched party details for: ${party.name}');
-        AppLogger.d('Party details: Phone: ${party.phoneNumber}, Email: ${party.email}, Address: ${party.fullAddress}');
+        AppLogger.d(
+          'Party details: Phone: ${party.phoneNumber}, Email: ${party.email}, Address: ${party.fullAddress}',
+        );
 
         return party;
       } else {
@@ -56,7 +58,9 @@ class EditPartyViewModel extends _$EditPartyViewModel {
   Future<void> updateParty(PartyDetails updatedParty) async {
     try {
       final dio = ref.read(dioClientProvider);
-      AppLogger.i('Updating party: ${updatedParty.name} (ID: ${updatedParty.id})');
+      AppLogger.i(
+        'Updating party: ${updatedParty.name} (ID: ${updatedParty.id})',
+      );
 
       // Create update request with all editable fields
       final updateRequest = UpdatePartyRequest.fromPartyDetails(updatedParty);

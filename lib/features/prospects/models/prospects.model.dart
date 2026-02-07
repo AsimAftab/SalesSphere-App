@@ -1,6 +1,7 @@
 // lib/features/prospects/models/prospects.model.dart
 
 import 'package:freezed_annotation/freezed_annotation.dart';
+
 import 'prospect_interest.model.dart';
 
 part 'prospects.model.freezed.dart';
@@ -8,9 +9,7 @@ part 'prospects.model.g.dart';
 
 @freezed
 abstract class ProspectLocation with _$ProspectLocation {
-  const factory ProspectLocation({
-    required String address,
-  }) = _ProspectLocation;
+  const factory ProspectLocation({required String address}) = _ProspectLocation;
 
   factory ProspectLocation.fromJson(Map<String, dynamic> json) =>
       _$ProspectLocationFromJson(json);
@@ -127,10 +126,8 @@ abstract class ProspectDetailApiData with _$ProspectDetailApiData {
 /// Contact information for prospect
 @freezed
 abstract class ProspectContact with _$ProspectContact {
-  const factory ProspectContact({
-    String? phone,
-    String? email,
-  }) = _ProspectContact;
+  const factory ProspectContact({String? phone, String? email}) =
+      _ProspectContact;
 
   factory ProspectContact.fromJson(Map<String, dynamic> json) =>
       _$ProspectContactFromJson(json);
@@ -290,10 +287,7 @@ abstract class ProspectDetails with _$ProspectDetails {
 /// Contact info for transferred party
 @freezed
 abstract class PartyContact with _$PartyContact {
-  const factory PartyContact({
-    String? phone,
-    String? email,
-  }) = _PartyContact;
+  const factory PartyContact({String? phone, String? email}) = _PartyContact;
 
   factory PartyContact.fromJson(Map<String, dynamic> json) =>
       _$PartyContactFromJson(json);
@@ -337,7 +331,8 @@ abstract class TransferredPartyData with _$TransferredPartyData {
 
 /// API Response wrapper for transfer prospect to party endpoint
 @freezed
-abstract class TransferProspectToPartyResponse with _$TransferProspectToPartyResponse {
+abstract class TransferProspectToPartyResponse
+    with _$TransferProspectToPartyResponse {
   const factory TransferProspectToPartyResponse({
     required bool success,
     required String message,

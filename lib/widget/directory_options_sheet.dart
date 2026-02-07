@@ -93,7 +93,9 @@ class DirectoryOptionsSheet extends ConsumerWidget {
           SizedBox(height: 8.h),
 
           // Options - only show enabled modules (render dynamically)
-          ...enabledDirectoryModules.map((moduleId) => _buildModuleOption(context, moduleId)),
+          ...enabledDirectoryModules.map(
+            (moduleId) => _buildModuleOption(context, moduleId),
+          ),
 
           SizedBox(height: 20.h),
         ],
@@ -272,11 +274,7 @@ class DirectoryOptionsSheet extends ConsumerWidget {
                   ),
                 ],
               ),
-              child: Icon(
-                icon,
-                color: Colors.white,
-                size: 24.sp,
-              ),
+              child: Icon(icon, color: Colors.white, size: 24.sp),
             ),
             SizedBox(width: 16.w),
             Expanded(

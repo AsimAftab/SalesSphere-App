@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
 import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
+
 import '../models/change_password.models.dart';
 
 part 'change_password_vm.g.dart';
@@ -40,9 +41,13 @@ class ChangePasswordViewModel extends _$ChangePasswordViewModel {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final changePasswordResponse = ChangePasswordResponse.fromJson(response.data);
+        final changePasswordResponse = ChangePasswordResponse.fromJson(
+          response.data,
+        );
 
-        AppLogger.i('✅ Password changed successfully: ${changePasswordResponse.message}');
+        AppLogger.i(
+          '✅ Password changed successfully: ${changePasswordResponse.message}',
+        );
 
         state = AsyncData(changePasswordResponse);
         return true;
@@ -53,17 +58,18 @@ class ChangePasswordViewModel extends _$ChangePasswordViewModel {
           errorMessage = response.data['message'];
         }
 
-        AppLogger.w('⚠️ Password change failed with status: ${response.statusCode} - $errorMessage');
-        state = AsyncError({
-          'general': errorMessage,
-        }, StackTrace.current);
+        AppLogger.w(
+          '⚠️ Password change failed with status: ${response.statusCode} - $errorMessage',
+        );
+        state = AsyncError({'general': errorMessage}, StackTrace.current);
         return false;
       }
     } on DioException catch (e) {
       AppLogger.e('❌ Password change failed', e);
 
       if (e.response?.statusCode == 401 || e.response?.statusCode == 400) {
-        final message = e.response?.data['message'] ?? 'Invalid current password';
+        final message =
+            e.response?.data['message'] ?? 'Invalid current password';
         state = AsyncError({'general': message}, StackTrace.current);
       } else if (e.response?.statusCode == 422) {
         final message = e.response?.data['message'] ?? 'Validation failed';

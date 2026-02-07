@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'beat_plan.models.freezed.dart';
+
 part 'beat_plan.models.g.dart';
 
 // ============================================================================
@@ -85,7 +86,8 @@ abstract class BeatPlanDetail with _$BeatPlanDetail {
     required BeatSchedule schedule,
     required BeatProgress progress,
     required List<BeatEmployee> employees,
-    required List<BeatDirectory> directories, // All directories (parties, sites, prospects)
+    required List<BeatDirectory>
+    directories, // All directories (parties, sites, prospects)
     required List<BeatDirectory> parties, // Filtered parties
     required List<BeatDirectory> sites, // Filtered sites
     required List<BeatDirectory> prospects, // Filtered prospects
@@ -170,7 +172,7 @@ abstract class BeatDirectory with _$BeatDirectory {
 abstract class BeatDirectoryContact with _$BeatDirectoryContact {
   const factory BeatDirectoryContact({
     required String phone,
-    String? email,  // Optional - some directories don't have email
+    String? email, // Optional - some directories don't have email
   }) = _BeatDirectoryContact;
 
   factory BeatDirectoryContact.fromJson(Map<String, dynamic> json) =>
@@ -181,7 +183,7 @@ abstract class BeatDirectoryContact with _$BeatDirectoryContact {
 @freezed
 abstract class BeatDirectoryLocation with _$BeatDirectoryLocation {
   const factory BeatDirectoryLocation({
-    String? address,  // Optional - API may not return this
+    String? address, // Optional - API may not return this
     required double latitude,
     required double longitude,
   }) = _BeatDirectoryLocation;
@@ -206,10 +208,8 @@ abstract class BeatVisitStatus with _$BeatVisitStatus {
 /// Beat Visit Location (coordinates where visit was marked)
 @freezed
 abstract class BeatVisitLocation with _$BeatVisitLocation {
-  const factory BeatVisitLocation({
-    double? latitude,
-    double? longitude,
-  }) = _BeatVisitLocation;
+  const factory BeatVisitLocation({double? latitude, double? longitude}) =
+      _BeatVisitLocation;
 
   factory BeatVisitLocation.fromJson(Map<String, dynamic> json) =>
       _$BeatVisitLocationFromJson(json);
@@ -332,4 +332,3 @@ abstract class BeatVisit with _$BeatVisit {
   factory BeatVisit.fromJson(Map<String, dynamic> json) =>
       _$BeatVisitFromJson(json);
 }
-

@@ -6,6 +6,7 @@ import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/services/geocoding_service.dart';
 import 'package:sales_sphere/core/services/location_service.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
+
 import '../model/odometer.model.dart';
 
 part 'odometer.vm.g.dart';
@@ -95,12 +96,22 @@ class OdometerViewModel extends _$OdometerViewModel {
 
       if (response.statusCode == 200 && response.data['success'] == true) {
         try {
-          final statusResponse = OdometerTodayStatusResponse.fromJson(response.data);
-          AppLogger.i('✅ Today\'s status loaded: ${statusResponse.trips.length} trips');
-          AppLogger.d('📊 hasActiveTrip: ${statusResponse.hasActiveTrip}, totalTrips: ${statusResponse.totalTrips}');
+          final statusResponse = OdometerTodayStatusResponse.fromJson(
+            response.data,
+          );
+          AppLogger.i(
+            '✅ Today\'s status loaded: ${statusResponse.trips.length} trips',
+          );
+          AppLogger.d(
+            '📊 hasActiveTrip: ${statusResponse.hasActiveTrip}, totalTrips: ${statusResponse.totalTrips}',
+          );
           for (var trip in statusResponse.trips) {
-            AppLogger.d('🚗 Trip #${trip.tripNumber}: ${trip.startReading} ${trip.unit} - ${trip.tripStatus}');
-            AppLogger.d('📸 Trip #${trip.tripNumber} startImage: ${trip.startReadingImage}, description: ${trip.description}');
+            AppLogger.d(
+              '🚗 Trip #${trip.tripNumber}: ${trip.startReading} ${trip.unit} - ${trip.tripStatus}',
+            );
+            AppLogger.d(
+              '📸 Trip #${trip.tripNumber} startImage: ${trip.startReadingImage}, description: ${trip.description}',
+            );
           }
           return statusResponse;
         } catch (parseError) {
@@ -211,7 +222,9 @@ class OdometerViewModel extends _$OdometerViewModel {
       final location = await locationService.getCurrentLocation();
 
       if (location == null) {
-        throw Exception('Unable to get current location. Please enable location services.');
+        throw Exception(
+          'Unable to get current location. Please enable location services.',
+        );
       }
 
       // Get address from coordinates
@@ -262,7 +275,9 @@ class OdometerViewModel extends _$OdometerViewModel {
           // Refresh to get updated state
           await refresh();
         } else {
-          throw Exception(response.data['message'] ?? 'Failed to start odometer reading');
+          throw Exception(
+            response.data['message'] ?? 'Failed to start odometer reading',
+          );
         }
       } else {
         throw Exception('Failed to start odometer reading');
@@ -289,7 +304,9 @@ class OdometerViewModel extends _$OdometerViewModel {
       final location = await locationService.getCurrentLocation();
 
       if (location == null) {
-        throw Exception('Unable to get current location. Please enable location services.');
+        throw Exception(
+          'Unable to get current location. Please enable location services.',
+        );
       }
 
       // Get address from coordinates
@@ -356,12 +373,14 @@ class OdometerViewModel extends _$OdometerViewModel {
           // The API will return the trip with status: "completed"
           await refresh();
         } else {
-          final errorMessage = response.data['message'] ?? 'Failed to stop odometer reading';
+          final errorMessage =
+              response.data['message'] ?? 'Failed to stop odometer reading';
           AppLogger.e('❌ API error: $errorMessage');
           throw Exception(errorMessage);
         }
       } else {
-        final errorMessage = response.data['message'] ??
+        final errorMessage =
+            response.data['message'] ??
             'Failed to stop odometer reading (Status: ${response.statusCode})';
         AppLogger.e('❌ HTTP error ${response.statusCode}: $errorMessage');
         throw Exception(errorMessage);

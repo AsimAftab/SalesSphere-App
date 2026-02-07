@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+
 import 'app_bottom_nav.dart';
 
 class MainShell extends StatelessWidget {
   final Widget child;
   final int currentIndex;
 
-  const MainShell({
-    super.key,
-    required this.child,
-    required this.currentIndex,
-  });
+  const MainShell({super.key, required this.child, required this.currentIndex});
 
   void _onNavTap(BuildContext context, int index) {
     switch (index) {

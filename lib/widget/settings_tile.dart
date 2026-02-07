@@ -64,7 +64,11 @@ class SettingsTile extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(Icons.arrow_forward_ios, size: 16.sp, color: AppColors.textSecondary),
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 16.sp,
+              color: AppColors.textSecondary,
+            ),
           ],
         ),
       ),

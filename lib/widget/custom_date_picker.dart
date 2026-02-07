@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:intl/intl.dart';
+import 'package:sales_sphere/core/constants/app_colors.dart';
 
 /// Custom Date Picker Field that matches PrimaryTextField style
 class CustomDatePicker extends StatelessWidget {
@@ -82,7 +82,6 @@ class CustomDatePicker extends StatelessWidget {
     }
   }
 
-
   DateTime _ensureSelectableInitialDate(
     DateTime initial,
     DateTime first,
@@ -123,14 +122,18 @@ class CustomDatePicker extends StatelessWidget {
         fontSize: 15.sp,
         fontFamily: 'Poppins',
         fontWeight: FontWeight.w400,
-        color: enabled ? AppColors.textPrimary : AppColors.textSecondary.withValues(alpha: 0.6),
+        color: enabled
+            ? AppColors.textPrimary
+            : AppColors.textSecondary.withValues(alpha: 0.6),
       ),
       decoration: InputDecoration(
         hintText: hintText,
         hintStyle: TextStyle(
           fontSize: 14.sp,
           fontFamily: 'Poppins',
-          color: enabled ? AppColors.textHint : AppColors.textHint.withValues(alpha: 0.5),
+          color: enabled
+              ? AppColors.textHint
+              : AppColors.textHint.withValues(alpha: 0.5),
           fontWeight: FontWeight.w400,
         ),
         prefixIcon: prefixIcon != null
@@ -141,11 +144,7 @@ class CustomDatePicker extends StatelessWidget {
               )
             : null,
         suffixIcon: enabled
-            ? Icon(
-                Icons.calendar_today,
-                color: AppColors.primary,
-                size: 18.sp,
-              )
+            ? Icon(Icons.calendar_today, color: AppColors.primary, size: 18.sp)
             : null,
         filled: true,
         fillColor: enabled ? Colors.white : Colors.grey.shade100,
@@ -165,24 +164,15 @@ class CustomDatePicker extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.r),
-          borderSide: const BorderSide(
-            color: AppColors.secondary,
-            width: 2,
-          ),
+          borderSide: const BorderSide(color: AppColors.secondary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.r),
-          borderSide: const BorderSide(
-            color: AppColors.error,
-            width: 1.5,
-          ),
+          borderSide: const BorderSide(color: AppColors.error, width: 1.5),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.r),
-          borderSide: const BorderSide(
-            color: AppColors.error,
-            width: 2,
-          ),
+          borderSide: const BorderSide(color: AppColors.error, width: 2),
         ),
         disabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.r),
@@ -191,10 +181,7 @@ class CustomDatePicker extends StatelessWidget {
             width: 1.5,
           ),
         ),
-        contentPadding: EdgeInsets.symmetric(
-          horizontal: 16.w,
-          vertical: 16.h,
-        ),
+        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
         errorStyle: TextStyle(
           fontSize: 12.sp,
           fontFamily: 'Poppins',

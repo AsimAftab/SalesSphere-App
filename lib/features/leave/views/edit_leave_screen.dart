@@ -7,12 +7,12 @@ import 'package:intl/intl.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:sales_sphere/core/utils/snackbar_utils.dart';
-import 'package:sales_sphere/widget/custom_text_field.dart';
+import 'package:sales_sphere/features/leave/models/leave.model.dart';
+import 'package:sales_sphere/features/leave/vm/edit_leave.vm.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
 import 'package:sales_sphere/widget/custom_date_picker.dart';
 import 'package:sales_sphere/widget/custom_dropdown_textfield.dart';
-import 'package:sales_sphere/features/leave/vm/edit_leave.vm.dart';
-import 'package:sales_sphere/features/leave/models/leave.model.dart';
+import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class EditLeaveScreen extends ConsumerStatefulWidget {
@@ -116,17 +116,18 @@ class _EditLeaveScreenState extends ConsumerState<EditLeaveScreen> {
         await ref
             .read(editLeaveViewModelProvider(widget.leaveId).notifier)
             .updateLeave(
-          leaveId: widget.leaveId,
-          category: _selectedCategory!.value,
-          startDate: _convertDateFormat(_startDateController.text)!,
-          endDate: _convertDateFormat(_endDateController.text),
-          reason: _reasonController.text.trim(),
-        );
+              leaveId: widget.leaveId,
+              category: _selectedCategory!.value,
+              startDate: _convertDateFormat(_startDateController.text)!,
+              endDate: _convertDateFormat(_endDateController.text),
+              reason: _reasonController.text.trim(),
+            );
 
         if (!mounted) return;
 
         final submissionState = ref.read(
-            editLeaveViewModelProvider(widget.leaveId));
+          editLeaveViewModelProvider(widget.leaveId),
+        );
         submissionState.whenData((updatedLeave) {
           if (updatedLeave != null) {
             setState(() {
@@ -142,12 +143,16 @@ class _EditLeaveScreenState extends ConsumerState<EditLeaveScreen> {
         } else {
           final error = submissionState.error.toString();
           SnackbarUtils.showError(
-              context, error.replaceFirst('Exception: ', ''));
+            context,
+            error.replaceFirst('Exception: ', ''),
+          );
         }
       } catch (e) {
         if (!mounted) return;
         SnackbarUtils.showError(
-            context, e.toString().replaceFirst('Exception: ', ''));
+          context,
+          e.toString().replaceFirst('Exception: ', ''),
+        );
       }
     }
   }
@@ -213,28 +218,26 @@ class _EditLeaveScreenState extends ConsumerState<EditLeaveScreen> {
           return _buildForm(leaveItem);
         },
         loading: () => _buildLoadingSkeleton(),
-        error: (error, _) =>
-            Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.error_outline, size: 64.sp, color: Colors.white),
-                  SizedBox(height: 16.h),
-                  Text(
-                    'Error: $error',
-                    style: TextStyle(color: Colors.white, fontSize: 16.sp),
-                    textAlign: TextAlign.center,
-                  ),
-                  SizedBox(height: 16.h),
-                  ElevatedButton(
-                    onPressed: () =>
-                        ref.invalidate(
-                            editLeaveViewModelProvider(widget.leaveId)),
-                    child: const Text('Retry'),
-                  ),
-                ],
+        error: (error, _) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 64.sp, color: Colors.white),
+              SizedBox(height: 16.h),
+              Text(
+                'Error: $error',
+                style: TextStyle(color: Colors.white, fontSize: 16.sp),
+                textAlign: TextAlign.center,
               ),
-            ),
+              SizedBox(height: 16.h),
+              ElevatedButton(
+                onPressed: () =>
+                    ref.invalidate(editLeaveViewModelProvider(widget.leaveId)),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -254,10 +257,7 @@ class _EditLeaveScreenState extends ConsumerState<EditLeaveScreen> {
         ),
         Column(
           children: [
-            Container(
-              height: 120.h,
-              color: Colors.transparent,
-            ),
+            Container(height: 120.h, color: Colors.transparent),
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -349,10 +349,7 @@ class _EditLeaveScreenState extends ConsumerState<EditLeaveScreen> {
           ),
           Column(
             children: [
-              Container(
-                height: 120.h,
-                color: Colors.transparent,
-              ),
+              Container(height: 120.h, color: Colors.transparent),
               Expanded(
                 child: SingleChildScrollView(
                   padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -399,18 +396,23 @@ class _EditLeaveScreenState extends ConsumerState<EditLeaveScreen> {
                                   hintText: "End Date (Optional)",
                                   prefixIcon: Icons.calendar_today_outlined,
                                   enabled: isEditable,
-                                  firstDate: _startDateController.text.isNotEmpty
-                                      ? DateFormat('dd MMM yyyy').parse(
-                                          _startDateController.text)
+                                  firstDate:
+                                      _startDateController.text.isNotEmpty
+                                      ? DateFormat(
+                                          'dd MMM yyyy',
+                                        ).parse(_startDateController.text)
                                       : DateTime.now(),
                                   validator: (value) {
-                                    if (value != null && value.isNotEmpty &&
+                                    if (value != null &&
+                                        value.isNotEmpty &&
                                         _startDateController.text.isNotEmpty) {
                                       try {
-                                        final startDate = DateFormat('dd MMM yyyy').parse(
-                                            _startDateController.text);
-                                        final endDate = DateFormat('dd MMM yyyy').parse(
-                                            value);
+                                        final startDate = DateFormat(
+                                          'dd MMM yyyy',
+                                        ).parse(_startDateController.text);
+                                        final endDate = DateFormat(
+                                          'dd MMM yyyy',
+                                        ).parse(value);
                                         if (endDate.isBefore(startDate)) {
                                           return 'End date cannot be before start date';
                                         }
@@ -566,10 +568,7 @@ class _EditLeaveScreenState extends ConsumerState<EditLeaveScreen> {
           Container(
             height: 10.w,
             width: 10.w,
-            decoration: BoxDecoration(
-              color: textColor,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: textColor, shape: BoxShape.circle),
           ),
           SizedBox(width: 16.w),
 

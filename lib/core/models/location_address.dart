@@ -24,8 +24,10 @@ class LocationAddress {
     return LocationAddress(
       formattedAddress: _buildFormattedAddress(placemark),
       street: placemark.street,
-      city: placemark.locality, // City/town
-      state: placemark.administrativeArea, // State/province
+      city: placemark.locality,
+      // City/town
+      state: placemark.administrativeArea,
+      // State/province
       country: placemark.country,
       postalCode: placemark.postalCode,
       locality: placemark.subLocality, // Neighborhood/area
@@ -45,7 +47,8 @@ class LocationAddress {
     if (placemark.locality != null && placemark.locality!.isNotEmpty) {
       parts.add(placemark.locality!);
     }
-    if (placemark.administrativeArea != null && placemark.administrativeArea!.isNotEmpty) {
+    if (placemark.administrativeArea != null &&
+        placemark.administrativeArea!.isNotEmpty) {
       parts.add(placemark.administrativeArea!);
     }
     if (placemark.postalCode != null && placemark.postalCode!.isNotEmpty) {

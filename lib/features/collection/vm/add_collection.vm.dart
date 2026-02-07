@@ -1,11 +1,11 @@
 import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
 import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/network_layer/network_exceptions.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
-import 'package:sales_sphere/features/collection/models/collection.model.dart';
 import 'package:sales_sphere/features/collection/vm/collection.vm.dart';
 
 part 'add_collection.vm.g.dart';
@@ -72,7 +72,9 @@ class AddCollectionViewModel extends _$AddCollectionViewModel {
 
         return collectionId;
       } else {
-        throw Exception('Failed to create collection: ${response.statusMessage}');
+        throw Exception(
+          'Failed to create collection: ${response.statusMessage}',
+        );
       }
     } on DioException catch (e) {
       AppLogger.e('❌ Dio error creating collection', e);
@@ -86,10 +88,15 @@ class AddCollectionViewModel extends _$AddCollectionViewModel {
     }
   }
 
-  Future<void> uploadCollectionImages(String collectionId, List<String> imagePaths) async {
+  Future<void> uploadCollectionImages(
+    String collectionId,
+    List<String> imagePaths,
+  ) async {
     try {
       final dio = ref.read(dioClientProvider);
-      AppLogger.i('📸 Uploading ${imagePaths.length} image(s) for collection: $collectionId');
+      AppLogger.i(
+        '📸 Uploading ${imagePaths.length} image(s) for collection: $collectionId',
+      );
 
       for (int i = 0; i < imagePaths.length && i < 2; i++) {
         final imageFile = File(imagePaths[i]);
@@ -113,7 +120,9 @@ class AddCollectionViewModel extends _$AddCollectionViewModel {
         if (response.statusCode == 200 || response.statusCode == 201) {
           AppLogger.i('✅ Image $imageNumber uploaded successfully');
         } else {
-          AppLogger.w('⚠️ Failed to upload image $imageNumber: ${response.statusMessage}');
+          AppLogger.w(
+            '⚠️ Failed to upload image $imageNumber: ${response.statusMessage}',
+          );
         }
       }
 

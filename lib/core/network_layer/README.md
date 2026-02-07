@@ -299,5 +299,6 @@ To use this network layer in existing code:
 ## 📞 Support
 
 For issues or questions, check:
+
 - Dio documentation: https://pub.dev/packages/dio
 - Riverpod documentation: https://riverpod.dev

@@ -1,5 +1,5 @@
-
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -69,10 +69,7 @@ class _SitesImagesViewerScreenState
         ),
         content: Text(
           'Are you sure you want to delete this photo?',
-          style: TextStyle(
-            fontSize: 14.sp,
-            fontFamily: 'Poppins',
-          ),
+          style: TextStyle(fontSize: 14.sp, fontFamily: 'Poppins'),
         ),
         actions: [
           TextButton(
@@ -105,7 +102,11 @@ class _SitesImagesViewerScreenState
       try {
         final viewModel = ref.read(siteImagesViewModelProvider.notifier);
         final imageToDelete = widget.images[_currentIndex];
-        await viewModel.deleteImage(imageToDelete.id, widget.siteId, imageToDelete.imageOrder);
+        await viewModel.deleteImage(
+          imageToDelete.id,
+          widget.siteId,
+          imageToDelete.imageOrder,
+        );
 
         // Refresh the images list
         ref.invalidate(siteImagesProvider(widget.siteId));
@@ -162,7 +163,8 @@ class _SitesImagesViewerScreenState
               scrollPhysics: const BouncingScrollPhysics(),
               builder: (BuildContext context, int index) {
                 final imageUrl = widget.images[index].imageUrl;
-                final isNetworkImage = imageUrl.startsWith('http') || imageUrl.startsWith('https');
+                final isNetworkImage =
+                    imageUrl.startsWith('http') || imageUrl.startsWith('https');
 
                 return PhotoViewGalleryPageOptions(
                   imageProvider: isNetworkImage
@@ -207,9 +209,7 @@ class _SitesImagesViewerScreenState
                   color: Colors.white,
                 ),
               ),
-              backgroundDecoration: const BoxDecoration(
-                color: Colors.black,
-              ),
+              backgroundDecoration: const BoxDecoration(color: Colors.black),
               pageController: _pageController,
               onPageChanged: (index) {
                 setState(() {
@@ -238,7 +238,10 @@ class _SitesImagesViewerScreenState
                 ),
                 child: SafeArea(
                   child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 8.w,
+                      vertical: 8.h,
+                    ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -337,7 +340,7 @@ class _SitesImagesViewerScreenState
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: List.generate(
                               widget.images.length,
-                                  (index) => Container(
+                              (index) => Container(
                                 width: _currentIndex == index ? 24.w : 8.w,
                                 height: 8.h,
                                 margin: EdgeInsets.symmetric(horizontal: 4.w),

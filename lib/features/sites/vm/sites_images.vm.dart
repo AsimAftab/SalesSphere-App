@@ -1,15 +1,13 @@
-
-import 'dart:io';
 import 'dart:convert';
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
 import 'package:sales_sphere/core/network_layer/dio_client.dart';
+import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:sales_sphere/features/sites/models/sites.model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:uuid/uuid.dart';
-import 'package:sales_sphere/core/utils/logger.dart';
 
 part 'sites_images.vm.g.dart';
 
@@ -131,10 +129,8 @@ class SiteImagesViewModel extends _$SiteImagesViewModel {
       int nextImageNumber = 1;
       if (existingImages.isNotEmpty) {
         // Get list of existing image numbers
-        final existingNumbers = existingImages
-            .map((img) => img.imageOrder)
-            .toList()
-          ..sort();
+        final existingNumbers =
+            existingImages.map((img) => img.imageOrder).toList()..sort();
 
         // Find the first gap in the sequence (1, 2, 3, ...)
         for (int i = 1; i <= 9; i++) {
@@ -173,7 +169,9 @@ class SiteImagesViewModel extends _$SiteImagesViewModel {
       }
 
       // Parse response
-      final uploadResponse = UploadSiteImageResponse.fromJson(response.data as Map<String, dynamic>);
+      final uploadResponse = UploadSiteImageResponse.fromJson(
+        response.data as Map<String, dynamic>,
+      );
 
       if (!uploadResponse.success) {
         throw Exception(uploadResponse.message);
@@ -190,7 +188,9 @@ class SiteImagesViewModel extends _$SiteImagesViewModel {
         isUploaded: true,
       );
 
-      AppLogger.i('✅ ${uploadResponse.message} - Image #${uploadResponse.data.imageNumber}');
+      AppLogger.i(
+        '✅ ${uploadResponse.message} - Image #${uploadResponse.data.imageNumber}',
+      );
       return newImage;
     } on DioException catch (e) {
       AppLogger.e('❌ DioException uploading image: ${e.message}');
@@ -203,11 +203,13 @@ class SiteImagesViewModel extends _$SiteImagesViewModel {
       if (e.response != null) {
         final statusCode = e.response!.statusCode;
 
-        if (e.response!.data != null && e.response!.data is Map<String, dynamic>) {
+        if (e.response!.data != null &&
+            e.response!.data is Map<String, dynamic>) {
           final data = e.response!.data as Map<String, dynamic>;
           errorMessage = data['message'] ?? errorMessage;
         } else if (statusCode == 400) {
-          errorMessage = 'Bad request - Please check image format and try again';
+          errorMessage =
+              'Bad request - Please check image format and try again';
         } else if (statusCode == 413) {
           errorMessage = 'Image file is too large';
         } else if (statusCode == 415) {
@@ -223,9 +225,15 @@ class SiteImagesViewModel extends _$SiteImagesViewModel {
   }
 
   /// Delete an image from a site
-  Future<void> deleteImage(String imageId, String siteId, int imageNumber) async {
+  Future<void> deleteImage(
+    String imageId,
+    String siteId,
+    int imageNumber,
+  ) async {
     try {
-      AppLogger.i('🗑️ Deleting image: $imageId (number: $imageNumber) from site: $siteId');
+      AppLogger.i(
+        '🗑️ Deleting image: $imageId (number: $imageNumber) from site: $siteId',
+      );
 
       // Get Dio instance
       final dio = ref.read(dioClientProvider);
@@ -281,9 +289,10 @@ class SiteImagesViewModel extends _$SiteImagesViewModel {
       final storedData = prefs.getString(_siteImagesStorageKey);
       if (storedData == null) return;
 
-      final List<SiteImage> allImages = (json.decode(storedData) as List<dynamic>)
-          .map((json) => SiteImage.fromJson(json as Map<String, dynamic>))
-          .toList();
+      final List<SiteImage> allImages =
+          (json.decode(storedData) as List<dynamic>)
+              .map((json) => SiteImage.fromJson(json as Map<String, dynamic>))
+              .toList();
 
       // Get images for this site
       final siteImages = allImages.where((img) => img.siteId == siteId).toList()

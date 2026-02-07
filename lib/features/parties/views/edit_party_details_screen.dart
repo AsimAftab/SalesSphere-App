@@ -1,28 +1,29 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:sales_sphere/core/utils/date_formatter.dart';
-import 'package:sales_sphere/core/utils/logger.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/services/google_places_service.dart';
 import 'package:sales_sphere/core/services/location_service.dart';
+import 'package:sales_sphere/core/utils/date_formatter.dart';
 import 'package:sales_sphere/core/utils/field_validators.dart';
+import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:sales_sphere/features/parties/models/parties.model.dart';
 import 'package:sales_sphere/features/parties/vm/edit_party.vm.dart';
-import 'package:sales_sphere/features/parties/vm/party_types.vm.dart';
 import 'package:sales_sphere/features/parties/vm/party_image.vm.dart';
-import 'package:sales_sphere/widget/custom_text_field.dart';
+import 'package:sales_sphere/features/parties/vm/party_types.vm.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
+import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/location_picker_widget.dart';
 import 'package:sales_sphere/widget/primary_image_picker.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 // Constant for "Add New..." option in party type dropdown
 const String _kAddNewPartyType = '__add_new_party_type__';
@@ -41,16 +42,15 @@ final locationServiceProvider = Provider<LocationService>((ref) {
 class EditPartyDetailsScreen extends ConsumerStatefulWidget {
   final String partyId;
 
-  const EditPartyDetailsScreen({
-    super.key,
-    required this.partyId,
-  });
+  const EditPartyDetailsScreen({super.key, required this.partyId});
 
   @override
-  ConsumerState<EditPartyDetailsScreen> createState() => _EditPartyDetailsScreenState();
+  ConsumerState<EditPartyDetailsScreen> createState() =>
+      _EditPartyDetailsScreenState();
 }
 
-class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen> {
+class _EditPartyDetailsScreenState
+    extends ConsumerState<EditPartyDetailsScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isEditMode = false;
 
@@ -78,6 +78,7 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
 
   PartyDetails? _currentParty;
   LatLng? _initialLocation;
+
   @override
   void initState() {
     super.initState();
@@ -111,7 +112,9 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
       _latitudeController.text = party.latitude?.toString() ?? '';
       _longitudeController.text = party.longitude?.toString() ?? '';
       _notesController.text = party.notes ?? '';
-      _dateJoinedController.text = DateFormatter.formatDateOnly(party.dateJoined);
+      _dateJoinedController.text = DateFormatter.formatDateOnly(
+        party.dateJoined,
+      );
       _selectedPartyType = party.partyType;
       _showNewPartyTypeField = false; // Reset when populating
       _newPartyTypeController.clear(); // Clear the new party type controller
@@ -220,8 +223,8 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
       // Use new party type from text field if "Add New" was selected
       final partyTypeToSend = _selectedPartyType == _kAddNewPartyType
           ? (_newPartyTypeController.text.trim().isEmpty
-                  ? null
-                  : _newPartyTypeController.text.trim())
+                ? null
+                : _newPartyTypeController.text.trim())
           : _selectedPartyType;
 
       final vm = ref.read(editPartyViewModelProvider.notifier);
@@ -361,7 +364,9 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
           // Wait a moment for the provider to refresh, then repopulate fields
           Future.delayed(Duration(milliseconds: 500), () {
             if (mounted) {
-              final refreshedPartyAsync = ref.read(partyByIdProvider(widget.partyId));
+              final refreshedPartyAsync = ref.read(
+                partyByIdProvider(widget.partyId),
+              );
               refreshedPartyAsync.whenData((refreshedParty) {
                 if (refreshedParty != null && mounted) {
                   _populateFields(refreshedParty);
@@ -468,7 +473,9 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('Could not open maps. Is Google Maps installed?'),
+              content: const Text(
+                'Could not open maps. Is Google Maps installed?',
+              ),
               backgroundColor: AppColors.error,
             ),
           );
@@ -519,7 +526,9 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                         children: [
                           Text(
                             // Use placeholder if controller is empty (i.e., loading)
-                            _nameController.text.isEmpty ? "Party Name" : _nameController.text,
+                            _nameController.text.isEmpty
+                                ? "Party Name"
+                                : _nameController.text,
                             style: TextStyle(
                               fontSize: 20.sp,
                               fontWeight: FontWeight.w700,
@@ -530,15 +539,19 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                           SizedBox(height: 8.h),
                           InkWell(
                             // Disable tap if 'party' is null (loading)
-                            onTap: party == null ? null : () => _openGoogleMaps(party),
+                            onTap: party == null
+                                ? null
+                                : () => _openGoogleMaps(party),
                             borderRadius: BorderRadius.circular(8.r),
                             child: Padding(
                               padding: EdgeInsets.symmetric(vertical: 4.h),
                               child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.center, // ✅ Center vertically
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                // ✅ Center vertically
                                 children: [
                                   Padding(
-                                    padding: EdgeInsets.only(top: 2.h), // ✅ small visual tweak
+                                    padding: EdgeInsets.only(top: 2.h),
+                                    // ✅ small visual tweak
                                     child: Icon(
                                       Icons.location_on_outlined,
                                       size: 14.sp,
@@ -557,7 +570,8 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                                         fontSize: 13.sp,
                                         color: AppColors.primary,
                                         fontWeight: FontWeight.w500,
-                                        height: 1.4, // ✅ gives better line spacing
+                                        height:
+                                            1.4, // ✅ gives better line spacing
                                       ),
                                       softWrap: true,
                                       overflow: TextOverflow.visible,
@@ -568,14 +582,14 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                                   Icon(
                                     Icons.open_in_new,
                                     size: 13.sp,
-                                    color: AppColors.primary.withValues(alpha: 0.7),
+                                    color: AppColors.primary.withValues(
+                                      alpha: 0.7,
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
-                          )
-
-
+                          ),
                         ],
                       ),
                     ),
@@ -598,7 +612,7 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                         borderRadius: BorderRadius.circular(16.r),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha:0.04), // Kept
+                            color: Colors.black.withValues(alpha: 0.04), // Kept
                             blurRadius: 10,
                             offset: const Offset(0, 2),
                           ),
@@ -671,17 +685,20 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                               return null;
                             },
                           ),
-                          SizedBox(height: 16.h,),
+                          SizedBox(height: 16.h),
 
                           // Party Type Dropdown
                           if (_selectedPartyType != null || _isEditMode)
                             _PartyTypeDropdown(
-                              partyTypesAsync: ref.watch(partyTypesViewModelProvider),
+                              partyTypesAsync: ref.watch(
+                                partyTypesViewModelProvider,
+                              ),
                               selectedType: _selectedPartyType,
                               onTypeSelected: (type) {
                                 setState(() {
                                   _selectedPartyType = type;
-                                  _showNewPartyTypeField = (type == _kAddNewPartyType);
+                                  _showNewPartyTypeField =
+                                      (type == _kAddNewPartyType);
                                 });
                               },
                               enabled: _isEditMode,
@@ -703,7 +720,8 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                                   textInputAction: TextInputAction.next,
                                   validator: (value) {
                                     if (_showNewPartyTypeField &&
-                                        (value == null || value.trim().isEmpty)) {
+                                        (value == null ||
+                                            value.trim().isEmpty)) {
                                       return 'Please enter a party type';
                                     }
                                     return null;
@@ -732,7 +750,9 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                             latitudeController: _latitudeController,
                             longitudeController: _longitudeController,
                             initialLocation: _initialLocation,
-                            placesService: ref.read(googlePlacesServiceProvider),
+                            placesService: ref.read(
+                              googlePlacesServiceProvider,
+                            ),
                             locationService: ref.read(locationServiceProvider),
                             enabled: _isEditMode,
                             addressValidator: (value) {
@@ -747,8 +767,10 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                                 setState(() {
                                   // Store the full formatted address for backend
                                   _fullAddressController.text = address;
-                                  _latitudeController.text = location.latitude.toStringAsFixed(6);
-                                  _longitudeController.text = location.longitude.toStringAsFixed(6);
+                                  _latitudeController.text = location.latitude
+                                      .toStringAsFixed(6);
+                                  _longitudeController.text = location.longitude
+                                      .toStringAsFixed(6);
                                 });
                               }
                             },
@@ -775,7 +797,9 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                             prefixIcon: Icons.explore_outlined,
                             hasFocusBorder: true,
                             enabled: false,
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
                             textInputAction: TextInputAction.next,
                           ),
                           SizedBox(height: 16.h),
@@ -804,7 +828,9 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
 
                           // Party Image Section
                           PrimaryImagePicker(
-                            images: _selectedImage != null ? [_selectedImage!] : [],
+                            images: _selectedImage != null
+                                ? [_selectedImage!]
+                                : [],
                             networkImageUrl: _currentParty?.imageUrl,
                             maxImages: 1,
                             label: 'Party Image',
@@ -824,7 +850,12 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
           ),
         ),
         Container(
-          padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, MediaQuery.of(context).padding.bottom + 16.h),
+          padding: EdgeInsets.fromLTRB(
+            16.w,
+            16.h,
+            16.w,
+            MediaQuery.of(context).padding.bottom + 16.h,
+          ),
           decoration: BoxDecoration(
             color: Colors.white,
             boxShadow: [
@@ -837,18 +868,18 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
           ),
           child: _isEditMode
               ? PrimaryButton(
-            label: 'Save Changes',
-            onPressed: _handleSave,
-            leadingIcon: Icons.check_rounded,
-            size: ButtonSize.medium,
-          )
+                  label: 'Save Changes',
+                  onPressed: _handleSave,
+                  leadingIcon: Icons.check_rounded,
+                  size: ButtonSize.medium,
+                )
               : PrimaryButton(
-            label: 'Edit Detail',
-            // Disable button if 'party' is null (loading)
-            onPressed: party == null ? null : _toggleEditMode,
-            leadingIcon: Icons.edit_outlined,
-            size: ButtonSize.medium,
-          ),
+                  label: 'Edit Detail',
+                  // Disable button if 'party' is null (loading)
+                  onPressed: party == null ? null : _toggleEditMode,
+                  leadingIcon: Icons.edit_outlined,
+                  size: ButtonSize.medium,
+                ),
         ),
       ],
     );
@@ -920,7 +951,10 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
                 return Center(
                   child: Text(
                     'Party not found',
-                    style: TextStyle(fontSize: 16.sp, color: AppColors.textdark),
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      color: AppColors.textdark,
+                    ),
                   ),
                 );
               }
@@ -948,18 +982,29 @@ class _EditPartyDetailsScreenState extends ConsumerState<EditPartyDetailsScreen>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.error_outline, size: 64.sp, color: AppColors.error),
+                  Icon(
+                    Icons.error_outline,
+                    size: 64.sp,
+                    color: AppColors.error,
+                  ),
                   SizedBox(height: 16.h),
                   Text(
                     'Failed to load party details',
-                    style: TextStyle(fontSize: 16.sp, color: AppColors.textdark, fontWeight: FontWeight.w500),
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      color: AppColors.textdark,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                   SizedBox(height: 8.h),
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 32.w),
                     child: Text(
                       error.toString(),
-                      style: TextStyle(fontSize: 14.sp, color: Colors.grey.shade600),
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        color: Colors.grey.shade600,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -999,7 +1044,9 @@ class _PartyTypeDropdown extends ConsumerWidget {
         final shouldShowGreyStyle = !enabled;
 
         return InkWell(
-          onTap: enabled ? () => _showPartyTypeBottomSheet(context, partyTypes) : null,
+          onTap: enabled
+              ? () => _showPartyTypeBottomSheet(context, partyTypes)
+              : null,
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
             decoration: BoxDecoration(
@@ -1035,11 +1082,11 @@ class _PartyTypeDropdown extends ConsumerWidget {
                       fontWeight: FontWeight.w400,
                       color: selectedType != null
                           ? (shouldShowGreyStyle
-                              ? AppColors.textSecondary.withValues(alpha: 0.6)
-                              : AppColors.textPrimary)
+                                ? AppColors.textSecondary.withValues(alpha: 0.6)
+                                : AppColors.textPrimary)
                           : (shouldShowGreyStyle
-                              ? AppColors.textHint.withValues(alpha: 0.5)
-                              : AppColors.textHint),
+                                ? AppColors.textHint.withValues(alpha: 0.5)
+                                : AppColors.textHint),
                     ),
                   ),
                 ),
@@ -1085,11 +1132,7 @@ class _PartyTypeDropdown extends ConsumerWidget {
         ),
         child: Row(
           children: [
-            Icon(
-              Icons.error_outline,
-              color: AppColors.error,
-              size: 20.sp,
-            ),
+            Icon(Icons.error_outline, color: AppColors.error, size: 20.sp),
             SizedBox(width: 12.w),
             Expanded(
               child: Text(
@@ -1203,7 +1246,10 @@ class _PartyTypeBottomSheet extends StatelessWidget {
           // Clear selection option
           if (selectedType != null && selectedType!.isNotEmpty)
             ListTile(
-              contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 12.w,
+                vertical: 4.h,
+              ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8.r),
               ),
@@ -1225,7 +1271,10 @@ class _PartyTypeBottomSheet extends StatelessWidget {
 
           // "Add New..." option at the top
           ListTile(
-            contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 12.w,
+              vertical: 4.h,
+            ),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8.r),
             ),
@@ -1279,7 +1328,10 @@ class _PartyTypeBottomSheet extends StatelessWidget {
               final isSelected = selectedType == type.name;
 
               return ListTile(
-                contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 12.w,
+                  vertical: 4.h,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8.r),
                 ),
@@ -1287,7 +1339,9 @@ class _PartyTypeBottomSheet extends StatelessWidget {
                     ? AppColors.primary.withValues(alpha: 0.1)
                     : null,
                 leading: Icon(
-                  isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
+                  isSelected
+                      ? Icons.check_circle
+                      : Icons.radio_button_unchecked,
                   color: isSelected ? AppColors.primary : Colors.grey.shade400,
                   size: 20.sp,
                 ),
@@ -1297,7 +1351,9 @@ class _PartyTypeBottomSheet extends StatelessWidget {
                     fontSize: 14.sp,
                     fontFamily: 'Poppins',
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                    color: isSelected ? AppColors.primary : Colors.grey.shade800,
+                    color: isSelected
+                        ? AppColors.primary
+                        : Colors.grey.shade800,
                   ),
                 ),
                 onTap: () => Navigator.pop(context, type.name),

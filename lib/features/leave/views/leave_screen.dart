@@ -4,10 +4,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:skeletonizer/skeletonizer.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/features/leave/models/leave.model.dart';
 import 'package:sales_sphere/features/leave/vm/leave.vm.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class LeaveScreen extends ConsumerStatefulWidget {
   const LeaveScreen({super.key});
@@ -69,7 +69,7 @@ class _LeaveScreenState extends ConsumerState<LeaveScreen> {
           style: TextStyle(
             color: AppColors.textdark,
             fontSize: 20.sp,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
             fontFamily: 'Poppins',
           ),
         ),

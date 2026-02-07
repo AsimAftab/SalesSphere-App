@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,15 +8,17 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/utils/snackbar_utils.dart';
-import 'package:sales_sphere/widget/custom_text_field.dart';
+import 'package:sales_sphere/features/expense-claim/models/expense_claim.model.dart';
+import 'package:sales_sphere/features/expense-claim/vm/expense_categories.vm.dart';
+import 'package:sales_sphere/features/expense-claim/vm/expense_claim_add.vm.dart';
+import 'package:sales_sphere/features/expense-claim/vm/expense_claims.vm.dart';
+import 'package:sales_sphere/features/parties/vm/parties.vm.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
 import 'package:sales_sphere/widget/custom_date_picker.dart';
+import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/primary_image_picker.dart';
-import 'package:sales_sphere/features/parties/vm/parties.vm.dart';
-import 'package:sales_sphere/features/expense-claim/vm/expense_claim_add.vm.dart';
-import 'package:sales_sphere/features/expense-claim/vm/expense_categories.vm.dart';
-import 'package:sales_sphere/features/expense-claim/vm/expense_claims.vm.dart';
-import 'package:sales_sphere/features/expense-claim/models/expense_claim.model.dart';
+
+import '../../../core/utils/logger.dart';
 
 class AddExpenseClaimScreen extends ConsumerStatefulWidget {
   const AddExpenseClaimScreen({super.key});
@@ -130,13 +133,14 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
 
         // Determine category to send
         String categoryToSend;
-        if (_isAddingNewCategory && _newCategoryController.text.trim().isNotEmpty) {
+        if (_isAddingNewCategory &&
+            _newCategoryController.text.trim().isNotEmpty) {
           categoryToSend = _newCategoryController.text.trim();
         } else if (_selectedCategoryId != null) {
           final categoriesAsync = ref.read(expenseCategoriesViewModelProvider);
           final categories = categoriesAsync.value ?? [];
           final selectedCategory = categories.firstWhere(
-                (c) => c.id == _selectedCategoryId,
+            (c) => c.id == _selectedCategoryId,
             orElse: () => categories.first,
           );
           categoryToSend = selectedCategory.name;
@@ -173,7 +177,10 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
         }
 
         if (mounted) {
-          SnackbarUtils.showSuccess(context, 'Expense claim submitted successfully!');
+          SnackbarUtils.showSuccess(
+            context,
+            'Expense claim submitted successfully!',
+          );
           // Invalidate the list provider to refresh the expense claims list
           ref.invalidate(expenseClaimsViewModelProvider);
           context.pop(); // Go back
@@ -232,190 +239,198 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                   mainAxisSize: MainAxisSize.max,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                  Center(
-                    child: Container(
-                      width: 40.w,
-                      height: 4.h,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade300,
-                        borderRadius: BorderRadius.circular(2.r),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 20.h),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.store_outlined,
-                        color: AppColors.primary,
-                        size: 24.sp,
-                      ),
-                      SizedBox(width: 12.w),
-                      Text(
-                        'Select Party',
-                        style: TextStyle(
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'Poppins',
-                          color: Colors.grey.shade800,
+                    Center(
+                      child: Container(
+                        width: 40.w,
+                        height: 4.h,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(2.r),
                         ),
                       ),
-                    ],
-                  ),
-                  SizedBox(height: 8.h),
-                  Text(
-                    'Choose an existing party',
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: Colors.grey.shade500,
-                      fontFamily: 'Poppins',
                     ),
-                  ),
-                  SizedBox(height: 16.h),
-                  TextField(
-                    controller: searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Search party...',
-                      prefixIcon: const Icon(Icons.search),
-                      filled: true,
-                      fillColor: Colors.white,
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12.r),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12.r),
-                        borderSide: BorderSide(color: AppColors.primary),
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12.r),
-                      ),
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 12.h,
+                    SizedBox(height: 20.h),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.store_outlined,
+                          color: AppColors.primary,
+                          size: 24.sp,
+                        ),
+                        SizedBox(width: 12.w),
+                        Text(
+                          'Select Party',
+                          style: TextStyle(
+                            fontSize: 18.sp,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Poppins',
+                            color: Colors.grey.shade800,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 8.h),
+                    Text(
+                      'Choose an existing party',
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: Colors.grey.shade500,
+                        fontFamily: 'Poppins',
                       ),
                     ),
-                    onChanged: (value) {
-                      setModalState(() {
-                        if (value.isEmpty) {
-                          filteredParties = _withSelectedFirst(parties);
-                        } else {
-                          final searched = parties
-                              .where((party) => party.name
-                                  .toLowerCase()
-                                  .contains(value.toLowerCase()))
-                              .toList();
-                          filteredParties = _withSelectedFirst(searched);
-                        }
-                      });
-                    },
-                  ),
-                  SizedBox(height: 12.h),
-                  if (_selectedPartyId != null)
-                    ListTile(
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8.r),
-                      ),
-                      leading: Icon(
-                        Icons.clear,
-                        color: Colors.red.shade400,
-                        size: 20.sp,
-                      ),
-                      title: Text(
-                        'Clear selection',
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          fontFamily: 'Poppins',
-                          color: Colors.red.shade400,
+                    SizedBox(height: 16.h),
+                    TextField(
+                      controller: searchController,
+                      decoration: InputDecoration(
+                        hintText: 'Search party...',
+                        prefixIcon: const Icon(Icons.search),
+                        filled: true,
+                        fillColor: Colors.white,
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                          borderSide: BorderSide(color: AppColors.primary),
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16.w,
+                          vertical: 12.h,
                         ),
                       ),
-                      onTap: () {
-                        this.setState(() {
-                          _selectedPartyId = null;
+                      onChanged: (value) {
+                        setModalState(() {
+                          if (value.isEmpty) {
+                            filteredParties = _withSelectedFirst(parties);
+                          } else {
+                            final searched = parties
+                                .where(
+                                  (party) => party.name.toLowerCase().contains(
+                                    value.toLowerCase(),
+                                  ),
+                                )
+                                .toList();
+                            filteredParties = _withSelectedFirst(searched);
+                          }
                         });
-                        context.pop();
                       },
                     ),
-                  Divider(height: 16.h),
-                  Text(
-                    'Existing Parties',
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey.shade500,
-                      fontFamily: 'Poppins',
+                    SizedBox(height: 12.h),
+                    if (_selectedPartyId != null)
+                      ListTile(
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12.w,
+                          vertical: 4.h,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                        leading: Icon(
+                          Icons.clear,
+                          color: Colors.red.shade400,
+                          size: 20.sp,
+                        ),
+                        title: Text(
+                          'Clear selection',
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontFamily: 'Poppins',
+                            color: Colors.red.shade400,
+                          ),
+                        ),
+                        onTap: () {
+                          setState(() {
+                            _selectedPartyId = null;
+                          });
+                          context.pop();
+                        },
+                      ),
+                    Divider(height: 16.h),
+                    Text(
+                      'Existing Parties',
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey.shade500,
+                        fontFamily: 'Poppins',
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 8.h),
-                  Expanded(
-                    child: filteredParties.isEmpty
-                        ? Center(
-                            child: Text(
-                              'No parties found',
-                              style: TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 14.sp,
-                                fontFamily: 'Poppins',
+                    SizedBox(height: 8.h),
+                    Expanded(
+                      child: filteredParties.isEmpty
+                          ? Center(
+                              child: Text(
+                                'No parties found',
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 14.sp,
+                                  fontFamily: 'Poppins',
+                                ),
                               ),
-                            ),
-                          )
-                        : ListView.builder(
-                            itemCount: filteredParties.length,
-                            itemBuilder: (context, index) {
-                              final party = filteredParties[index];
-                              final isSelected = _selectedPartyId == party.id;
-                              return ListTile(
-                                contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8.r),
-                                ),
-                                tileColor: isSelected
-                                    ? AppColors.primary.withValues(alpha: 0.1)
-                                    : null,
-                                leading: Icon(
-                                  isSelected
-                                      ? Icons.check_circle
-                                      : Icons.store_outlined,
-                                  color: isSelected
-                                      ? AppColors.primary
-                                      : Colors.grey.shade600,
-                                  size: 20.sp,
-                                ),
-                                title: Text(
-                                  party.name,
-                                  style: TextStyle(
-                                    fontSize: 14.sp,
-                                    fontFamily: 'Poppins',
-                                    fontWeight: isSelected
-                                        ? FontWeight.w600
-                                        : FontWeight.w400,
+                            )
+                          : ListView.builder(
+                              itemCount: filteredParties.length,
+                              itemBuilder: (context, index) {
+                                final party = filteredParties[index];
+                                final isSelected = _selectedPartyId == party.id;
+                                return ListTile(
+                                  contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 12.w,
+                                    vertical: 4.h,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8.r),
+                                  ),
+                                  tileColor: isSelected
+                                      ? AppColors.primary.withValues(alpha: 0.1)
+                                      : null,
+                                  leading: Icon(
+                                    isSelected
+                                        ? Icons.check_circle
+                                        : Icons.store_outlined,
                                     color: isSelected
                                         ? AppColors.primary
-                                        : Colors.grey.shade800,
+                                        : Colors.grey.shade600,
+                                    size: 20.sp,
                                   ),
-                                ),
-                                subtitle: Text(
-                                  party.fullAddress,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 12.sp,
-                                    color: Colors.grey.shade500,
-                                    fontFamily: 'Poppins',
+                                  title: Text(
+                                    party.name,
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      fontFamily: 'Poppins',
+                                      fontWeight: isSelected
+                                          ? FontWeight.w600
+                                          : FontWeight.w400,
+                                      color: isSelected
+                                          ? AppColors.primary
+                                          : Colors.grey.shade800,
+                                    ),
                                   ),
-                                ),
-                                onTap: () {
-                                  this.setState(() {
-                                    _selectedPartyId = party.id;
-                                  });
-                                  context.pop();
-                                },
-                              );
-                            },
-                          ),
-                  ),
-                ],
+                                  subtitle: Text(
+                                    party.fullAddress,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 12.sp,
+                                      color: Colors.grey.shade500,
+                                      fontFamily: 'Poppins',
+                                    ),
+                                  ),
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedPartyId = party.id;
+                                    });
+                                    context.pop();
+                                  },
+                                );
+                              },
+                            ),
+                    ),
+                  ],
                 ),
               ),
             );
@@ -481,7 +496,7 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                         prefixIcon: Icons.title_outlined,
                         hasFocusBorder: true,
                         validator: (value) =>
-                        (value == null || value.trim().isEmpty)
+                            (value == null || value.trim().isEmpty)
                             ? 'Required'
                             : null,
                       ),
@@ -497,7 +512,8 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                         keyboardType: TextInputType.number,
                         inputFormatters: [
                           FilteringTextInputFormatter.allow(
-                              RegExp(r'^\d+\.?\d{0,2}')),
+                            RegExp(r'^\d+\.?\d{0,2}'),
+                          ),
                         ],
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
@@ -538,7 +554,10 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                                 decoration: BoxDecoration(
                                   color: AppColors.surface,
                                   borderRadius: BorderRadius.circular(12.r),
-                                  border: Border.all(color: AppColors.border, width: 1.5),
+                                  border: Border.all(
+                                    color: AppColors.border,
+                                    width: 1.5,
+                                  ),
                                 ),
                                 child: Row(
                                   children: [
@@ -555,18 +574,27 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                                         _isAddingNewCategory
                                             ? 'Add New...'
                                             : (_selectedCategoryId == null
-                                                ? 'Select Category'
-                                                : categories
-                                                    .firstWhere(
-                                                      (c) => c.id == _selectedCategoryId,
-                                                      orElse: () => const ExpenseCategory(id: '', name: 'Category'),
-                                                    )
-                                                    .name),
+                                                  ? 'Select Category'
+                                                  : categories
+                                                        .firstWhere(
+                                                          (c) =>
+                                                              c.id ==
+                                                              _selectedCategoryId,
+                                                          orElse: () =>
+                                                              const ExpenseCategory(
+                                                                id: '',
+                                                                name:
+                                                                    'Category',
+                                                              ),
+                                                        )
+                                                        .name),
                                         style: TextStyle(
                                           fontSize: 15.sp,
                                           fontFamily: 'Poppins',
                                           fontWeight: FontWeight.w400,
-                                          color: (_isAddingNewCategory || _selectedCategoryId != null)
+                                          color:
+                                              (_isAddingNewCategory ||
+                                                  _selectedCategoryId != null)
                                               ? AppColors.textPrimary
                                               : AppColors.textHint,
                                         ),
@@ -588,7 +616,8 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                                 hintText: 'Enter new category name',
                                 prefixIcon: Icons.label_outline,
                                 validator: (value) {
-                                  if (_isAddingNewCategory && (value == null || value.trim().isEmpty)) {
+                                  if (_isAddingNewCategory &&
+                                      (value == null || value.trim().isEmpty)) {
                                     return 'Please enter category name';
                                   }
                                   return null;
@@ -606,7 +635,10 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                           decoration: BoxDecoration(
                             color: AppColors.surface,
                             borderRadius: BorderRadius.circular(12.r),
-                            border: Border.all(color: AppColors.border, width: 1.5),
+                            border: Border.all(
+                              color: AppColors.border,
+                              width: 1.5,
+                            ),
                           ),
                           child: Center(
                             child: SizedBox(
@@ -627,7 +659,10 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                           decoration: BoxDecoration(
                             color: AppColors.error.withValues(alpha: 0.05),
                             borderRadius: BorderRadius.circular(12.r),
-                            border: Border.all(color: AppColors.error, width: 1.5),
+                            border: Border.all(
+                              color: AppColors.error,
+                              width: 1.5,
+                            ),
                           ),
                           child: Row(
                             children: [
@@ -665,7 +700,10 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                             decoration: BoxDecoration(
                               color: AppColors.surface,
                               borderRadius: BorderRadius.circular(12.r),
-                              border: Border.all(color: AppColors.border, width: 1.5),
+                              border: Border.all(
+                                color: AppColors.border,
+                                width: 1.5,
+                              ),
                             ),
                             child: Row(
                               children: [
@@ -680,9 +718,10 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                                     _selectedPartyId == null
                                         ? 'Select Party (Optional)'
                                         : parties
-                                        .firstWhere(
-                                            (p) => p.id == _selectedPartyId)
-                                        .name,
+                                              .firstWhere(
+                                                (p) => p.id == _selectedPartyId,
+                                              )
+                                              .name,
                                     style: TextStyle(
                                       fontSize: 15.sp,
                                       color: _selectedPartyId == null
@@ -711,7 +750,10 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                           decoration: BoxDecoration(
                             color: AppColors.surface,
                             borderRadius: BorderRadius.circular(12.r),
-                            border: Border.all(color: AppColors.border, width: 1.5),
+                            border: Border.all(
+                              color: AppColors.border,
+                              width: 1.5,
+                            ),
                           ),
                           child: Center(
                             child: SizedBox(
@@ -732,7 +774,10 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                           decoration: BoxDecoration(
                             color: AppColors.error.withValues(alpha: 0.05),
                             borderRadius: BorderRadius.circular(12.r),
-                            border: Border.all(color: AppColors.error, width: 1.5),
+                            border: Border.all(
+                              color: AppColors.error,
+                              width: 1.5,
+                            ),
                           ),
                           child: Row(
                             children: [
@@ -874,7 +919,10 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
             SizedBox(height: 20.h),
             if (_selectedCategoryId != null)
               ListTile(
-                contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 12.w,
+                  vertical: 4.h,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8.r),
                 ),
@@ -900,7 +948,10 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                 },
               ),
             ListTile(
-              contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 12.w,
+                vertical: 4.h,
+              ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8.r),
               ),
@@ -921,8 +972,9 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                 style: TextStyle(
                   fontSize: 14.sp,
                   fontFamily: 'Poppins',
-                  fontWeight:
-                      _isAddingNewCategory ? FontWeight.w600 : FontWeight.w400,
+                  fontWeight: _isAddingNewCategory
+                      ? FontWeight.w600
+                      : FontWeight.w400,
                   color: _isAddingNewCategory
                       ? AppColors.primary
                       : AppColors.success,
@@ -954,15 +1006,23 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                 final category = categories[index];
                 final isSelected = _selectedCategoryId == category.id;
                 return ListTile(
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 12.w,
+                    vertical: 4.h,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.r),
                   ),
-                  tileColor:
-                      isSelected ? AppColors.primary.withValues(alpha: 0.1) : null,
+                  tileColor: isSelected
+                      ? AppColors.primary.withValues(alpha: 0.1)
+                      : null,
                   leading: Icon(
-                    isSelected ? Icons.check_circle : _getCategoryIcon(category.name),
-                    color: isSelected ? AppColors.primary : Colors.grey.shade600,
+                    isSelected
+                        ? Icons.check_circle
+                        : _getCategoryIcon(category.name),
+                    color: isSelected
+                        ? AppColors.primary
+                        : Colors.grey.shade600,
                     size: 20.sp,
                   ),
                   title: Text(
@@ -970,8 +1030,12 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
                     style: TextStyle(
                       fontSize: 14.sp,
                       fontFamily: 'Poppins',
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                      color: isSelected ? AppColors.primary : Colors.grey.shade800,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.w400,
+                      color: isSelected
+                          ? AppColors.primary
+                          : Colors.grey.shade800,
                     ),
                   ),
                   onTap: () {
@@ -1008,5 +1072,4 @@ class _AddExpenseClaimScreenState extends ConsumerState<AddExpenseClaimScreen> {
         return Icons.category;
     }
   }
-
 }

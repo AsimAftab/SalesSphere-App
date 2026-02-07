@@ -1,8 +1,9 @@
 import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
+import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 
 part 'expense_claim_add.vm.g.dart';
@@ -143,7 +144,7 @@ class ExpenseClaimAddViewModel extends _$ExpenseClaimAddViewModel {
       case DioExceptionType.receiveTimeout:
         return 'Connection timeout. Check internet connection.';
       case DioExceptionType.badResponse:
-      // Optimization: Safe parsing of response data
+        // Optimization: Safe parsing of response data
         final data = e.response?.data;
         if (data != null && data is Map && data.containsKey('message')) {
           return data['message'];

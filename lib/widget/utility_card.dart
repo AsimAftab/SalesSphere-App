@@ -34,9 +34,7 @@ class UtilityCard extends StatelessWidget {
               offset: const Offset(0, 4),
             ),
           ],
-          border: Border.all(
-            color: iconColor.withValues(alpha: 0.2),
-          ),
+          border: Border.all(color: iconColor.withValues(alpha: 0.2)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -48,11 +46,7 @@ class UtilityCard extends StatelessWidget {
                 color: iconColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12.r),
               ),
-              child: Icon(
-                icon,
-                color: iconColor,
-                size: 22.sp,
-              ),
+              child: Icon(icon, color: iconColor, size: 22.sp),
             ),
             SizedBox(height: 10.h),
             Expanded(

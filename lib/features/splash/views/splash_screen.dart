@@ -38,15 +38,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       duration: const Duration(milliseconds: 1500),
     )..repeat(reverse: true); // Loop back and forth
 
-    _logoScale = Tween<double>(
-      begin: 0.85, // Smaller
-      end: 1.0,    // Normal size
-    ).animate(
-      CurvedAnimation(
-        parent: _logoController,
-        curve: Curves.easeInOut,
-      ),
-    );
+    _logoScale =
+        Tween<double>(
+          begin: 0.85, // Smaller
+          end: 1.0, // Normal size
+        ).animate(
+          CurvedAnimation(parent: _logoController, curve: Curves.easeInOut),
+        );
 
     // ✅ TEXT ANIMATION (Netflix style - letter by letter)
     _textController = AnimationController(
@@ -59,10 +57,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       final double start = i * 0.1;
       final double end = start + 0.3;
 
-      final animation = Tween<double>(
-        begin: 0.0,
-        end: 1.0,
-      ).animate(
+      final animation = Tween<double>(begin: 0.0, end: 1.0).animate(
         CurvedAnimation(
           parent: _textController,
           curve: Interval(
@@ -81,10 +76,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       final double start = 0.3 + (i * 0.08); // Start after "Sales"
       final double end = start + 0.25;
 
-      final animation = Tween<double>(
-        begin: 0.0,
-        end: 1.0,
-      ).animate(
+      final animation = Tween<double>(begin: 0.0, end: 1.0).animate(
         CurvedAnimation(
           parent: _textController,
           curve: Interval(
@@ -196,10 +188,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                         return FadeTransition(
                           opacity: animation,
                           child: Transform.translate(
-                            offset: Offset(
-                              0,
-                              (1 - animation.value) * 30,
-                            ),
+                            offset: Offset(0, (1 - animation.value) * 30),
                             child: Text(
                               char,
                               style: TextStyle(
@@ -230,16 +219,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                         return FadeTransition(
                           opacity: animation,
                           child: Transform.translate(
-                            offset: Offset(
-                              0,
-                              (1 - animation.value) * 30,
-                            ),
+                            offset: Offset(0, (1 - animation.value) * 30),
                             child: Text(
                               char,
                               style: TextStyle(
                                 fontSize: 48.sp,
                                 fontWeight: FontWeight.bold,
-                                color: const Color(0xFF0D47A1), // Dark blue
+                                color: const Color(0xFF0D47A1),
+                                // Dark blue
                                 fontFamily: 'Poppins',
                                 letterSpacing: 2,
                               ),
@@ -276,33 +263,29 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                         children: List.generate(3, (index) {
                           final delay = index * 0.2;
 
-                          final opacityAnimation = Tween<double>(
-                            begin: 0.3,
-                            end: 1.0,
-                          ).animate(
-                            CurvedAnimation(
-                              parent: _dotsController,
-                              curve: Interval(
-                                delay,
-                                delay + 0.4,
-                                curve: Curves.easeInOut,
-                              ),
-                            ),
-                          );
+                          final opacityAnimation =
+                              Tween<double>(begin: 0.3, end: 1.0).animate(
+                                CurvedAnimation(
+                                  parent: _dotsController,
+                                  curve: Interval(
+                                    delay,
+                                    delay + 0.4,
+                                    curve: Curves.easeInOut,
+                                  ),
+                                ),
+                              );
 
-                          final scaleAnimation = Tween<double>(
-                            begin: 0.8,
-                            end: 1.2,
-                          ).animate(
-                            CurvedAnimation(
-                              parent: _dotsController,
-                              curve: Interval(
-                                delay,
-                                delay + 0.4,
-                                curve: Curves.easeInOut,
-                              ),
-                            ),
-                          );
+                          final scaleAnimation =
+                              Tween<double>(begin: 0.8, end: 1.2).animate(
+                                CurvedAnimation(
+                                  parent: _dotsController,
+                                  curve: Interval(
+                                    delay,
+                                    delay + 0.4,
+                                    curve: Curves.easeInOut,
+                                  ),
+                                ),
+                              );
 
                           return Transform.scale(
                             scale: scaleAnimation.value,

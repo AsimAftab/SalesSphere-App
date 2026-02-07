@@ -1,7 +1,7 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:dio/dio.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/exceptions/offline_exception.dart';
 import 'package:sales_sphere/core/network_layer/network_exceptions.dart';
@@ -107,10 +107,7 @@ class ErrorHandlerWidget extends StatelessWidget {
             child: Text(
               error.toString(),
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14.sp,
-                color: AppColors.textSecondary,
-              ),
+              style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
             ),
           ),
           if (onRetry != null) ...[

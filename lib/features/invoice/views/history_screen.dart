@@ -6,9 +6,10 @@ import 'package:intl/intl.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:sales_sphere/core/utils/snackbar_utils.dart';
+
 import '../models/invoice.models.dart';
-import '../vm/invoice.vm.dart';
 import '../services/invoice_pdf_service.dart';
+import '../vm/invoice.vm.dart';
 
 class HistoryScreen extends ConsumerStatefulWidget {
   const HistoryScreen({super.key});
@@ -17,7 +18,8 @@ class HistoryScreen extends ConsumerStatefulWidget {
   ConsumerState<HistoryScreen> createState() => _HistoryScreenState();
 }
 
-class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTickerProviderStateMixin {
+class _HistoryScreenState extends ConsumerState<HistoryScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
@@ -89,10 +91,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
       ),
       body: TabBarView(
         controller: _tabController,
-        children: [
-          _buildInvoiceHistoryTab(),
-          _buildEstimateHistoryTab(),
-        ],
+        children: [_buildInvoiceHistoryTab(), _buildEstimateHistoryTab()],
       ),
     );
   }
@@ -102,7 +101,10 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
 
     return invoicesAsync.when(
       data: (invoices) => invoices.isEmpty
-          ? _buildEmptyState('No invoices yet', 'Start creating invoices to see them here')
+          ? _buildEmptyState(
+              'No invoices yet',
+              'Start creating invoices to see them here',
+            )
           : RefreshIndicator(
               onRefresh: () async {
                 ref.invalidate(invoiceHistoryProvider);
@@ -118,7 +120,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
               ),
             ),
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stack) => _buildErrorState(error, () => ref.invalidate(invoiceHistoryProvider)),
+      error: (error, stack) =>
+          _buildErrorState(error, () => ref.invalidate(invoiceHistoryProvider)),
     );
   }
 
@@ -127,7 +130,10 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
 
     return estimatesAsync.when(
       data: (estimates) => estimates.isEmpty
-          ? _buildEmptyState('No estimates yet', 'Start creating estimates to see them here')
+          ? _buildEmptyState(
+              'No estimates yet',
+              'Start creating estimates to see them here',
+            )
           : RefreshIndicator(
               onRefresh: () async {
                 ref.invalidate(estimateHistoryProvider);
@@ -143,11 +149,18 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
               ),
             ),
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stack) => _buildErrorState(error, () => ref.invalidate(estimateHistoryProvider)),
+      error: (error, stack) => _buildErrorState(
+        error,
+        () => ref.invalidate(estimateHistoryProvider),
+      ),
     );
   }
 
-  Widget _buildInvoiceCard(BuildContext context, WidgetRef ref, InvoiceHistoryItem invoice) {
+  Widget _buildInvoiceCard(
+    BuildContext context,
+    WidgetRef ref,
+    InvoiceHistoryItem invoice,
+  ) {
     final dateFormat = DateFormat('dd MMM yyyy');
     final createdDate = DateTime.parse(invoice.createdAt);
 
@@ -267,7 +280,11 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
                   SizedBox(height: 8.h),
                   Row(
                     children: [
-                      Icon(Icons.local_shipping_outlined, size: 14.sp, color: Colors.grey.shade600),
+                      Icon(
+                        Icons.local_shipping_outlined,
+                        size: 14.sp,
+                        color: Colors.grey.shade600,
+                      ),
                       SizedBox(width: 6.w),
                       Text(
                         'Delivery: ${dateFormat.format(DateTime.parse(invoice.expectedDeliveryDate!))}',
@@ -289,7 +306,10 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
                         icon: Icon(Icons.download_rounded, size: 16.sp),
                         label: Text(
                           'Download PDF',
-                          style: TextStyle(fontSize: 12.sp, fontFamily: 'Poppins'),
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontFamily: 'Poppins',
+                          ),
                         ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.primary,
@@ -304,11 +324,15 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
                     SizedBox(width: 8.w),
                     Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: () => context.push('/invoice/details/${invoice.id}'),
+                        onPressed: () =>
+                            context.push('/invoice/details/${invoice.id}'),
                         icon: Icon(Icons.visibility_rounded, size: 16.sp),
                         label: Text(
                           'View Details',
-                          style: TextStyle(fontSize: 12.sp, fontFamily: 'Poppins'),
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontFamily: 'Poppins',
+                          ),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
@@ -330,7 +354,11 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
     );
   }
 
-  Widget _buildEstimateCard(BuildContext context, WidgetRef ref, EstimateHistoryItem estimate) {
+  Widget _buildEstimateCard(
+    BuildContext context,
+    WidgetRef ref,
+    EstimateHistoryItem estimate,
+  ) {
     final dateFormat = DateFormat('dd MMM yyyy');
     final createdDate = DateTime.parse(estimate.createdAt);
 
@@ -381,7 +409,11 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
                               ),
                               SizedBox(width: 8.w),
                               InkWell(
-                                onTap: () => _showDeleteEstimateDialog(context, ref, estimate),
+                                onTap: () => _showDeleteEstimateDialog(
+                                  context,
+                                  ref,
+                                  estimate,
+                                ),
                                 borderRadius: BorderRadius.circular(8.r),
                                 child: Container(
                                   padding: EdgeInsets.all(6.w),
@@ -417,7 +449,10 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
                     ),
                     SizedBox(width: 12.w),
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10.w,
+                        vertical: 6.h,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.orange.shade50,
                         borderRadius: BorderRadius.circular(20.r),
@@ -498,7 +533,10 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
                         icon: Icon(Icons.download_rounded, size: 16.sp),
                         label: Text(
                           'Download PDF',
-                          style: TextStyle(fontSize: 12.sp, fontFamily: 'Poppins'),
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontFamily: 'Poppins',
+                          ),
                         ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.orange.shade700,
@@ -519,7 +557,10 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
                         icon: Icon(Icons.visibility_rounded, size: 16.sp),
                         label: Text(
                           'View Details',
-                          style: TextStyle(fontSize: 12.sp, fontFamily: 'Poppins'),
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontFamily: 'Poppins',
+                          ),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.orange.shade700,
@@ -575,7 +616,11 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.receipt_long_outlined, size: 80.sp, color: Colors.grey.shade300),
+            Icon(
+              Icons.receipt_long_outlined,
+              size: 80.sp,
+              color: Colors.grey.shade300,
+            ),
             SizedBox(height: 24.h),
             Text(
               title,
@@ -646,11 +691,16 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
     );
   }
 
-  Future<void> _downloadInvoice(WidgetRef ref, InvoiceHistoryItem invoice) async {
+  Future<void> _downloadInvoice(
+    WidgetRef ref,
+    InvoiceHistoryItem invoice,
+  ) async {
     try {
       SnackbarUtils.showInfo(context, 'Generating PDF...');
 
-      final invoiceDetails = await ref.read(fetchInvoiceDetailsProvider(invoice.id).future);
+      final invoiceDetails = await ref.read(
+        fetchInvoiceDetailsProvider(invoice.id).future,
+      );
 
       if (invoiceDetails == null) {
         throw Exception('Invoice details not found');
@@ -724,22 +774,32 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
     } catch (e) {
       AppLogger.e('Error generating PDF: $e');
       if (!mounted) return;
-      SnackbarUtils.showError(context, 'Failed to generate PDF: ${e.toString()}');
+      SnackbarUtils.showError(
+        context,
+        'Failed to generate PDF: ${e.toString()}',
+      );
     }
   }
 
-  Future<void> _downloadEstimate(WidgetRef ref, EstimateHistoryItem estimate) async {
+  Future<void> _downloadEstimate(
+    WidgetRef ref,
+    EstimateHistoryItem estimate,
+  ) async {
     try {
       SnackbarUtils.showInfo(context, 'Generating PDF...');
 
-      final estimateDetails = await ref.read(fetchEstimateDetailsProvider(estimate.id).future);
+      final estimateDetails = await ref.read(
+        fetchEstimateDetailsProvider(estimate.id).future,
+      );
 
       if (estimateDetails == null) {
         throw Exception('Estimate details not found');
       }
 
       // Save directly to Downloads folder (Google Play compliant)
-      final savedPath = await InvoicePdfService.saveToDownloads(estimateDetails);
+      final savedPath = await InvoicePdfService.saveToDownloads(
+        estimateDetails,
+      );
 
       if (!mounted) return;
 
@@ -806,7 +866,10 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
     } catch (e) {
       AppLogger.e('Error generating PDF: $e');
       if (!mounted) return;
-      SnackbarUtils.showError(context, 'Failed to generate PDF: ${e.toString()}');
+      SnackbarUtils.showError(
+        context,
+        'Failed to generate PDF: ${e.toString()}',
+      );
     }
   }
 
@@ -840,10 +903,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [
-                      Colors.red.shade400,
-                      Colors.red.shade600,
-                    ],
+                    colors: [Colors.red.shade400, Colors.red.shade600],
                   ),
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(20.r),
@@ -972,10 +1032,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
                             ],
                           ),
                           SizedBox(height: 12.h),
-                          Divider(
-                            height: 1,
-                            color: Colors.orange.shade200,
-                          ),
+                          Divider(height: 1, color: Colors.orange.shade200),
                           SizedBox(height: 12.h),
                           Row(
                             children: [
@@ -1093,7 +1150,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
     try {
       SnackbarUtils.showInfo(context, 'Deleting estimate...');
 
-      await ref.read(estimateHistoryProvider.notifier).deleteEstimate(estimate.id);
+      await ref
+          .read(estimateHistoryProvider.notifier)
+          .deleteEstimate(estimate.id);
 
       if (!mounted) return;
 
@@ -1101,7 +1160,10 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
     } catch (e) {
       AppLogger.e('Error deleting estimate: $e');
       if (!mounted) return;
-      SnackbarUtils.showError(context, 'Failed to delete estimate: ${e.toString()}');
+      SnackbarUtils.showError(
+        context,
+        'Failed to delete estimate: ${e.toString()}',
+      );
     }
   }
 }

@@ -1,6 +1,5 @@
 import 'package:hive/hive.dart';
 
-
 /// Queued Location Model
 /// Stores location data in Hive when offline for later synchronization
 @HiveType(typeId: 0)

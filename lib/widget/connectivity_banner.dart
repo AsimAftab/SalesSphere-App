@@ -9,10 +9,7 @@ import 'package:sales_sphere/core/providers/connectivity_provider.dart';
 class ConnectivityBanner extends ConsumerWidget {
   final Widget child;
 
-  const ConnectivityBanner({
-    super.key,
-    required this.child,
-  });
+  const ConnectivityBanner({super.key, required this.child});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

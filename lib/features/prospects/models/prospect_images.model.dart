@@ -56,4 +56,3 @@ abstract class UploadProspectImageResponse with _$UploadProspectImageResponse {
   factory UploadProspectImageResponse.fromJson(Map<String, dynamic> json) =>
       _$UploadProspectImageResponseFromJson(json);
 }
-

@@ -37,9 +37,7 @@ abstract class CheckStatusResponse with _$CheckStatusResponse {
 // ========================================
 @freezed
 abstract class CheckStatusData with _$CheckStatusData {
-  const factory CheckStatusData({
-    required User user,
-  }) = _CheckStatusData;
+  const factory CheckStatusData({required User user}) = _CheckStatusData;
 
   factory CheckStatusData.fromJson(Map<String, dynamic> json) =>
       _$CheckStatusDataFromJson(json);

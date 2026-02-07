@@ -5,53 +5,36 @@ class NetworkException implements Exception {
   final int? statusCode;
   final dynamic errors;
 
-  const NetworkException({
-    required this.message,
-    this.statusCode,
-    this.errors,
-  });
+  const NetworkException({required this.message, this.statusCode, this.errors});
 
   // Timeout Exception
-  const NetworkException.timeout({
-    required this.message,
-    this.statusCode,
-  }) : errors = null;
+  const NetworkException.timeout({required this.message, this.statusCode})
+    : errors = null;
 
   // No Internet Connection
-  const NetworkException.noInternetConnection({
-    required this.message,
-  })  : statusCode = null,
-        errors = null;
+  const NetworkException.noInternetConnection({required this.message})
+    : statusCode = null,
+      errors = null;
 
   // Bad Request (400)
-  const NetworkException.badRequest({
-    required this.message,
-    this.statusCode,
-  }) : errors = null;
+  const NetworkException.badRequest({required this.message, this.statusCode})
+    : errors = null;
 
   // Unauthorized (401)
-  const NetworkException.unauthorized({
-    required this.message,
-    this.statusCode,
-  }) : errors = null;
+  const NetworkException.unauthorized({required this.message, this.statusCode})
+    : errors = null;
 
   // Forbidden (403)
-  const NetworkException.forbidden({
-    required this.message,
-    this.statusCode,
-  }) : errors = null;
+  const NetworkException.forbidden({required this.message, this.statusCode})
+    : errors = null;
 
   // Not Found (404)
-  const NetworkException.notFound({
-    required this.message,
-    this.statusCode,
-  }) : errors = null;
+  const NetworkException.notFound({required this.message, this.statusCode})
+    : errors = null;
 
   // Conflict (409)
-  const NetworkException.conflict({
-    required this.message,
-    this.statusCode,
-  }) : errors = null;
+  const NetworkException.conflict({required this.message, this.statusCode})
+    : errors = null;
 
   // Validation Error (422)
   const NetworkException.validationError({
@@ -61,22 +44,18 @@ class NetworkException implements Exception {
   });
 
   // Server Error (500+)
-  const NetworkException.serverError({
-    required this.message,
-    this.statusCode,
-  }) : errors = null;
+  const NetworkException.serverError({required this.message, this.statusCode})
+    : errors = null;
 
   // Request Cancelled
-  const NetworkException.requestCancelled({
-    required this.message,
-  })  : statusCode = null,
-        errors = null;
+  const NetworkException.requestCancelled({required this.message})
+    : statusCode = null,
+      errors = null;
 
   // Unexpected Error
-  const NetworkException.unexpected({
-    required this.message,
-  })  : statusCode = null,
-        errors = null;
+  const NetworkException.unexpected({required this.message})
+    : statusCode = null,
+      errors = null;
 
   @override
   String toString() {

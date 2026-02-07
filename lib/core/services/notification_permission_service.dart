@@ -5,7 +5,9 @@ import 'package:sales_sphere/core/utils/logger.dart';
 /// Handles runtime notification permission for Android 13+ (API 33+)
 class NotificationPermissionService {
   NotificationPermissionService._();
-  static final NotificationPermissionService instance = NotificationPermissionService._();
+
+  static final NotificationPermissionService instance =
+      NotificationPermissionService._();
 
   /// Request notification permission (Android 13+)
   /// Returns true if permission is granted, false otherwise

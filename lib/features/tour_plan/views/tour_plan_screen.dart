@@ -4,10 +4,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/features/tour_plan/models/tour_plan.model.dart';
 import 'package:sales_sphere/features/tour_plan/vm/tour_plan.vm.dart';
 import 'package:skeletonizer/skeletonizer.dart';
-import 'package:sales_sphere/core/constants/app_colors.dart';
 
 enum TourFilter { all, pending, approved, rejected }
 
@@ -90,16 +90,14 @@ class _TourPlanScreenState extends ConsumerState<TourPlanScreen> {
           ),
           Column(
             children: [
-              Container(
-                height: 120.h,
-                color: Colors.transparent,
-              ),
+              Container(height: 120.h, color: Colors.transparent),
               // Search Bar Section - Matched to Expense Claims
               Padding(
                 padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 16.h),
                 child: TextField(
                   controller: _searchController,
-                  onChanged: (v) => ref.read(tourSearchQueryProvider.notifier).update(v),
+                  onChanged: (v) =>
+                      ref.read(tourSearchQueryProvider.notifier).update(v),
                   decoration: InputDecoration(
                     hintText: 'Search tours',
                     hintStyle: TextStyle(
@@ -114,12 +112,18 @@ class _TourPlanScreenState extends ConsumerState<TourPlanScreen> {
                     ),
                     suffixIcon: searchQuery.isNotEmpty
                         ? IconButton(
-                      icon: Icon(Icons.clear, color: Colors.grey.shade400, size: 20.sp),
-                      onPressed: () {
-                        _searchController.clear();
-                        ref.read(tourSearchQueryProvider.notifier).update('');
-                      },
-                    )
+                            icon: Icon(
+                              Icons.clear,
+                              color: Colors.grey.shade400,
+                              size: 20.sp,
+                            ),
+                            onPressed: () {
+                              _searchController.clear();
+                              ref
+                                  .read(tourSearchQueryProvider.notifier)
+                                  .update('');
+                            },
+                          )
                         : null,
                     filled: true,
                     fillColor: Colors.white,
@@ -133,9 +137,15 @@ class _TourPlanScreenState extends ConsumerState<TourPlanScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.r),
-                      borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                      borderSide: const BorderSide(
+                        color: AppColors.primary,
+                        width: 2,
+                      ),
                     ),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 12.h,
+                    ),
                   ),
                 ),
               ),
@@ -207,13 +217,16 @@ class _TourPlanScreenState extends ConsumerState<TourPlanScreen> {
                       );
                     }
                     return RefreshIndicator(
-                      onRefresh: () => ref.read(tourPlanViewModelProvider.notifier).refresh(),
+                      onRefresh: () => ref
+                          .read(tourPlanViewModelProvider.notifier)
+                          .refresh(),
                       color: AppColors.primary,
                       child: ListView.separated(
                         padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 80.h),
                         itemCount: filtered.length,
                         separatorBuilder: (_, __) => SizedBox(height: 12.h),
-                        itemBuilder: (context, index) => _buildTourCard(filtered[index]),
+                        itemBuilder: (context, index) =>
+                            _buildTourCard(filtered[index]),
                       ),
                     );
                   },
@@ -264,7 +277,8 @@ class _TourPlanScreenState extends ConsumerState<TourPlanScreen> {
     final statusColor = _getStatusColor(plan.status);
 
     return GestureDetector(
-      onTap: () => context.pushNamed('edit-tour', pathParameters: {'tourId': plan.id}),
+      onTap: () =>
+          context.pushNamed('edit-tour', pathParameters: {'tourId': plan.id}),
       child: Container(
         padding: EdgeInsets.all(16.w),
         decoration: BoxDecoration(
@@ -300,7 +314,10 @@ class _TourPlanScreenState extends ConsumerState<TourPlanScreen> {
                   ),
                 ),
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 4.h,
+                  ),
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20.r),
@@ -369,7 +386,9 @@ class _TourPlanScreenState extends ConsumerState<TourPlanScreen> {
 
   List<TourPlanListItem> _applyStatusFilter(List<TourPlanListItem> plans) {
     if (_activeFilter == TourFilter.all) return plans;
-    return plans.where((p) => p.status.toLowerCase() == _activeFilter.name).toList();
+    return plans
+        .where((p) => p.status.toLowerCase() == _activeFilter.name)
+        .toList();
   }
 
   Widget _buildFilterDropdown() {
@@ -423,7 +442,11 @@ class _TourPlanScreenState extends ConsumerState<TourPlanScreen> {
                     value: TourFilter.all,
                     child: Row(
                       children: [
-                        Icon(Icons.list, size: 18.sp, color: AppColors.textdark),
+                        Icon(
+                          Icons.list,
+                          size: 18.sp,
+                          color: AppColors.textdark,
+                        ),
                         SizedBox(width: 8.w),
                         const Text('All Plans'),
                       ],
@@ -443,7 +466,11 @@ class _TourPlanScreenState extends ConsumerState<TourPlanScreen> {
                     value: TourFilter.approved,
                     child: Row(
                       children: [
-                        Icon(Icons.check_circle, size: 18.sp, color: Colors.green),
+                        Icon(
+                          Icons.check_circle,
+                          size: 18.sp,
+                          color: Colors.green,
+                        ),
                         SizedBox(width: 8.w),
                         const Text('Approved'),
                       ],

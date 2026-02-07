@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sales_sphere/features/attendance/vm/attendance.vm.dart';
+import 'package:sales_sphere/features/beat_plan/vm/beat_plan.vm.dart';
 import 'package:sales_sphere/features/catalog/vm/catalog.vm.dart';
 import 'package:sales_sphere/features/catalog/vm/catalog_item.vm.dart';
 import 'package:sales_sphere/features/home/vm/home.vm.dart';
@@ -7,8 +9,6 @@ import 'package:sales_sphere/features/parties/vm/parties.vm.dart';
 import 'package:sales_sphere/features/profile/vm/profile.vm.dart';
 import 'package:sales_sphere/features/prospects/vm/prospects.vm.dart';
 import 'package:sales_sphere/features/sites/vm/sites.vm.dart';
-import 'package:sales_sphere/features/attendance/vm/attendance.vm.dart';
-import 'package:sales_sphere/features/beat_plan/vm/beat_plan.vm.dart';
 
 /// Provider Registry
 /// Central registry for all data providers that need to be refreshed

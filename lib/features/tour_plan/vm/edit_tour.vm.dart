@@ -31,7 +31,8 @@ class EditTourViewModel extends _$EditTourViewModel {
       final responseData = response.data;
 
       if (statusCode >= 400) {
-        final message = _extractMessage(responseData) ?? 'Failed to update tour plan';
+        final message =
+            _extractMessage(responseData) ?? 'Failed to update tour plan';
         state = AsyncError(message, StackTrace.current);
         return false;
       }
@@ -43,7 +44,8 @@ class EditTourViewModel extends _$EditTourViewModel {
 
       final success = responseData['success'] == true;
       if (!success) {
-        final message = _extractMessage(responseData) ?? 'Failed to update tour plan';
+        final message =
+            _extractMessage(responseData) ?? 'Failed to update tour plan';
         state = AsyncError(message, StackTrace.current);
         return false;
       }
