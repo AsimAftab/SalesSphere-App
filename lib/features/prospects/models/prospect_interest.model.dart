@@ -29,10 +29,7 @@ abstract class ProspectInterest with _$ProspectInterest {
     required String category,
     required List<String> brands,
   }) {
-    return ProspectInterest(
-      category: category,
-      brands: brands,
-    );
+    return ProspectInterest(category: category, brands: brands);
   }
 
   /// Display string for UI

@@ -1,6 +1,6 @@
 import 'dart:convert';
-import 'package:dio/dio.dart';
 
+import 'package:dio/dio.dart';
 
 /// Colored + Unified Logging Interceptor
 class LoggingInterceptor extends Interceptor {
@@ -17,9 +17,13 @@ class LoggingInterceptor extends Interceptor {
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     final buffer = StringBuffer();
 
-    buffer.writeln('$_cyan╔══════════════════════════════════════════════════════════════════════════════════════════╗$_reset');
+    buffer.writeln(
+      '$_cyan╔══════════════════════════════════════════════════════════════════════════════════════════╗$_reset',
+    );
     buffer.writeln('$_cyan║ 📤 REQUEST $_reset');
-    buffer.writeln('$_cyan╠══════════════════════════════════════════════════════════════════════════════════════════╣$_reset');
+    buffer.writeln(
+      '$_cyan╠══════════════════════════════════════════════════════════════════════════════════════════╣$_reset',
+    );
     buffer.writeln('$_white║ ${options.method}  $_blue${options.uri}$_reset');
     buffer.writeln('$_white║ Headers:$_reset');
 
@@ -46,7 +50,9 @@ class LoggingInterceptor extends Interceptor {
       }
     }
 
-    buffer.writeln('$_cyan╚══════════════════════════════════════════════════════════════════════════════════════════╝$_reset');
+    buffer.writeln(
+      '$_cyan╚══════════════════════════════════════════════════════════════════════════════════════════╝$_reset',
+    );
 
     // 🔥 Print once to keep the block together
     print(buffer.toString());
@@ -57,13 +63,24 @@ class LoggingInterceptor extends Interceptor {
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
     final buffer = StringBuffer();
-    final statusColor = (response.statusCode ?? 0) >= 200 && (response.statusCode ?? 0) < 300 ? _green : _red;
+    final statusColor =
+        (response.statusCode ?? 0) >= 200 && (response.statusCode ?? 0) < 300
+        ? _green
+        : _red;
 
-    buffer.writeln('$_cyan╔══════════════════════════════════════════════════════════════════════════════════════════╗$_reset');
+    buffer.writeln(
+      '$_cyan╔══════════════════════════════════════════════════════════════════════════════════════════╗$_reset',
+    );
     buffer.writeln('$_cyan║ 📥 RESPONSE $_reset');
-    buffer.writeln('$_cyan╠══════════════════════════════════════════════════════════════════════════════════════════╣$_reset');
-    buffer.writeln('$_white║ ${response.requestOptions.method}  $_blue${response.requestOptions.uri}$_reset');
-    buffer.writeln('$_white║ Status: $statusColor${response.statusCode} ${response.statusMessage ?? ''}$_reset');
+    buffer.writeln(
+      '$_cyan╠══════════════════════════════════════════════════════════════════════════════════════════╣$_reset',
+    );
+    buffer.writeln(
+      '$_white║ ${response.requestOptions.method}  $_blue${response.requestOptions.uri}$_reset',
+    );
+    buffer.writeln(
+      '$_white║ Status: $statusColor${response.statusCode} ${response.statusMessage ?? ''}$_reset',
+    );
 
     if (response.headers.map.isNotEmpty) {
       buffer.writeln('$_white║ Headers:$_reset');
@@ -83,11 +100,15 @@ class LoggingInterceptor extends Interceptor {
       }
 
       if (lines.length > maxLines) {
-        buffer.writeln('$_yellow║   ... (${lines.length - maxLines} utilities lines)$_reset');
+        buffer.writeln(
+          '$_yellow║   ... (${lines.length - maxLines} utilities lines)$_reset',
+        );
       }
     }
 
-    buffer.writeln('$_cyan╚══════════════════════════════════════════════════════════════════════════════════════════╝$_reset');
+    buffer.writeln(
+      '$_cyan╚══════════════════════════════════════════════════════════════════════════════════════════╝$_reset',
+    );
 
     print(buffer.toString());
     handler.next(response);
@@ -97,15 +118,21 @@ class LoggingInterceptor extends Interceptor {
   void onError(DioException err, ErrorInterceptorHandler handler) {
     final buffer = StringBuffer();
 
-    buffer.writeln('$_red╔══════════════════════════════════════════════════════════════════════════════════════════╗$_reset');
+    buffer.writeln(
+      '$_red╔══════════════════════════════════════════════════════════════════════════════════════════╗$_reset',
+    );
     buffer.writeln('$_red║ ❌ ERROR $_reset');
-    buffer.writeln('$_red╠══════════════════════════════════════════════════════════════════════════════════════════╣$_reset');
+    buffer.writeln(
+      '$_red╠══════════════════════════════════════════════════════════════════════════════════════════╣$_reset',
+    );
     buffer.writeln('$_white║ Type: ${err.type}$_reset');
     buffer.writeln('$_white║ Message: ${err.message}$_reset');
     buffer.writeln('$_white║ URL: ${err.requestOptions.uri}$_reset');
 
     if (err.response != null) {
-      buffer.writeln('$_white║ Status: ${err.response?.statusCode} ${err.response?.statusMessage ?? ''}$_reset');
+      buffer.writeln(
+        '$_white║ Status: ${err.response?.statusCode} ${err.response?.statusMessage ?? ''}$_reset',
+      );
 
       if (err.response?.data != null) {
         buffer.writeln('$_magenta║ Error Data:$_reset');
@@ -123,7 +150,9 @@ class LoggingInterceptor extends Interceptor {
       }
     }
 
-    buffer.writeln('$_red╚══════════════════════════════════════════════════════════════════════════════════════════╝$_reset');
+    buffer.writeln(
+      '$_red╚══════════════════════════════════════════════════════════════════════════════════════════╝$_reset',
+    );
 
     print(buffer.toString());
     handler.next(err);

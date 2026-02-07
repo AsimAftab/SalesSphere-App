@@ -1,13 +1,11 @@
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:sales_sphere/core/exceptions/offline_exception.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
 import 'package:sales_sphere/core/network_layer/dio_client.dart';
-import 'package:sales_sphere/core/providers/connectivity_provider.dart';
 import 'package:sales_sphere/core/services/geofencing_service.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
+
 import '../models/attendance.models.dart';
 
 part 'attendance.vm.g.dart';
@@ -33,11 +31,15 @@ class TodayAttendanceViewModel extends _$TodayAttendanceViewModel {
       final response = await dio.get(ApiEndpoints.attendanceTodayStatus);
 
       if (response.statusCode == 200 && response.data['success'] == true) {
-        final statusResponse = TodayAttendanceStatusResponse.fromJson(response.data);
+        final statusResponse = TodayAttendanceStatusResponse.fromJson(
+          response.data,
+        );
 
         if (statusResponse.data == null) {
           AppLogger.i('ℹ️ Not marked today: ${statusResponse.message}');
-          AppLogger.i('🕐 Org Check-In Time: ${statusResponse.organizationCheckInTime}');
+          AppLogger.i(
+            '🕐 Org Check-In Time: ${statusResponse.organizationCheckInTime}',
+          );
         } else {
           AppLogger.i('✅ Today\'s attendance status fetched');
         }
@@ -74,14 +76,25 @@ class TodayAttendanceViewModel extends _$TodayAttendanceViewModel {
       final minute = int.parse(timeParts[1]);
 
       final now = DateTime.now();
-      final scheduledCheckIn = DateTime(now.year, now.month, now.day, hour, minute);
-      final twoHoursBefore = scheduledCheckIn.subtract(const Duration(hours: 2));
+      final scheduledCheckIn = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        hour,
+        minute,
+      );
+      final twoHoursBefore = scheduledCheckIn.subtract(
+        const Duration(hours: 2),
+      );
 
       // Allow check-in if current time is within 2 hours before scheduled time
-      final isAllowed = now.isAfter(twoHoursBefore) || now.isAtSameMomentAs(twoHoursBefore);
+      final isAllowed =
+          now.isAfter(twoHoursBefore) || now.isAtSameMomentAs(twoHoursBefore);
 
       if (!isAllowed) {
-        AppLogger.i('⏰ Check-in not allowed yet. Earliest: ${DateFormat('HH:mm').format(twoHoursBefore)}');
+        AppLogger.i(
+          '⏰ Check-in not allowed yet. Earliest: ${DateFormat('HH:mm').format(twoHoursBefore)}',
+        );
       }
 
       return isAllowed;
@@ -115,7 +128,9 @@ class TodayAttendanceViewModel extends _$TodayAttendanceViewModel {
 
     final orgLocation = statusResponse.organizationLocation!;
     AppLogger.i('📍 Validating geofence for check-in...');
-    AppLogger.d('   Organization: ${orgLocation.latitude}, ${orgLocation.longitude}');
+    AppLogger.d(
+      '   Organization: ${orgLocation.latitude}, ${orgLocation.longitude}',
+    );
     AppLogger.d('   User: $userLat, $userLng');
 
     final result = GeofencingService.instance.validateGeofence(
@@ -127,9 +142,15 @@ class TodayAttendanceViewModel extends _$TodayAttendanceViewModel {
     );
 
     if (!result.isWithinGeofence) {
-      final distanceFormatted = GeofencingService.instance.formatDistance(result.distanceOutside);
-      final radiusFormatted = GeofencingService.instance.formatDistance(result.radius);
-      AppLogger.w('⚠️ Geofence violation: ${distanceFormatted} outside (allowed: ${radiusFormatted})');
+      final distanceFormatted = GeofencingService.instance.formatDistance(
+        result.distanceOutside,
+      );
+      final radiusFormatted = GeofencingService.instance.formatDistance(
+        result.radius,
+      );
+      AppLogger.w(
+        '⚠️ Geofence violation: ${distanceFormatted} outside (allowed: ${radiusFormatted})',
+      );
       throw GeofenceViolationException(
         'You are outside the attendance geofence. '
         'Please move within ${radiusFormatted} of ${orgLocation.address}. '
@@ -154,7 +175,9 @@ class TodayAttendanceViewModel extends _$TodayAttendanceViewModel {
 
     final orgLocation = statusResponse.organizationLocation!;
     AppLogger.i('📍 Validating geofence for check-out...');
-    AppLogger.d('   Organization: ${orgLocation.latitude}, ${orgLocation.longitude}');
+    AppLogger.d(
+      '   Organization: ${orgLocation.latitude}, ${orgLocation.longitude}',
+    );
     AppLogger.d('   User: $userLat, $userLng');
 
     final result = GeofencingService.instance.validateGeofence(
@@ -166,9 +189,15 @@ class TodayAttendanceViewModel extends _$TodayAttendanceViewModel {
     );
 
     if (!result.isWithinGeofence) {
-      final distanceFormatted = GeofencingService.instance.formatDistance(result.distanceOutside);
-      final radiusFormatted = GeofencingService.instance.formatDistance(result.radius);
-      AppLogger.w('⚠️ Geofence violation: ${distanceFormatted} outside (allowed: ${radiusFormatted})');
+      final distanceFormatted = GeofencingService.instance.formatDistance(
+        result.distanceOutside,
+      );
+      final radiusFormatted = GeofencingService.instance.formatDistance(
+        result.radius,
+      );
+      AppLogger.w(
+        '⚠️ Geofence violation: ${distanceFormatted} outside (allowed: ${radiusFormatted})',
+      );
       throw GeofenceViolationException(
         'You are outside the attendance geofence. '
         'Please move within ${radiusFormatted} of ${orgLocation.address}. '
@@ -215,7 +244,9 @@ class TodayAttendanceViewModel extends _$TodayAttendanceViewModel {
 
         AppLogger.i('✅ Checked in successfully');
         if (checkInResponse.isLate == true) {
-          AppLogger.w('⚠️ Late check-in! Expected: ${checkInResponse.expectedCheckInTime}');
+          AppLogger.w(
+            '⚠️ Late check-in! Expected: ${checkInResponse.expectedCheckInTime}',
+          );
         }
 
         // Refresh the status to get updated data with organization info
@@ -250,7 +281,9 @@ class TodayAttendanceViewModel extends _$TodayAttendanceViewModel {
       state = previousState;
       rethrow;
     } on DioException catch (e) {
-      AppLogger.e('❌ Check-in failed: ${e.response?.statusCode} - ${e.response?.data}');
+      AppLogger.e(
+        '❌ Check-in failed: ${e.response?.statusCode} - ${e.response?.data}',
+      );
 
       // Check if response contains check-in time window error
       if (e.response?.data != null &&
@@ -301,7 +334,9 @@ class TodayAttendanceViewModel extends _$TodayAttendanceViewModel {
     state = const AsyncLoading();
 
     try {
-      AppLogger.i('📍 Checking out at: $address${isHalfDay ? ' (Half-day)' : ''}');
+      AppLogger.i(
+        '📍 Checking out at: $address${isHalfDay ? ' (Half-day)' : ''}',
+      );
 
       // Validate geofence before API call
       final currentStatus = previousState.value;
@@ -324,7 +359,9 @@ class TodayAttendanceViewModel extends _$TodayAttendanceViewModel {
       if (response.data['success'] == true) {
         final checkOutResponse = CheckInOutResponse.fromJson(response.data);
 
-        AppLogger.i('✅ Checked out successfully${isHalfDay ? ' (Half-day)' : ''}');
+        AppLogger.i(
+          '✅ Checked out successfully${isHalfDay ? ' (Half-day)' : ''}',
+        );
 
         // Refresh the status to get updated data with organization info
         await refresh();
@@ -341,7 +378,9 @@ class TodayAttendanceViewModel extends _$TodayAttendanceViewModel {
 
           // Check if half-day window has closed
           if (isHalfDay && restriction.halfDayCheckoutClosedAt != null) {
-            AppLogger.w('Half-day checkout window closed: ${restriction.message}');
+            AppLogger.w(
+              'Half-day checkout window closed: ${restriction.message}',
+            );
             throw HalfDayWindowClosedException(restriction);
           }
 
@@ -361,7 +400,9 @@ class TodayAttendanceViewModel extends _$TodayAttendanceViewModel {
           }
           AppLogger.e('Failed to parse checkout restriction: $parseError');
           state = AsyncError(parseError, StackTrace.current);
-          throw Exception('Check-out failed: ${response.data['message'] ?? 'Unknown error'}');
+          throw Exception(
+            'Check-out failed: ${response.data['message'] ?? 'Unknown error'}',
+          );
         }
       }
       // Generic failure
@@ -395,7 +436,9 @@ class TodayAttendanceViewModel extends _$TodayAttendanceViewModel {
 
           // Check if half-day window has closed
           if (isHalfDay && restriction.halfDayCheckoutClosedAt != null) {
-            AppLogger.w('Half-day checkout window closed: ${restriction.message}');
+            AppLogger.w(
+              'Half-day checkout window closed: ${restriction.message}',
+            );
             throw HalfDayWindowClosedException(restriction);
           }
 
@@ -421,7 +464,8 @@ class TodayAttendanceViewModel extends _$TodayAttendanceViewModel {
       state = AsyncError(e, StackTrace.current);
       rethrow;
     } catch (e) {
-      if (e is CheckoutRestrictionException || e is HalfDayWindowClosedException) {
+      if (e is CheckoutRestrictionException ||
+          e is HalfDayWindowClosedException) {
         // Validation errors should not change the provider state
         rethrow;
       }
@@ -520,7 +564,8 @@ class AttendanceHistoryViewModel extends _$AttendanceHistoryViewModel {
           checkInTime: checkInTime,
           checkOutTime: checkOutTime,
           status: status,
-          location: status == AttendanceStatus.present ||
+          location:
+              status == AttendanceStatus.present ||
                   status == AttendanceStatus.halfDay
               ? 'Office - Main Branch'
               : null,
@@ -550,8 +595,9 @@ class AttendanceHistoryViewModel extends _$AttendanceHistoryViewModel {
   /// Get attendance for specific month
   List<AttendanceRecord> getAttendanceForMonth(int year, int month) {
     return state
-        .where((record) =>
-            record.date.year == year && record.date.month == month)
+        .where(
+          (record) => record.date.year == year && record.date.month == month,
+        )
         .toList();
   }
 }
@@ -603,8 +649,9 @@ class AttendanceSummaryViewModel extends _$AttendanceSummaryViewModel {
   AttendanceSummary getSummaryForMonth(int year, int month) {
     final history = ref.read(attendanceHistoryViewModelProvider);
     final monthRecords = history
-        .where((record) =>
-            record.date.year == year && record.date.month == month)
+        .where(
+          (record) => record.date.year == year && record.date.month == month,
+        )
         .toList();
 
     int totalDays = monthRecords.length;
@@ -656,13 +703,17 @@ class MonthlyAttendanceReportViewModel
 
   /// Fetch monthly attendance report from API
   Future<MonthlyAttendanceReport> _fetchMonthlyReport(
-      int month, int year) async {
+    int month,
+    int year,
+  ) async {
     try {
       AppLogger.i('📅 Fetching monthly attendance report for $month/$year');
 
       final dio = ref.read(dioClientProvider);
-      final endpoint =
-          ApiEndpoints.monthlyAttendanceReport(month: month, year: year);
+      final endpoint = ApiEndpoints.monthlyAttendanceReport(
+        month: month,
+        year: year,
+      );
 
       AppLogger.d('Endpoint: $endpoint');
 
@@ -744,7 +795,9 @@ class AttendanceSearchViewModel extends _$AttendanceSearchViewModel {
   }) async {
     try {
       AppLogger.i('🔍 Searching attendance records...');
-      AppLogger.d('Filters: status=$status, month=$month, year=$year, page=$page');
+      AppLogger.d(
+        'Filters: status=$status, month=$month, year=$year, page=$page',
+      );
 
       final dio = ref.read(dioClientProvider);
       final endpoint = ApiEndpoints.attendanceSearch(
@@ -791,7 +844,9 @@ class AttendanceSearchViewModel extends _$AttendanceSearchViewModel {
     }
 
     if (!current.pagination.hasNextPage) {
-      AppLogger.i('ℹ️ No utilities pages to load (total: ${current.pagination.total})');
+      AppLogger.i(
+        'ℹ️ No utilities pages to load (total: ${current.pagination.total})',
+      );
       return;
     }
 
@@ -802,7 +857,9 @@ class AttendanceSearchViewModel extends _$AttendanceSearchViewModel {
     }
 
     try {
-      AppLogger.i('📄 Loading utilities attendance records (page ${current.pagination.page + 1})');
+      AppLogger.i(
+        '📄 Loading utilities attendance records (page ${current.pagination.page + 1})',
+      );
 
       state = const AsyncLoading();
 
@@ -823,7 +880,9 @@ class AttendanceSearchViewModel extends _$AttendanceSearchViewModel {
       final updatedResponse = nextPage.copyWith(data: combinedData);
 
       state = AsyncData(updatedResponse);
-      AppLogger.i('✅ Loaded ${nextPage.data.length} utilities records (total: ${combinedData.length})');
+      AppLogger.i(
+        '✅ Loaded ${nextPage.data.length} utilities records (total: ${combinedData.length})',
+      );
     } catch (e) {
       AppLogger.e('❌ Failed to load utilities: $e');
       state = AsyncError(e, StackTrace.current);

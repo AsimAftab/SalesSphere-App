@@ -16,10 +16,14 @@ class ConnectivityInterceptor extends Interceptor {
   ) async {
     // Check connectivity before making request
     final connectivityResults = await _connectivity.checkConnectivity();
-    final hasConnection = !connectivityResults.contains(ConnectivityResult.none);
+    final hasConnection = !connectivityResults.contains(
+      ConnectivityResult.none,
+    );
 
     if (!hasConnection) {
-      AppLogger.w('🚫 Blocked API request - No internet connection: ${options.path}');
+      AppLogger.w(
+        '🚫 Blocked API request - No internet connection: ${options.path}',
+      );
 
       // Reject with typed OfflineException
       return handler.reject(

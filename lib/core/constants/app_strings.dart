@@ -53,14 +53,16 @@ class AppStrings {
   // Validation Messages
   static const String fieldRequired = 'This field is required';
   static const String emailInvalid = 'Please enter a valid email';
-  static const String passwordTooShort = 'Password must be at least 8 characters';
+  static const String passwordTooShort =
+      'Password must be at least 8 characters';
   static const String passwordsDoNotMatch = 'Passwords do not match';
   static const String phoneInvalid = 'Please enter a valid phone number';
   static const String urlInvalid = 'Please enter a valid URL';
 
   // Error Messages
   static const String errorOccurred = 'An error occurred';
-  static const String networkError = 'Network error. Please check your connection';
+  static const String networkError =
+      'Network error. Please check your connection';
   static const String serverError = 'Server error. Please try again later';
   static const String unauthorized = 'Unauthorized. Please login again';
   static const String sessionExpired = 'Your session has expired';
@@ -74,13 +76,15 @@ class AppStrings {
   static const String loginSuccessful = 'Login successful';
   static const String logoutSuccessful = 'Logout successful';
   static const String registrationSuccessful = 'Registration successful';
-  static const String passwordChangedSuccessfully = 'Password changed successfully';
+  static const String passwordChangedSuccessfully =
+      'Password changed successfully';
 
   // Confirmation Messages
   static const String confirmDelete = 'Are you sure you want to delete?';
   static const String confirmLogout = 'Are you sure you want to logout?';
   static const String confirmCancel = 'Are you sure you want to cancel?';
-  static const String unsavedChanges = 'You have unsaved changes. Do you want to save?';
+  static const String unsavedChanges =
+      'You have unsaved changes. Do you want to save?';
 
   // Navigation
   static const String home = 'Home';

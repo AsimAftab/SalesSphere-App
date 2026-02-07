@@ -75,7 +75,8 @@ class _ProductImageWidgetState extends State<ProductImageWidget> {
     if (widget.item.image?.url != null && widget.item.image!.url!.isNotEmpty) {
       return widget.item.image!.url;
     }
-    if (widget.item.imageAssetPath != null && widget.item.imageAssetPath!.isNotEmpty) {
+    if (widget.item.imageAssetPath != null &&
+        widget.item.imageAssetPath!.isNotEmpty) {
       return widget.item.imageAssetPath;
     }
     return null;
@@ -94,7 +95,9 @@ class _ProductImageWidgetState extends State<ProductImageWidget> {
       barrierColor: Colors.black,
       builder: (context) => _ImagePreviewDialog(
         imageUrl: _imageUrl!,
-        isNetworkImage: widget.item.image?.url != null && widget.item.image!.url!.isNotEmpty,
+        isNetworkImage:
+            widget.item.image?.url != null &&
+            widget.item.image!.url!.isNotEmpty,
         productName: widget.item.name,
       ),
     );
@@ -102,11 +105,14 @@ class _ProductImageWidgetState extends State<ProductImageWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveBorderRadius = widget.borderRadius ?? BorderRadius.circular(12.r);
+    final effectiveBorderRadius =
+        widget.borderRadius ?? BorderRadius.circular(12.r);
 
     // Priority 1: Show Cloudinary image if available
     if (widget.item.image?.url != null && widget.item.image!.url!.isNotEmpty) {
-      AppLogger.d('📷 Loading image for ${widget.item.name}: ${widget.item.image!.url}');
+      AppLogger.d(
+        '📷 Loading image for ${widget.item.name}: ${widget.item.image!.url}',
+      );
       return GestureDetector(
         onTap: () => _showImagePreview(context),
         child: ClipRRect(
@@ -124,7 +130,7 @@ class _ProductImageWidgetState extends State<ProductImageWidget> {
                     child: CircularProgressIndicator(
                       value: loadingProgress.expectedTotalBytes != null
                           ? loadingProgress.cumulativeBytesLoaded /
-                              loadingProgress.expectedTotalBytes!
+                                loadingProgress.expectedTotalBytes!
                           : null,
                       strokeWidth: 2.5,
                     ),
@@ -132,7 +138,9 @@ class _ProductImageWidgetState extends State<ProductImageWidget> {
                 );
               },
               errorBuilder: (context, error, stackTrace) {
-                AppLogger.e('❌ Error loading image for ${widget.item.name}: $error');
+                AppLogger.e(
+                  '❌ Error loading image for ${widget.item.name}: $error',
+                );
                 return _buildInitialsWidget();
               },
             ),
@@ -142,10 +150,13 @@ class _ProductImageWidgetState extends State<ProductImageWidget> {
     }
 
     // Log when no image URL found
-    AppLogger.d('⚠️ No image URL for ${widget.item.name}, image object: ${widget.item.image}');
+    AppLogger.d(
+      '⚠️ No image URL for ${widget.item.name}, image object: ${widget.item.image}',
+    );
 
     // Priority 2: Show local asset image if available
-    if (widget.item.imageAssetPath != null && widget.item.imageAssetPath!.isNotEmpty) {
+    if (widget.item.imageAssetPath != null &&
+        widget.item.imageAssetPath!.isNotEmpty) {
       return GestureDetector(
         onTap: () => _showImagePreview(context),
         child: ClipRRect(
@@ -218,7 +229,9 @@ class _ImagePreviewDialog extends StatelessWidget {
         // Full-screen image viewer
         Positioned.fill(
           child: PhotoView(
-            imageProvider: isNetworkImage ? NetworkImage(imageUrl) : AssetImage(imageUrl) as ImageProvider,
+            imageProvider: isNetworkImage
+                ? NetworkImage(imageUrl)
+                : AssetImage(imageUrl) as ImageProvider,
             initialScale: PhotoViewComputedScale.contained,
             minScale: PhotoViewComputedScale.contained,
             maxScale: PhotoViewComputedScale.covered * 4,
@@ -230,11 +243,18 @@ class _ImagePreviewDialog extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.broken_image, size: 64.sp, color: Colors.white54),
+                      Icon(
+                        Icons.broken_image,
+                        size: 64.sp,
+                        color: Colors.white54,
+                      ),
                       SizedBox(height: 16.h),
                       Text(
                         'Failed to load image',
-                        style: TextStyle(color: Colors.white54, fontSize: 14.sp),
+                        style: TextStyle(
+                          color: Colors.white54,
+                          fontSize: 14.sp,
+                        ),
                       ),
                     ],
                   ),
@@ -248,7 +268,8 @@ class _ImagePreviewDialog extends StatelessWidget {
                   child: CircularProgressIndicator(
                     value: event == null
                         ? 0
-                        : event.cumulativeBytesLoaded / event.expectedTotalBytes!,
+                        : event.cumulativeBytesLoaded /
+                              event.expectedTotalBytes!,
                     color: Colors.white,
                   ),
                 ),

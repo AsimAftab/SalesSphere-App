@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
@@ -44,10 +45,14 @@ class ProspectViewModel extends _$ProspectViewModel {
       final prospectsResponse = ProspectsResponse.fromJson(response.data);
 
       if (prospectsResponse.success) {
-        AppLogger.i('Successfully fetched ${prospectsResponse.count} prospects');
+        AppLogger.i(
+          'Successfully fetched ${prospectsResponse.count} prospects',
+        );
         return prospectsResponse.data;
       } else {
-        throw Exception('Failed to fetch prospects: API returned success=false');
+        throw Exception(
+          'Failed to fetch prospects: API returned success=false',
+        );
       }
     } on DioException catch (e) {
       AppLogger.e('DioException while fetching prospects: $e');

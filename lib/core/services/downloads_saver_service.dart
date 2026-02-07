@@ -1,15 +1,19 @@
 import 'dart:io';
+
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:share_plus/share_plus.dart';
+
 import '../utils/logger.dart';
 
 /// Service for saving PDFs to Downloads folder (Google Play compliant)
 /// Uses MediaStore API on Android 10+ (API 29+) - no special permissions needed
 /// Falls back to app-specific storage on other platforms
 class DownloadsSaverService {
-  static const MethodChannel _channel = MethodChannel('com.salessphere/downloads_saver');
+  static const MethodChannel _channel = MethodChannel(
+    'com.salessphere/downloads_saver',
+  );
 
   /// Save PDF bytes to Downloads folder
   /// Returns the file path if successful, null otherwise
@@ -35,7 +39,9 @@ class DownloadsSaverService {
             return result;
           }
         } on PlatformException catch (e) {
-          AppLogger.w('MediaStore save failed: ${e.message}. Falling back to app storage.');
+          AppLogger.w(
+            'MediaStore save failed: ${e.message}. Falling back to app storage.',
+          );
           // Fall through to app storage fallback
         }
       }
@@ -49,7 +55,10 @@ class DownloadsSaverService {
   }
 
   /// Fallback: Save to app-specific storage
-  static Future<String> _saveToAppStorage(String fileName, List<int> bytes) async {
+  static Future<String> _saveToAppStorage(
+    String fileName,
+    List<int> bytes,
+  ) async {
     Directory? baseDir;
 
     if (Platform.isAndroid) {

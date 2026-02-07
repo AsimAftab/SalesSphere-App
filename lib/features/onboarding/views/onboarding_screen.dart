@@ -42,7 +42,7 @@ class OnboardingScreen extends ConsumerWidget {
       case 0:
         return 160.h; // First page header
       case 1:
-        return 40.h;  // Second page header
+        return 40.h; // Second page header
       case 2:
         return 160.h; // Third page header
       default:
@@ -85,10 +85,11 @@ class OnboardingScreen extends ConsumerWidget {
                 SizedBox(
                   height: _getHeaderHeight(state.currentPage),
                   child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 8.h),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 24.w,
+                      vertical: 8.h,
                     ),
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start),
                   ),
                 ),
 
@@ -116,46 +117,45 @@ class OnboardingScreen extends ConsumerWidget {
                       // ✅ ADDED: Skip button on bottom-left (pages 0 and 1 only)
                       SizedBox(
                         width: 50.w,
-                        child: state.currentPage < 2 // Show skip on pages 0 and 1
+                        child:
+                            state.currentPage <
+                                2 // Show skip on pages 0 and 1
                             ? TextButton(
-                          onPressed: vm.onSkipPressed,
-                          style: TextButton.styleFrom(
-                            padding: EdgeInsets.zero,
-                          ),
-                          child: Text(
-                            'Skip',
-                            style: TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w500,
-                              fontFamily: 'Poppins',
-                            ),
-                          ),
-                        )
+                                onPressed: vm.onSkipPressed,
+                                style: TextButton.styleFrom(
+                                  padding: EdgeInsets.zero,
+                                ),
+                                child: Text(
+                                  'Skip',
+                                  style: TextStyle(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.w500,
+                                    fontFamily: 'Poppins',
+                                  ),
+                                ),
+                              )
                             : const SizedBox.shrink(), // No skip on page 3
                       ),
 
                       // Page Indicator Dots (center)
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(
-                          state.pages.length,
-                              (index) {
-                            final isActive = state.currentPage == index;
-                            return AnimatedContainer(
-                              duration: const Duration(milliseconds: 300),
-                              margin: EdgeInsets.symmetric(horizontal: 4.w),
-                              width: isActive ? 28.w : 8.w,
-                              height: 8.h,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(4.r),
-                                color: isActive
-                                    ? AppColors.primary
-                                    : AppColors.primary.withValues(alpha: 0.25),
-                              ),
-                            );
-                          },
-                        ),
+                        children: List.generate(state.pages.length, (index) {
+                          final isActive = state.currentPage == index;
+                          return AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            margin: EdgeInsets.symmetric(horizontal: 4.w),
+                            width: isActive ? 28.w : 8.w,
+                            height: 8.h,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(4.r),
+                              color: isActive
+                                  ? AppColors.primary
+                                  : AppColors.primary.withValues(alpha: 0.25),
+                            ),
+                          );
+                        }),
                       ),
 
                       // Next/Get Started button (right)
@@ -165,8 +165,10 @@ class OnboardingScreen extends ConsumerWidget {
                           backgroundColor: AppColors.secondary,
                           foregroundColor: Colors.white,
                           padding: EdgeInsets.symmetric(
-                            horizontal: state.currentPage == state.pages.length - 1
-                                ? 16.w // Shorter padding for "Get Started"
+                            horizontal:
+                                state.currentPage == state.pages.length - 1
+                                ? 16
+                                      .w // Shorter padding for "Get Started"
                                 : 24.w,
                             vertical: 10.h,
                           ),

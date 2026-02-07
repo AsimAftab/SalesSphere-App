@@ -1,9 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
+
 import '../model/odometer.model.dart';
 
 part 'odometer_list.vm.g.dart';
@@ -46,15 +46,14 @@ class OdometerListViewModel extends _$OdometerListViewModel {
   /// Now supports multiple trips per day
   Future<List<OdometerListItem>> _fetchMonthlyReport(DateTime month) async {
     try {
-      AppLogger.i('📋 Fetching odometer monthly report for ${DateFormat('MMMM yyyy').format(month)}...');
+      AppLogger.i(
+        '📋 Fetching odometer monthly report for ${DateFormat('MMMM yyyy').format(month)}...',
+      );
 
       final dio = ref.read(dioClientProvider);
       final response = await dio.get(
         '/api/v1/odometer/my-monthly-report',
-        queryParameters: {
-          'month': month.month,
-          'year': month.year,
-        },
+        queryParameters: {'month': month.month, 'year': month.year},
       );
 
       if (response.statusCode == 200 && response.data['success'] == true) {
@@ -77,18 +76,23 @@ class OdometerListViewModel extends _$OdometerListViewModel {
               // Only include completed trips
               if (tripStatus == 'completed' ||
                   tripData['stopReading'] != null) {
-                final itemId = tripData['_id'] ??
+                final itemId =
+                    tripData['_id'] ??
                     'odometer_${month.year}_${month.month}_${day}_trip_${tripData['tripNumber'] ?? 1}';
 
-                items.add(OdometerListItem(
-                  id: itemId,
-                  date: date,
-                  tripNumber: tripData['tripNumber'] ?? 1,
-                  startReading: _toDouble(tripData['startReading']),
-                  endReading: _toDouble(tripData['stopReading'] ?? tripData['startReading']),
-                  totalDistance: _toDouble(tripData['distance']),
-                  unit: tripData['startUnit'] ?? 'km',
-                ));
+                items.add(
+                  OdometerListItem(
+                    id: itemId,
+                    date: date,
+                    tripNumber: tripData['tripNumber'] ?? 1,
+                    startReading: _toDouble(tripData['startReading']),
+                    endReading: _toDouble(
+                      tripData['stopReading'] ?? tripData['startReading'],
+                    ),
+                    totalDistance: _toDouble(tripData['distance']),
+                    unit: tripData['startUnit'] ?? 'km',
+                  ),
+                );
               }
             }
           }

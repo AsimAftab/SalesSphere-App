@@ -34,7 +34,8 @@ abstract class ExpenseCategory with _$ExpenseCategory {
 
 /// API Response wrapper for expense categories endpoint
 @freezed
-abstract class ExpenseCategoriesApiResponse with _$ExpenseCategoriesApiResponse {
+abstract class ExpenseCategoriesApiResponse
+    with _$ExpenseCategoriesApiResponse {
   const factory ExpenseCategoriesApiResponse({
     required bool success,
     required int count,
@@ -205,7 +206,8 @@ abstract class UpdateExpenseClaimRequest with _$UpdateExpenseClaimRequest {
       _$UpdateExpenseClaimRequestFromJson(json);
 
   factory UpdateExpenseClaimRequest.fromExpenseClaimDetails(
-      ExpenseClaimDetails claim) {
+    ExpenseClaimDetails claim,
+  ) {
     return UpdateExpenseClaimRequest(
       claimType: claim.claimType,
       amount: claim.amount,
@@ -249,7 +251,8 @@ abstract class ExpenseClaimListItem with _$ExpenseClaimListItem {
   }
 
   factory ExpenseClaimListItem.fromExpenseClaimDetails(
-      ExpenseClaimDetails claim) {
+    ExpenseClaimDetails claim,
+  ) {
     return ExpenseClaimListItem(
       id: claim.id,
       title: claim.title,
@@ -286,12 +289,12 @@ abstract class ExpenseClaimDetails with _$ExpenseClaimDetails {
   factory ExpenseClaimDetails.fromJson(Map<String, dynamic> json) =>
       _$ExpenseClaimDetailsFromJson(json);
 
-  factory ExpenseClaimDetails.fromApiDetail(
-      ExpenseClaimDetailApiData apiData) {
+  factory ExpenseClaimDetails.fromApiDetail(ExpenseClaimDetailApiData apiData) {
     return ExpenseClaimDetails(
       id: apiData.id,
       title: apiData.title,
-      claimType: apiData.category?.name ?? '', // Extract category name
+      claimType: apiData.category?.name ?? '',
+      // Extract category name
       amount: apiData.amount,
       date: apiData.date,
       status: apiData.status,

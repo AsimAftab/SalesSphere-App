@@ -6,12 +6,12 @@ import 'package:intl/intl.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:sales_sphere/core/utils/snackbar_utils.dart';
-import 'package:sales_sphere/widget/custom_text_field.dart';
+import 'package:sales_sphere/features/leave/models/leave.model.dart';
+import 'package:sales_sphere/features/leave/vm/apply_leave.vm.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
 import 'package:sales_sphere/widget/custom_date_picker.dart';
 import 'package:sales_sphere/widget/custom_dropdown_textfield.dart';
-import 'package:sales_sphere/features/leave/vm/apply_leave.vm.dart';
-import 'package:sales_sphere/features/leave/models/leave.model.dart';
+import 'package:sales_sphere/widget/custom_text_field.dart';
 
 class ApplyLeaveRequestScreen extends ConsumerStatefulWidget {
   const ApplyLeaveRequestScreen({super.key});
@@ -70,12 +70,14 @@ class _ApplyLeaveRequestScreenState
       }
 
       try {
-        await ref.read(applyLeaveViewModelProvider.notifier).submitLeave(
-          category: _selectedCategory!.value,
-          startDate: _convertDateFormat(_startDateController.text)!,
-          endDate: _convertDateFormat(_endDateController.text),
-          reason: _reasonController.text.trim(),
-        );
+        await ref
+            .read(applyLeaveViewModelProvider.notifier)
+            .submitLeave(
+              category: _selectedCategory!.value,
+              startDate: _convertDateFormat(_startDateController.text)!,
+              endDate: _convertDateFormat(_endDateController.text),
+              reason: _reasonController.text.trim(),
+            );
 
         if (!mounted) return;
 
@@ -151,17 +153,21 @@ class _ApplyLeaveRequestScreenState
                           prefixIcon: Icons.calendar_today_outlined,
                           enabled: true,
                           firstDate: _startDateController.text.isNotEmpty
-                              ? DateFormat('dd MMM yyyy').parse(
-                              _startDateController.text)
+                              ? DateFormat(
+                                  'dd MMM yyyy',
+                                ).parse(_startDateController.text)
                               : DateTime.now(),
                           validator: (value) {
-                            if (value != null && value.isNotEmpty &&
+                            if (value != null &&
+                                value.isNotEmpty &&
                                 _startDateController.text.isNotEmpty) {
                               try {
-                                final startDate = DateFormat('dd MMM yyyy')
-                                    .parse(_startDateController.text);
-                                final endDate = DateFormat('dd MMM yyyy').parse(
-                                    value);
+                                final startDate = DateFormat(
+                                  'dd MMM yyyy',
+                                ).parse(_startDateController.text);
+                                final endDate = DateFormat(
+                                  'dd MMM yyyy',
+                                ).parse(value);
                                 if (endDate.isBefore(startDate)) {
                                   return 'End date cannot be before start date';
                                 }
@@ -209,24 +215,21 @@ class _ApplyLeaveRequestScreenState
                           minLines: 1,
                           maxLines: 5,
                           validator: (v) {
-                            if (v == null || v
-                                .trim()
-                                .isEmpty) {
+                            if (v == null || v.trim().isEmpty) {
                               return 'Please provide a reason';
                             }
-                            if (v
-                                .trim()
-                                .length < 3) {
+                            if (v.trim().length < 3) {
                               return 'Reason must be at least 3 characters';
                             }
                             return null;
                           },
                         ),
 
-                        SizedBox(height: MediaQuery
-                            .of(context)
-                            .viewInsets
-                            .bottom > 0 ? 100.h : 80.h),
+                        SizedBox(
+                          height: MediaQuery.of(context).viewInsets.bottom > 0
+                              ? 100.h
+                              : 80.h,
+                        ),
                       ],
                     ),
                   ),
@@ -239,10 +242,7 @@ class _ApplyLeaveRequestScreenState
                 16.w,
                 16.h,
                 16.w,
-                MediaQuery
-                    .of(context)
-                    .padding
-                    .bottom + 16.h,
+                MediaQuery.of(context).padding.bottom + 16.h,
               ),
               color: Colors.white,
               child: PrimaryButton(

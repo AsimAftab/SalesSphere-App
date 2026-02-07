@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:go_router/go_router.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/constants/module_config.dart';
-import 'package:sales_sphere/core/providers/user_controller.dart';
 import 'package:sales_sphere/core/providers/permission_controller.dart';
 import 'package:sales_sphere/widget/utility_card.dart';
 
@@ -28,17 +26,8 @@ class UtilityCardConfig {
 class UtilitiesScreen extends ConsumerWidget {
   const UtilitiesScreen({super.key});
 
-  String _getInitials(String name) {
-    final trimmedName = name.trim();
-    if (trimmedName.isNotEmpty) {
-      return trimmedName[0].toUpperCase();
-    }
-    return 'U';
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(userControllerProvider);
     final permissionController = ref.watch(permissionControllerProvider);
 
     // Get enabled utility modules using helper
@@ -50,9 +39,6 @@ class UtilitiesScreen extends ConsumerWidget {
     // Check if any utilities are enabled
     final anyUtilityEnabled = enabledUtilityModules.isNotEmpty;
 
-    // Cache avatar URL for null safety
-    final avatarUrl = user?.avatarUrl;
-
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -61,8 +47,6 @@ class UtilitiesScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -86,35 +70,6 @@ class UtilitiesScreen extends ConsumerWidget {
                         ),
                       ),
                     ],
-                  ),
-                  GestureDetector(
-                    onTap: () => context.pushNamed('profile'),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppColors.textOrange,
-                          width: 2.5,
-                        ),
-                      ),
-                      child: CircleAvatar(
-                        radius: 26.r,
-                        backgroundColor: AppColors.primary,
-                        backgroundImage: avatarUrl != null
-                            ? NetworkImage(avatarUrl)
-                            : null,
-                        child: avatarUrl == null
-                            ? Text(
-                                _getInitials(user?.name ?? 'User'),
-                                style: TextStyle(
-                                  fontSize: 18.sp,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.textWhite,
-                                ),
-                              )
-                            : null,
-                      ),
-                    ),
                   ),
                 ],
               ),
@@ -156,8 +111,17 @@ class UtilitiesScreen extends ConsumerWidget {
                         // Settings card shown even when no utilities enabled
                         // Wrap in SizedBox to provide height constraints
                         SizedBox(
-                          width: (MediaQuery.of(context).size.width - 40.w - 16.w) / 2,
-                          height: ((MediaQuery.of(context).size.width - 40.w - 16.w) / 2) / 0.99,
+                          width:
+                              (MediaQuery.of(context).size.width -
+                                  40.w -
+                                  16.w) /
+                              2,
+                          height:
+                              ((MediaQuery.of(context).size.width -
+                                      40.w -
+                                      16.w) /
+                                  2) /
+                              0.99,
                           child: _buildSettingsCard(),
                         ),
                       ],
@@ -176,9 +140,10 @@ class UtilitiesScreen extends ConsumerWidget {
                   childAspectRatio: 0.99,
                   // Add all utility modules + Settings card
                   children: [
-                    ...enabledUtilityModules.map((moduleId) => RepaintBoundary(
-                          child: _buildUtilityCard(moduleId),
-                        )),
+                    ...enabledUtilityModules.map(
+                      (moduleId) =>
+                          RepaintBoundary(child: _buildUtilityCard(moduleId)),
+                    ),
                     // Settings card as last item in grid
                     RepaintBoundary(child: _buildSettingsCard()),
                   ],

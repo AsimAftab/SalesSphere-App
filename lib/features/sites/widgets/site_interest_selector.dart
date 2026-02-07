@@ -32,6 +32,7 @@ class SiteSelectionData {
   }
 
   bool get isEmpty => brands.isEmpty && technicians.isEmpty;
+
   bool get isNotEmpty => !isEmpty;
 }
 
@@ -120,9 +121,8 @@ class _SiteInterestSelectorState extends ConsumerState<SiteInterestSelector> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _SiteInterestBottomSheet(
-        initiallySelected: Map.from(_selectedData),
-      ),
+      builder: (context) =>
+          _SiteInterestBottomSheet(initiallySelected: Map.from(_selectedData)),
     );
 
     if (result != null) {
@@ -259,13 +259,15 @@ class _SiteInterestSelectorState extends ConsumerState<SiteInterestSelector> {
 
         // Add only brand chips (technicians shown inside modify selection only)
         for (final brand in data.brands) {
-          chips.add(_BrandChip(
-            category: categoryName,
-            brand: brand,
-            onRemove: widget.enabled
-                ? () => _removeBrand(categoryName, brand)
-                : null,
-          ));
+          chips.add(
+            _BrandChip(
+              category: categoryName,
+              brand: brand,
+              onRemove: widget.enabled
+                  ? () => _removeBrand(categoryName, brand)
+                  : null,
+            ),
+          );
         }
 
         return chips;
@@ -411,8 +413,8 @@ class _SiteInterestBottomSheetState
                 ..add(brand);
               _selectedData[categoryName] =
                   (current ?? const SiteSelectionData()).copyWith(
-                brands: newBrands,
-              );
+                    brands: newBrands,
+                  );
             });
           }
         },
@@ -437,13 +439,11 @@ class _SiteInterestBottomSheetState
 
             // Also add to selected data so it's checked by default
             final current = _selectedData[categoryName];
-            final newTechnicians =
-                Set<SiteTechnician>.from(current?.technicians ?? {})
-                  ..add(technician);
-            _selectedData[categoryName] =
-                (current ?? const SiteSelectionData()).copyWith(
-              technicians: newTechnicians,
-            );
+            final newTechnicians = Set<SiteTechnician>.from(
+              current?.technicians ?? {},
+            )..add(technician);
+            _selectedData[categoryName] = (current ?? const SiteSelectionData())
+                .copyWith(technicians: newTechnicians);
           });
         },
       ),
@@ -492,8 +492,9 @@ class _SiteInterestBottomSheetState
         newTechnicians.add(technician);
       }
 
-      _selectedData[categoryName] =
-          current.copyWith(technicians: newTechnicians);
+      _selectedData[categoryName] = current.copyWith(
+        technicians: newTechnicians,
+      );
     });
   }
 
@@ -521,8 +522,9 @@ class _SiteInterestBottomSheetState
     final selectedTechs = _selectedData[categoryName]?.technicians;
     if (selectedTechs == null) return false;
     // Compare by name and phone only, ignoring _id field which may differ
-    return selectedTechs.any((t) =>
-        t.name == technician.name && t.phone == technician.phone);
+    return selectedTechs.any(
+      (t) => t.name == technician.name && t.phone == technician.phone,
+    );
   }
 
   void _applySelection() {
@@ -606,17 +608,21 @@ class _SiteInterestBottomSheetState
                   ...categories,
                   // Add custom categories that aren't in API response
                   ..._customCategories.keys
-                      .where((customName) =>
-                          categories.every((c) => c.name != customName))
-                      .map((customName) => SiteCategory(
-                            id: const Uuid().v4(),
-                            name: customName,
-                            brands: _customCategories[customName]?.toList() ?? [],
-                            technicians: [],
-                            organizationId: '',
-                            createdAt: DateTime.now(),
-                            updatedAt: DateTime.now(),
-                          )),
+                      .where(
+                        (customName) =>
+                            categories.every((c) => c.name != customName),
+                      )
+                      .map(
+                        (customName) => SiteCategory(
+                          id: const Uuid().v4(),
+                          name: customName,
+                          brands: _customCategories[customName]?.toList() ?? [],
+                          technicians: [],
+                          organizationId: '',
+                          createdAt: DateTime.now(),
+                          updatedAt: DateTime.now(),
+                        ),
+                      ),
                 ];
 
                 if (allCategories.isEmpty) {
@@ -644,7 +650,8 @@ class _SiteInterestBottomSheetState
 
                 return ListView.separated(
                   padding: EdgeInsets.symmetric(horizontal: 16.w),
-                  itemCount: allCategories.length + 1, // +1 for "Add New Category"
+                  itemCount: allCategories.length + 1,
+                  // +1 for "Add New Category"
                   separatorBuilder: (_, __) => SizedBox(height: 8.h),
                   itemBuilder: (context, index) {
                     // Add New Category button at the top
@@ -785,7 +792,8 @@ class _SiteInterestBottomSheetState
     // Get all brands: original category brands + custom added brands
     final allBrands = {
       ...category.brands,
-      if (_customBrands.containsKey(category.name)) ..._customBrands[category.name]!,
+      if (_customBrands.containsKey(category.name))
+        ..._customBrands[category.name]!,
     }.toList();
 
     // Get all technicians: original category technicians + custom added technicians
@@ -859,8 +867,7 @@ class _SiteInterestBottomSheetState
               if (isCustomCategory) ...[
                 SizedBox(width: 6.w),
                 Container(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                  padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
                   decoration: BoxDecoration(
                     color: AppColors.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(4.r),
@@ -920,8 +927,9 @@ class _SiteInterestBottomSheetState
                     style: TextStyle(
                       fontSize: 14.sp,
                       color: AppColors.textPrimary,
-                      fontWeight:
-                          isSelected ? FontWeight.w500 : FontWeight.normal,
+                      fontWeight: isSelected
+                          ? FontWeight.w500
+                          : FontWeight.normal,
                     ),
                   ),
                   value: isSelected,
@@ -938,8 +946,10 @@ class _SiteInterestBottomSheetState
                 borderRadius: BorderRadius.circular(8.r),
                 child: Container(
                   margin: EdgeInsets.only(top: 4.h),
-                  padding:
-                      EdgeInsets.symmetric(vertical: 8.h, horizontal: 12.w),
+                  padding: EdgeInsets.symmetric(
+                    vertical: 8.h,
+                    horizontal: 12.w,
+                  ),
                   decoration: BoxDecoration(
                     border: Border.all(
                       color: AppColors.primary.withValues(alpha: 0.3),
@@ -950,11 +960,7 @@ class _SiteInterestBottomSheetState
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.add,
-                        color: AppColors.primary,
-                        size: 16.sp,
-                      ),
+                      Icon(Icons.add, color: AppColors.primary, size: 16.sp),
                       SizedBox(width: 6.w),
                       Text(
                         'Add Brand',
@@ -1007,8 +1013,7 @@ class _SiteInterestBottomSheetState
                 )
               else
                 ...allTechnicians.map((tech) {
-                  final isSelected =
-                      _isTechnicianSelected(category.name, tech);
+                  final isSelected = _isTechnicianSelected(category.name, tech);
                   return CheckboxListTile(
                     contentPadding: EdgeInsets.zero,
                     title: Text(
@@ -1016,8 +1021,9 @@ class _SiteInterestBottomSheetState
                       style: TextStyle(
                         fontSize: 14.sp,
                         color: AppColors.textPrimary,
-                        fontWeight:
-                            isSelected ? FontWeight.w500 : FontWeight.normal,
+                        fontWeight: isSelected
+                            ? FontWeight.w500
+                            : FontWeight.normal,
                       ),
                     ),
                     subtitle: Text(
@@ -1041,12 +1047,13 @@ class _SiteInterestBottomSheetState
                 borderRadius: BorderRadius.circular(8.r),
                 child: Container(
                   margin: EdgeInsets.only(top: 4.h),
-                  padding:
-                      EdgeInsets.symmetric(vertical: 8.h, horizontal: 12.w),
+                  padding: EdgeInsets.symmetric(
+                    vertical: 8.h,
+                    horizontal: 12.w,
+                  ),
                   decoration: BoxDecoration(
                     border: Border.all(
-                      color: (AppColors.secondary)
-                          .withValues(alpha: 0.3),
+                      color: (AppColors.secondary).withValues(alpha: 0.3),
                       style: BorderStyle.solid,
                     ),
                     borderRadius: BorderRadius.circular(8.r),
@@ -1088,10 +1095,7 @@ class _AddCategoryDialog extends StatefulWidget {
   final TextEditingController controller;
   final VoidCallback onSave;
 
-  const _AddCategoryDialog({
-    required this.controller,
-    required this.onSave,
-  });
+  const _AddCategoryDialog({required this.controller, required this.onSave});
 
   @override
   State<_AddCategoryDialog> createState() => _AddCategoryDialogState();
@@ -1116,10 +1120,7 @@ class _AddCategoryDialogState extends State<_AddCategoryDialog> {
     return AlertDialog(
       title: Text(
         'Add New Category',
-        style: TextStyle(
-          fontSize: 18.sp,
-          fontWeight: FontWeight.w600,
-        ),
+        style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600),
       ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1148,10 +1149,7 @@ class _AddCategoryDialogState extends State<_AddCategoryDialog> {
           onPressed: () => context.pop(),
           child: Text(
             'Cancel',
-            style: TextStyle(
-              fontSize: 14.sp,
-              color: AppColors.textSecondary,
-            ),
+            style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
           ),
         ),
         ElevatedButton(
@@ -1162,10 +1160,7 @@ class _AddCategoryDialogState extends State<_AddCategoryDialog> {
           ),
           child: Text(
             'Add',
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w500,
-            ),
+            style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500),
           ),
         ),
       ],
@@ -1211,10 +1206,7 @@ class _AddBrandDialogState extends State<_AddBrandDialog> {
     return AlertDialog(
       title: Text(
         'Add Brand to ${widget.categoryName}',
-        style: TextStyle(
-          fontSize: 18.sp,
-          fontWeight: FontWeight.w600,
-        ),
+        style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600),
       ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1243,10 +1235,7 @@ class _AddBrandDialogState extends State<_AddBrandDialog> {
           onPressed: () => context.pop(),
           child: Text(
             'Cancel',
-            style: TextStyle(
-              fontSize: 14.sp,
-              color: AppColors.textSecondary,
-            ),
+            style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
           ),
         ),
         ElevatedButton(
@@ -1257,10 +1246,7 @@ class _AddBrandDialogState extends State<_AddBrandDialog> {
           ),
           child: Text(
             'Add',
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w500,
-            ),
+            style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500),
           ),
         ),
       ],
@@ -1315,10 +1301,7 @@ class _AddTechnicianDialogState extends State<_AddTechnicianDialog> {
     return AlertDialog(
       title: Text(
         'Add Technician to ${widget.categoryName}',
-        style: TextStyle(
-          fontSize: 18.sp,
-          fontWeight: FontWeight.w600,
-        ),
+        style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600),
       ),
       content: Form(
         key: _formKey,
@@ -1372,8 +1355,9 @@ class _AddTechnicianDialogState extends State<_AddTechnicianDialog> {
                 if (value == null || value.trim().isEmpty) {
                   return 'Please enter phone number';
                 }
-                if (value.trim().length < 10) {
-                  return 'Phone number must be at least 10 digits';
+                final phoneValue = value.trim();
+                if (phoneValue.length != 10) {
+                  return 'Phone number must be exactly 10 digits';
                 }
                 return null;
               },
@@ -1386,10 +1370,7 @@ class _AddTechnicianDialogState extends State<_AddTechnicianDialog> {
           onPressed: () => context.pop(),
           child: Text(
             'Cancel',
-            style: TextStyle(
-              fontSize: 14.sp,
-              color: AppColors.textSecondary,
-            ),
+            style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
           ),
         ),
         ElevatedButton(
@@ -1400,10 +1381,7 @@ class _AddTechnicianDialogState extends State<_AddTechnicianDialog> {
           ),
           child: Text(
             'Add',
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w500,
-            ),
+            style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500),
           ),
         ),
       ],

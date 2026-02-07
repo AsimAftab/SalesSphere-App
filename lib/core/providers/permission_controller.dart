@@ -1,7 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sales_sphere/core/network_layer/token_storage_service.dart';
-import 'package:sales_sphere/features/auth/models/login.models.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
+import 'package:sales_sphere/features/auth/models/login.models.dart';
 
 part 'permission_controller.g.dart';
 
@@ -76,7 +76,7 @@ class PermissionController extends _$PermissionController {
     } catch (e, stack) {
       AppLogger.e('❌ Error loading cached permission data', e, stack);
     }
-    
+
     // Return empty state if no cached data
     return const PermissionState();
   }

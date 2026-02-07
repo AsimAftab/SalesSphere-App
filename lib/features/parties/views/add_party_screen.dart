@@ -244,8 +244,8 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
         // Use new party type from text field if "Add New" was selected
         final partyTypeToSend = _selectedPartyType == _kAddNewPartyType
             ? (_newPartyTypeController.text.trim().isEmpty
-                    ? null
-                    : _newPartyTypeController.text.trim())
+                  ? null
+                  : _newPartyTypeController.text.trim())
             : _selectedPartyType;
 
         final createRequest = CreatePartyRequest(
@@ -607,7 +607,8 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
                         onTypeSelected: (type) {
                           setState(() {
                             _selectedPartyType = type;
-                            _showNewPartyTypeField = (type == _kAddNewPartyType);
+                            _showNewPartyTypeField =
+                                (type == _kAddNewPartyType);
                           });
                         },
                       ),
@@ -852,11 +853,7 @@ class _PartyTypeDropdown extends ConsumerWidget {
         ),
         child: Row(
           children: [
-            Icon(
-              Icons.error_outline,
-              color: AppColors.error,
-              size: 20.sp,
-            ),
+            Icon(Icons.error_outline, color: AppColors.error, size: 20.sp),
             SizedBox(width: 12.w),
             Expanded(
               child: Text(
@@ -970,7 +967,10 @@ class _PartyTypeBottomSheet extends StatelessWidget {
           // Clear selection option
           if (selectedType != null && selectedType!.isNotEmpty)
             ListTile(
-              contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 12.w,
+                vertical: 4.h,
+              ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8.r),
               ),
@@ -992,7 +992,10 @@ class _PartyTypeBottomSheet extends StatelessWidget {
 
           // "Add New..." option at the top
           ListTile(
-            contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 12.w,
+              vertical: 4.h,
+            ),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8.r),
             ),
@@ -1046,7 +1049,10 @@ class _PartyTypeBottomSheet extends StatelessWidget {
               final isSelected = selectedType == type.name;
 
               return ListTile(
-                contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 12.w,
+                  vertical: 4.h,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8.r),
                 ),
@@ -1054,7 +1060,9 @@ class _PartyTypeBottomSheet extends StatelessWidget {
                     ? AppColors.primary.withValues(alpha: 0.1)
                     : null,
                 leading: Icon(
-                  isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
+                  isSelected
+                      ? Icons.check_circle
+                      : Icons.radio_button_unchecked,
                   color: isSelected ? AppColors.primary : Colors.grey.shade400,
                   size: 20.sp,
                 ),
@@ -1064,7 +1072,9 @@ class _PartyTypeBottomSheet extends StatelessWidget {
                     fontSize: 14.sp,
                     fontFamily: 'Poppins',
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                    color: isSelected ? AppColors.primary : Colors.grey.shade800,
+                    color: isSelected
+                        ? AppColors.primary
+                        : Colors.grey.shade800,
                   ),
                 ),
                 onTap: () => Navigator.pop(context, type.name),

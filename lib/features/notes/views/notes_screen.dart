@@ -4,12 +4,12 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:skeletonizer/skeletonizer.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/network_layer/network_exceptions.dart';
-import 'package:sales_sphere/features/notes/vm/notes.vm.dart';
 import 'package:sales_sphere/features/notes/models/notes.model.dart';
+import 'package:sales_sphere/features/notes/vm/notes.vm.dart';
 import 'package:sales_sphere/widget/permission_denied_widget.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 /// Enum for filtering notes by entity type
 enum NoteFilter { all, party, prospect, site }
@@ -208,7 +208,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                         onRetry: () => ref.invalidate(notesViewModelProvider),
                       );
                     }
-                    
+
                     // Generic error fallback
                     return Center(
                       child: Padding(
@@ -242,7 +242,8 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                             ),
                             SizedBox(height: 24.h),
                             OutlinedButton.icon(
-                              onPressed: () => ref.invalidate(notesViewModelProvider),
+                              onPressed: () =>
+                                  ref.invalidate(notesViewModelProvider),
                               icon: Icon(Icons.refresh, size: 18.sp),
                               label: Text('Retry'),
                             ),

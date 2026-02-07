@@ -101,11 +101,7 @@ class PrimaryAsyncDropdown<T> extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.info_outline,
-            color: AppColors.textSecondary,
-            size: 20.sp,
-          ),
+          Icon(Icons.info_outline, color: AppColors.textSecondary, size: 20.sp),
           SizedBox(width: 12.w),
           Expanded(
             child: Text(
@@ -156,11 +152,7 @@ class PrimaryAsyncDropdown<T> extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.error_outline,
-            color: AppColors.error,
-            size: 20.sp,
-          ),
+          Icon(Icons.error_outline, color: AppColors.error, size: 20.sp),
           SizedBox(width: 12.w),
           Expanded(
             child: Text(
@@ -188,9 +180,7 @@ class PrimaryAsyncDropdown<T> extends ConsumerWidget {
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
         decoration: BoxDecoration(
           // Grey background when disabled, surface when enabled
-          color: shouldShowGreyStyle
-              ? Colors.grey.shade100
-              : AppColors.surface,
+          color: shouldShowGreyStyle ? Colors.grey.shade100 : AppColors.surface,
           borderRadius: BorderRadius.circular(12.r),
           border: Border.all(
             // Very light border when disabled, normal border when enabled
@@ -221,18 +211,16 @@ class PrimaryAsyncDropdown<T> extends ConsumerWidget {
                   // Grey text when disabled, normal when enabled
                   color: hasSelection
                       ? (shouldShowGreyStyle
-                          ? AppColors.textSecondary.withValues(alpha: 0.6)
-                          : AppColors.textPrimary)
+                            ? AppColors.textSecondary.withValues(alpha: 0.6)
+                            : AppColors.textPrimary)
                       : (shouldShowGreyStyle
-                          ? AppColors.textHint.withValues(alpha: 0.5)
-                          : AppColors.textHint),
+                            ? AppColors.textHint.withValues(alpha: 0.5)
+                            : AppColors.textHint),
                 ),
               ),
             ),
             Icon(
-              enabled
-                  ? Icons.keyboard_arrow_down_rounded
-                  : Icons.lock_outline,
+              enabled ? Icons.keyboard_arrow_down_rounded : Icons.lock_outline,
               color: shouldShowGreyStyle
                   ? AppColors.textSecondary.withValues(alpha: 0.4)
                   : AppColors.textSecondary,
@@ -245,10 +233,7 @@ class PrimaryAsyncDropdown<T> extends ConsumerWidget {
   }
 
   /// Show the bottom sheet selection modal
-  Future<void> _showBottomSheet(
-    BuildContext context,
-    List<T> items,
-  ) async {
+  Future<void> _showBottomSheet(BuildContext context, List<T> items) async {
     final selected = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: Colors.transparent,
@@ -324,11 +309,7 @@ class _PrimaryAsyncDropdownBottomSheet<T> extends StatelessWidget {
           // Header
           Row(
             children: [
-              Icon(
-                prefixIcon,
-                color: AppColors.primary,
-                size: 24.sp,
-              ),
+              Icon(prefixIcon, color: AppColors.primary, size: 24.sp),
               SizedBox(width: 12.w),
               Text(
                 title,
@@ -357,7 +338,10 @@ class _PrimaryAsyncDropdownBottomSheet<T> extends StatelessWidget {
           // Clear selection option
           if (initialValue != null && initialValue!.isNotEmpty)
             ListTile(
-              contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 12.w,
+                vertical: 4.h,
+              ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8.r),
               ),
@@ -387,7 +371,10 @@ class _PrimaryAsyncDropdownBottomSheet<T> extends StatelessWidget {
               final isSelected = initialValue == itemLabelValue;
 
               return ListTile(
-                contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 12.w,
+                  vertical: 4.h,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8.r),
                 ),
@@ -395,7 +382,9 @@ class _PrimaryAsyncDropdownBottomSheet<T> extends StatelessWidget {
                     ? AppColors.primary.withValues(alpha: 0.1)
                     : null,
                 leading: Icon(
-                  isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
+                  isSelected
+                      ? Icons.check_circle
+                      : Icons.radio_button_unchecked,
                   color: isSelected ? AppColors.primary : Colors.grey.shade400,
                   size: 20.sp,
                 ),
@@ -405,7 +394,9 @@ class _PrimaryAsyncDropdownBottomSheet<T> extends StatelessWidget {
                     fontSize: 14.sp,
                     fontFamily: 'Poppins',
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                    color: isSelected ? AppColors.primary : Colors.grey.shade800,
+                    color: isSelected
+                        ? AppColors.primary
+                        : Colors.grey.shade800,
                   ),
                 ),
                 onTap: () => Navigator.pop(context, itemLabelValue),

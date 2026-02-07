@@ -33,7 +33,9 @@ class BankNamesViewModel extends _$BankNamesViewModel {
         AppLogger.i('✅ Fetched ${apiResponse.count} bank names');
         return apiResponse.data;
       } else {
-        throw Exception('Failed to fetch bank names: ${response.statusMessage}');
+        throw Exception(
+          'Failed to fetch bank names: ${response.statusMessage}',
+        );
       }
     } on DioException catch (e) {
       AppLogger.e('❌ Dio error fetching bank names', e);

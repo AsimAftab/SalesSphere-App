@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
@@ -64,11 +63,13 @@ class GooglePlacesService {
   String? _sessionToken;
 
   GooglePlacesService({required this.apiKey})
-      : _dio = Dio(BaseOptions(
+    : _dio = Dio(
+        BaseOptions(
           baseUrl: 'https://maps.googleapis.com/maps/api',
           connectTimeout: const Duration(seconds: 10),
           receiveTimeout: const Duration(seconds: 10),
-        ));
+        ),
+      );
 
   /// Get session token for billing optimization
   String _getSessionToken() {
@@ -96,7 +97,8 @@ class GooglePlacesService {
         'input': input,
         'key': apiKey,
         'sessiontoken': _getSessionToken(),
-        'types': 'geocode|establishment', // Include both addresses and businesses
+        'types': 'geocode|establishment',
+        // Include both addresses and businesses
       };
 
       // Add location bias if provided
@@ -193,7 +195,9 @@ class GooglePlacesService {
     String? type,
   }) async {
     try {
-      AppLogger.d('Fetching nearby places at: ${location.latitude}, ${location.longitude}');
+      AppLogger.d(
+        'Fetching nearby places at: ${location.latitude}, ${location.longitude}',
+      );
 
       final params = {
         'location': '${location.latitude},${location.longitude}',

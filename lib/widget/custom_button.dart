@@ -1,22 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import '../core/constants/app_colors.dart';
 
 /// Enum for button types
-enum ButtonType {
-  primary,
-  secondary,
-  outlined,
-  text,
-  gradient,
-}
+enum ButtonType { primary, secondary, outlined, text, gradient }
 
 /// Enum for button sizes
-enum ButtonSize {
-  small,
-  medium,
-  large,
-}
+enum ButtonSize { small, medium, large }
 
 /// Custom Button Widget - Modular and reusable button component
 /// Compatible with Riverpod 3.0
@@ -146,7 +137,10 @@ class CustomButton extends StatelessWidget {
         backgroundColor: backgroundColor ?? AppColors.secondary,
         disabledBackgroundColor: AppColors.neutral.withValues(alpha: 0.3),
         foregroundColor: textColor ?? Colors.white,
-        padding: customPadding ?? padding ?? EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+        padding:
+            customPadding ??
+            padding ??
+            EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(borderRadius ?? 12.r),
         ),
@@ -166,7 +160,10 @@ class CustomButton extends StatelessWidget {
         backgroundColor: backgroundColor ?? AppColors.primary,
         disabledBackgroundColor: AppColors.neutral.withValues(alpha: 0.3),
         foregroundColor: textColor ?? Colors.white,
-        padding: customPadding ?? padding ?? EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+        padding:
+            customPadding ??
+            padding ??
+            EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(borderRadius ?? 12.r),
         ),
@@ -185,7 +182,10 @@ class CustomButton extends StatelessWidget {
       style: OutlinedButton.styleFrom(
         foregroundColor: textColor ?? AppColors.secondary,
         disabledForegroundColor: AppColors.textDisabled,
-        padding: customPadding ?? padding ?? EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+        padding:
+            customPadding ??
+            padding ??
+            EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
         side: BorderSide(
           color: isButtonDisabled
               ? AppColors.border
@@ -208,7 +208,10 @@ class CustomButton extends StatelessWidget {
       style: TextButton.styleFrom(
         foregroundColor: textColor ?? AppColors.secondary,
         disabledForegroundColor: AppColors.textDisabled,
-        padding: customPadding ?? padding ?? EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+        padding:
+            customPadding ??
+            padding ??
+            EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(borderRadius ?? 12.r),
         ),
@@ -225,21 +228,23 @@ class CustomButton extends StatelessWidget {
         gradient: isButtonDisabled
             ? null
             : const LinearGradient(
-          colors: [AppColors.secondary, AppColors.primary],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
-        color: isButtonDisabled ? AppColors.neutral.withValues(alpha: 0.3) : null,
+                colors: [AppColors.secondary, AppColors.primary],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+        color: isButtonDisabled
+            ? AppColors.neutral.withValues(alpha: 0.3)
+            : null,
         borderRadius: BorderRadius.circular(borderRadius ?? 12.r),
         boxShadow: isButtonDisabled
             ? null
             : [
-          BoxShadow(
-            color: AppColors.secondary.withValues(alpha: 0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
+                BoxShadow(
+                  color: AppColors.secondary.withValues(alpha: 0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
       ),
       child: Material(
         color: Colors.transparent,
@@ -247,7 +252,10 @@ class CustomButton extends StatelessWidget {
           onTap: isButtonDisabled ? null : onPressed,
           borderRadius: BorderRadius.circular(borderRadius ?? 12.r),
           child: Container(
-            padding: customPadding ?? padding ?? EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+            padding:
+                customPadding ??
+                padding ??
+                EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
             child: _buildButtonContent(forceWhiteColor: true),
           ),
         ),
@@ -268,9 +276,10 @@ class CustomButton extends StatelessWidget {
           valueColor: AlwaysStoppedAnimation<Color>(
             forceWhiteColor
                 ? Colors.white
-                : (textColor ?? (type == ButtonType.outlined || type == ButtonType.text
-                ? AppColors.secondary
-                : Colors.white)),
+                : (textColor ??
+                      (type == ButtonType.outlined || type == ButtonType.text
+                          ? AppColors.secondary
+                          : Colors.white)),
           ),
         ),
       );
@@ -280,21 +289,23 @@ class CustomButton extends StatelessWidget {
 
     // Leading Icon
     if (leadingIcon != null) {
-      children.add(Icon(
-        leadingIcon,
-        size: _getIconSizeForSize(),
-        color: forceWhiteColor
-            ? Colors.white
-            : (textColor ??
-            (type == ButtonType.outlined || type == ButtonType.text
-                ? AppColors.secondary
-                : Colors.white)),
-      ));
+      children.add(
+        Icon(
+          leadingIcon,
+          size: _getIconSizeForSize(),
+          color: forceWhiteColor
+              ? Colors.white
+              : (textColor ??
+                    (type == ButtonType.outlined || type == ButtonType.text
+                        ? AppColors.secondary
+                        : Colors.white)),
+        ),
+      );
       children.add(SizedBox(width: 8.w));
     }
 
     // Label
-// Label (supports multiline)
+    // Label (supports multiline)
     children.add(
       Flexible(
         child: Text(
@@ -303,7 +314,8 @@ class CustomButton extends StatelessWidget {
           softWrap: true,
           maxLines: 2,
           overflow: TextOverflow.visible,
-          style: textStyle ??
+          style:
+              textStyle ??
               TextStyle(
                 fontSize: _getFontSizeForSize(),
                 fontWeight: FontWeight.w600,
@@ -311,9 +323,10 @@ class CustomButton extends StatelessWidget {
                 color: forceWhiteColor
                     ? Colors.white
                     : (textColor ??
-                    (type == ButtonType.outlined || type == ButtonType.text
-                        ? AppColors.secondary
-                        : Colors.white)),
+                          (type == ButtonType.outlined ||
+                                  type == ButtonType.text
+                              ? AppColors.secondary
+                              : Colors.white)),
               ),
         ),
       ),
@@ -322,16 +335,18 @@ class CustomButton extends StatelessWidget {
     // Trailing Icon
     if (trailingIcon != null) {
       children.add(SizedBox(width: 8.w));
-      children.add(Icon(
-        trailingIcon,
-        size: _getIconSizeForSize(),
-        color: forceWhiteColor
-            ? Colors.white
-            : (textColor ??
-            (type == ButtonType.outlined || type == ButtonType.text
-                ? AppColors.secondary
-                : Colors.white)),
-      ));
+      children.add(
+        Icon(
+          trailingIcon,
+          size: _getIconSizeForSize(),
+          color: forceWhiteColor
+              ? Colors.white
+              : (textColor ??
+                    (type == ButtonType.outlined || type == ButtonType.text
+                        ? AppColors.secondary
+                        : Colors.white)),
+        ),
+      );
     }
 
     return Row(

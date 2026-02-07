@@ -2,66 +2,67 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sales_sphere/features/attendance/models/attendance.models.dart';
+import 'package:sales_sphere/features/attendance/views/attendance_detail_screen.dart';
+import 'package:sales_sphere/features/attendance/views/attendance_monthly_details_screen.dart';
+import 'package:sales_sphere/features/attendance/views/attendance_screen.dart';
+import 'package:sales_sphere/features/auth/models/login.models.dart';
+import 'package:sales_sphere/features/auth/views/forgot_password_screen.dart';
+import 'package:sales_sphere/features/auth/views/login_screen.dart';
+import 'package:sales_sphere/features/beat_plan/views/beat_plan_details_screen.dart';
+import 'package:sales_sphere/features/catalog/views/catalog_screen.dart';
+import 'package:sales_sphere/features/catalog/views/category_selection_screen.dart';
 import 'package:sales_sphere/features/collection/views/add_collection_screen.dart';
 import 'package:sales_sphere/features/collection/views/collection_screen.dart';
 import 'package:sales_sphere/features/collection/views/edit_collection_screen.dart';
+import 'package:sales_sphere/features/expense-claim/views/add_expense_claim_screen.dart';
+import 'package:sales_sphere/features/expense-claim/views/edit_expense_claim_screen.dart';
+import 'package:sales_sphere/features/expense-claim/views/expense_claims_screen.dart';
+import 'package:sales_sphere/features/home/views/home_screen.dart';
+import 'package:sales_sphere/features/invoice/views/invoice_screen.dart';
 import 'package:sales_sphere/features/leave/views/apply_leave_screen.dart';
-import 'package:sales_sphere/features/leave/views/leave_screen.dart';
 import 'package:sales_sphere/features/leave/views/edit_leave_screen.dart';
+import 'package:sales_sphere/features/leave/views/leave_screen.dart';
+import 'package:sales_sphere/features/miscellaneous/models/miscellaneous.model.dart';
+import 'package:sales_sphere/features/miscellaneous/views/add_miscellaneous_work_screen.dart';
+import 'package:sales_sphere/features/miscellaneous/views/edit_miscellaneous_work_screen.dart';
+import 'package:sales_sphere/features/miscellaneous/views/miscellaneous_list_screen.dart';
 import 'package:sales_sphere/features/notes/views/add_notes_screen.dart';
 import 'package:sales_sphere/features/notes/views/edit_notes_screen.dart';
 import 'package:sales_sphere/features/notes/views/notes_screen.dart';
 import 'package:sales_sphere/features/odometer/views/odometer_details_screen.dart';
 import 'package:sales_sphere/features/odometer/views/odometer_list_screen.dart';
 import 'package:sales_sphere/features/odometer/views/odometer_screen.dart';
-import 'package:sales_sphere/features/tour_plan/views/add_tour_screen.dart';
-import 'package:sales_sphere/features/tour_plan/views/edit_tour_details_screen.dart';
-import 'package:sales_sphere/features/tour_plan/views/tour_plan_screen.dart';
-import 'package:sales_sphere/widget/main_shell.dart';
-import 'package:sales_sphere/features/auth/views/login_screen.dart';
-import 'package:sales_sphere/features/auth/views/forgot_password_screen.dart';
-import 'package:sales_sphere/features/home/views/home_screen.dart';
-import 'package:sales_sphere/features/catalog/views/catalog_screen.dart';
-import 'package:sales_sphere/features/catalog/views/category_selection_screen.dart';
-import 'package:sales_sphere/features/invoice/views/invoice_screen.dart';
-import 'package:sales_sphere/features/parties/views/parties_screen.dart';
-import 'package:sales_sphere/features/parties/views/edit_party_details_screen.dart';
+import 'package:sales_sphere/features/onboarding/views/onboarding_screen.dart';
 import 'package:sales_sphere/features/parties/views/add_party_screen.dart';
+import 'package:sales_sphere/features/parties/views/edit_party_details_screen.dart';
+import 'package:sales_sphere/features/parties/views/parties_screen.dart';
 import 'package:sales_sphere/features/profile/view/profile_screen.dart';
-import 'package:sales_sphere/features/attendance/views/attendance_screen.dart';
-import 'package:sales_sphere/features/attendance/views/attendance_detail_screen.dart';
-import 'package:sales_sphere/features/attendance/views/attendance_monthly_details_screen.dart';
-import 'package:sales_sphere/features/attendance/models/attendance.models.dart';
-import 'package:sales_sphere/features/prospects/views/prospects_screen.dart';
 import 'package:sales_sphere/features/prospects/views/add_prospect_screen.dart';
 import 'package:sales_sphere/features/prospects/views/edit_prospect_details_screen.dart';
-import 'package:sales_sphere/features/sites/views/sites_screen.dart';
+import 'package:sales_sphere/features/prospects/views/prospects_screen.dart';
+import 'package:sales_sphere/features/settings/views/about_screen.dart';
+import 'package:sales_sphere/features/settings/views/change_password_screen.dart';
+import 'package:sales_sphere/features/settings/views/settings_screen.dart';
+import 'package:sales_sphere/features/settings/views/terms_and_conditions_screen.dart';
 import 'package:sales_sphere/features/sites/views/add_sites_screen.dart';
 import 'package:sales_sphere/features/sites/views/edit_site_details_screen.dart';
 import 'package:sales_sphere/features/sites/views/sites_images_screen.dart';
-import 'package:sales_sphere/features/settings/views/settings_screen.dart';
-import 'package:sales_sphere/features/settings/views/about_screen.dart';
-import 'package:sales_sphere/features/settings/views/terms_and_conditions_screen.dart';
-import 'package:sales_sphere/features/settings/views/change_password_screen.dart';
-import 'package:sales_sphere/features/utilities/views/utilities_screen.dart';
-import 'package:sales_sphere/features/beat_plan/views/beat_plan_details_screen.dart';
-import 'package:sales_sphere/features/miscellaneous/views/miscellaneous_list_screen.dart';
-import 'package:sales_sphere/features/miscellaneous/views/add_miscellaneous_work_screen.dart';
-import 'package:sales_sphere/features/miscellaneous/views/edit_miscellaneous_work_screen.dart';
-import 'package:sales_sphere/features/miscellaneous/models/miscellaneous.model.dart';
-import 'package:sales_sphere/features/expense-claim/views/expense_claims_screen.dart';
-import 'package:sales_sphere/features/expense-claim/views/add_expense_claim_screen.dart';
-import 'package:sales_sphere/features/expense-claim/views/edit_expense_claim_screen.dart';
-import 'package:sales_sphere/features/auth/models/login.models.dart';
+import 'package:sales_sphere/features/sites/views/sites_screen.dart';
 import 'package:sales_sphere/features/splash/views/splash_screen.dart';
-import 'package:sales_sphere/features/onboarding/views/onboarding_screen.dart';
+import 'package:sales_sphere/features/tour_plan/views/add_tour_screen.dart';
+import 'package:sales_sphere/features/tour_plan/views/edit_tour_details_screen.dart';
+import 'package:sales_sphere/features/tour_plan/views/tour_plan_screen.dart';
+import 'package:sales_sphere/features/utilities/views/utilities_screen.dart';
+import 'package:sales_sphere/widget/main_shell.dart';
+
+import '../../features/invoice/views/estimate_details_screen.dart';
 import '../../features/invoice/views/history_screen.dart';
 import '../../features/invoice/views/invoice_details_screen.dart';
-import '../../features/invoice/views/estimate_details_screen.dart';
-import '../providers/user_controller.dart';
+import '../constants/module_config.dart';
 import '../providers/app_startup.dart';
 import '../providers/permission_controller.dart';
-import '../constants/module_config.dart';
+import '../providers/user_controller.dart';
 
 // ========================================
 // HELPER FUNCTIONS
@@ -119,7 +120,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       }
 
       // Check if route is always accessible (no auth required for these)
-      final isAlwaysAccessible = ModuleConfig.isAlwaysAccessibleRoute(requestedPath);
+      final isAlwaysAccessible = ModuleConfig.isAlwaysAccessibleRoute(
+        requestedPath,
+      );
       if (isAlwaysAccessible) {
         return null; // Allow navigation to public routes
       }
@@ -472,7 +475,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-
       // ========================================
       // SETTINGS ROUTES (No Bottom Navigation)
       // ========================================
@@ -558,14 +560,17 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       // ========================================
       // MAIN APP ROUTES (With Bottom Navigation)
       // ========================================
-
       ShellRoute(
         builder: (context, state, child) {
           // Check if user was redirected due to disabled module
           _showModuleDisabledSnackbarIfNeeded(context);
 
           // Calculate current index dynamically based on enabled modules
-          final currentIndex = _calculateCurrentTabIndex(ref, context, state.uri.path);
+          final currentIndex = _calculateCurrentTabIndex(
+            ref,
+            context,
+            state.uri.path,
+          );
 
           return MainShell(currentIndex: currentIndex, child: child);
         },
@@ -665,10 +670,7 @@ void _showModuleDisabledSnackbarIfNeeded(BuildContext context) {
             content: Text('$displayName is not available in your current plan'),
             duration: const Duration(seconds: 3),
             behavior: SnackBarBehavior.floating,
-            margin: EdgeInsets.symmetric(
-              horizontal: 16.w,
-              vertical: 16.h,
-            ),
+            margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
           ),
         );
 

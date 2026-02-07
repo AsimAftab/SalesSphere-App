@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/services/geofencing_service.dart';
 import 'package:sales_sphere/features/beat_plan/models/beat_plan.models.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Directory Visit Card
 /// Displays individual directory (party/site/prospect) visit information with clean, modern design
@@ -114,13 +114,25 @@ class DirectoryVisitCard extends StatelessWidget {
                     // Leading Circle with type badge below
                     Column(
                       children: [
-                        // Circle (color based on type: blue for Party, green for Prospect)
+                        // Circle with initial (color based on type: blue for Party, green for Prospect)
                         Container(
                           width: 48.w,
                           height: 48.w,
                           decoration: BoxDecoration(
                             color: _getTypeColor(),
                             shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Text(
+                              directory.name.isNotEmpty
+                                  ? directory.name[0].toUpperCase()
+                                  : '',
+                              style: TextStyle(
+                                fontSize: 20.sp,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
                           ),
                         ),
                         SizedBox(height: 6.h),
@@ -191,7 +203,8 @@ class DirectoryVisitCard extends StatelessWidget {
                               SizedBox(width: 4.w),
                               Expanded(
                                 child: Text(
-                                  directory.location.address ?? 'No address available',
+                                  directory.location.address ??
+                                      'No address available',
                                   style: TextStyle(
                                     fontSize: 12.sp,
                                     color: AppColors.textSecondary,
@@ -219,7 +232,9 @@ class DirectoryVisitCard extends StatelessWidget {
                       child: Icon(
                         isVisited ? Icons.check : Icons.schedule_outlined,
                         size: 20.sp,
-                        color: isVisited ? AppColors.success : AppColors.warning,
+                        color: isVisited
+                            ? AppColors.success
+                            : AppColors.warning,
                       ),
                     ),
                   ],
@@ -230,7 +245,10 @@ class DirectoryVisitCard extends StatelessWidget {
                 if (geofenceResult != null && !isVisited) ...[
                   SizedBox(height: 12.h),
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 8.h,
+                    ),
                     decoration: BoxDecoration(
                       color: geofenceResult.isWithinGeofence
                           ? AppColors.success.withValues(alpha: 0.1)
@@ -293,7 +311,10 @@ class DirectoryVisitCard extends StatelessWidget {
                             color: AppColors.primary.withValues(alpha: 0.3),
                             width: 1.0,
                           ),
-                          padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 12.w),
+                          padding: EdgeInsets.symmetric(
+                            vertical: 10.h,
+                            horizontal: 12.w,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10.r),
                           ),
@@ -306,12 +327,12 @@ class DirectoryVisitCard extends StatelessWidget {
                       child: OutlinedButton.icon(
                         onPressed: currentLocation != null
                             ? () => _openInDirections(
-                                  currentLocation!.latitude,
-                                  currentLocation!.longitude,
-                                  directory.location.latitude,
-                                  directory.location.longitude,
-                                  directory.name,
-                                )
+                                currentLocation!.latitude,
+                                currentLocation!.longitude,
+                                directory.location.latitude,
+                                directory.location.longitude,
+                                directory.name,
+                              )
                             : null,
                         icon: Icon(Icons.directions_outlined, size: 16.sp),
                         label: Text(
@@ -330,7 +351,10 @@ class DirectoryVisitCard extends StatelessWidget {
                                 : AppColors.greyMedium.withValues(alpha: 0.2),
                             width: 1.0,
                           ),
-                          padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 12.w),
+                          padding: EdgeInsets.symmetric(
+                            vertical: 10.h,
+                            horizontal: 12.w,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10.r),
                           ),

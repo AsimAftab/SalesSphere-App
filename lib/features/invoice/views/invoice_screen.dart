@@ -3,18 +3,18 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
-import 'package:sales_sphere/core/utils/snackbar_utils.dart';
-import 'package:sales_sphere/features/parties/models/parties.model.dart';
-import 'package:sales_sphere/features/parties/vm/parties.vm.dart';
-import 'package:sales_sphere/widget/custom_text_field.dart';
-import 'package:sales_sphere/widget/custom_date_picker.dart';
-import 'package:sales_sphere/widget/custom_button.dart';
 import 'package:sales_sphere/core/providers/order_controller.dart';
+import 'package:sales_sphere/core/utils/snackbar_utils.dart';
 import 'package:sales_sphere/features/invoice/models/invoice.models.dart';
 import 'package:sales_sphere/features/invoice/vm/invoice.vm.dart';
 import 'package:sales_sphere/features/invoice/vm/invoice_draft_vm.dart';
-import 'package:intl/intl.dart';
+import 'package:sales_sphere/features/parties/models/parties.model.dart';
+import 'package:sales_sphere/features/parties/vm/parties.vm.dart';
+import 'package:sales_sphere/widget/custom_button.dart';
+import 'package:sales_sphere/widget/custom_date_picker.dart';
+import 'package:sales_sphere/widget/custom_text_field.dart';
 
 class InvoiceScreen extends ConsumerStatefulWidget {
   const InvoiceScreen({super.key});
@@ -28,7 +28,8 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
   final TextEditingController _partySearchController = TextEditingController();
   final TextEditingController _ownerNameController = TextEditingController();
   final TextEditingController _deliveryDateController = TextEditingController();
-  final TextEditingController _discountController = TextEditingController(); // Empty by default
+  final TextEditingController _discountController =
+      TextEditingController(); // Empty by default
   final FocusNode _partySearchFocusNode = FocusNode();
   bool _showPartyDropdown = false;
   String _searchQuery = '';
@@ -46,7 +47,7 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
   @override
   void initState() {
     super.initState();
-    
+
     // Restore state from draft provider
     final draftState = ref.read(invoiceDraftControllerProvider);
     selectedParty = draftState.selectedParty;
@@ -55,11 +56,13 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
       _ownerNameController.text = selectedParty!.ownerName;
       _searchQuery = selectedParty!.name;
     }
-    
+
     if (draftState.expectedDeliveryDate != null) {
-      _deliveryDateController.text = DateFormat('dd MMM yyyy').format(draftState.expectedDeliveryDate!);
+      _deliveryDateController.text = DateFormat(
+        'dd MMM yyyy',
+      ).format(draftState.expectedDeliveryDate!);
     }
-    
+
     _discountPercentage = draftState.discountPercentage;
     if (_discountPercentage > 0) {
       _discountController.text = _discountPercentage.toString();
@@ -75,7 +78,9 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
     _deliveryDateController.addListener(() {
       if (_deliveryDateController.text.isNotEmpty) {
         try {
-          final date = DateFormat('dd MMM yyyy').parse(_deliveryDateController.text);
+          final date = DateFormat(
+            'dd MMM yyyy',
+          ).parse(_deliveryDateController.text);
           ref.read(invoiceDraftControllerProvider.notifier).updateDate(date);
         } catch (_) {}
       } else {
@@ -110,7 +115,10 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
   }
 
   // Get or create a TextEditingController for a product's set price
-  TextEditingController _getPriceController(String productId, double initialPrice) {
+  TextEditingController _getPriceController(
+    String productId,
+    double initialPrice,
+  ) {
     if (!_priceControllers.containsKey(productId)) {
       _priceControllers[productId] = TextEditingController(
         text: initialPrice.toStringAsFixed(2),
@@ -120,7 +128,10 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
   }
 
   // Get or create a TextEditingController for a product's quantity
-  TextEditingController _getQuantityController(String productId, int initialQuantity) {
+  TextEditingController _getQuantityController(
+    String productId,
+    int initialQuantity,
+  ) {
     if (!_quantityControllers.containsKey(productId)) {
       _quantityControllers[productId] = TextEditingController(
         text: initialQuantity.toString(),
@@ -132,9 +143,7 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
   // Get or create a TextEditingController for a product's item discount
   TextEditingController _getItemDiscountController(String productId) {
     if (!_itemDiscountControllers.containsKey(productId)) {
-      _itemDiscountControllers[productId] = TextEditingController(
-        text: '0',
-      );
+      _itemDiscountControllers[productId] = TextEditingController(text: '0');
     }
     return _itemDiscountControllers[productId]!;
   }
@@ -166,7 +175,9 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
     final partiesAsync = ref.watch(partiesViewModelProvider);
     final orderController = ref.watch(orderControllerProvider);
     final orderItems = orderController.values.toList();
-    final subtotalCost = ref.read(orderControllerProvider.notifier).getTotalCost();
+    final subtotalCost = ref
+        .read(orderControllerProvider.notifier)
+        .getTotalCost();
 
     // Calculate discount amount and final total
     final discountAmount = subtotalCost * (_discountPercentage / 100);
@@ -268,7 +279,8 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                               return _buildInlinePartySearchField(parties);
                             },
                             loading: () => _buildInlinePartySearchField([]),
-                            error: (error, stack) => _buildInlinePartySearchField([]),
+                            error: (error, stack) =>
+                                _buildInlinePartySearchField([]),
                           ),
 
                           SizedBox(height: 16.h),
@@ -289,7 +301,9 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                             controller: _deliveryDateController,
                             prefixIcon: Icons.local_shipping_rounded,
                             firstDate: DateTime.now(),
-                            lastDate: DateTime.now().add(const Duration(days: 365)),
+                            lastDate: DateTime.now().add(
+                              const Duration(days: 365),
+                            ),
                             initialDate: DateTime.now(),
                           ),
                         ],
@@ -307,7 +321,10 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                     if (orderItems.isEmpty)
                       _buildEnhancedEmptyState()
                     else
-                      ...orderItems.map((orderItemData) => _buildEnhancedOrderItemRow(orderItemData)),
+                      ...orderItems.map(
+                        (orderItemData) =>
+                            _buildEnhancedOrderItemRow(orderItemData),
+                      ),
 
                     if (orderItems.isNotEmpty) SizedBox(height: 16.h),
 
@@ -342,7 +359,10 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                                     width: 100.w,
                                     child: TextFormField(
                                       controller: _discountController,
-                                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                      keyboardType:
+                                          const TextInputType.numberWithOptions(
+                                            decimal: true,
+                                          ),
                                       textAlign: TextAlign.right,
                                       style: TextStyle(
                                         fontSize: 16.sp,
@@ -351,27 +371,51 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                                       ),
                                       decoration: InputDecoration(
                                         isDense: true,
-                                        contentPadding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
+                                        contentPadding: EdgeInsets.symmetric(
+                                          horizontal: 8.w,
+                                          vertical: 8.h,
+                                        ),
                                         border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8.r),
-                                          borderSide: const BorderSide(color: Colors.grey),
+                                          borderRadius: BorderRadius.circular(
+                                            8.r,
+                                          ),
+                                          borderSide: const BorderSide(
+                                            color: Colors.grey,
+                                          ),
                                         ),
                                         enabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8.r),
-                                          borderSide: BorderSide(color: Colors.grey.shade300),
+                                          borderRadius: BorderRadius.circular(
+                                            8.r,
+                                          ),
+                                          borderSide: BorderSide(
+                                            color: Colors.grey.shade300,
+                                          ),
                                         ),
                                         focusedBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8.r),
-                                          borderSide: BorderSide(color: AppColors.primary),
+                                          borderRadius: BorderRadius.circular(
+                                            8.r,
+                                          ),
+                                          borderSide: BorderSide(
+                                            color: AppColors.primary,
+                                          ),
                                         ),
                                         suffixText: '%',
                                       ),
                                       onChanged: (value) {
                                         setState(() {
-                                          final parsedValue = double.tryParse(value) ?? 0.0;
-                                          _discountPercentage = parsedValue.clamp(0.0, 100.0);
+                                          final parsedValue =
+                                              double.tryParse(value) ?? 0.0;
+                                          _discountPercentage = parsedValue
+                                              .clamp(0.0, 100.0);
                                         });
-                                        ref.read(invoiceDraftControllerProvider.notifier).updateDiscount(_discountPercentage);
+                                        ref
+                                            .read(
+                                              invoiceDraftControllerProvider
+                                                  .notifier,
+                                            )
+                                            .updateDiscount(
+                                              _discountPercentage,
+                                            );
                                       },
                                     ),
                                   ),
@@ -395,14 +439,17 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                                 ),
                                 borderRadius: BorderRadius.circular(12.r),
                                 border: Border.all(
-                                  color: AppColors.primary.withValues(alpha: 0.2),
+                                  color: AppColors.primary.withValues(
+                                    alpha: 0.2,
+                                  ),
                                   width: 1,
                                 ),
                               ),
                               child: Column(
                                 children: [
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
                                         'Subtotal',
@@ -427,7 +474,8 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                                   if (_discountPercentage > 0) ...[
                                     SizedBox(height: 12.h),
                                     Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
                                       children: [
                                         Text(
                                           'Discount ($_discountPercentage%)',
@@ -451,10 +499,15 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                                     ),
                                   ],
                                   SizedBox(height: 12.h),
-                                  Divider(color: AppColors.primary.withValues(alpha: 0.3)),
+                                  Divider(
+                                    color: AppColors.primary.withValues(
+                                      alpha: 0.3,
+                                    ),
+                                  ),
                                   SizedBox(height: 12.h),
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
                                         'Total',
@@ -488,98 +541,131 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                     // Generate Invoice Button
                     Builder(
                       builder: (context) {
-                        final canGenerate = selectedParty != null &&
+                        final canGenerate =
+                            selectedParty != null &&
                             _deliveryDateController.text.isNotEmpty &&
                             orderItems.isNotEmpty;
-                        final createInvoiceState = ref.watch(createInvoiceProvider);
+                        final createInvoiceState = ref.watch(
+                          createInvoiceProvider,
+                        );
                         final isLoading = createInvoiceState.isLoading;
 
                         return PrimaryButton(
-                          label: isLoading ? 'Creating Invoice...' : 'Generate Invoice',
+                          label: isLoading
+                              ? 'Creating Invoice...'
+                              : 'Generate Invoice',
                           onPressed: (canGenerate && !isLoading)
                               ? () async {
-                            try {
-                              // Parse delivery date (format: 'dd MMM yyyy' from CustomDatePicker)
-                              final deliveryDate = DateFormat('dd MMM yyyy').parse(_deliveryDateController.text);
+                                  try {
+                                    // Parse delivery date (format: 'dd MMM yyyy' from CustomDatePicker)
+                                    final deliveryDate = DateFormat(
+                                      'dd MMM yyyy',
+                                    ).parse(_deliveryDateController.text);
 
-                              // Create invoice items for API request
-                              final requestItems = orderItems
-                                  .where((item) => item.quantity > 0)
-                                  .map((orderItem) {
-                                final itemDiscountController = _itemDiscountControllers[orderItem.product.id];
-                                final itemDiscount = double.tryParse(itemDiscountController?.text ?? '0') ?? 0.0;
-                                
-                                return CreateInvoiceItemRequest(
-                                  productId: orderItem.product.id,
-                                  quantity: orderItem.quantity,
-                                  price: orderItem.defaultPrice, // Use default price, backend calculates discount
-                                  discount: itemDiscount,
-                                );
-                              }).toList();
+                                    // Create invoice items for API request
+                                    final requestItems = orderItems
+                                        .where((item) => item.quantity > 0)
+                                        .map((orderItem) {
+                                          final itemDiscountController =
+                                              _itemDiscountControllers[orderItem
+                                                  .product
+                                                  .id];
+                                          final itemDiscount =
+                                              double.tryParse(
+                                                itemDiscountController?.text ??
+                                                    '0',
+                                              ) ??
+                                              0.0;
 
-                              if (requestItems.isEmpty) {
-                                SnackbarUtils.showWarning(context, 'Please add items with quantity > 0');
-                                return;
-                              }
+                                          return CreateInvoiceItemRequest(
+                                            productId: orderItem.product.id,
+                                            quantity: orderItem.quantity,
+                                            price: orderItem.defaultPrice,
+                                            // Use default price, backend calculates discount
+                                            discount: itemDiscount,
+                                          );
+                                        })
+                                        .toList();
 
-                              // Call API to create invoice
-                              // Backend now expects discount as a percentage (0-100)
-                              // Backend will calculate: discountAmount = (subtotal * discount) / 100
-                              final response = await ref.read(createInvoiceProvider.notifier).createInvoice(
-                                partyId: selectedParty!.id,
-                                expectedDeliveryDate: deliveryDate,
-                                discount: _discountPercentage,  // Send the percentage value directly
-                                items: requestItems,
-                              );
+                                    if (requestItems.isEmpty) {
+                                      SnackbarUtils.showWarning(
+                                        context,
+                                        'Please add items with quantity > 0',
+                                      );
+                                      return;
+                                    }
 
-                              if (!context.mounted) return;
+                                    // Call API to create invoice
+                                    // Backend now expects discount as a percentage (0-100)
+                                    // Backend will calculate: discountAmount = (subtotal * discount) / 100
+                                    final response = await ref
+                                        .read(createInvoiceProvider.notifier)
+                                        .createInvoice(
+                                          partyId: selectedParty!.id,
+                                          expectedDeliveryDate: deliveryDate,
+                                          discount: _discountPercentage,
+                                          // Send the percentage value directly
+                                          items: requestItems,
+                                        );
 
-                              // Show success message
-                              SnackbarUtils.showSuccess(
-                                context,
-                                'Invoice ${response.data?.invoiceNumber ?? 'created'} generated for ${selectedParty!.name}!',
-                                duration: const Duration(seconds: 4),
-                              );
+                                    if (!context.mounted) return;
 
-                              // Clear the order after invoice generation
-                              ref.read(orderControllerProvider.notifier).clearOrder();
-                              ref.read(invoiceDraftControllerProvider.notifier).clear();
+                                    // Show success message
+                                    SnackbarUtils.showSuccess(
+                                      context,
+                                      'Invoice ${response.data?.invoiceNumber ?? 'created'} generated for ${selectedParty!.name}!',
+                                      duration: const Duration(seconds: 4),
+                                    );
 
-                              // Clear form fields
-                              setState(() {
-                                selectedParty = null;
-                                _partySearchController.clear();
-                                _ownerNameController.clear();
-                                _deliveryDateController.clear();
-                                _discountController.clear();
-                                _discountPercentage = 0.0;
-                                _searchQuery = '';
-                                // Clear price controllers
-                                for (var controller in _priceControllers.values) {
-                                  controller.dispose();
+                                    // Clear the order after invoice generation
+                                    ref
+                                        .read(orderControllerProvider.notifier)
+                                        .clearOrder();
+                                    ref
+                                        .read(
+                                          invoiceDraftControllerProvider
+                                              .notifier,
+                                        )
+                                        .clear();
+
+                                    // Clear form fields
+                                    setState(() {
+                                      selectedParty = null;
+                                      _partySearchController.clear();
+                                      _ownerNameController.clear();
+                                      _deliveryDateController.clear();
+                                      _discountController.clear();
+                                      _discountPercentage = 0.0;
+                                      _searchQuery = '';
+                                      // Clear price controllers
+                                      for (var controller
+                                          in _priceControllers.values) {
+                                        controller.dispose();
+                                      }
+                                      _priceControllers.clear();
+                                      // Clear quantity controllers
+                                      for (var controller
+                                          in _quantityControllers.values) {
+                                        controller.dispose();
+                                      }
+                                      _quantityControllers.clear();
+                                      // Clear item discount controllers
+                                      for (var controller
+                                          in _itemDiscountControllers.values) {
+                                        controller.dispose();
+                                      }
+                                      _itemDiscountControllers.clear();
+                                    });
+                                  } catch (e) {
+                                    if (!context.mounted) return;
+
+                                    // Show error message
+                                    SnackbarUtils.showError(
+                                      context,
+                                      'Error generating invoice: ${e.toString()}',
+                                    );
+                                  }
                                 }
-                                _priceControllers.clear();
-                                // Clear quantity controllers
-                                for (var controller in _quantityControllers.values) {
-                                  controller.dispose();
-                                }
-                                _quantityControllers.clear();
-                                // Clear item discount controllers
-                                for (var controller in _itemDiscountControllers.values) {
-                                  controller.dispose();
-                                }
-                                _itemDiscountControllers.clear();
-                              });
-                            } catch (e) {
-                              if (!context.mounted) return;
-
-                              // Show error message
-                              SnackbarUtils.showError(
-                                context,
-                                'Error generating invoice: ${e.toString()}',
-                              );
-                            }
-                          }
                               : null,
                           size: ButtonSize.large,
                         );
@@ -591,91 +677,120 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                     // Generate Estimates Button
                     Builder(
                       builder: (context) {
-                        final canGenerate = selectedParty != null &&
-                            orderItems.isNotEmpty;
-                        final createEstimateState = ref.watch(createEstimateProvider);
+                        final canGenerate =
+                            selectedParty != null && orderItems.isNotEmpty;
+                        final createEstimateState = ref.watch(
+                          createEstimateProvider,
+                        );
                         final isLoading = createEstimateState.isLoading;
 
                         return PrimaryButton(
-                          label: isLoading ? 'Creating Estimate...' : 'Generate Estimates',
+                          label: isLoading
+                              ? 'Creating Estimate...'
+                              : 'Generate Estimates',
                           onPressed: (canGenerate && !isLoading)
                               ? () async {
-                            try {
-                              // Create estimate items for API request
-                              final requestItems = orderItems
-                                  .where((item) => item.quantity > 0)
-                                  .map((orderItem) {
-                                final itemDiscountController = _itemDiscountControllers[orderItem.product.id];
-                                final itemDiscount = double.tryParse(itemDiscountController?.text ?? '0') ?? 0.0;
-                                
-                                return CreateEstimateItemRequest(
-                                  productId: orderItem.product.id,
-                                  quantity: orderItem.quantity,
-                                  price: orderItem.defaultPrice, // Use default price, backend calculates discount
-                                  discount: itemDiscount,
-                                );
-                              }).toList();
+                                  try {
+                                    // Create estimate items for API request
+                                    final requestItems = orderItems
+                                        .where((item) => item.quantity > 0)
+                                        .map((orderItem) {
+                                          final itemDiscountController =
+                                              _itemDiscountControllers[orderItem
+                                                  .product
+                                                  .id];
+                                          final itemDiscount =
+                                              double.tryParse(
+                                                itemDiscountController?.text ??
+                                                    '0',
+                                              ) ??
+                                              0.0;
 
-                              if (requestItems.isEmpty) {
-                                SnackbarUtils.showWarning(context, 'Please add items with quantity > 0');
-                                return;
-                              }
+                                          return CreateEstimateItemRequest(
+                                            productId: orderItem.product.id,
+                                            quantity: orderItem.quantity,
+                                            price: orderItem.defaultPrice,
+                                            // Use default price, backend calculates discount
+                                            discount: itemDiscount,
+                                          );
+                                        })
+                                        .toList();
 
-                              // Call API to create estimate
-                              final response = await ref.read(createEstimateProvider.notifier).createEstimate(
-                                partyId: selectedParty!.id,
-                                discount: _discountPercentage,
-                                items: requestItems,
-                              );
+                                    if (requestItems.isEmpty) {
+                                      SnackbarUtils.showWarning(
+                                        context,
+                                        'Please add items with quantity > 0',
+                                      );
+                                      return;
+                                    }
 
-                              if (!context.mounted) return;
+                                    // Call API to create estimate
+                                    final response = await ref
+                                        .read(createEstimateProvider.notifier)
+                                        .createEstimate(
+                                          partyId: selectedParty!.id,
+                                          discount: _discountPercentage,
+                                          items: requestItems,
+                                        );
 
-                              // Show success message
-                              SnackbarUtils.showSuccess(
-                                context,
-                                'Estimate ${response.data?.estimateNumber ?? 'created'} generated for ${selectedParty!.name}!',
-                                duration: const Duration(seconds: 4),
-                              );
+                                    if (!context.mounted) return;
 
-                              // Clear the order after estimate generation
-                              ref.read(orderControllerProvider.notifier).clearOrder();
-                              ref.read(invoiceDraftControllerProvider.notifier).clear();
+                                    // Show success message
+                                    SnackbarUtils.showSuccess(
+                                      context,
+                                      'Estimate ${response.data?.estimateNumber ?? 'created'} generated for ${selectedParty!.name}!',
+                                      duration: const Duration(seconds: 4),
+                                    );
 
-                              // Clear form fields
-                              setState(() {
-                                selectedParty = null;
-                                _partySearchController.clear();
-                                _ownerNameController.clear();
-                                _deliveryDateController.clear();
-                                _discountController.clear();
-                                _discountPercentage = 0.0;
-                                _searchQuery = '';
-                                // Clear price controllers
-                                for (var controller in _priceControllers.values) {
-                                  controller.dispose();
+                                    // Clear the order after estimate generation
+                                    ref
+                                        .read(orderControllerProvider.notifier)
+                                        .clearOrder();
+                                    ref
+                                        .read(
+                                          invoiceDraftControllerProvider
+                                              .notifier,
+                                        )
+                                        .clear();
+
+                                    // Clear form fields
+                                    setState(() {
+                                      selectedParty = null;
+                                      _partySearchController.clear();
+                                      _ownerNameController.clear();
+                                      _deliveryDateController.clear();
+                                      _discountController.clear();
+                                      _discountPercentage = 0.0;
+                                      _searchQuery = '';
+                                      // Clear price controllers
+                                      for (var controller
+                                          in _priceControllers.values) {
+                                        controller.dispose();
+                                      }
+                                      _priceControllers.clear();
+                                      // Clear quantity controllers
+                                      for (var controller
+                                          in _quantityControllers.values) {
+                                        controller.dispose();
+                                      }
+                                      _quantityControllers.clear();
+                                      // Clear item discount controllers
+                                      for (var controller
+                                          in _itemDiscountControllers.values) {
+                                        controller.dispose();
+                                      }
+                                      _itemDiscountControllers.clear();
+                                    });
+                                  } catch (e) {
+                                    if (!context.mounted) return;
+
+                                    // Show error message
+                                    SnackbarUtils.showError(
+                                      context,
+                                      'Error generating estimate: ${e.toString()}',
+                                    );
+                                  }
                                 }
-                                _priceControllers.clear();
-                                // Clear quantity controllers
-                                for (var controller in _quantityControllers.values) {
-                                  controller.dispose();
-                                }
-                                _quantityControllers.clear();
-                                // Clear item discount controllers
-                                for (var controller in _itemDiscountControllers.values) {
-                                  controller.dispose();
-                                }
-                                _itemDiscountControllers.clear();
-                              });
-                            } catch (e) {
-                              if (!context.mounted) return;
-
-                              // Show error message
-                              SnackbarUtils.showError(
-                                context,
-                                'Error generating estimate: ${e.toString()}',
-                              );
-                            }
-                          }
                               : null,
                           size: ButtonSize.large,
                         );
@@ -742,11 +857,7 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                     color: AppColors.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8.r),
                   ),
-                  child: Icon(
-                    icon,
-                    color: AppColors.primary,
-                    size: 20.sp,
-                  ),
+                  child: Icon(icon, color: AppColors.primary, size: 20.sp),
                 ),
                 SizedBox(width: 12.w),
                 Text(
@@ -921,8 +1032,14 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
   // Enhanced Order Item Row with Product Thumbnail
   Widget _buildEnhancedOrderItemRow(OrderItemData orderItemData) {
     final product = orderItemData.product;
-    final priceController = _getPriceController(product.id, orderItemData.setPrice);
-    final quantityController = _getQuantityController(product.id, orderItemData.quantity);
+    final priceController = _getPriceController(
+      product.id,
+      orderItemData.setPrice,
+    );
+    final quantityController = _getQuantityController(
+      product.id,
+      orderItemData.quantity,
+    );
     final isPriceModified = orderItemData.isPriceModified;
 
     return Container(
@@ -952,32 +1069,29 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                   decoration: BoxDecoration(
                     color: Colors.grey.shade100,
                     borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(
-                      color: Colors.grey.shade200,
-                      width: 1,
-                    ),
+                    border: Border.all(color: Colors.grey.shade200, width: 1),
                   ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12.r),
-                      child: product.imageAssetPath != null
-                          ? Image.asset(
-                        product.imageAssetPath!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Icon(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12.r),
+                    child: product.imageAssetPath != null
+                        ? Image.asset(
+                            product.imageAssetPath!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Icon(
+                                Icons.inventory_2_rounded,
+                                color: Colors.grey.shade400,
+                                size: 30.sp,
+                              );
+                            },
+                          )
+                        : Icon(
                             Icons.inventory_2_rounded,
                             color: Colors.grey.shade400,
                             size: 30.sp,
-                          );
-                        },
-                      )
-                          : Icon(
-                        Icons.inventory_2_rounded,
-                        color: Colors.grey.shade400,
-                        size: 30.sp,
-                      ),
-                    ),
+                          ),
                   ),
+                ),
                 SizedBox(width: 12.w),
                 // Product Info
                 Expanded(
@@ -989,12 +1103,12 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                         style: TextStyle(
                           fontSize: 15.sp,
                           fontWeight: FontWeight.w600,
-                            color: const Color(0xFF202020),
-                            fontFamily: 'Poppins',
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                          color: const Color(0xFF202020),
+                          fontFamily: 'Poppins',
                         ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       SizedBox(height: 4.h),
                       Wrap(
                         spacing: 6.w,
@@ -1002,7 +1116,10 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                         children: [
                           // List Price (Default Price)
                           Container(
-                            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 8.w,
+                              vertical: 2.h,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.blue.shade50,
                               borderRadius: BorderRadius.circular(4.r),
@@ -1034,7 +1151,10 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                           ),
                           if (isPriceModified)
                             Container(
-                              padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 6.w,
+                                vertical: 2.h,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.orange.shade50,
                                 borderRadius: BorderRadius.circular(4.r),
@@ -1077,8 +1197,12 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                     size: 22.sp,
                   ),
                   onPressed: () {
-                    ref.read(invoiceDraftControllerProvider.notifier).refreshSession();
-                    ref.read(orderControllerProvider.notifier).removeItem(product.id);
+                    ref
+                        .read(invoiceDraftControllerProvider.notifier)
+                        .refreshSession();
+                    ref
+                        .read(orderControllerProvider.notifier)
+                        .removeItem(product.id);
                     _priceControllers[product.id]?.dispose();
                     _priceControllers.remove(product.id);
                     _quantityControllers[product.id]?.dispose();
@@ -1142,48 +1266,75 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                               decoration: InputDecoration(
                                 filled: true,
                                 fillColor: Colors.grey.shade50,
-                                contentPadding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 10.w,
+                                  vertical: 8.h,
+                                ),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(10.r),
-                                  borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+                                  borderSide: BorderSide(
+                                    color: Colors.grey.shade300,
+                                    width: 1,
+                                  ),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(10.r),
-                                  borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+                                  borderSide: BorderSide(
+                                    color: Colors.grey.shade300,
+                                    width: 1,
+                                  ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(10.r),
-                                  borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                                  borderSide: const BorderSide(
+                                    color: AppColors.primary,
+                                    width: 2,
+                                  ),
                                 ),
                               ),
                               onTapOutside: (event) {
-                                final currentQty = int.tryParse(quantityController.text) ?? 0;
+                                final currentQty =
+                                    int.tryParse(quantityController.text) ?? 0;
                                 if (currentQty <= 0) {
                                   setState(() {
                                     quantityController.text = '1';
-                                    ref.read(orderControllerProvider.notifier).setQuantity(product.id, 1);
+                                    ref
+                                        .read(orderControllerProvider.notifier)
+                                        .setQuantity(product.id, 1);
                                   });
                                 }
                                 FocusScope.of(context).unfocus();
                               },
                               onChanged: (value) {
-                                ref.read(invoiceDraftControllerProvider.notifier).refreshSession();
+                                ref
+                                    .read(
+                                      invoiceDraftControllerProvider.notifier,
+                                    )
+                                    .refreshSession();
                                 final newQty = int.tryParse(value) ?? 0;
                                 if (newQty >= 0) {
                                   final stockQty = product.quantity ?? 0;
                                   if (newQty <= stockQty) {
-                                    ref.read(orderControllerProvider.notifier).setQuantity(product.id, newQty);
+                                    ref
+                                        .read(orderControllerProvider.notifier)
+                                        .setQuantity(product.id, newQty);
                                   } else {
-                                    quantityController.text = stockQty.toString();
-                                    quantityController.selection = TextSelection.fromPosition(
-                                      TextPosition(offset: quantityController.text.length),
+                                    quantityController.text = stockQty
+                                        .toString();
+                                    quantityController
+                                        .selection = TextSelection.fromPosition(
+                                      TextPosition(
+                                        offset: quantityController.text.length,
+                                      ),
                                     );
                                     SnackbarUtils.showWarning(
                                       context,
                                       'Only $stockQty units available in stock',
                                       duration: const Duration(seconds: 2),
                                     );
-                                    ref.read(orderControllerProvider.notifier).setQuantity(product.id, stockQty);
+                                    ref
+                                        .read(orderControllerProvider.notifier)
+                                        .setQuantity(product.id, stockQty);
                                   }
                                 }
                               },
@@ -1215,9 +1366,14 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                             height: 40.h,
                             child: TextFormField(
                               controller: priceController,
-                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
                               inputFormatters: [
-                                FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                                FilteringTextInputFormatter.allow(
+                                  RegExp(r'^\d+\.?\d{0,2}'),
+                                ),
                               ],
                               style: TextStyle(
                                 fontSize: 14.sp,
@@ -1234,38 +1390,68 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                                   fontFamily: 'Poppins',
                                 ),
                                 filled: true,
-                                fillColor: AppColors.primary.withValues(alpha: 0.05),
-                                contentPadding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+                                fillColor: AppColors.primary.withValues(
+                                  alpha: 0.05,
+                                ),
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 10.w,
+                                  vertical: 8.h,
+                                ),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(10.r),
-                                  borderSide: const BorderSide(color: AppColors.primary, width: 1),
+                                  borderSide: const BorderSide(
+                                    color: AppColors.primary,
+                                    width: 1,
+                                  ),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(10.r),
-                                  borderSide: BorderSide(color: AppColors.primary.withValues(alpha: 0.3), width: 1),
+                                  borderSide: BorderSide(
+                                    color: AppColors.primary.withValues(
+                                      alpha: 0.3,
+                                    ),
+                                    width: 1,
+                                  ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(10.r),
-                                  borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                                  borderSide: const BorderSide(
+                                    color: AppColors.primary,
+                                    width: 2,
+                                  ),
                                 ),
                               ),
                               onChanged: (value) {
-                                ref.read(invoiceDraftControllerProvider.notifier).refreshSession();
+                                ref
+                                    .read(
+                                      invoiceDraftControllerProvider.notifier,
+                                    )
+                                    .refreshSession();
                                 final newPrice = double.tryParse(value);
                                 if (newPrice != null && newPrice >= 0) {
                                   setState(() {
                                     // Update the set price
-                                    ref.read(orderControllerProvider.notifier).updateSetPrice(product.id, newPrice);
-                                    
+                                    ref
+                                        .read(orderControllerProvider.notifier)
+                                        .updateSetPrice(product.id, newPrice);
+
                                     // Calculate discount percentage based on new sale price
-                                    final originalPrice = orderItemData.defaultPrice;
+                                    final originalPrice =
+                                        orderItemData.defaultPrice;
                                     if (originalPrice > 0) {
-                                      final discountPercentage = ((originalPrice - newPrice) / originalPrice) * 100;
-                                      final clampedDiscount = discountPercentage.clamp(0.0, 100.0);
-                                      
+                                      final discountPercentage =
+                                          ((originalPrice - newPrice) /
+                                              originalPrice) *
+                                          100;
+                                      final clampedDiscount = discountPercentage
+                                          .clamp(0.0, 100.0);
+
                                       // Update discount controller
-                                      _getItemDiscountController(product.id).text = 
-                                          clampedDiscount.toStringAsFixed(2);
+                                      _getItemDiscountController(
+                                        product.id,
+                                      ).text = clampedDiscount.toStringAsFixed(
+                                        2,
+                                      );
                                     }
                                   });
                                 }
@@ -1302,10 +1488,17 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                           SizedBox(
                             height: 40.h,
                             child: TextFormField(
-                              controller: _getItemDiscountController(product.id),
-                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              controller: _getItemDiscountController(
+                                product.id,
+                              ),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
                               inputFormatters: [
-                                FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                                FilteringTextInputFormatter.allow(
+                                  RegExp(r'^\d+\.?\d{0,2}'),
+                                ),
                               ],
                               style: TextStyle(
                                 fontSize: 14.sp,
@@ -1323,40 +1516,76 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                                 ),
                                 filled: true,
                                 fillColor: Colors.green.shade50,
-                                contentPadding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 10.w,
+                                  vertical: 8.h,
+                                ),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(10.r),
-                                  borderSide: BorderSide(color: Colors.green.shade300, width: 1),
+                                  borderSide: BorderSide(
+                                    color: Colors.green.shade300,
+                                    width: 1,
+                                  ),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(10.r),
-                                  borderSide: BorderSide(color: Colors.green.shade300, width: 1),
+                                  borderSide: BorderSide(
+                                    color: Colors.green.shade300,
+                                    width: 1,
+                                  ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(10.r),
-                                  borderSide: BorderSide(color: Colors.green.shade700, width: 2),
+                                  borderSide: BorderSide(
+                                    color: Colors.green.shade700,
+                                    width: 2,
+                                  ),
                                 ),
                               ),
                               onChanged: (value) {
-                                ref.read(invoiceDraftControllerProvider.notifier).refreshSession();
+                                ref
+                                    .read(
+                                      invoiceDraftControllerProvider.notifier,
+                                    )
+                                    .refreshSession();
                                 setState(() {
-                                  final discount = double.tryParse(value) ?? 0.0;
-                                  final clampedDiscount = discount.clamp(0.0, 100.0);
-                                  
+                                  final discount =
+                                      double.tryParse(value) ?? 0.0;
+                                  final clampedDiscount = discount.clamp(
+                                    0.0,
+                                    100.0,
+                                  );
+
                                   // Calculate discounted price
-                                  final originalPrice = orderItemData.defaultPrice;
-                                  final discountedPrice = originalPrice * (1 - clampedDiscount / 100);
-                                  
+                                  final originalPrice =
+                                      orderItemData.defaultPrice;
+                                  final discountedPrice =
+                                      originalPrice *
+                                      (1 - clampedDiscount / 100);
+
                                   // Update price controller
-                                  _getPriceController(product.id, discountedPrice).text = 
-                                      discountedPrice.toStringAsFixed(2);
-                                  
+                                  _getPriceController(
+                                    product.id,
+                                    discountedPrice,
+                                  ).text = discountedPrice.toStringAsFixed(
+                                    2,
+                                  );
+
                                   // Update order
-                                  ref.read(orderControllerProvider.notifier).updateSetPrice(product.id, discountedPrice);
-                                  
+                                  ref
+                                      .read(orderControllerProvider.notifier)
+                                      .updateSetPrice(
+                                        product.id,
+                                        discountedPrice,
+                                      );
+
                                   // Clamp the input if needed
                                   if (discount != clampedDiscount) {
-                                    _getItemDiscountController(product.id).text = clampedDiscount.toStringAsFixed(2);
+                                    _getItemDiscountController(
+                                      product.id,
+                                    ).text = clampedDiscount.toStringAsFixed(
+                                      2,
+                                    );
                                   }
                                 });
                               },
@@ -1372,7 +1601,10 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
 
                 // Subtotal
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 12.w,
+                    vertical: 10.h,
+                  ),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
@@ -1418,11 +1650,11 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
     final filteredParties = _searchQuery.isEmpty
         ? parties
         : parties.where((party) {
-      final query = _searchQuery.toLowerCase();
-      return party.name.toLowerCase().contains(query) ||
-          party.ownerName.toLowerCase().contains(query) ||
-          party.fullAddress.toLowerCase().contains(query);
-    }).toList();
+            final query = _searchQuery.toLowerCase();
+            return party.name.toLowerCase().contains(query) ||
+                party.ownerName.toLowerCase().contains(query) ||
+                party.fullAddress.toLowerCase().contains(query);
+          }).toList();
 
     return GestureDetector(
       onTap: () {
@@ -1469,7 +1701,10 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                   });
                 },
                 decoration: InputDecoration(
-                  contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 14.h,
+                  ),
                   hintText: 'Party Name',
                   hintStyle: TextStyle(
                     color: AppColors.textHint,
@@ -1484,53 +1719,55 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                   ),
                   suffixIcon: _partySearchController.text.isNotEmpty
                       ? IconButton(
-                    icon: Icon(
-                      Icons.clear,
-                      color: Colors.grey.shade600,
-                      size: 20.sp,
-                    ),
-                    onPressed: _clearPartySelection,
-                  )
+                          icon: Icon(
+                            Icons.clear,
+                            color: Colors.grey.shade600,
+                            size: 20.sp,
+                          ),
+                          onPressed: _clearPartySelection,
+                        )
                       : IconButton(
-                    icon: Icon(
-                      _showPartyDropdown ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                      color: Colors.grey.shade600,
-                      size: 20.sp,
+                          icon: Icon(
+                            _showPartyDropdown
+                                ? Icons.keyboard_arrow_up
+                                : Icons.keyboard_arrow_down,
+                            color: Colors.grey.shade600,
+                            size: 20.sp,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _showPartyDropdown = !_showPartyDropdown;
+                              if (!_showPartyDropdown) {
+                                _partySearchFocusNode.unfocus();
+                              }
+                            });
+                          },
+                        ),
+                  filled: true,
+                  fillColor: AppColors.surface,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                    borderSide: const BorderSide(
+                      color: AppColors.border,
+                      width: 1.5,
                     ),
-                    onPressed: () {
-                      setState(() {
-                        _showPartyDropdown = !_showPartyDropdown;
-                        if (!_showPartyDropdown) {
-                          _partySearchFocusNode.unfocus();
-                        }
-                      });
-                    },
                   ),
-              filled: true,
-              fillColor: AppColors.surface,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12.r),
-                borderSide: const BorderSide(
-                  color: AppColors.border,
-                  width: 1.5,
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                    borderSide: const BorderSide(
+                      color: AppColors.border,
+                      width: 1.5,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                    borderSide: const BorderSide(
+                      color: AppColors.secondary,
+                      width: 2,
+                    ),
+                  ),
                 ),
               ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12.r),
-                borderSide: const BorderSide(
-                  color: AppColors.border,
-                  width: 1.5,
-                ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12.r),
-                borderSide: const BorderSide(
-                  color: AppColors.secondary,
-                  width: 2,
-                ),
-              ),
-            ),
-          ),
             ),
           ),
 
@@ -1539,102 +1776,101 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
             GestureDetector(
               onTap: () {}, // Prevent parent GestureDetector from triggering
               child: Container(
-            margin: EdgeInsets.only(top: 8.h),
-            constraints: BoxConstraints(maxHeight: 200.h),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(
-                color: Colors.grey.shade300,
-                width: 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: filteredParties.isEmpty
-                ? Padding(
-              padding: EdgeInsets.all(16.w),
-              child: Text(
-                'No parties found',
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  color: Colors.grey.shade600,
-                  fontFamily: 'Poppins',
-                ),
-                textAlign: TextAlign.center,
-              ),
-            )
-                : ListView.builder(
-              shrinkWrap: true,
-              itemCount: filteredParties.length,
-              itemBuilder: (context, index) {
-                final party = filteredParties[index];
-                return InkWell(
-                  onTap: () => _selectParty(party),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 16.w,
-                      vertical: 12.h,
+                margin: EdgeInsets.only(top: 8.h),
+                constraints: BoxConstraints(maxHeight: 200.h),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12.r),
+                  border: Border.all(color: Colors.grey.shade300, width: 1),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
                     ),
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: index < filteredParties.length - 1
-                            ? BorderSide(
-                          color: Colors.grey.shade200,
-                          width: 1,
-                        )
-                            : BorderSide.none,
+                  ],
+                ),
+                child: filteredParties.isEmpty
+                    ? Padding(
+                        padding: EdgeInsets.all(16.w),
+                        child: Text(
+                          'No parties found',
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            color: Colors.grey.shade600,
+                            fontFamily: 'Poppins',
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      )
+                    : ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: filteredParties.length,
+                        itemBuilder: (context, index) {
+                          final party = filteredParties[index];
+                          return InkWell(
+                            onTap: () => _selectParty(party),
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 16.w,
+                                vertical: 12.h,
+                              ),
+                              decoration: BoxDecoration(
+                                border: Border(
+                                  bottom: index < filteredParties.length - 1
+                                      ? BorderSide(
+                                          color: Colors.grey.shade200,
+                                          width: 1,
+                                        )
+                                      : BorderSide.none,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 18.r,
+                                    backgroundColor: AppColors.primary
+                                        .withValues(alpha: 0.1),
+                                    child: Icon(
+                                      Icons.business,
+                                      color: AppColors.primary,
+                                      size: 18.sp,
+                                    ),
+                                  ),
+                                  SizedBox(width: 12.w),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          party.name,
+                                          style: TextStyle(
+                                            fontSize: 14.sp,
+                                            fontWeight: FontWeight.w600,
+                                            fontFamily: 'Poppins',
+                                          ),
+                                        ),
+                                        SizedBox(height: 2.h),
+                                        Text(
+                                          party.fullAddress,
+                                          style: TextStyle(
+                                            fontSize: 12.sp,
+                                            color: Colors.grey.shade600,
+                                            fontFamily: 'Poppins',
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                    ),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 18.r,
-                          backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                          child: Icon(
-                            Icons.business,
-                            color: AppColors.primary,
-                            size: 18.sp,
-                          ),
-                        ),
-                        SizedBox(width: 12.w),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                party.name,
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.w600,
-                                  fontFamily: 'Poppins',
-                                ),
-                              ),
-                              SizedBox(height: 2.h),
-                              Text(
-                                party.fullAddress,
-                                style: TextStyle(
-                                  fontSize: 12.sp,
-                                  color: Colors.grey.shade600,
-                                  fontFamily: 'Poppins',
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
               ),
             ),
         ],

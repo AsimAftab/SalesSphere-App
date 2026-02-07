@@ -57,7 +57,9 @@ class LocationService {
         ),
       );
 
-      AppLogger.i('Current location: ${position.latitude}, ${position.longitude}');
+      AppLogger.i(
+        'Current location: ${position.latitude}, ${position.longitude}',
+      );
       return LatLng(position.latitude, position.longitude);
     } catch (e) {
       AppLogger.e('Error getting current location: $e');

@@ -1,8 +1,9 @@
 import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
+import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 
 part 'expense_claim_edit.vm.g.dart';
@@ -58,7 +59,7 @@ class ExpenseClaimEditViewModel extends _$ExpenseClaimEditViewModel {
 
       // Build request body (any field can be updated)
       final requestBody = <String, dynamic>{};
-      
+
       if (title != null) requestBody['title'] = title;
       if (amount != null) requestBody['amount'] = amount;
       if (category != null) requestBody['category'] = category;
@@ -136,8 +137,6 @@ class ExpenseClaimEditViewModel extends _$ExpenseClaimEditViewModel {
       _release();
     }
   }
-
-
 
   /// Handle Dio errors with user-friendly messages
   String _handleDioError(DioException e) {

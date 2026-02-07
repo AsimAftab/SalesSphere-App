@@ -13,12 +13,12 @@ import 'package:sales_sphere/features/sites/models/sites.model.dart';
 import 'package:sales_sphere/features/sites/vm/add_sites.vm.dart';
 import 'package:sales_sphere/features/sites/vm/site_options.vm.dart';
 import 'package:sales_sphere/features/sites/vm/sites.vm.dart';
+import 'package:sales_sphere/features/sites/widgets/site_interest_selector.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
 import 'package:sales_sphere/widget/custom_date_picker.dart';
 import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/location_picker_widget.dart';
 import 'package:sales_sphere/widget/primary_async_dropdown.dart';
-import 'package:sales_sphere/features/sites/widgets/site_interest_selector.dart';
 
 // Google Places service provider
 final googlePlacesServiceProvider = Provider<GooglePlacesService>((ref) {
@@ -457,9 +457,12 @@ class _AddSitesScreenState extends ConsumerState<AddSitesScreen> {
 
                       // Sub-Organization Dropdown
                       PrimaryAsyncDropdown<SubOrganization>(
-                        itemsAsync: ref.watch(subOrganizationsViewModelProvider),
+                        itemsAsync: ref.watch(
+                          subOrganizationsViewModelProvider,
+                        ),
                         initialValue: _selectedSubOrganization,
-                        onChanged: (value) => setState(() => _selectedSubOrganization = value),
+                        onChanged: (value) =>
+                            setState(() => _selectedSubOrganization = value),
                         itemLabel: (item) => item.name,
                         hintText: 'Select sub-organization (Optional)',
                         prefixIcon: Icons.business_outlined,

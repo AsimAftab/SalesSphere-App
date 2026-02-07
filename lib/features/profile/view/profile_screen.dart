@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:sales_sphere/features/settings/vm/settings.vm.dart';
+
 import '../models/profile.model.dart';
 import '../vm/profile.vm.dart';
 
@@ -50,11 +51,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           Padding(
             padding: EdgeInsets.only(right: 24.w),
             child: IconButton(
-              icon: Icon(
-                Icons.logout,
-                color: AppColors.error,
-                size: 24.sp,
-              ),
+              icon: Icon(Icons.logout, color: AppColors.error, size: 24.sp),
               onPressed: () => _handleLogout(context),
             ),
           ),
@@ -81,11 +78,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.error_outline,
-                size: 64.sp,
-                color: AppColors.error,
-              ),
+              Icon(Icons.error_outline, size: 64.sp, color: AppColors.error),
               SizedBox(height: 16.h),
               Text(
                 'Error loading profile',
@@ -114,7 +107,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Widget _buildProfileContent(
-      BuildContext context, WidgetRef ref, Profile profile) {
+    BuildContext context,
+    WidgetRef ref,
+    Profile profile,
+  ) {
     return RefreshIndicator(
       onRefresh: () async {
         await ref.read(profileViewModelProvider.notifier).refresh();
@@ -176,7 +172,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   /// Profile Avatar with Camera Button
-  Widget _buildProfileAvatar(BuildContext context, WidgetRef ref, Profile profile) {
+  Widget _buildProfileAvatar(
+    BuildContext context,
+    WidgetRef ref,
+    Profile profile,
+  ) {
     return Column(
       children: [
         Stack(
@@ -188,10 +188,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 padding: EdgeInsets.all(4.w),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppColors.textOrange,
-                    width: 3.w,
-                  ),
+                  border: Border.all(color: AppColors.textOrange, width: 3.w),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.1),
@@ -203,9 +200,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 child: Container(
                   width: 112.w,
                   height: 112.h,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                  ),
+                  decoration: const BoxDecoration(shape: BoxShape.circle),
                   child: ClipOval(
                     child: profile.avatarUrl != null
                         ? _buildProfileImage(profile.avatarUrl!, profile.name)
@@ -227,10 +222,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   decoration: BoxDecoration(
                     color: AppColors.secondary,
                     shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Colors.white,
-                      width: 2.w,
-                    ),
+                    border: Border.all(color: Colors.white, width: 2.w),
                   ),
                   child: Icon(
                     Icons.camera_alt,
@@ -300,9 +292,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   /// Build Profile Image (handles both local files and network URLs)
   Widget _buildProfileImage(String imageUrl, String fallbackName) {
     // Check if it's a local file path
-    final isLocalFile = !imageUrl.startsWith('http://') &&
-                        !imageUrl.startsWith('https://') &&
-                        File(imageUrl).existsSync();
+    final isLocalFile =
+        !imageUrl.startsWith('http://') &&
+        !imageUrl.startsWith('https://') &&
+        File(imageUrl).existsSync();
 
     if (isLocalFile) {
       // Display local file
@@ -331,7 +324,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   /// Shows attendance percentage and orders count for current month
   Widget _buildStatsCards(Profile profile) {
     // Get attendance percentage from API data
-    final attendancePercentage = profile.currentMonthAttendance?.attendancePercentage ?? '0';
+    final attendancePercentage =
+        profile.currentMonthAttendance?.attendancePercentage ?? '0';
     final ordersCount = profile.currentMonthInvoiceCount ?? 0;
 
     return Row(
@@ -466,7 +460,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           _buildInfoRow(
             icon: Icons.badge_outlined,
             label: 'Age',
-            value: profile.age != null ? '${profile.age} years' : 'Not specified',
+            value: profile.age != null
+                ? '${profile.age} years'
+                : 'Not specified',
           ),
           SizedBox(height: 16.h),
 
@@ -514,7 +510,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             label: 'Role',
             value: profile.displayRole,
           ),
-
         ],
       ),
     );
@@ -536,11 +531,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             color: AppColors.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8.r),
           ),
-          child: Icon(
-            icon,
-            color: AppColors.primary,
-            size: 20.sp,
-          ),
+          child: Icon(icon, color: AppColors.primary, size: 20.sp),
         ),
         SizedBox(width: 12.w),
         Expanded(
@@ -563,7 +554,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   fontSize: 14.sp,
                   fontFamily: 'Poppins',
                   fontWeight: FontWeight.w500,
-                  color: value.isNotEmpty ? AppColors.textPrimary : AppColors.textSecondary,
+                  color: value.isNotEmpty
+                      ? AppColors.textPrimary
+                      : AppColors.textSecondary,
                 ),
               ),
             ],
@@ -595,11 +588,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     color: Colors.white.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
-                    Icons.close,
-                    color: Colors.white,
-                    size: 24.sp,
-                  ),
+                  child: Icon(Icons.close, color: Colors.white, size: 24.sp),
                 ),
               ),
             ),
@@ -611,10 +600,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 padding: EdgeInsets.all(6.w),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppColors.textOrange,
-                    width: 4.w,
-                  ),
+                  border: Border.all(color: AppColors.textOrange, width: 4.w),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.3),
@@ -626,9 +612,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 child: Container(
                   width: 268.w,
                   height: 268.w,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                  ),
+                  decoration: const BoxDecoration(shape: BoxShape.circle),
                   child: ClipOval(
                     child: profile.avatarUrl != null
                         ? _buildProfileImage(profile.avatarUrl!, profile.name)
@@ -754,7 +738,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   /// Pick Image from Camera or Gallery
   Future<void> _pickImage(
-      BuildContext context, WidgetRef ref, ImageSource source) async {
+    BuildContext context,
+    WidgetRef ref,
+    ImageSource source,
+  ) async {
     try {
       final ImagePicker picker = ImagePicker();
       final XFile? image = await picker.pickImage(
@@ -825,8 +812,3 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 }
-
-
-
-
-

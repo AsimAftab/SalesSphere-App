@@ -153,10 +153,12 @@ abstract class OdometerDetails with _$OdometerDetails {
   String get stopLocationDisplay => stopLocation?.address ?? 'Unknown location';
 
   /// Get start description (use startDescription if not available)
-  String get displayStartDescription => description ?? 'No description provided';
+  String get displayStartDescription =>
+      description ?? 'No description provided';
 
   /// Get stop description
-  String get displayStopDescription => stopDescription ?? 'No description provided';
+  String get displayStopDescription =>
+      stopDescription ?? 'No description provided';
 }
 
 /// Lightweight model for Odometer history list display
@@ -184,7 +186,8 @@ abstract class OdometerReading with _$OdometerReading {
     @Default(1) int tripNumber,
     @Default(0.0) double startReading,
     @JsonKey(name: 'startUnit')
-    @Default('KM') String unit, // 'km' or 'miles' from API
+    @Default('KM')
+    String unit, // 'km' or 'miles' from API
     @JsonKey(name: 'startDescription') String? description,
     @JsonKey(name: 'startImage') String? startReadingImage,
     double? stopReading,

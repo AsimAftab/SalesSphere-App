@@ -35,9 +35,8 @@ abstract class PartyTypesApiResponse with _$PartyTypesApiResponse {
 /// Image upload response data
 @freezed
 abstract class PartyImageUploadData with _$PartyImageUploadData {
-  const factory PartyImageUploadData({
-    required String imageUrl,
-  }) = _PartyImageUploadData;
+  const factory PartyImageUploadData({required String imageUrl}) =
+      _PartyImageUploadData;
 
   factory PartyImageUploadData.fromJson(Map<String, dynamic> json) =>
       _$PartyImageUploadDataFromJson(json);
@@ -233,9 +232,10 @@ abstract class UpdatePartyRequest with _$UpdatePartyRequest {
 /// Contact info for update request
 @freezed
 abstract class UpdatePartyContact with _$UpdatePartyContact {
-  const factory UpdatePartyContact(
-      {required String phone, @JsonKey(includeIfNull: false) String? email}) =
-      _UpdatePartyContact;
+  const factory UpdatePartyContact({
+    required String phone,
+    @JsonKey(includeIfNull: false) String? email,
+  }) = _UpdatePartyContact;
 
   factory UpdatePartyContact.fromJson(Map<String, dynamic> json) =>
       _$UpdatePartyContactFromJson(json);
@@ -279,9 +279,10 @@ abstract class CreatePartyRequest with _$CreatePartyRequest {
 /// Contact info for create request
 @freezed
 abstract class CreatePartyContact with _$CreatePartyContact {
-  const factory CreatePartyContact(
-      {required String phone, @JsonKey(includeIfNull: false) String? email}) =
-      _CreatePartyContact;
+  const factory CreatePartyContact({
+    required String phone,
+    @JsonKey(includeIfNull: false) String? email,
+  }) = _CreatePartyContact;
 
   factory CreatePartyContact.fromJson(Map<String, dynamic> json) =>
       _$CreatePartyContactFromJson(json);

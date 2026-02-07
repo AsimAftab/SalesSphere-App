@@ -430,10 +430,8 @@ abstract class SearchPagination with _$SearchPagination {
 // Date Range Filter
 @freezed
 abstract class DateRangeFilter with _$DateRangeFilter {
-  const factory DateRangeFilter({
-    required String start,
-    required String end,
-  }) = _DateRangeFilter;
+  const factory DateRangeFilter({required String start, required String end}) =
+      _DateRangeFilter;
 
   factory DateRangeFilter.fromJson(Map<String, dynamic> json) =>
       _$DateRangeFilterFromJson(json);

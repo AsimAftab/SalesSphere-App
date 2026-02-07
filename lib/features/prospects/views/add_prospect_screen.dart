@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:intl/intl.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/services/google_places_service.dart';
 import 'package:sales_sphere/core/services/location_service.dart';
 import 'package:sales_sphere/features/prospects/vm/add_prospect.vm.dart';
 import 'package:sales_sphere/features/prospects/vm/prospects.vm.dart';
-import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
 import 'package:sales_sphere/widget/custom_date_picker.dart';
+import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/location_picker_widget.dart';
-import 'package:intl/intl.dart';
 
-import '../models/prospects.model.dart';
 import '../models/prospect_interest.model.dart';
+import '../models/prospects.model.dart';
 import '../widgets/prospect_interest_selector.dart';
 
 // Google Places service provider
@@ -187,7 +187,9 @@ class _AddProspectScreenState extends ConsumerState<AddProspectScreen> {
           ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
           // ✅ CRITICAL: Add to list BEFORE popping
-          ref.read(prospectViewModelProvider.notifier).addProspect(createdProspect);
+          ref
+              .read(prospectViewModelProvider.notifier)
+              .addProspect(createdProspect);
 
           // Show success
           ScaffoldMessenger.of(context).showSnackBar(
@@ -534,7 +536,7 @@ class _AddProspectScreenState extends ConsumerState<AddProspectScreen> {
                         onLocationSelected: (location, address) {
                           if (mounted) {
                             setState(() {
-                              _addressController.text=address;
+                              _addressController.text = address;
                               _latitudeController.text = location.latitude
                                   .toStringAsFixed(6);
                               _longitudeController.text = location.longitude

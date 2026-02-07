@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -7,15 +8,15 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
-import 'package:sales_sphere/widget/custom_text_field.dart';
+import 'package:sales_sphere/features/collection/models/collection.model.dart';
+import 'package:sales_sphere/features/collection/vm/bank_names.vm.dart';
+import 'package:sales_sphere/features/collection/vm/collection.vm.dart';
+import 'package:sales_sphere/features/collection/vm/edit_collection.vm.dart';
+import 'package:sales_sphere/features/parties/vm/parties.vm.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
 import 'package:sales_sphere/widget/custom_date_picker.dart';
 import 'package:sales_sphere/widget/custom_dropdown_textfield.dart';
-import 'package:sales_sphere/features/collection/models/collection.model.dart';
-import 'package:sales_sphere/features/collection/vm/collection.vm.dart';
-import 'package:sales_sphere/features/collection/vm/edit_collection.vm.dart';
-import 'package:sales_sphere/features/collection/vm/bank_names.vm.dart';
-import 'package:sales_sphere/features/parties/vm/parties.vm.dart';
+import 'package:sales_sphere/widget/custom_text_field.dart';
 
 class EditCollectionScreen extends ConsumerStatefulWidget {
   final String collectionId;
@@ -191,7 +192,7 @@ class _EditCollectionScreenState extends ConsumerState<EditCollectionScreen> {
                       child: CircularProgressIndicator(
                         value: loadingProgress.expectedTotalBytes != null
                             ? loadingProgress.cumulativeBytesLoaded /
-                                loadingProgress.expectedTotalBytes!
+                                  loadingProgress.expectedTotalBytes!
                             : null,
                         color: Colors.white,
                       ),
@@ -205,11 +206,18 @@ class _EditCollectionScreenState extends ConsumerState<EditCollectionScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.broken_image, size: 64.sp, color: Colors.white),
+                          Icon(
+                            Icons.broken_image,
+                            size: 64.sp,
+                            color: Colors.white,
+                          ),
                           SizedBox(height: 16.h),
                           Text(
                             'Failed to load image',
-                            style: TextStyle(color: Colors.white, fontSize: 14.sp),
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14.sp,
+                            ),
                           ),
                         ],
                       ),
@@ -312,8 +320,12 @@ class _EditCollectionScreenState extends ConsumerState<EditCollectionScreen> {
         final vm = ref.read(editCollectionViewModelProvider.notifier);
 
         // Convert dates to ISO format (yyyy-MM-dd)
-        final parsedReceivedDate = _parseDateFromController(_dateController.text);
-        final formattedReceivedDate = parsedReceivedDate.toIso8601String().split('T')[0];
+        final parsedReceivedDate = _parseDateFromController(
+          _dateController.text,
+        );
+        final formattedReceivedDate = parsedReceivedDate
+            .toIso8601String()
+            .split('T')[0];
 
         // Only include cheque fields if payment mode is Cheque
         String? formattedChequeDate;
@@ -322,11 +334,15 @@ class _EditCollectionScreenState extends ConsumerState<EditCollectionScreen> {
 
         if (_selectedPaymentMode == PaymentMode.cheque) {
           if (_chequeDateController.text.isNotEmpty) {
-            final parsedChequeDate = _parseDateFromController(_chequeDateController.text);
-            formattedChequeDate = parsedChequeDate.toIso8601String().split('T')[0];
+            final parsedChequeDate = _parseDateFromController(
+              _chequeDateController.text,
+            );
+            formattedChequeDate = parsedChequeDate.toIso8601String().split(
+              'T',
+            )[0];
           }
-          chequeNumber = _chequeNoController.text.trim().isEmpty 
-              ? null 
+          chequeNumber = _chequeNoController.text.trim().isEmpty
+              ? null
               : _chequeNoController.text.trim();
           chequeStatus = _selectedChequeStatus?.label.toLowerCase();
         }
@@ -373,9 +389,7 @@ class _EditCollectionScreenState extends ConsumerState<EditCollectionScreen> {
 
     // Show loading state while fetching data
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     // Show error state
@@ -454,280 +468,298 @@ class _EditCollectionScreenState extends ConsumerState<EditCollectionScreen> {
             ),
         ],
       ),
-          body: GestureDetector(
-            onTap: () => FocusScope.of(context).unfocus(),
-            child: Stack(
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Stack(
+          children: [
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: SvgPicture.asset(
+                'assets/images/corner_bubble.svg',
+                fit: BoxFit.cover,
+                height: 180.h,
+              ),
+            ),
+            Column(
               children: [
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  child: SvgPicture.asset(
-                    'assets/images/corner_bubble.svg',
-                    fit: BoxFit.cover,
-                    height: 180.h,
-                  ),
-                ),
-                Column(
-                  children: [
-                    Expanded(
-                      child: SingleChildScrollView(
-                        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                        padding: EdgeInsets.only(
-                          left: 16.w,
-                          right: 16.w,
-                          bottom: 24.h,
-                        ),
-                        child: Column(
-                          children: [
-                            Padding(
-                              padding: EdgeInsets.only(
-                                top: 100.h,
-                                bottom: 16.h,
-                              ),
-                              child: Form(
-                                key: _formKey,
-                                child: Container(
-                                  width: double.infinity,
-                                  padding: EdgeInsets.all(14.w),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(16.r),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.04),
-                                        blurRadius: 10,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
+                Expanded(
+                  child: SingleChildScrollView(
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
+                    padding: EdgeInsets.only(
+                      left: 16.w,
+                      right: 16.w,
+                      bottom: 24.h,
+                    ),
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.only(top: 100.h, bottom: 16.h),
+                          child: Form(
+                            key: _formKey,
+                            child: Container(
+                              width: double.infinity,
+                              padding: EdgeInsets.all(14.w),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16.r),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.04),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 2),
                                   ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      // Party Name - populated from API
-                                      assignedPartiesAsync.when(
-                                        data: (parties) {
-                                          final dropdownItems = parties
-                                              .map(
-                                                (p) => DropdownItem(
-                                                  value: p.id,
-                                                  label: p.displayName,
-                                                ),
-                                              )
-                                              .toList();
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Party Name - populated from API
+                                  assignedPartiesAsync.when(
+                                    data: (parties) {
+                                      final dropdownItems = parties
+                                          .map(
+                                            (p) => DropdownItem(
+                                              value: p.id,
+                                              label: p.displayName,
+                                            ),
+                                          )
+                                          .toList();
 
-                                          return CustomDropdownTextField<String>(
-                                            hintText: "Party Name",
-                                            searchHint: "Search party...",
-                                            value: _selectedPartyId,
-                                            prefixIcon: Icons.people_outline,
-                                            enabled: _isEditMode,
-                                            items: dropdownItems,
-                                            onChanged: (val) => setState(
-                                              () => _selectedPartyId = val,
-                                            ),
-                                          );
-                                        },
-                                        loading: () => PrimaryTextField(
-                                          controller: TextEditingController(text: 'Loading...'),
-                                          hintText: "Party Name",
-                                          prefixIcon: Icons.people_outline,
-                                          enabled: false,
-                                          suffixWidget: const SizedBox(
-                                            width: 20,
-                                            height: 20,
-                                            child: CircularProgressIndicator(strokeWidth: 2),
+                                      return CustomDropdownTextField<String>(
+                                        hintText: "Party Name",
+                                        searchHint: "Search party...",
+                                        value: _selectedPartyId,
+                                        prefixIcon: Icons.people_outline,
+                                        enabled: _isEditMode,
+                                        items: dropdownItems,
+                                        onChanged: (val) => setState(
+                                          () => _selectedPartyId = val,
+                                        ),
+                                      );
+                                    },
+                                    loading: () => PrimaryTextField(
+                                      controller: TextEditingController(
+                                        text: 'Loading...',
+                                      ),
+                                      hintText: "Party Name",
+                                      prefixIcon: Icons.people_outline,
+                                      enabled: false,
+                                      suffixWidget: const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      ),
+                                    ),
+                                    error: (e, _) => PrimaryTextField(
+                                      controller: TextEditingController(
+                                        text: '',
+                                      ),
+                                      hintText: "Party Name",
+                                      prefixIcon: Icons.people_outline,
+                                      enabled: false,
+                                      errorText: "Failed to load parties",
+                                    ),
+                                  ),
+                                  SizedBox(height: 16.h),
+                                  PrimaryTextField(
+                                    controller: _amountController,
+                                    hintText: "Amount Received",
+                                    prefixIcon: Icons.currency_rupee,
+                                    enabled: _isEditMode,
+                                    keyboardType: TextInputType.number,
+                                    validator: (v) =>
+                                        v!.isEmpty ? 'Required' : null,
+                                  ),
+                                  SizedBox(height: 16.h),
+                                  CustomDatePicker(
+                                    controller: _dateController,
+                                    hintText: "Received Date",
+                                    prefixIcon: Icons.calendar_today_outlined,
+                                    enabled: _isEditMode,
+                                  ),
+                                  SizedBox(height: 16.h),
+                                  CustomDropdownTextField<PaymentMode>(
+                                    hintText: "Payment Mode",
+                                    value: _selectedPaymentMode,
+                                    prefixIcon: Icons.credit_card_outlined,
+                                    enabled: _isEditMode,
+                                    items: PaymentMode.values
+                                        .map(
+                                          (mode) => DropdownItem(
+                                            value: mode,
+                                            label: mode.label,
+                                            icon: mode.icon,
                                           ),
-                                        ),
-                                        error: (e, _) => PrimaryTextField(
-                                          controller: TextEditingController(text: ''),
-                                          hintText: "Party Name",
-                                          prefixIcon: Icons.people_outline,
-                                          enabled: false,
-                                          errorText: "Failed to load parties",
-                                        ),
-                                      ),
-                                      SizedBox(height: 16.h),
-                                      PrimaryTextField(
-                                        controller: _amountController,
-                                        hintText: "Amount Received",
-                                        prefixIcon: Icons.currency_rupee,
-                                        enabled: _isEditMode,
-                                        keyboardType: TextInputType.number,
-                                        validator: (v) =>
-                                            v!.isEmpty ? 'Required' : null,
-                                      ),
-                                      SizedBox(height: 16.h),
-                                      CustomDatePicker(
-                                        controller: _dateController,
-                                        hintText: "Received Date",
-                                        prefixIcon:
-                                            Icons.calendar_today_outlined,
-                                        enabled: _isEditMode,
-                                      ),
-                                      SizedBox(height: 16.h),
-                                      CustomDropdownTextField<PaymentMode>(
-                                        hintText: "Payment Mode",
-                                        value: _selectedPaymentMode,
-                                        prefixIcon: Icons.credit_card_outlined,
-                                        enabled: _isEditMode,
-                                        items: PaymentMode.values
-                                            .map(
-                                              (mode) => DropdownItem(
-                                                value: mode,
-                                                label: mode.label,
-                                                icon: mode.icon,
+                                        )
+                                        .toList(),
+                                    onChanged: (val) => setState(() {
+                                      _selectedPaymentMode = val;
+                                      _selectedBank = null;
+                                      _chequeNoController.clear();
+                                      _selectedChequeStatus = null;
+                                    }),
+                                    validator: (v) =>
+                                        v == null ? 'Required' : null,
+                                  ),
+                                  if (_selectedPaymentMode ==
+                                          PaymentMode.cheque ||
+                                      _selectedPaymentMode ==
+                                          PaymentMode.bankTransfer) ...[
+                                    SizedBox(height: 16.h),
+                                    // Bank Selector Dropdown from API
+                                    ref
+                                        .watch(bankNamesViewModelProvider)
+                                        .when(
+                                          data: (banks) =>
+                                              CustomDropdownTextField<String>(
+                                                hintText: "Select Bank",
+                                                searchHint:
+                                                    "Search your bank...",
+                                                value: _selectedBank,
+                                                prefixIcon: Icons
+                                                    .account_balance_outlined,
+                                                enabled: _isEditMode,
+                                                items: banks
+                                                    .map(
+                                                      (
+                                                        bank,
+                                                      ) => DropdownItem<String>(
+                                                        value: bank.name,
+                                                        label: bank.name,
+                                                        icon: Icons
+                                                            .account_balance,
+                                                      ),
+                                                    )
+                                                    .toList(),
+                                                onChanged: (val) => setState(
+                                                  () => _selectedBank = val,
+                                                ),
+                                                validator: (v) => v == null
+                                                    ? 'Required'
+                                                    : null,
                                               ),
-                                            )
-                                            .toList(),
-                                        onChanged: (val) => setState(() {
-                                          _selectedPaymentMode = val;
-                                          _selectedBank = null;
-                                          _chequeNoController.clear();
-                                          _selectedChequeStatus = null;
-                                        }),
-                                        validator: (v) =>
-                                            v == null ? 'Required' : null,
-                                      ),
-                                      if (_selectedPaymentMode ==
-                                              PaymentMode.cheque ||
-                                          _selectedPaymentMode ==
-                                              PaymentMode.bankTransfer) ...[
-                                        SizedBox(height: 16.h),
-                                        // Bank Selector Dropdown from API
-                                        ref.watch(bankNamesViewModelProvider).when(
-                                          data: (banks) => CustomDropdownTextField<String>(
-                                            hintText: "Select Bank",
-                                            searchHint: "Search your bank...",
-                                            value: _selectedBank,
-                                            prefixIcon: Icons.account_balance_outlined,
-                                            enabled: _isEditMode,
-                                            items: banks
-                                                .map(
-                                                  (bank) => DropdownItem<String>(
-                                                    value: bank.name,
-                                                    label: bank.name,
-                                                    icon: Icons.account_balance,
-                                                  ),
-                                                )
-                                                .toList(),
-                                            onChanged: (val) => setState(
-                                              () => _selectedBank = val,
-                                            ),
-                                            validator: (v) =>
-                                                v == null ? 'Required' : null,
-                                          ),
                                           loading: () => PrimaryTextField(
-                                            controller: TextEditingController(text: 'Loading banks...'),
+                                            controller: TextEditingController(
+                                              text: 'Loading banks...',
+                                            ),
                                             hintText: "Select Bank",
-                                            prefixIcon: Icons.account_balance_outlined,
+                                            prefixIcon:
+                                                Icons.account_balance_outlined,
                                             enabled: false,
                                             suffixWidget: const SizedBox(
                                               width: 20,
                                               height: 20,
-                                              child: CircularProgressIndicator(strokeWidth: 2),
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                              ),
                                             ),
                                           ),
                                           error: (e, _) => PrimaryTextField(
-                                            controller: TextEditingController(text: ''),
+                                            controller: TextEditingController(
+                                              text: '',
+                                            ),
                                             hintText: "Select Bank",
-                                            prefixIcon: Icons.account_balance_outlined,
+                                            prefixIcon:
+                                                Icons.account_balance_outlined,
                                             enabled: false,
                                             errorText: "Failed to load banks",
                                           ),
                                         ),
-                                      ],
-                                      if (_selectedPaymentMode ==
-                                          PaymentMode.cheque) ...[
-                                        SizedBox(height: 16.h),
-                                        PrimaryTextField(
-                                          controller: _chequeNoController,
-                                          hintText: "Cheque Number",
-                                          prefixIcon: Icons.numbers_outlined,
-                                          enabled: _isEditMode,
-                                          validator: (v) =>
-                                              v!.isEmpty ? 'Required' : null,
-                                        ),
-                                        SizedBox(height: 16.h),
-                                        CustomDatePicker(
-                                          controller: _chequeDateController,
-                                          hintText: "Date of Cheque",
-                                          prefixIcon:
-                                              Icons.calendar_today_outlined,
-                                          enabled: _isEditMode,
-                                        ),
-                                        SizedBox(height: 16.h),
-                                        CustomDropdownTextField<ChequeStatus>(
-                                          hintText: "Cheque Status",
-                                          value: _selectedChequeStatus,
-                                          prefixIcon: Icons.assignment_outlined,
-                                          enabled: _isEditMode,
-                                          items: ChequeStatus.values
-                                              .map(
-                                                (status) => DropdownItem(
-                                                  value: status,
-                                                  label: status.label,
-                                                  icon: status.icon,
-                                                ),
-                                              )
-                                              .toList(),
-                                          onChanged: (val) => setState(
-                                            () => _selectedChequeStatus = val,
-                                          ),
-                                          validator: (v) =>
-                                              v == null ? 'Required' : null,
-                                        ),
-                                      ],
-                                      SizedBox(height: 16.h),
-                                      PrimaryTextField(
-                                        controller: _descriptionController,
-                                        hintText: "Description",
-                                        prefixIcon: Icons.description_outlined,
-                                        enabled: _isEditMode,
-                                        maxLines: 5,
-                                        minLines: 1,
+                                  ],
+                                  if (_selectedPaymentMode ==
+                                      PaymentMode.cheque) ...[
+                                    SizedBox(height: 16.h),
+                                    PrimaryTextField(
+                                      controller: _chequeNoController,
+                                      hintText: "Cheque Number",
+                                      prefixIcon: Icons.numbers_outlined,
+                                      enabled: _isEditMode,
+                                      validator: (v) =>
+                                          v!.isEmpty ? 'Required' : null,
+                                    ),
+                                    SizedBox(height: 16.h),
+                                    CustomDatePicker(
+                                      controller: _chequeDateController,
+                                      hintText: "Date of Cheque",
+                                      prefixIcon: Icons.calendar_today_outlined,
+                                      enabled: _isEditMode,
+                                    ),
+                                    SizedBox(height: 16.h),
+                                    CustomDropdownTextField<ChequeStatus>(
+                                      hintText: "Cheque Status",
+                                      value: _selectedChequeStatus,
+                                      prefixIcon: Icons.assignment_outlined,
+                                      enabled: _isEditMode,
+                                      items: ChequeStatus.values
+                                          .map(
+                                            (status) => DropdownItem(
+                                              value: status,
+                                              label: status.label,
+                                              icon: status.icon,
+                                            ),
+                                          )
+                                          .toList(),
+                                      onChanged: (val) => setState(
+                                        () => _selectedChequeStatus = val,
                                       ),
-                                      if (requiresImage ||
-                                          _selectedImages.isNotEmpty) ...[
-                                        SizedBox(height: 20.h),
-                                        Text(
-                                          "Collection Images",
-                                          style: TextStyle(
-                                            fontSize: 12.sp,
-                                            fontWeight: FontWeight.w500,
-                                            color: Colors.grey.shade600,
-                                            fontFamily: 'Poppins',
-                                          ),
-                                        ),
-                                        SizedBox(height: 8.h),
-                                        _buildImageSection(),
-                                      ],
-                                    ],
+                                      validator: (v) =>
+                                          v == null ? 'Required' : null,
+                                    ),
+                                  ],
+                                  SizedBox(height: 16.h),
+                                  PrimaryTextField(
+                                    controller: _descriptionController,
+                                    hintText: "Description",
+                                    prefixIcon: Icons.description_outlined,
+                                    enabled: _isEditMode,
+                                    maxLines: 5,
+                                    minLines: 1,
                                   ),
-                                ),
+                                  if (requiresImage ||
+                                      _selectedImages.isNotEmpty) ...[
+                                    SizedBox(height: 20.h),
+                                    Text(
+                                      "Collection Images",
+                                      style: TextStyle(
+                                        fontSize: 12.sp,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.grey.shade600,
+                                        fontFamily: 'Poppins',
+                                      ),
+                                    ),
+                                    SizedBox(height: 8.h),
+                                    _buildImageSection(),
+                                  ],
+                                ],
                               ),
                             ),
-                          ],
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                    _buildBottomButton(),
-                  ],
+                  ),
                 ),
+                _buildBottomButton(),
               ],
             ),
-          ),
-        );
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildBottomButton() {
     final isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
-    
+
     if (isKeyboardVisible) {
       return const SizedBox.shrink();
     }
-    
+
     return Container(
       padding: EdgeInsets.fromLTRB(
         16.w,
@@ -838,7 +870,11 @@ class _EditCollectionScreenState extends ConsumerState<EditCollectionScreen> {
                     color: const Color(0xFFF5F6FA),
                     borderRadius: BorderRadius.circular(12.r),
                   ),
-                  child: const Icon(Icons.broken_image, size: 48, color: Colors.grey),
+                  child: const Icon(
+                    Icons.broken_image,
+                    size: 48,
+                    color: Colors.grey,
+                  ),
                 );
               },
             ),

@@ -4,8 +4,10 @@ part 'notes.model.freezed.dart';
 part 'notes.model.g.dart';
 
 Object? _readPartyName(Map json, String key) => json[key] ?? json['name'];
+
 Object? _readProspectName(Map json, String key) =>
     json[key] ?? json['prospectName'];
+
 Object? _readSiteName(Map json, String key) => json[key] ?? json['siteName'];
 
 // ============================================================================
@@ -120,8 +122,7 @@ abstract class CreateNoteData with _$CreateNoteData {
 abstract class NotePartyRef with _$NotePartyRef {
   const factory NotePartyRef({
     @JsonKey(name: '_id') required String id,
-    @JsonKey(readValue: _readPartyName)
-    required String partyName,
+    @JsonKey(readValue: _readPartyName) required String partyName,
   }) = _NotePartyRef;
 
   factory NotePartyRef.fromJson(Map<String, dynamic> json) =>
@@ -133,8 +134,7 @@ abstract class NotePartyRef with _$NotePartyRef {
 abstract class NoteProspectRef with _$NoteProspectRef {
   const factory NoteProspectRef({
     @JsonKey(name: '_id') required String id,
-    @JsonKey(readValue: _readProspectName)
-    required String name,
+    @JsonKey(readValue: _readProspectName) required String name,
   }) = _NoteProspectRef;
 
   factory NoteProspectRef.fromJson(Map<String, dynamic> json) =>
@@ -146,8 +146,7 @@ abstract class NoteProspectRef with _$NoteProspectRef {
 abstract class NoteSiteRef with _$NoteSiteRef {
   const factory NoteSiteRef({
     @JsonKey(name: '_id') required String id,
-    @JsonKey(readValue: _readSiteName)
-    required String name,
+    @JsonKey(readValue: _readSiteName) required String name,
   }) = _NoteSiteRef;
 
   factory NoteSiteRef.fromJson(Map<String, dynamic> json) =>
@@ -239,9 +238,11 @@ abstract class NoteListItem with _$NoteListItem {
     return NoteListItem(
       id: detail.id,
       title: detail.title,
-      name: (detail.party?['partyName'] ??
+      name:
+          (detail.party?['partyName'] ??
           detail.prospect?['name'] ??
-          detail.site?['name'] ?? 'General'),
+          detail.site?['name'] ??
+          'General'),
       date: detail.updatedAt ?? detail.createdAt ?? '',
       content: detail.description,
     );

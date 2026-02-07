@@ -84,7 +84,7 @@ abstract class AddLeaveRequest with _$AddLeaveRequest {
 @freezed
 abstract class LeaveListItem with _$LeaveListItem {
   const LeaveListItem._();
-  
+
   const factory LeaveListItem({
     required String id,
     required String leaveType,
@@ -108,7 +108,9 @@ abstract class LeaveListItem with _$LeaveListItem {
   }
 
   LeaveCategory get category => LeaveCategory.fromValue(leaveType);
+
   String get displayLeaveType => category.displayName;
+
   IconData get leaveIcon => category.icon;
 }
 
@@ -124,6 +126,7 @@ enum LeaveCategory {
   miscellaneous('miscellaneous');
 
   final String value;
+
   const LeaveCategory(this.value);
 
   static LeaveCategory fromValue(String value) {
@@ -171,4 +174,3 @@ enum LeaveCategory {
     }
   }
 }
-

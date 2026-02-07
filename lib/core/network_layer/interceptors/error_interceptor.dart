@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+
 import '../../utils/logger.dart';
 import '../network_exceptions.dart';
 
@@ -44,7 +45,8 @@ class ErrorInterceptor extends Interceptor {
 
       case DioExceptionType.connectionError:
         return const NetworkException.noInternetConnection(
-          message: 'No internet connection. Please check your network settings.',
+          message:
+              'No internet connection. Please check your network settings.',
         );
 
       case DioExceptionType.badCertificate:
@@ -73,7 +75,8 @@ class ErrorInterceptor extends Interceptor {
     // Extract error message from response
     String? message;
     if (data is Map<String, dynamic>) {
-      message = data['message'] as String? ??
+      message =
+          data['message'] as String? ??
           data['error'] as String? ??
           data['detail'] as String?;
     }

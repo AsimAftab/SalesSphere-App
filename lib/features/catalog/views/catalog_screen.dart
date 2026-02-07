@@ -3,10 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sales_sphere/core/constants/app_colors.dart';
+import 'package:sales_sphere/core/providers/order_controller.dart';
 import 'package:sales_sphere/features/catalog/models/catalog.models.dart';
 import 'package:sales_sphere/features/catalog/vm/catalog.vm.dart';
 import 'package:sales_sphere/features/catalog/vm/catalog_item.vm.dart';
-import 'package:sales_sphere/core/providers/order_controller.dart';
 import 'package:sales_sphere/features/invoice/vm/invoice_draft_vm.dart';
 import 'package:sales_sphere/widget/product_image_widget.dart';
 
@@ -43,14 +44,19 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     }
 
     // Find the index of the selected category (+1 because "All" is at index 0)
-    final categoryIndex = categories.indexWhere((c) => c.id == selectedCategoryId);
+    final categoryIndex = categories.indexWhere(
+      (c) => c.id == selectedCategoryId,
+    );
     if (categoryIndex != -1) {
       // Calculate approximate scroll position
       // Each chip is roughly 100-120 pixels wide with 8 pixels padding
       final scrollPosition = (categoryIndex + 1) * 108.w - 100.w;
 
       _categoryScrollController.animateTo(
-        scrollPosition.clamp(0.0, _categoryScrollController.position.maxScrollExtent),
+        scrollPosition.clamp(
+          0.0,
+          _categoryScrollController.position.maxScrollExtent,
+        ),
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
@@ -89,7 +95,8 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
       _previousSelectedCategoryId = selectedCategoryId;
       // Schedule scroll after build completes
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_categoryScrollController.hasClients && categoriesWithProducts.isNotEmpty) {
+        if (_categoryScrollController.hasClients &&
+            categoriesWithProducts.isNotEmpty) {
           _scrollToSelectedCategory(selectedCategoryId, categoriesWithProducts);
         }
       });
@@ -107,8 +114,8 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                 'Catalogs',
                 style: TextStyle(
                   fontSize: 28.sp,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF202020),
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
                   fontFamily: 'Poppins',
                 ),
               ),
@@ -121,7 +128,9 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                 controller: _searchController,
                 focusNode: _searchFocusNode,
                 onChanged: (query) {
-                  ref.read(catalogSearchQueryProvider.notifier).updateQuery(query);
+                  ref
+                      .read(catalogSearchQueryProvider.notifier)
+                      .updateQuery(query);
                 },
                 decoration: InputDecoration(
                   hintText: 'Search products or categories...',
@@ -144,7 +153,9 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                           ),
                           onPressed: () {
                             _searchController.clear();
-                            ref.read(catalogSearchQueryProvider.notifier).clearQuery();
+                            ref
+                                .read(catalogSearchQueryProvider.notifier)
+                                .clearQuery();
                             _searchFocusNode.unfocus();
                           },
                         )
@@ -161,7 +172,10 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12.r),
-                    borderSide: const BorderSide(color: Color(0xFF1C548C), width: 2),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF1C548C),
+                      width: 2,
+                    ),
                   ),
                   contentPadding: EdgeInsets.symmetric(
                     horizontal: 16.w,
@@ -180,8 +194,12 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                 final filteredCategories = searchQuery.isEmpty
                     ? categoriesWithProducts
                     : categoriesWithProducts
-                        .where((c) => c.name.toLowerCase().contains(searchQuery.toLowerCase()))
-                        .toList();
+                          .where(
+                            (c) => c.name.toLowerCase().contains(
+                              searchQuery.toLowerCase(),
+                            ),
+                          )
+                          .toList();
 
                 return SizedBox(
                   height: 62.h,
@@ -189,7 +207,8 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                     controller: _categoryScrollController,
                     scrollDirection: Axis.horizontal,
                     padding: EdgeInsets.symmetric(horizontal: 20.w),
-                    itemCount: filteredCategories.length + 1, // +1 for "All" button
+                    itemCount: filteredCategories.length + 1,
+                    // +1 for "All" button
                     itemBuilder: (context, index) {
                       if (index == 0) {
                         // "Select Category" button - navigates to category grid
@@ -214,8 +233,12 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                           imageAssetPath: category.imageAssetPath,
                           isSelected: selectedCategoryId == category.id,
                           onTap: () {
-                            ref.read(selectedCategoryProvider.notifier).selectCategory(category.id);
-                            ref.read(catalogSearchQueryProvider.notifier).clearQuery();
+                            ref
+                                .read(selectedCategoryProvider.notifier)
+                                .selectCategory(category.id);
+                            ref
+                                .read(catalogSearchQueryProvider.notifier)
+                                .clearQuery();
                           },
                         ),
                       );
@@ -267,7 +290,8 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                     final lowerQuery = searchQuery.toLowerCase();
                     filteredItems = filteredItems.where((item) {
                       return item.name.toLowerCase().contains(lowerQuery) ||
-                          (item.sku?.toLowerCase().contains(lowerQuery) ?? false);
+                          (item.sku?.toLowerCase().contains(lowerQuery) ??
+                              false);
                     }).toList();
                   }
 
@@ -372,11 +396,18 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.error_outline, size: 64.sp, color: Colors.red),
+                            Icon(
+                              Icons.error_outline,
+                              size: 64.sp,
+                              color: Colors.red,
+                            ),
                             SizedBox(height: 16.h),
                             Text(
                               'Failed to load items',
-                              style: TextStyle(fontSize: 16.sp, color: Colors.red),
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                color: Colors.red,
+                              ),
                             ),
                             SizedBox(height: 16.h),
                             Icon(
@@ -543,17 +574,26 @@ class _ProductCard extends ConsumerWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 6.w,
+                          vertical: 2.h,
+                        ),
                         decoration: BoxDecoration(
-                          color: remainingQty > 0 ? Colors.green.shade50 : Colors.red.shade50,
+                          color: remainingQty > 0
+                              ? Colors.green.shade50
+                              : Colors.red.shade50,
                           borderRadius: BorderRadius.circular(4.r),
                         ),
                         child: Text(
-                          remainingQty > 0 ? 'Qty: $remainingQty' : 'Out of Stock',
+                          remainingQty > 0
+                              ? 'Qty: $remainingQty'
+                              : 'Out of Stock',
                           style: TextStyle(
                             fontSize: 9.sp,
                             fontWeight: FontWeight.w500,
-                            color: remainingQty > 0 ? Colors.green.shade700 : Colors.red.shade700,
+                            color: remainingQty > 0
+                                ? Colors.green.shade700
+                                : Colors.red.shade700,
                             fontFamily: 'Poppins',
                           ),
                         ),
@@ -584,8 +624,12 @@ class _ProductCard extends ConsumerWidget {
                         children: [
                           GestureDetector(
                             onTap: () {
-                              ref.read(orderControllerProvider.notifier).updateQuantity(item.id, quantity - 1);
-                              ref.read(invoiceDraftControllerProvider.notifier).refreshSession();
+                              ref
+                                  .read(orderControllerProvider.notifier)
+                                  .updateQuantity(item.id, quantity - 1);
+                              ref
+                                  .read(invoiceDraftControllerProvider.notifier)
+                                  .refreshSession();
                             },
                             child: Container(
                               width: 26.w,
@@ -596,7 +640,9 @@ class _ProductCard extends ConsumerWidget {
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
-                                quantity == 1 ? Icons.delete_outline : Icons.remove,
+                                quantity == 1
+                                    ? Icons.delete_outline
+                                    : Icons.remove,
                                 size: 14.sp,
                                 color: Colors.white,
                               ),
@@ -614,8 +660,15 @@ class _ProductCard extends ConsumerWidget {
                           GestureDetector(
                             onTap: remainingQty > 0
                                 ? () {
-                                    ref.read(orderControllerProvider.notifier).addItem(item, 1);
-                                    ref.read(invoiceDraftControllerProvider.notifier).refreshSession();
+                                    ref
+                                        .read(orderControllerProvider.notifier)
+                                        .addItem(item, 1);
+                                    ref
+                                        .read(
+                                          invoiceDraftControllerProvider
+                                              .notifier,
+                                        )
+                                        .refreshSession();
                                   }
                                 : null,
                             child: Container(
@@ -631,7 +684,9 @@ class _ProductCard extends ConsumerWidget {
                               child: Icon(
                                 Icons.add,
                                 size: 14.sp,
-                                color: remainingQty > 0 ? Colors.white : Colors.grey,
+                                color: remainingQty > 0
+                                    ? Colors.white
+                                    : Colors.grey,
                               ),
                             ),
                           ),
@@ -642,14 +697,20 @@ class _ProductCard extends ConsumerWidget {
                     GestureDetector(
                       onTap: remainingQty > 0
                           ? () {
-                              ref.read(orderControllerProvider.notifier).addItem(item, 1);
-                              ref.read(invoiceDraftControllerProvider.notifier).refreshSession();
+                              ref
+                                  .read(orderControllerProvider.notifier)
+                                  .addItem(item, 1);
+                              ref
+                                  .read(invoiceDraftControllerProvider.notifier)
+                                  .refreshSession();
                             }
                           : null,
                       child: Container(
                         height: 30.h,
                         decoration: BoxDecoration(
-                          color: remainingQty > 0 ? const Color(0xFF1C548C) : Colors.grey,
+                          color: remainingQty > 0
+                              ? const Color(0xFF1C548C)
+                              : Colors.grey,
                           borderRadius: BorderRadius.circular(15.r),
                         ),
                         child: Row(

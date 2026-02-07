@@ -3,14 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
+import 'package:sales_sphere/core/services/location_permission_service.dart';
+import 'package:sales_sphere/core/services/tracking_coordinator.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:sales_sphere/core/utils/snackbar_utils.dart';
-import 'package:sales_sphere/core/services/location_permission_service.dart';
 import 'package:sales_sphere/core/widgets/location_permission_dialog.dart';
 import 'package:sales_sphere/features/beat_plan/models/beat_plan.models.dart';
 import 'package:sales_sphere/features/beat_plan/vm/beat_plan.vm.dart';
 import 'package:sales_sphere/features/beat_plan/widgets/beat_plan_summary_card.dart';
-import 'package:sales_sphere/core/services/tracking_coordinator.dart';
 
 /// Beat Plan Section for Home Screen
 /// Displays beat plan summaries as cards
@@ -155,7 +155,9 @@ class _BeatPlanSectionState extends ConsumerState<BeatPlanSection> {
                           boxShadow: isSelected
                               ? [
                                   BoxShadow(
-                                    color: AppColors.shadow.withValues(alpha: 0.08),
+                                    color: AppColors.shadow.withValues(
+                                      alpha: 0.08,
+                                    ),
                                     blurRadius: 8,
                                     offset: const Offset(0, 2),
                                   ),
@@ -167,8 +169,9 @@ class _BeatPlanSectionState extends ConsumerState<BeatPlanSection> {
                             _tabTitles[index],
                             style: TextStyle(
                               fontSize: 14.sp,
-                              fontWeight:
-                                  isSelected ? FontWeight.w600 : FontWeight.w500,
+                              fontWeight: isSelected
+                                  ? FontWeight.w600
+                                  : FontWeight.w500,
                               color: isSelected
                                   ? AppColors.textPrimary
                                   : AppColors.textSecondary,
@@ -225,7 +228,9 @@ class _BeatPlanSectionState extends ConsumerState<BeatPlanSection> {
 
   /// Get filtered plans based on selected tab index
   List<BeatPlanSummary> _getFilteredPlans(
-      List<BeatPlanSummary> allBeatPlans, int tabIndex) {
+    List<BeatPlanSummary> allBeatPlans,
+    int tabIndex,
+  ) {
     if (tabIndex == 0) {
       // Active & Pending tab
       final filtered = allBeatPlans.where((plan) {
@@ -241,10 +246,12 @@ class _BeatPlanSectionState extends ConsumerState<BeatPlanSection> {
         final statusB = b.status.toLowerCase();
 
         // Priority: active/in-progress > pending
-        final priorityA =
-            (statusA == 'active' || statusA == 'in-progress') ? 0 : 1;
-        final priorityB =
-            (statusB == 'active' || statusB == 'in-progress') ? 0 : 1;
+        final priorityA = (statusA == 'active' || statusA == 'in-progress')
+            ? 0
+            : 1;
+        final priorityB = (statusB == 'active' || statusB == 'in-progress')
+            ? 0
+            : 1;
 
         if (priorityA != priorityB) {
           return priorityA.compareTo(priorityB);
@@ -330,10 +337,7 @@ class _BeatPlanSectionState extends ConsumerState<BeatPlanSection> {
     AppLogger.i('🔑 Checking location permissions...');
 
     final permissionResult = await LocationPermissionService.instance
-        .requestTrackingPermissions(
-      context: context,
-      requireBackground: true,
-    );
+        .requestTrackingPermissions(context: context, requireBackground: true);
 
     if (!permissionResult.success) {
       AppLogger.w('⚠️ Location permission denied');
@@ -357,9 +361,9 @@ class _BeatPlanSectionState extends ConsumerState<BeatPlanSection> {
         // Check permission again after dialog
         final retryResult = await LocationPermissionService.instance
             .requestTrackingPermissions(
-          context: context,
-          requireBackground: true,
-        );
+              context: context,
+              requireBackground: true,
+            );
 
         if (!retryResult.success) {
           SnackbarUtils.showError(
@@ -416,11 +420,7 @@ class _BeatPlanSectionState extends ConsumerState<BeatPlanSection> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.route_outlined,
-            size: 64.sp,
-            color: AppColors.greyMedium,
-          ),
+          Icon(Icons.route_outlined, size: 64.sp, color: AppColors.greyMedium),
           SizedBox(height: 16.h),
           Text(
             'No Beat Plan Assigned',
@@ -433,10 +433,7 @@ class _BeatPlanSectionState extends ConsumerState<BeatPlanSection> {
           SizedBox(height: 8.h),
           Text(
             'Contact your manager to get assigned',
-            style: TextStyle(
-              fontSize: 13.sp,
-              color: AppColors.textSecondary,
-            ),
+            style: TextStyle(fontSize: 13.sp, color: AppColors.textSecondary),
             textAlign: TextAlign.center,
           ),
         ],
@@ -449,16 +446,11 @@ class _BeatPlanSectionState extends ConsumerState<BeatPlanSection> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const CircularProgressIndicator(
-            color: AppColors.primary,
-          ),
+          const CircularProgressIndicator(color: AppColors.primary),
           SizedBox(height: 16.h),
           Text(
             'Loading beat plan...',
-            style: TextStyle(
-              fontSize: 14.sp,
-              color: AppColors.textSecondary,
-            ),
+            style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
           ),
         ],
       ),
@@ -470,11 +462,7 @@ class _BeatPlanSectionState extends ConsumerState<BeatPlanSection> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.error_outline,
-            size: 64.sp,
-            color: AppColors.error,
-          ),
+          Icon(Icons.error_outline, size: 64.sp, color: AppColors.error),
           SizedBox(height: 16.h),
           Text(
             'Failed to load beat plan',
@@ -487,10 +475,7 @@ class _BeatPlanSectionState extends ConsumerState<BeatPlanSection> {
           SizedBox(height: 8.h),
           Text(
             error,
-            style: TextStyle(
-              fontSize: 12.sp,
-              color: AppColors.textSecondary,
-            ),
+            style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
             textAlign: TextAlign.center,
           ),
         ],

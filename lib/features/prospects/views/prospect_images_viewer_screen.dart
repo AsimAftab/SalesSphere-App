@@ -1,5 +1,5 @@
-
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -69,10 +69,7 @@ class _ProspectImagesViewerScreenState
         ),
         content: Text(
           'Are you sure you want to delete this photo?',
-          style: TextStyle(
-            fontSize: 14.sp,
-            fontFamily: 'Poppins',
-          ),
+          style: TextStyle(fontSize: 14.sp, fontFamily: 'Poppins'),
         ),
         actions: [
           TextButton(
@@ -208,9 +205,7 @@ class _ProspectImagesViewerScreenState
                   color: Colors.white,
                 ),
               ),
-              backgroundDecoration: const BoxDecoration(
-                color: Colors.black,
-              ),
+              backgroundDecoration: const BoxDecoration(color: Colors.black),
               pageController: _pageController,
               onPageChanged: (index) {
                 setState(() {
@@ -239,7 +234,10 @@ class _ProspectImagesViewerScreenState
                 ),
                 child: SafeArea(
                   child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 8.w,
+                      vertical: 8.h,
+                    ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [

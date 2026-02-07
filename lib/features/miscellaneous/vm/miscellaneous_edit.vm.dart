@@ -1,7 +1,7 @@
 import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:sales_sphere/features/miscellaneous/models/miscellaneous.model.dart';
@@ -73,13 +73,13 @@ class MiscellaneousEditViewModel extends _$MiscellaneousEditViewModel {
       AppLogger.i('✅ Image $imageNumber uploaded successfully');
     } on DioException catch (e) {
       AppLogger.e('❌ Dio error uploading image: ${e.message}');
-      
+
       // Handle specific error for imageNumber validation
       if (e.response?.statusCode == 400) {
         final errorMsg = e.response?.data['message'] ?? 'Invalid request';
         throw Exception(errorMsg);
       }
-      
+
       throw Exception(_handleDioError(e));
     } catch (e, stackTrace) {
       AppLogger.e('❌ Error uploading image: $e');

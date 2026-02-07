@@ -3,11 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
-import 'package:skeletonizer/skeletonizer.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/features/miscellaneous/vm/miscellaneous_list.vm.dart';
 import 'package:sales_sphere/widget/universal_list_card.dart';
-import 'package:sales_sphere/widget/async_value_handler.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../widget/error_handler_widget.dart';
 
@@ -15,10 +14,12 @@ class MiscellaneousListScreen extends ConsumerStatefulWidget {
   const MiscellaneousListScreen({super.key});
 
   @override
-  ConsumerState<MiscellaneousListScreen> createState() => _MiscellaneousListScreenState();
+  ConsumerState<MiscellaneousListScreen> createState() =>
+      _MiscellaneousListScreenState();
 }
 
-class _MiscellaneousListScreenState extends ConsumerState<MiscellaneousListScreen> {
+class _MiscellaneousListScreenState
+    extends ConsumerState<MiscellaneousListScreen> {
   final TextEditingController _searchController = TextEditingController();
 
   @override
@@ -88,10 +89,7 @@ class _MiscellaneousListScreenState extends ConsumerState<MiscellaneousListScree
           ),
           Column(
             children: [
-              Container(
-                height: 120.h,
-                color: Colors.transparent,
-              ),
+              Container(height: 120.h, color: Colors.transparent),
               // Search Bar Section
               Container(
                 color: Colors.transparent,
@@ -113,16 +111,16 @@ class _MiscellaneousListScreenState extends ConsumerState<MiscellaneousListScree
                     ),
                     suffixIcon: searchQuery.isNotEmpty
                         ? IconButton(
-                      icon: Icon(
-                        Icons.clear,
-                        color: Colors.grey.shade400,
-                        size: 20.sp,
-                      ),
-                      onPressed: () {
-                        _searchController.clear();
-                        _onSearchChanged('');
-                      },
-                    )
+                            icon: Icon(
+                              Icons.clear,
+                              color: Colors.grey.shade400,
+                              size: 20.sp,
+                            ),
+                            onPressed: () {
+                              _searchController.clear();
+                              _onSearchChanged('');
+                            },
+                          )
                         : null,
                     filled: true,
                     fillColor: Colors.white,
@@ -136,7 +134,10 @@ class _MiscellaneousListScreenState extends ConsumerState<MiscellaneousListScree
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.r),
-                      borderSide: BorderSide(color: AppColors.primary, width: 2),
+                      borderSide: BorderSide(
+                        color: AppColors.primary,
+                        width: 2,
+                      ),
                     ),
                     contentPadding: EdgeInsets.symmetric(
                       horizontal: 16.w,
@@ -195,7 +196,9 @@ class _MiscellaneousListScreenState extends ConsumerState<MiscellaneousListScree
                     }
                     return RefreshIndicator(
                       onRefresh: () async {
-                        await ref.read(miscellaneousListViewModelProvider.notifier).refresh();
+                        await ref
+                            .read(miscellaneousListViewModelProvider.notifier)
+                            .refresh();
                       },
                       color: AppColors.primary,
                       child: ListView.separated(
@@ -216,7 +219,8 @@ class _MiscellaneousListScreenState extends ConsumerState<MiscellaneousListScree
                             leadingSize: 48.w,
                             title: work.natureOfWork,
                             subtitle: _extractLocation(work.address),
-                            secondarySubtitle: 'Assigned by: ${work.assignedBy}',
+                            secondarySubtitle:
+                                'Assigned by: ${work.assignedBy}',
                             onTap: () => _navigateToWorkDetails(work.id),
                             showArrow: true,
                             arrowColor: AppColors.primary,
@@ -253,7 +257,8 @@ class _MiscellaneousListScreenState extends ConsumerState<MiscellaneousListScree
                   ),
                   error: (error, stack) => ErrorHandlerConsumer(
                     error: error,
-                    onRefresh: (ref) => ref.invalidate(miscellaneousListViewModelProvider),
+                    onRefresh: (ref) =>
+                        ref.invalidate(miscellaneousListViewModelProvider),
                     title: 'Failed to load work items',
                   ),
                 ),
@@ -266,11 +271,7 @@ class _MiscellaneousListScreenState extends ConsumerState<MiscellaneousListScree
         onPressed: _navigateToAddWork,
         backgroundColor: AppColors.primary,
         elevation: 4,
-        icon: Icon(
-          Icons.add,
-          color: Colors.white,
-          size: 20.sp,
-        ),
+        icon: Icon(Icons.add, color: Colors.white, size: 20.sp),
         label: Text(
           'Add Work',
           style: TextStyle(

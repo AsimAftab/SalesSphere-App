@@ -50,11 +50,13 @@ class _OdometerDetailsScreenState extends ConsumerState<OdometerDetailsScreen>
 
   void _onScroll() {
     // Show tabs when scrolling up, hide when scrolling down
-    if (_scrollController.position.userScrollDirection == ScrollDirection.forward) {
+    if (_scrollController.position.userScrollDirection ==
+        ScrollDirection.forward) {
       if (!_showTabs) {
         setState(() => _showTabs = true);
       }
-    } else if (_scrollController.position.userScrollDirection == ScrollDirection.reverse) {
+    } else if (_scrollController.position.userScrollDirection ==
+        ScrollDirection.reverse) {
       if (_showTabs && _scrollController.offset > 20) {
         setState(() => _showTabs = false);
       }
@@ -184,14 +186,12 @@ class _OdometerDetailsScreenState extends ConsumerState<OdometerDetailsScreen>
                             fontWeight: FontWeight.w400,
                             fontFamily: 'Poppins',
                           ),
-                          tabs: List.generate(
-                            _tripIdsList.length,
-                            (index) {
-                              final tripId = _tripIdsList[index];
-                              final tripNumber = _tripNumbersMap[tripId] ?? (index + 1);
-                              return Tab(text: 'Trip $tripNumber');
-                            },
-                          ),
+                          tabs: List.generate(_tripIdsList.length, (index) {
+                            final tripId = _tripIdsList[index];
+                            final tripNumber =
+                                _tripNumbersMap[tripId] ?? (index + 1);
+                            return Tab(text: 'Trip $tripNumber');
+                          }),
                         )
                       : const SizedBox.shrink(),
                 ),
@@ -225,8 +225,8 @@ class _OdometerDetailsScreenState extends ConsumerState<OdometerDetailsScreen>
 
   Widget _buildContent(BuildContext context, OdometerDetails data) {
     final dateFormat = DateFormat('dd MMM yyyy, hh:mm a');
-    final topPadding = _tabController != null 
-        ? (_showTabs ? 170.h : 120.h) 
+    final topPadding = _tabController != null
+        ? (_showTabs ? 170.h : 120.h)
         : 110.h;
 
     return AnimatedPadding(
@@ -244,7 +244,10 @@ class _OdometerDetailsScreenState extends ConsumerState<OdometerDetailsScreen>
               Center(
                 child: Container(
                   margin: EdgeInsets.only(bottom: 16.h),
-                  padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 20.w,
+                    vertical: 10.h,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.primary,
                     borderRadius: BorderRadius.circular(30.r),
@@ -260,103 +263,107 @@ class _OdometerDetailsScreenState extends ConsumerState<OdometerDetailsScreen>
                   ),
                 ),
               ),
-          // Time Card
-          _buildInfoCard([
-            _buildDetailRow(
-              Icons.calendar_today_outlined,
-              "Start Date & Time",
-              dateFormat.format(data.startTime),
-            ),
-            if (data.stopTime != null)
+            // Time Card
+            _buildInfoCard([
               _buildDetailRow(
                 Icons.calendar_today_outlined,
-                "End Date & Time",
-                dateFormat.format(data.stopTime!),
+                "Start Date & Time",
+                dateFormat.format(data.startTime),
               ),
-          ]),
-          SizedBox(height: 16.h),
+              if (data.stopTime != null)
+                _buildDetailRow(
+                  Icons.calendar_today_outlined,
+                  "End Date & Time",
+                  dateFormat.format(data.stopTime!),
+                ),
+            ]),
+            SizedBox(height: 16.h),
 
-          // Readings Card
-          _buildInfoCard([
-            _buildDetailRow(
-              Icons.speed,
-              "Starting Reading",
-              "${data.startReading.toInt()} ${data.unit.toLowerCase()}",
-            ),
-            if (data.stopReading != null)
+            // Readings Card
+            _buildInfoCard([
               _buildDetailRow(
                 Icons.speed,
-                "Ending Reading",
-                "${data.stopReading!.toInt()} ${data.unit.toLowerCase()}",
+                "Starting Reading",
+                "${data.startReading.toInt()} ${data.unit.toLowerCase()}",
               ),
-            _buildDetailRow(
-              Icons.route,
-              "Total Distance Travelled",
-              "${data.distanceTravelled.toInt()} ${data.unit.toLowerCase()}",
-              isHighlighted: true,
-            ),
-          ]),
-          SizedBox(height: 16.h),
-
-          // Start Location Card
-          if (data.startLocation != null)
-            _buildLocationCard(context, data.startLocation!, 'Start Location'),
-
-          // Stop Location Card
-          if (data.stopLocation != null)
-            _buildStopLocationCard(context, data.stopLocation!),
-
-          SizedBox(height: 16.h),
-
-          // Start Description Card
-          _buildInfoCard([
-            _buildDetailRow(
-              Icons.description_outlined,
-              "Start Description",
-              data.displayStartDescription,
-            ),
-          ]),
-          
-          // Stop Description Card (if available)
-          if (data.stopDescription != null) ...[
+              if (data.stopReading != null)
+                _buildDetailRow(
+                  Icons.speed,
+                  "Ending Reading",
+                  "${data.stopReading!.toInt()} ${data.unit.toLowerCase()}",
+                ),
+              _buildDetailRow(
+                Icons.route,
+                "Total Distance Travelled",
+                "${data.distanceTravelled.toInt()} ${data.unit.toLowerCase()}",
+                isHighlighted: true,
+              ),
+            ]),
             SizedBox(height: 16.h),
+
+            // Start Location Card
+            if (data.startLocation != null)
+              _buildLocationCard(
+                context,
+                data.startLocation!,
+                'Start Location',
+              ),
+
+            // Stop Location Card
+            if (data.stopLocation != null)
+              _buildStopLocationCard(context, data.stopLocation!),
+
+            SizedBox(height: 16.h),
+
+            // Start Description Card
             _buildInfoCard([
               _buildDetailRow(
                 Icons.description_outlined,
-                "Stop Description",
-                data.displayStopDescription,
+                "Start Description",
+                data.displayStartDescription,
               ),
             ]),
-          ],
-          
-          SizedBox(height: 24.h),
 
-          // Images Section
-          Text(
-            "Odometer Images",
-            style: TextStyle(
-              fontSize: 15.sp,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textdark,
+            // Stop Description Card (if available)
+            if (data.stopDescription != null) ...[
+              SizedBox(height: 16.h),
+              _buildInfoCard([
+                _buildDetailRow(
+                  Icons.description_outlined,
+                  "Stop Description",
+                  data.displayStopDescription,
+                ),
+              ]),
+            ],
+
+            SizedBox(height: 24.h),
+
+            // Images Section
+            Text(
+              "Odometer Images",
+              style: TextStyle(
+                fontSize: 15.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textdark,
+              ),
             ),
-          ),
-          SizedBox(height: 12.h),
+            SizedBox(height: 12.h),
 
-          _buildImageSection(
-            context,
-            "Starting Reading",
-            data.startReadingImage,
-          ),
-          SizedBox(height: 12.h),
-          if (data.stopReadingImage != null)
             _buildImageSection(
               context,
-              "Ending Reading",
-              data.stopReadingImage,
+              "Starting Reading",
+              data.startReadingImage,
             ),
-        ],
+            SizedBox(height: 12.h),
+            if (data.stopReadingImage != null)
+              _buildImageSection(
+                context,
+                "Ending Reading",
+                data.stopReadingImage,
+              ),
+          ],
+        ),
       ),
-    ),
     );
   }
 

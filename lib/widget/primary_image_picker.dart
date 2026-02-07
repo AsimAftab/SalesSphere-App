@@ -1,9 +1,9 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:sales_sphere/core/constants/app_colors.dart';
 
 /// Reusable Image Picker Component
 ///
@@ -138,7 +138,8 @@ class PrimaryImagePicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasLocalImage = images.isNotEmpty;
-    final resolvedNetworkImages = networkImageUrls ??
+    final resolvedNetworkImages =
+        networkImageUrls ??
         ((networkImageUrl != null && networkImageUrl!.isNotEmpty)
             ? [networkImageUrl!]
             : <String>[]);
@@ -146,8 +147,9 @@ class PrimaryImagePicker extends StatelessWidget {
     final shouldShowNetworkImages = isExplicitNetworkList
         ? resolvedNetworkImages.isNotEmpty
         : (resolvedNetworkImages.isNotEmpty && !hasLocalImage);
-    final visibleNetworkCount =
-        shouldShowNetworkImages ? resolvedNetworkImages.length : 0;
+    final visibleNetworkCount = shouldShowNetworkImages
+        ? resolvedNetworkImages.length
+        : 0;
     final totalVisibleCount = images.length + visibleNetworkCount;
     final hasAnyImage = totalVisibleCount > 0;
     final canAddMore = enabled && totalVisibleCount < maxImages;
@@ -276,7 +278,11 @@ class PrimaryImagePicker extends StatelessWidget {
     );
   }
 
-  Widget _buildImageThumbnail(BuildContext context, XFile imageFile, int index) {
+  Widget _buildImageThumbnail(
+    BuildContext context,
+    XFile imageFile,
+    int index,
+  ) {
     final isSingleImage = maxImages == 1;
 
     return GestureDetector(
@@ -284,9 +290,7 @@ class PrimaryImagePicker extends StatelessWidget {
       child: Container(
         height: isSingleImage ? 200.h : 140.h,
         width: double.infinity,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12.r),
-        ),
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(12.r)),
         child: Stack(
           children: [
             ClipRRect(
@@ -315,11 +319,7 @@ class PrimaryImagePicker extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        Icons.zoom_in,
-                        color: Colors.white,
-                        size: 16.sp,
-                      ),
+                      Icon(Icons.zoom_in, color: Colors.white, size: 16.sp),
                       SizedBox(width: 4.w),
                       Text(
                         'Tap to preview',
@@ -339,7 +339,10 @@ class PrimaryImagePicker extends StatelessWidget {
                 bottom: 8.h,
                 right: 8.w,
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 4.h,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.black.withValues(alpha: 0.6),
                     borderRadius: BorderRadius.circular(20.r),
@@ -393,9 +396,7 @@ class PrimaryImagePicker extends StatelessWidget {
       child: Container(
         height: isSingleImage ? 200.h : 140.h,
         width: double.infinity,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12.r),
-        ),
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(12.r)),
         child: Stack(
           children: [
             ClipRRect(
@@ -440,24 +441,21 @@ class PrimaryImagePicker extends StatelessWidget {
               bottom: 8.h,
               right: 8.w,
               child: Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 12.w,
-                  vertical: 6.h,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                 decoration: BoxDecoration(
                   color: Colors.black.withValues(alpha: 0.6),
                   borderRadius: BorderRadius.circular(20.r),
                 ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.zoom_in,
-                          color: Colors.white,
-                          size: isSingleImage ? 16.sp : 14.sp,
-                        ),
-                        SizedBox(width: 4.w),
-                        Text(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.zoom_in,
+                      color: Colors.white,
+                      size: isSingleImage ? 16.sp : 14.sp,
+                    ),
+                    SizedBox(width: 4.w),
+                    Text(
                       isSingleImage ? 'Tap to preview' : 'Preview',
                       style: TextStyle(
                         color: Colors.white,
@@ -547,11 +545,7 @@ class PrimaryImagePicker extends StatelessWidget {
                       color: Colors.black.withValues(alpha: 0.7),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(
-                      Icons.close,
-                      color: Colors.white,
-                      size: 24.sp,
-                    ),
+                    child: Icon(Icons.close, color: Colors.white, size: 24.sp),
                   ),
                 ),
               ),
@@ -654,11 +648,7 @@ class PrimaryImagePicker extends StatelessWidget {
                       color: Colors.black.withValues(alpha: 0.7),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(
-                      Icons.close,
-                      color: Colors.white,
-                      size: 24.sp,
-                    ),
+                    child: Icon(Icons.close, color: Colors.white, size: 24.sp),
                   ),
                 ),
               ),

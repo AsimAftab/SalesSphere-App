@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,15 +7,15 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:wechat_assets_picker/wechat_assets_picker.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
 import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:sales_sphere/features/prospects/models/prospect_images.model.dart';
-import 'package:sales_sphere/features/prospects/vm/prospect_images.vm.dart';
 import 'package:sales_sphere/features/prospects/views/prospect_images_viewer_screen.dart';
+import 'package:sales_sphere/features/prospects/vm/prospect_images.vm.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:wechat_assets_picker/wechat_assets_picker.dart';
 
 class ProspectImagesScreen extends ConsumerStatefulWidget {
   final String prospectId;
@@ -27,7 +28,8 @@ class ProspectImagesScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<ProspectImagesScreen> createState() => _ProspectImagesScreenState();
+  ConsumerState<ProspectImagesScreen> createState() =>
+      _ProspectImagesScreenState();
 }
 
 class _ProspectImagesScreenState extends ConsumerState<ProspectImagesScreen> {
@@ -134,10 +136,7 @@ class _ProspectImagesScreenState extends ConsumerState<ProspectImagesScreen> {
         ),
         content: Text(
           '$permissionType permission is permanently denied. Please enable it in app settings.',
-          style: TextStyle(
-            fontSize: 14.sp,
-            fontFamily: 'Poppins',
-          ),
+          style: TextStyle(fontSize: 14.sp, fontFamily: 'Poppins'),
         ),
         actions: [
           TextButton(
@@ -181,10 +180,16 @@ class _ProspectImagesScreenState extends ConsumerState<ProspectImagesScreen> {
             SnackBar(
               content: Row(
                 children: [
-                  Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20.sp),
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    color: Colors.white,
+                    size: 20.sp,
+                  ),
                   SizedBox(width: 12.w),
                   Expanded(
-                    child: const Text('Gallery permission is required to select photos'),
+                    child: const Text(
+                      'Gallery permission is required to select photos',
+                    ),
                   ),
                 ],
               ),
@@ -201,7 +206,9 @@ class _ProspectImagesScreenState extends ConsumerState<ProspectImagesScreen> {
       }
 
       // Get current images to check available slots
-      final currentImages = await ref.read(prospectImagesProvider(widget.prospectId).future);
+      final currentImages = await ref.read(
+        prospectImagesProvider(widget.prospectId).future,
+      );
       final availableSlots = 5 - currentImages.length;
 
       if (availableSlots <= 0) {
@@ -210,11 +217,13 @@ class _ProspectImagesScreenState extends ConsumerState<ProspectImagesScreen> {
             SnackBar(
               content: Row(
                 children: [
-                  Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20.sp),
-                  SizedBox(width: 12.w),
-                  Expanded(
-                    child: const Text('Maximum 5 photos allowed'),
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    color: Colors.white,
+                    size: 20.sp,
                   ),
+                  SizedBox(width: 12.w),
+                  Expanded(child: const Text('Maximum 5 photos allowed')),
                 ],
               ),
               backgroundColor: AppColors.error,
@@ -286,7 +295,9 @@ class _ProspectImagesScreenState extends ConsumerState<ProspectImagesScreen> {
       int failureCount = 0;
 
       // Get existing image numbers ONCE before the upload loop (reuse currentImages from earlier)
-      final usedImageNumbers = currentImages.map((img) => img.imageOrder).toSet();
+      final usedImageNumbers = currentImages
+          .map((img) => img.imageOrder)
+          .toSet();
 
       // Upload each image
       for (int i = 0; i < imageFiles.length; i++) {
@@ -354,7 +365,9 @@ class _ProspectImagesScreenState extends ConsumerState<ProspectImagesScreen> {
                 children: [
                   Icon(Icons.check_circle, color: Colors.white, size: 20.sp),
                   SizedBox(width: 12.w),
-                  Text('$successCount photo${successCount > 1 ? 's' : ''} added'),
+                  Text(
+                    '$successCount photo${successCount > 1 ? 's' : ''} added',
+                  ),
                 ],
               ),
               backgroundColor: AppColors.success,
@@ -471,7 +484,11 @@ class _ProspectImagesScreenState extends ConsumerState<ProspectImagesScreen> {
             ),
             SizedBox(height: 20.h),
             ListTile(
-              leading: Icon(Icons.photo_library_rounded, color: AppColors.primary, size: 28.sp),
+              leading: Icon(
+                Icons.photo_library_rounded,
+                color: AppColors.primary,
+                size: 28.sp,
+              ),
               title: Text(
                 'Choose Multiple Photos',
                 style: TextStyle(
@@ -494,7 +511,11 @@ class _ProspectImagesScreenState extends ConsumerState<ProspectImagesScreen> {
               },
             ),
             ListTile(
-              leading: Icon(Icons.camera_alt, color: AppColors.primary, size: 28.sp),
+              leading: Icon(
+                Icons.camera_alt,
+                color: AppColors.primary,
+                size: 28.sp,
+              ),
               title: Text(
                 'Take Photo',
                 style: TextStyle(
@@ -534,10 +555,16 @@ class _ProspectImagesScreenState extends ConsumerState<ProspectImagesScreen> {
             SnackBar(
               content: Row(
                 children: [
-                  Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20.sp),
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    color: Colors.white,
+                    size: 20.sp,
+                  ),
                   SizedBox(width: 12.w),
                   Expanded(
-                    child: const Text('Camera permission is required to take photos'),
+                    child: const Text(
+                      'Camera permission is required to take photos',
+                    ),
                   ),
                 ],
               ),
@@ -554,7 +581,9 @@ class _ProspectImagesScreenState extends ConsumerState<ProspectImagesScreen> {
       }
 
       // Get current images to check available slots
-      final currentImages = await ref.read(prospectImagesProvider(widget.prospectId).future);
+      final currentImages = await ref.read(
+        prospectImagesProvider(widget.prospectId).future,
+      );
       final availableSlots = 5 - currentImages.length;
 
       if (availableSlots <= 0) {
@@ -563,11 +592,13 @@ class _ProspectImagesScreenState extends ConsumerState<ProspectImagesScreen> {
             SnackBar(
               content: Row(
                 children: [
-                  Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20.sp),
-                  SizedBox(width: 12.w),
-                  Expanded(
-                    child: const Text('Maximum 5 photos allowed'),
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    color: Colors.white,
+                    size: 20.sp,
                   ),
+                  SizedBox(width: 12.w),
+                  Expanded(child: const Text('Maximum 5 photos allowed')),
                 ],
               ),
               backgroundColor: AppColors.error,
@@ -675,10 +706,7 @@ class _ProspectImagesScreenState extends ConsumerState<ProspectImagesScreen> {
         ),
         content: Text(
           'Are you sure you want to delete this photo?',
-          style: TextStyle(
-            fontSize: 14.sp,
-            fontFamily: 'Poppins',
-          ),
+          style: TextStyle(fontSize: 14.sp, fontFamily: 'Poppins'),
         ),
         actions: [
           TextButton(
@@ -710,7 +738,11 @@ class _ProspectImagesScreenState extends ConsumerState<ProspectImagesScreen> {
     if (confirmed == true) {
       try {
         final viewModel = ref.read(prospectImagesViewModelProvider.notifier);
-        await viewModel.deleteImage(image.id, widget.prospectId, image.imageOrder);
+        await viewModel.deleteImage(
+          image.id,
+          widget.prospectId,
+          image.imageOrder,
+        );
 
         // Refresh the images list
         ref.invalidate(prospectImagesProvider(widget.prospectId));
@@ -747,7 +779,11 @@ class _ProspectImagesScreenState extends ConsumerState<ProspectImagesScreen> {
     }
   }
 
-  Widget _buildImageCard(ProspectImage image, int index, List<ProspectImage> allImages) {
+  Widget _buildImageCard(
+    ProspectImage image,
+    int index,
+    List<ProspectImage> allImages,
+  ) {
     return GestureDetector(
       onTap: () {
         // Navigate to full-screen viewer
@@ -780,7 +816,9 @@ class _ProspectImagesScreenState extends ConsumerState<ProspectImagesScreen> {
               // Image - Handle both network URLs and local files
               ClipRRect(
                 borderRadius: BorderRadius.circular(12.r),
-                child: image.imageUrl.startsWith('http') || image.imageUrl.startsWith('https')
+                child:
+                    image.imageUrl.startsWith('http') ||
+                        image.imageUrl.startsWith('https')
                     ? Image.network(
                         image.imageUrl,
                         fit: BoxFit.cover,
@@ -790,9 +828,10 @@ class _ProspectImagesScreenState extends ConsumerState<ProspectImagesScreen> {
                             color: Colors.grey.shade300,
                             child: Center(
                               child: CircularProgressIndicator(
-                                value: loadingProgress.expectedTotalBytes != null
+                                value:
+                                    loadingProgress.expectedTotalBytes != null
                                     ? loadingProgress.cumulativeBytesLoaded /
-                                        loadingProgress.expectedTotalBytes!
+                                          loadingProgress.expectedTotalBytes!
                                     : null,
                                 color: AppColors.primary,
                                 strokeWidth: 2,
@@ -839,11 +878,7 @@ class _ProspectImagesScreenState extends ConsumerState<ProspectImagesScreen> {
                       color: Colors.black.withValues(alpha: 0.6),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(
-                      Icons.close,
-                      color: Colors.white,
-                      size: 16.sp,
-                    ),
+                    child: Icon(Icons.close, color: Colors.white, size: 16.sp),
                   ),
                 ),
               ),
@@ -890,9 +925,7 @@ class _ProspectImagesScreenState extends ConsumerState<ProspectImagesScreen> {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12.r),
-        child: Bone.square(
-          size: 150.sp,
-        ),
+        child: Bone.square(size: 150.sp),
       ),
     );
   }
@@ -1026,16 +1059,21 @@ class _ProspectImagesScreenState extends ConsumerState<ProspectImagesScreen> {
                       // Grid
                       Expanded(
                         child: GridView.builder(
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            crossAxisSpacing: 12.w,
-                            mainAxisSpacing: 12.h,
-                            childAspectRatio: 0.75,
-                          ),
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 3,
+                                crossAxisSpacing: 12.w,
+                                mainAxisSpacing: 12.h,
+                                childAspectRatio: 0.75,
+                              ),
                           itemCount: canAddMore ? imageCount + 1 : imageCount,
                           itemBuilder: (context, index) {
                             if (index < imageCount) {
-                              return _buildImageCard(images[index], index, images);
+                              return _buildImageCard(
+                                images[index],
+                                index,
+                                images,
+                              );
                             } else {
                               return _buildAddButton();
                             }
@@ -1057,30 +1095,26 @@ class _ProspectImagesScreenState extends ConsumerState<ProspectImagesScreen> {
                         SizedBox(height: 12.h),
 
                         // Skeleton prospect name
-                        Bone.text(
-                          words: 3,
-                          fontSize: 24.sp,
-                        ),
+                        Bone.text(words: 3, fontSize: 24.sp),
                         SizedBox(height: 8.h),
 
                         // Skeleton description
-                        Bone.text(
-                          words: 8,
-                          fontSize: 14.sp,
-                        ),
+                        Bone.text(words: 8, fontSize: 14.sp),
                         SizedBox(height: 24.h),
 
                         // Skeleton grid
                         Expanded(
                           child: GridView.builder(
-                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 3,
-                              crossAxisSpacing: 12.w,
-                              mainAxisSpacing: 12.h,
-                              childAspectRatio: 0.75,
-                            ),
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 3,
+                                  crossAxisSpacing: 12.w,
+                                  mainAxisSpacing: 12.h,
+                                  childAspectRatio: 0.75,
+                                ),
                             itemCount: 5,
-                            itemBuilder: (context, index) => _buildSkeletonCard(),
+                            itemBuilder: (context, index) =>
+                                _buildSkeletonCard(),
                           ),
                         ),
                       ],

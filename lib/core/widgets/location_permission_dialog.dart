@@ -26,18 +26,15 @@ class LocationPermissionDialog extends StatelessWidget {
     return showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (context) => LocationPermissionDialog(
-        requireBackground: requireBackground,
-      ),
+      builder: (context) =>
+          LocationPermissionDialog(requireBackground: requireBackground),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20.r),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
       contentPadding: EdgeInsets.zero,
       content: Container(
         width: double.maxFinite,
@@ -60,9 +57,7 @@ class LocationPermissionDialog extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                borderRadius: BorderRadius.vertical(
-                  top: Radius.circular(20.r),
-                ),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
               ),
               child: Column(
                 children: [
@@ -243,11 +238,7 @@ class LocationPermissionDialog extends StatelessWidget {
             color: AppColors.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8.r),
           ),
-          child: Icon(
-            icon,
-            size: 20.sp,
-            color: AppColors.primary,
-          ),
+          child: Icon(icon, size: 20.sp, color: AppColors.primary),
         ),
         SizedBox(width: 12.w),
         Expanded(
@@ -309,9 +300,9 @@ class LocationPermissionDialog extends StatelessWidget {
       // Request permissions
       final result = await LocationPermissionService.instance
           .requestTrackingPermissions(
-        context: context,
-        requireBackground: requireBackground,
-      );
+            context: context,
+            requireBackground: requireBackground,
+          );
 
       if (result.success) {
         AppLogger.i('✅ Location permissions granted');
@@ -370,17 +361,11 @@ class LocationPermissionDialog extends StatelessWidget {
         ),
         title: Text(
           'Enable Location Services',
-          style: TextStyle(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
         ),
         content: Text(
           'Location services are disabled. Please enable them in your device settings to use real-time tracking.',
-          style: TextStyle(
-            fontSize: 14.sp,
-            color: AppColors.textSecondary,
-          ),
+          style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
         ),
         actions: [
           TextButton(
@@ -390,10 +375,7 @@ class LocationPermissionDialog extends StatelessWidget {
             },
             child: Text(
               'Cancel',
-              style: TextStyle(
-                fontSize: 14.sp,
-                color: AppColors.textSecondary,
-              ),
+              style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
             ),
           ),
           ElevatedButton(
@@ -404,15 +386,10 @@ class LocationPermissionDialog extends StatelessWidget {
                 Navigator.of(context).pop(false);
               }
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
             child: Text(
               'Open Settings',
-              style: TextStyle(
-                fontSize: 14.sp,
-                color: Colors.white,
-              ),
+              style: TextStyle(fontSize: 14.sp, color: Colors.white),
             ),
           ),
         ],
@@ -429,17 +406,11 @@ class LocationPermissionDialog extends StatelessWidget {
         ),
         title: Text(
           'Permission Denied',
-          style: TextStyle(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
         ),
         content: Text(
           'Location permission has been permanently denied. Please enable it in app settings to use real-time tracking.',
-          style: TextStyle(
-            fontSize: 14.sp,
-            color: AppColors.textSecondary,
-          ),
+          style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
         ),
         actions: [
           TextButton(
@@ -449,10 +420,7 @@ class LocationPermissionDialog extends StatelessWidget {
             },
             child: Text(
               'Cancel',
-              style: TextStyle(
-                fontSize: 14.sp,
-                color: AppColors.textSecondary,
-              ),
+              style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
             ),
           ),
           ElevatedButton(
@@ -463,15 +431,10 @@ class LocationPermissionDialog extends StatelessWidget {
                 Navigator.of(context).pop(false);
               }
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
             child: Text(
               'Open Settings',
-              style: TextStyle(
-                fontSize: 14.sp,
-                color: Colors.white,
-              ),
+              style: TextStyle(fontSize: 14.sp, color: Colors.white),
             ),
           ),
         ],

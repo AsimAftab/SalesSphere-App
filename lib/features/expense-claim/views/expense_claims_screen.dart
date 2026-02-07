@@ -3,19 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
-import 'package:skeletonizer/skeletonizer.dart';
-import 'package:sales_sphere/core/constants/app_colors.dart';
-import 'package:sales_sphere/features/expense-claim/vm/expense_claims.vm.dart';
-import 'package:sales_sphere/features/expense-claim/models/expense_claim.model.dart';
-import 'package:sales_sphere/widget/error_handler_widget.dart';
 import 'package:intl/intl.dart';
+import 'package:sales_sphere/core/constants/app_colors.dart';
+import 'package:sales_sphere/features/expense-claim/models/expense_claim.model.dart';
+import 'package:sales_sphere/features/expense-claim/vm/expense_claims.vm.dart';
+import 'package:sales_sphere/widget/error_handler_widget.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
-enum ExpenseClaimFilter {
-  all,
-  pending,
-  approved,
-  rejected,
-}
+enum ExpenseClaimFilter { all, pending, approved, rejected }
 
 class ExpenseClaimsScreen extends ConsumerStatefulWidget {
   const ExpenseClaimsScreen({super.key});
@@ -110,10 +105,7 @@ class _ExpenseClaimsScreenState extends ConsumerState<ExpenseClaimsScreen> {
           ),
           Column(
             children: [
-              Container(
-                height: 120.h,
-                color: Colors.transparent,
-              ),
+              Container(height: 120.h, color: Colors.transparent),
               // Search Bar Section
               Container(
                 color: Colors.transparent,
@@ -135,16 +127,16 @@ class _ExpenseClaimsScreenState extends ConsumerState<ExpenseClaimsScreen> {
                     ),
                     suffixIcon: searchQuery.isNotEmpty
                         ? IconButton(
-                      icon: Icon(
-                        Icons.clear,
-                        color: Colors.grey.shade400,
-                        size: 20.sp,
-                      ),
-                      onPressed: () {
-                        _searchController.clear();
-                        _onSearchChanged('');
-                      },
-                    )
+                            icon: Icon(
+                              Icons.clear,
+                              color: Colors.grey.shade400,
+                              size: 20.sp,
+                            ),
+                            onPressed: () {
+                              _searchController.clear();
+                              _onSearchChanged('');
+                            },
+                          )
                         : null,
                     filled: true,
                     fillColor: Colors.white,
@@ -158,8 +150,10 @@ class _ExpenseClaimsScreenState extends ConsumerState<ExpenseClaimsScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.r),
-                      borderSide:
-                      const BorderSide(color: AppColors.primary, width: 2),
+                      borderSide: const BorderSide(
+                        color: AppColors.primary,
+                        width: 2,
+                      ),
                     ),
                     contentPadding: EdgeInsets.symmetric(
                       horizontal: 16.w,
@@ -305,11 +299,7 @@ class _ExpenseClaimsScreenState extends ConsumerState<ExpenseClaimsScreen> {
         onPressed: _navigateToAddExpenseClaim,
         backgroundColor: AppColors.primary,
         elevation: 4,
-        icon: Icon(
-          Icons.add,
-          color: Colors.white,
-          size: 20.sp,
-        ),
+        icon: Icon(Icons.add, color: Colors.white, size: 20.sp),
         label: Text(
           'Add Claim',
           style: TextStyle(
@@ -366,7 +356,10 @@ class _ExpenseClaimsScreenState extends ConsumerState<ExpenseClaimsScreen> {
                   ),
                 ),
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 4.h,
+                  ),
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20.r),
@@ -525,8 +518,11 @@ class _ExpenseClaimsScreenState extends ConsumerState<ExpenseClaimsScreen> {
                     value: ExpenseClaimFilter.all,
                     child: Row(
                       children: [
-                        Icon(Icons.list,
-                            size: 18.sp, color: AppColors.textdark),
+                        Icon(
+                          Icons.list,
+                          size: 18.sp,
+                          color: AppColors.textdark,
+                        ),
                         SizedBox(width: 8.w),
                         const Text('All Claims'),
                       ],
@@ -536,8 +532,7 @@ class _ExpenseClaimsScreenState extends ConsumerState<ExpenseClaimsScreen> {
                     value: ExpenseClaimFilter.pending,
                     child: Row(
                       children: [
-                        Icon(Icons.pending,
-                            size: 18.sp, color: Colors.orange),
+                        Icon(Icons.pending, size: 18.sp, color: Colors.orange),
                         SizedBox(width: 8.w),
                         const Text('Pending'),
                       ],
@@ -547,8 +542,11 @@ class _ExpenseClaimsScreenState extends ConsumerState<ExpenseClaimsScreen> {
                     value: ExpenseClaimFilter.approved,
                     child: Row(
                       children: [
-                        Icon(Icons.check_circle,
-                            size: 18.sp, color: Colors.green),
+                        Icon(
+                          Icons.check_circle,
+                          size: 18.sp,
+                          color: Colors.green,
+                        ),
                         SizedBox(width: 8.w),
                         const Text('Approved'),
                       ],

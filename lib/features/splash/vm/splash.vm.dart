@@ -1,13 +1,14 @@
 import 'dart:async';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
+import 'package:sales_sphere/core/network_layer/dio_client.dart';
+import 'package:sales_sphere/core/network_layer/token_storage_service.dart';
 import 'package:sales_sphere/core/providers/shared_prefs_provider.dart';
+import 'package:sales_sphere/core/providers/user_controller.dart';
 import 'package:sales_sphere/core/router/route_handler.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
-import 'package:sales_sphere/core/network_layer/token_storage_service.dart';
-import 'package:sales_sphere/core/network_layer/dio_client.dart';
-import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
 import 'package:sales_sphere/features/auth/models/login.models.dart';
-import 'package:sales_sphere/core/providers/user_controller.dart';
 
 part 'splash.vm.g.dart';
 
@@ -56,8 +57,11 @@ class SplashVM extends _$SplashVM {
           final dio = ref.read(dioClientProvider);
           final response = await dio.get(ApiEndpoints.checkStatus);
 
-          if (response.statusCode == 200 && response.data['status'] == 'success') {
-            final checkStatusResponse = CheckStatusResponse.fromJson(response.data);
+          if (response.statusCode == 200 &&
+              response.data['status'] == 'success') {
+            final checkStatusResponse = CheckStatusResponse.fromJson(
+              response.data,
+            );
             final user = checkStatusResponse.data.user;
 
             // Save user data

@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
@@ -35,7 +36,9 @@ class _TrackingStatusCardState extends State<TrackingStatusCard> {
 
   void _subscribeToTracking() {
     // Listen to tracking stats updates
-    _statsSubscription = TrackingCoordinator.instance.onStatsChanged.listen((stats) {
+    _statsSubscription = TrackingCoordinator.instance.onStatsChanged.listen((
+      stats,
+    ) {
       if (mounted) {
         setState(() {
           _currentStats = stats;
@@ -44,7 +47,9 @@ class _TrackingStatusCardState extends State<TrackingStatusCard> {
     });
 
     // Listen to tracking state changes
-    _stateSubscription = TrackingCoordinator.instance.onStateChanged.listen((state) {
+    _stateSubscription = TrackingCoordinator.instance.onStateChanged.listen((
+      state,
+    ) {
       if (mounted) {
         setState(() {
           _currentState = state;
@@ -240,11 +245,7 @@ class _TrackingStatusCardState extends State<TrackingStatusCard> {
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8.r),
       ),
-      child: Icon(
-        icon,
-        size: 20.sp,
-        color: color,
-      ),
+      child: Icon(icon, size: 20.sp, color: color),
     );
   }
 
@@ -259,10 +260,7 @@ class _TrackingStatusCardState extends State<TrackingStatusCard> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(
-          color: color.withValues(alpha: 0.15),
-          width: 1.5,
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.15), width: 1.5),
         boxShadow: [
           BoxShadow(
             color: color.withValues(alpha: 0.08),
@@ -355,11 +353,7 @@ class _TrackingStatusCardState extends State<TrackingStatusCard> {
               color: statusColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10.r),
             ),
-            child: Icon(
-              statusIcon,
-              size: 18.sp,
-              color: statusColor,
-            ),
+            child: Icon(statusIcon, size: 18.sp, color: statusColor),
           ),
           SizedBox(width: 12.w),
           Expanded(

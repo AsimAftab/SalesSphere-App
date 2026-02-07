@@ -2,10 +2,10 @@
 
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
-import 'package:sales_sphere/features/prospects/models/prospects.model.dart';
+import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
+import 'package:sales_sphere/features/prospects/models/prospects.model.dart';
 
 part 'add_prospect.vm.g.dart';
 
@@ -22,7 +22,9 @@ class AddProspectViewModel extends _$AddProspectViewModel {
   }
 
   // CREATE NEW PROSPECT (API CALL)
-  Future<Prospects> createProspect(CreateProspectRequest newProspectRequest) async {
+  Future<Prospects> createProspect(
+    CreateProspectRequest newProspectRequest,
+  ) async {
     try {
       final dio = ref.read(dioClientProvider);
       AppLogger.i('Creating new prospect via API: ${newProspectRequest.name}');
@@ -34,7 +36,9 @@ class AddProspectViewModel extends _$AddProspectViewModel {
       );
 
       AppLogger.d('Create prospect API status: ${response.statusCode}');
-      AppLogger.d('Create prospect API raw data: ${response.data.runtimeType} -> ${response.data}');
+      AppLogger.d(
+        'Create prospect API raw data: ${response.data.runtimeType} -> ${response.data}',
+      );
 
       // ✅ Ensure we have a proper JSON map
       if (response.data == null || response.data is! Map<String, dynamic>) {
@@ -44,14 +48,17 @@ class AddProspectViewModel extends _$AddProspectViewModel {
       }
 
       // ✅ Parse safely
-      final createResponse =
-      CreateProspectApiResponse.fromJson(response.data as Map<String, dynamic>);
+      final createResponse = CreateProspectApiResponse.fromJson(
+        response.data as Map<String, dynamic>,
+      );
 
       // ✅ Check success
       if (createResponse.success) {
         final data = createResponse.data;
 
-        AppLogger.i('✅ Prospect created successfully: ${data.name} (${data.id})');
+        AppLogger.i(
+          '✅ Prospect created successfully: ${data.name} (${data.id})',
+        );
 
         // Convert API response to Prospects model
         final createdProspect = Prospects(
@@ -60,7 +67,7 @@ class AddProspectViewModel extends _$AddProspectViewModel {
           ownerName: data.ownerName,
           location: ProspectLocation(
             address:
-            data.location?.address ?? newProspectRequest.location.address,
+                data.location?.address ?? newProspectRequest.location.address,
           ),
         );
 
@@ -124,8 +131,9 @@ class AddProspectViewModel extends _$AddProspectViewModel {
 
   String? validateEmail(String? value) {
     if (value == null || value.trim().isEmpty) return null; // optional
-    final emailRegex =
-    RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+    final emailRegex = RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    );
     if (!emailRegex.hasMatch(value.trim())) {
       return 'Enter a valid email address';
     }

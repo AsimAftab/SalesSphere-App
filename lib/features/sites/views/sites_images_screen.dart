@@ -1,5 +1,5 @@
-
 import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,15 +7,15 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:wechat_assets_picker/wechat_assets_picker.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
 import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:sales_sphere/features/sites/models/sites.model.dart';
-import 'package:sales_sphere/features/sites/vm/sites_images.vm.dart';
 import 'package:sales_sphere/features/sites/views/sites_images_viewer_screen.dart';
+import 'package:sales_sphere/features/sites/vm/sites_images.vm.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:wechat_assets_picker/wechat_assets_picker.dart';
 
 class SitesImagesScreen extends ConsumerStatefulWidget {
   final String siteId;
@@ -135,10 +135,7 @@ class _SitesImagesScreenState extends ConsumerState<SitesImagesScreen> {
         ),
         content: Text(
           '$permissionType permission is permanently denied. Please enable it in app settings.',
-          style: TextStyle(
-            fontSize: 14.sp,
-            fontFamily: 'Poppins',
-          ),
+          style: TextStyle(fontSize: 14.sp, fontFamily: 'Poppins'),
         ),
         actions: [
           TextButton(
@@ -182,10 +179,16 @@ class _SitesImagesScreenState extends ConsumerState<SitesImagesScreen> {
             SnackBar(
               content: Row(
                 children: [
-                  Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20.sp),
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    color: Colors.white,
+                    size: 20.sp,
+                  ),
                   SizedBox(width: 12.w),
                   Expanded(
-                    child: const Text('Gallery permission is required to select photos'),
+                    child: const Text(
+                      'Gallery permission is required to select photos',
+                    ),
                   ),
                 ],
               ),
@@ -202,7 +205,9 @@ class _SitesImagesScreenState extends ConsumerState<SitesImagesScreen> {
       }
 
       // Get current images to check available slots
-      final currentImages = await ref.read(siteImagesProvider(widget.siteId).future);
+      final currentImages = await ref.read(
+        siteImagesProvider(widget.siteId).future,
+      );
       final availableSlots = 9 - currentImages.length;
 
       if (availableSlots <= 0) {
@@ -211,11 +216,13 @@ class _SitesImagesScreenState extends ConsumerState<SitesImagesScreen> {
             SnackBar(
               content: Row(
                 children: [
-                  Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20.sp),
-                  SizedBox(width: 12.w),
-                  Expanded(
-                    child: const Text('Maximum 9 photos allowed'),
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    color: Colors.white,
+                    size: 20.sp,
                   ),
+                  SizedBox(width: 12.w),
+                  Expanded(child: const Text('Maximum 9 photos allowed')),
                 ],
               ),
               backgroundColor: AppColors.error,
@@ -287,7 +294,9 @@ class _SitesImagesScreenState extends ConsumerState<SitesImagesScreen> {
       int failureCount = 0;
 
       // Get existing image numbers ONCE before the upload loop (reuse currentImages from earlier)
-      final usedImageNumbers = currentImages.map((img) => img.imageOrder).toSet();
+      final usedImageNumbers = currentImages
+          .map((img) => img.imageOrder)
+          .toSet();
 
       // Upload each image
       for (int i = 0; i < imageFiles.length; i++) {
@@ -355,7 +364,9 @@ class _SitesImagesScreenState extends ConsumerState<SitesImagesScreen> {
                 children: [
                   Icon(Icons.check_circle, color: Colors.white, size: 20.sp),
                   SizedBox(width: 12.w),
-                  Text('$successCount photo${successCount > 1 ? 's' : ''} added'),
+                  Text(
+                    '$successCount photo${successCount > 1 ? 's' : ''} added',
+                  ),
                 ],
               ),
               backgroundColor: AppColors.success,
@@ -472,7 +483,11 @@ class _SitesImagesScreenState extends ConsumerState<SitesImagesScreen> {
             ),
             SizedBox(height: 20.h),
             ListTile(
-              leading: Icon(Icons.photo_library_rounded, color: AppColors.primary, size: 28.sp),
+              leading: Icon(
+                Icons.photo_library_rounded,
+                color: AppColors.primary,
+                size: 28.sp,
+              ),
               title: Text(
                 'Choose Multiple Photos',
                 style: TextStyle(
@@ -495,7 +510,11 @@ class _SitesImagesScreenState extends ConsumerState<SitesImagesScreen> {
               },
             ),
             ListTile(
-              leading: Icon(Icons.camera_alt, color: AppColors.primary, size: 28.sp),
+              leading: Icon(
+                Icons.camera_alt,
+                color: AppColors.primary,
+                size: 28.sp,
+              ),
               title: Text(
                 'Take Photo',
                 style: TextStyle(
@@ -535,10 +554,16 @@ class _SitesImagesScreenState extends ConsumerState<SitesImagesScreen> {
             SnackBar(
               content: Row(
                 children: [
-                  Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20.sp),
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    color: Colors.white,
+                    size: 20.sp,
+                  ),
                   SizedBox(width: 12.w),
                   Expanded(
-                    child: const Text('Camera permission is required to take photos'),
+                    child: const Text(
+                      'Camera permission is required to take photos',
+                    ),
                   ),
                 ],
               ),
@@ -555,7 +580,9 @@ class _SitesImagesScreenState extends ConsumerState<SitesImagesScreen> {
       }
 
       // Get current images to check available slots
-      final currentImages = await ref.read(siteImagesProvider(widget.siteId).future);
+      final currentImages = await ref.read(
+        siteImagesProvider(widget.siteId).future,
+      );
       final availableSlots = 9 - currentImages.length;
 
       if (availableSlots <= 0) {
@@ -564,11 +591,13 @@ class _SitesImagesScreenState extends ConsumerState<SitesImagesScreen> {
             SnackBar(
               content: Row(
                 children: [
-                  Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20.sp),
-                  SizedBox(width: 12.w),
-                  Expanded(
-                    child: const Text('Maximum 9 photos allowed'),
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    color: Colors.white,
+                    size: 20.sp,
                   ),
+                  SizedBox(width: 12.w),
+                  Expanded(child: const Text('Maximum 9 photos allowed')),
                 ],
               ),
               backgroundColor: AppColors.error,
@@ -676,10 +705,7 @@ class _SitesImagesScreenState extends ConsumerState<SitesImagesScreen> {
         ),
         content: Text(
           'Are you sure you want to delete this photo?',
-          style: TextStyle(
-            fontSize: 14.sp,
-            fontFamily: 'Poppins',
-          ),
+          style: TextStyle(fontSize: 14.sp, fontFamily: 'Poppins'),
         ),
         actions: [
           TextButton(
@@ -748,7 +774,11 @@ class _SitesImagesScreenState extends ConsumerState<SitesImagesScreen> {
     }
   }
 
-  Widget _buildImageCard(SiteImage image, int index, List<SiteImage> allImages) {
+  Widget _buildImageCard(
+    SiteImage image,
+    int index,
+    List<SiteImage> allImages,
+  ) {
     return GestureDetector(
       onTap: () {
         // Navigate to full-screen viewer
@@ -781,7 +811,9 @@ class _SitesImagesScreenState extends ConsumerState<SitesImagesScreen> {
               // Image - Handle both network URLs and local files
               ClipRRect(
                 borderRadius: BorderRadius.circular(12.r),
-                child: image.imageUrl.startsWith('http') || image.imageUrl.startsWith('https')
+                child:
+                    image.imageUrl.startsWith('http') ||
+                        image.imageUrl.startsWith('https')
                     ? Image.network(
                         image.imageUrl,
                         fit: BoxFit.cover,
@@ -791,9 +823,10 @@ class _SitesImagesScreenState extends ConsumerState<SitesImagesScreen> {
                             color: Colors.grey.shade300,
                             child: Center(
                               child: CircularProgressIndicator(
-                                value: loadingProgress.expectedTotalBytes != null
+                                value:
+                                    loadingProgress.expectedTotalBytes != null
                                     ? loadingProgress.cumulativeBytesLoaded /
-                                        loadingProgress.expectedTotalBytes!
+                                          loadingProgress.expectedTotalBytes!
                                     : null,
                                 color: AppColors.primary,
                                 strokeWidth: 2,
@@ -840,11 +873,7 @@ class _SitesImagesScreenState extends ConsumerState<SitesImagesScreen> {
                       color: Colors.black.withValues(alpha: 0.6),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(
-                      Icons.close,
-                      color: Colors.white,
-                      size: 16.sp,
-                    ),
+                    child: Icon(Icons.close, color: Colors.white, size: 16.sp),
                   ),
                 ),
               ),
@@ -891,9 +920,7 @@ class _SitesImagesScreenState extends ConsumerState<SitesImagesScreen> {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12.r),
-        child: Bone.square(
-          size: 150.sp,
-        ),
+        child: Bone.square(size: 150.sp),
       ),
     );
   }
@@ -1027,16 +1054,21 @@ class _SitesImagesScreenState extends ConsumerState<SitesImagesScreen> {
                       // Grid
                       Expanded(
                         child: GridView.builder(
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            crossAxisSpacing: 12.w,
-                            mainAxisSpacing: 12.h,
-                            childAspectRatio: 0.75,
-                          ),
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 3,
+                                crossAxisSpacing: 12.w,
+                                mainAxisSpacing: 12.h,
+                                childAspectRatio: 0.75,
+                              ),
                           itemCount: canAddMore ? imageCount + 1 : imageCount,
                           itemBuilder: (context, index) {
                             if (index < imageCount) {
-                              return _buildImageCard(images[index], index, images);
+                              return _buildImageCard(
+                                images[index],
+                                index,
+                                images,
+                              );
                             } else {
                               return _buildAddButton();
                             }
@@ -1058,30 +1090,26 @@ class _SitesImagesScreenState extends ConsumerState<SitesImagesScreen> {
                         SizedBox(height: 12.h),
 
                         // Skeleton site name
-                        Bone.text(
-                          words: 3,
-                          fontSize: 24.sp,
-                        ),
+                        Bone.text(words: 3, fontSize: 24.sp),
                         SizedBox(height: 8.h),
 
                         // Skeleton description
-                        Bone.text(
-                          words: 8,
-                          fontSize: 14.sp,
-                        ),
+                        Bone.text(words: 8, fontSize: 14.sp),
                         SizedBox(height: 24.h),
 
                         // Skeleton grid
                         Expanded(
                           child: GridView.builder(
-                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 3,
-                              crossAxisSpacing: 12.w,
-                              mainAxisSpacing: 12.h,
-                              childAspectRatio: 0.75,
-                            ),
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 3,
+                                  crossAxisSpacing: 12.w,
+                                  mainAxisSpacing: 12.h,
+                                  childAspectRatio: 0.75,
+                                ),
                             itemCount: 9,
-                            itemBuilder: (context, index) => _buildSkeletonCard(),
+                            itemBuilder: (context, index) =>
+                                _buildSkeletonCard(),
                           ),
                         ),
                       ],

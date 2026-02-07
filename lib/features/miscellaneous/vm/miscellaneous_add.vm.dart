@@ -1,8 +1,9 @@
 import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
+import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:sales_sphere/features/miscellaneous/models/miscellaneous.model.dart';
 
@@ -109,13 +110,15 @@ class MiscellaneousAddViewModel extends _$MiscellaneousAddViewModel {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         AppLogger.i('✅ Image uploaded successfully');
-        final uploadResponse = MiscWorkImageUploadResponse.fromJson(response.data);
-        
+        final uploadResponse = MiscWorkImageUploadResponse.fromJson(
+          response.data,
+        );
+
         // Release keep alive after last image
         if (isLastImage) {
           _release();
         }
-        
+
         return uploadResponse;
       } else {
         _release();
@@ -124,13 +127,13 @@ class MiscellaneousAddViewModel extends _$MiscellaneousAddViewModel {
     } on DioException catch (e) {
       _release();
       AppLogger.e('❌ Dio error uploading image: ${e.message}');
-      
+
       // Handle specific error for imageNumber validation
       if (e.response?.statusCode == 400) {
         final errorMsg = e.response?.data['message'] ?? 'Invalid request';
         throw Exception(errorMsg);
       }
-      
+
       throw Exception(_handleDioError(e));
     } catch (e, stackTrace) {
       _release();

@@ -2,13 +2,15 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../utils/logger.dart';
-import 'interceptors/connectivity_interceptor.dart';
-import 'interceptors/auth_interceptor.dart';
-import 'interceptors/logging_interceptor.dart';
-import 'interceptors/error_interceptor.dart';
-import 'token_storage_service.dart';
 import 'package:pretty_dio_logger/src/pretty_dio_logger.dart';
+
+import '../utils/logger.dart';
+import 'interceptors/auth_interceptor.dart';
+import 'interceptors/connectivity_interceptor.dart';
+import 'interceptors/error_interceptor.dart';
+import 'interceptors/logging_interceptor.dart';
+import 'token_storage_service.dart';
+
 /// Dio Client Provider
 /// Provides a configured Dio instance with all interceptors
 final dioClientProvider = Provider<Dio>((ref) {
@@ -47,20 +49,20 @@ class DioClient {
 
   /// Base Options for Dio
   BaseOptions get _baseOptions => BaseOptions(
-        baseUrl: _baseUrl,
-        connectTimeout: const Duration(seconds: 30),
-        receiveTimeout: const Duration(seconds: 30),
-        sendTimeout: const Duration(seconds: 30),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-Client-Type': 'mobile',
-        },
-        validateStatus: (status) {
-          // Accept all status codes and handle them in interceptors
-          return status != null && status < 500;
-        },
-      );
+    baseUrl: _baseUrl,
+    connectTimeout: const Duration(seconds: 30),
+    receiveTimeout: const Duration(seconds: 30),
+    sendTimeout: const Duration(seconds: 30),
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'X-Client-Type': 'mobile',
+    },
+    validateStatus: (status) {
+      // Accept all status codes and handle them in interceptors
+      return status != null && status < 500;
+    },
+  );
 
   /// Setup Interceptors
   void _setupInterceptors() {

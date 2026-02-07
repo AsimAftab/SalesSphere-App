@@ -1,10 +1,12 @@
 import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
-import 'package:sales_sphere/core/utils/logger.dart';
+import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/services/tracking_coordinator.dart';
+import 'package:sales_sphere/core/utils/logger.dart';
+
 import '../models/beat_plan.models.dart';
 
 part 'beat_plan.vm.g.dart';
@@ -34,7 +36,9 @@ class BeatPlanListViewModel extends _$BeatPlanListViewModel {
   Future<List<BeatPlanSummary>> _fetchBeatPlans() async {
     // Guard: prevent concurrent fetches - wait for current request to complete
     if (_isFetching) {
-      AppLogger.w('⚠️ Already fetching beat plans, waiting for current request');
+      AppLogger.w(
+        '⚠️ Already fetching beat plans, waiting for current request',
+      );
       // Wait for current fetch to complete
       while (_isFetching) {
         await Future.delayed(const Duration(milliseconds: 100));
@@ -52,13 +56,19 @@ class BeatPlanListViewModel extends _$BeatPlanListViewModel {
 
       if (response.statusCode == 200) {
         // Parse the API response
-        final beatPlanResponse = BeatPlanSummaryResponse.fromJson(response.data);
+        final beatPlanResponse = BeatPlanSummaryResponse.fromJson(
+          response.data,
+        );
 
-        AppLogger.i('✅ Beat plan summaries loaded: ${beatPlanResponse.data.length} plans');
+        AppLogger.i(
+          '✅ Beat plan summaries loaded: ${beatPlanResponse.data.length} plans',
+        );
 
         return beatPlanResponse.data;
       } else {
-        throw Exception('Failed to fetch beat plans: ${response.statusMessage}');
+        throw Exception(
+          'Failed to fetch beat plans: ${response.statusMessage}',
+        );
       }
     } on DioException catch (e) {
       AppLogger.e('❌ Dio error fetching beat plans: ${e.message}');
@@ -98,9 +108,7 @@ class BeatPlanListViewModel extends _$BeatPlanListViewModel {
       final dio = ref.read(dioClientProvider);
       AppLogger.i('Starting beat plan $beatPlanId');
 
-      final response = await dio.post(
-        ApiEndpoints.startBeatPlan(beatPlanId),
-      );
+      final response = await dio.post(ApiEndpoints.startBeatPlan(beatPlanId));
 
       if (response.statusCode == 200) {
         AppLogger.i('✅ Beat plan started successfully on server');
@@ -111,12 +119,18 @@ class BeatPlanListViewModel extends _$BeatPlanListViewModel {
 
         try {
           // Fetch details to get directory counts
-          final detailsResponse = await dio.get(ApiEndpoints.beatPlanDetails(beatPlanId));
+          final detailsResponse = await dio.get(
+            ApiEndpoints.beatPlanDetails(beatPlanId),
+          );
           if (detailsResponse.statusCode == 200) {
-            final details = BeatPlanDetailResponse.fromJson(detailsResponse.data);
+            final details = BeatPlanDetailResponse.fromJson(
+              detailsResponse.data,
+            );
             totalDirectories = details.data.progress.totalDirectories;
             visitedDirectories = details.data.progress.visitedDirectories;
-            AppLogger.d('📊 Progress: $visitedDirectories/$totalDirectories directories');
+            AppLogger.d(
+              '📊 Progress: $visitedDirectories/$totalDirectories directories',
+            );
           }
         } catch (e) {
           AppLogger.w('⚠️ Could not fetch progress details: $e');
@@ -181,7 +195,9 @@ class BeatPlanDetailViewModel extends _$BeatPlanDetailViewModel {
   Future<BeatPlanDetail?> _fetchBeatPlanDetails(String beatPlanId) async {
     // Guard: prevent concurrent fetches - return null instead of throwing
     if (_isFetching) {
-      AppLogger.w('⚠️ Already fetching beat plan details, waiting for current request');
+      AppLogger.w(
+        '⚠️ Already fetching beat plan details, waiting for current request',
+      );
       // Wait for current fetch to complete
       while (_isFetching) {
         await Future.delayed(const Duration(milliseconds: 100));
@@ -201,12 +217,18 @@ class BeatPlanDetailViewModel extends _$BeatPlanDetailViewModel {
         // Parse the API response
         final beatPlanResponse = BeatPlanDetailResponse.fromJson(response.data);
 
-        AppLogger.i('✅ Beat plan details loaded: ${beatPlanResponse.data.name}');
-        AppLogger.d('📊 Directories: ${beatPlanResponse.data.directories.length} (${beatPlanResponse.data.progress.totalParties} parties, ${beatPlanResponse.data.progress.totalSites} sites, ${beatPlanResponse.data.progress.totalProspects} prospects), Progress: ${beatPlanResponse.data.progress.percentage}%');
+        AppLogger.i(
+          '✅ Beat plan details loaded: ${beatPlanResponse.data.name}',
+        );
+        AppLogger.d(
+          '📊 Directories: ${beatPlanResponse.data.directories.length} (${beatPlanResponse.data.progress.totalParties} parties, ${beatPlanResponse.data.progress.totalSites} sites, ${beatPlanResponse.data.progress.totalProspects} prospects), Progress: ${beatPlanResponse.data.progress.percentage}%',
+        );
 
         return beatPlanResponse.data;
       } else {
-        throw Exception('Failed to fetch beat plan details: ${response.statusMessage}');
+        throw Exception(
+          'Failed to fetch beat plan details: ${response.statusMessage}',
+        );
       }
     } on DioException catch (e) {
       AppLogger.e('❌ Dio error fetching beat plan details: ${e.message}');
@@ -254,7 +276,9 @@ class BeatPlanDetailViewModel extends _$BeatPlanDetailViewModel {
   }) async {
     try {
       final dio = ref.read(dioClientProvider);
-      AppLogger.i('Marking $directoryType $directoryId as visited for beat plan $beatPlanId');
+      AppLogger.i(
+        'Marking $directoryType $directoryId as visited for beat plan $beatPlanId',
+      );
       AppLogger.i('📍 User location: $userLatitude, $userLongitude');
 
       final requestBody = {
@@ -285,8 +309,12 @@ class BeatPlanDetailViewModel extends _$BeatPlanDetailViewModel {
 
             // Update tracking notification with new progress
             final visitedCount = beatPlan.progress.visitedDirectories;
-            await TrackingCoordinator.instance.updateVisitProgress(visitedCount);
-            AppLogger.i('📊 Tracking notification updated with progress: $visitedCount visited');
+            await TrackingCoordinator.instance.updateVisitProgress(
+              visitedCount,
+            );
+            AppLogger.i(
+              '📊 Tracking notification updated with progress: $visitedCount visited',
+            );
           } catch (e) {
             AppLogger.w('⚠️ Could not refresh/update tracking progress: $e');
             // Still return true since the visit was marked successfully
@@ -295,7 +323,9 @@ class BeatPlanDetailViewModel extends _$BeatPlanDetailViewModel {
         }
         return true;
       } else {
-        throw Exception('Failed to mark visit as complete: ${response.statusMessage}');
+        throw Exception(
+          'Failed to mark visit as complete: ${response.statusMessage}',
+        );
       }
     } on DioException catch (e) {
       AppLogger.e('❌ Dio error marking visit as complete: ${e.message}');
@@ -320,7 +350,9 @@ class BeatPlanDetailViewModel extends _$BeatPlanDetailViewModel {
   Future<bool> markVisitPending(String beatPlanId, String visitId) async {
     try {
       final dio = ref.read(dioClientProvider);
-      AppLogger.i('Marking visit $visitId as pending for beat plan $beatPlanId');
+      AppLogger.i(
+        'Marking visit $visitId as pending for beat plan $beatPlanId',
+      );
 
       final response = await dio.put(
         ApiEndpoints.markVisitPending(beatPlanId, visitId),
@@ -342,8 +374,12 @@ class BeatPlanDetailViewModel extends _$BeatPlanDetailViewModel {
 
             // Update tracking notification with new progress
             final visitedCount = beatPlan.progress.visitedDirectories;
-            await TrackingCoordinator.instance.updateVisitProgress(visitedCount);
-            AppLogger.i('📊 Tracking notification updated with progress: $visitedCount visited');
+            await TrackingCoordinator.instance.updateVisitProgress(
+              visitedCount,
+            );
+            AppLogger.i(
+              '📊 Tracking notification updated with progress: $visitedCount visited',
+            );
           } catch (e) {
             AppLogger.w('⚠️ Could not refresh/update tracking progress: $e');
             // Still return true since the visit was marked successfully
@@ -352,7 +388,9 @@ class BeatPlanDetailViewModel extends _$BeatPlanDetailViewModel {
         }
         return true;
       } else {
-        throw Exception('Failed to mark visit as pending: ${response.statusMessage}');
+        throw Exception(
+          'Failed to mark visit as pending: ${response.statusMessage}',
+        );
       }
     } on DioException catch (e) {
       AppLogger.e('❌ Dio error marking visit as pending: ${e.message}');

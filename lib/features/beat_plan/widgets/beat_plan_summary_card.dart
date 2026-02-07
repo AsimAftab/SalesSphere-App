@@ -26,12 +26,16 @@ class BeatPlanSummaryCard extends StatelessWidget {
     // Determine status and colors
     final status = beatPlan.status.toLowerCase();
     final statusColor = _getStatusColor(status);
-    final progressColor = _getProgressColor(status, beatPlan.progressPercentage);
+    final progressColor = _getProgressColor(
+      status,
+      beatPlan.progressPercentage,
+    );
     final statusText = _getStatusText(status);
 
     // Check if tracking is active for this beat plan
     // Ignore tracking state for completed beat plans (no tracking should be active)
-    final isTrackingThisPlan = status != 'completed' &&
+    final isTrackingThisPlan =
+        status != 'completed' &&
         TrackingCoordinator.instance.isTracking &&
         TrackingCoordinator.instance.currentBeatPlanId == beatPlan.id;
 
@@ -120,7 +124,8 @@ class BeatPlanSummaryCard extends StatelessWidget {
                 ),
 
                 // Started time if available
-                if ((status == 'in-progress' || status == 'active') && beatPlan.startedAt != null) ...[
+                if ((status == 'in-progress' || status == 'active') &&
+                    beatPlan.startedAt != null) ...[
                   SizedBox(height: 6.h),
                   Row(
                     children: [
@@ -251,20 +256,17 @@ class BeatPlanSummaryCard extends StatelessWidget {
         ),
         child: isLoadingStart
             ? SizedBox(
-          height: 20.h,
-          width: 20.w,
-          child: const CircularProgressIndicator(
-            color: Colors.white,
-            strokeWidth: 2.5,
-          ),
-        )
+                height: 20.h,
+                width: 20.w,
+                child: const CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2.5,
+                ),
+              )
             : Text(
-          'Start Beat Plan',
-          style: TextStyle(
-            fontSize: 13.sp,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+                'Start Beat Plan',
+                style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600),
+              ),
       );
     } else if (status == 'completed') {
       // "View Details" Button
@@ -283,10 +285,7 @@ class BeatPlanSummaryCard extends StatelessWidget {
         ),
         child: Text(
           'View Details',
-          style: TextStyle(
-            fontSize: 13.sp,
-            fontWeight: FontWeight.w600,
-          ),
+          style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600),
         ),
       );
     } else {
@@ -320,7 +319,7 @@ class BeatPlanSummaryCard extends StatelessWidget {
           style: TextStyle(
             fontSize: 12.sp,
             color: AppColors.textSecondary,
-            fontWeight: FontWeight.w500
+            fontWeight: FontWeight.w500,
           ),
         ),
       ],
@@ -360,7 +359,8 @@ class BeatPlanSummaryCard extends StatelessWidget {
 
   Color _getProgressColor(String status, int percentage) {
     if (status == 'completed' || percentage == 100) return AppColors.success;
-    if (status == 'in-progress' || status == 'active') return AppColors.secondary;
+    if (status == 'in-progress' || status == 'active')
+      return AppColors.secondary;
     // For pending (0%), the widthFactor will be 0, so color doesn't matter
     return AppColors.greyLight;
   }

@@ -6,9 +6,10 @@ import 'package:intl/intl.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:sales_sphere/core/utils/snackbar_utils.dart';
+
 import '../models/invoice.models.dart';
-import '../vm/invoice.vm.dart';
 import '../services/invoice_pdf_service.dart';
+import '../vm/invoice.vm.dart';
 
 class InvoiceHistoryScreen extends ConsumerWidget {
   const InvoiceHistoryScreen({super.key});
@@ -78,10 +79,7 @@ class InvoiceHistoryScreen extends ConsumerWidget {
               SizedBox(height: 8.h),
               Text(
                 error.toString(),
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  color: Colors.grey.shade500,
-                ),
+                style: TextStyle(fontSize: 12.sp, color: Colors.grey.shade500),
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: 16.h),
@@ -130,10 +128,14 @@ class InvoiceHistoryScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildInvoiceCard(BuildContext context, WidgetRef ref, InvoiceHistoryItem invoice) {
+  Widget _buildInvoiceCard(
+    BuildContext context,
+    WidgetRef ref,
+    InvoiceHistoryItem invoice,
+  ) {
     final dateFormat = DateFormat('MMM dd, yyyy');
     final timeFormat = DateFormat('hh:mm a');
-    final deliveryDate = invoice.expectedDeliveryDate != null 
+    final deliveryDate = invoice.expectedDeliveryDate != null
         ? DateTime.parse(invoice.expectedDeliveryDate!)
         : null;
     final createdDate = DateTime.parse(invoice.createdAt);
@@ -166,7 +168,10 @@ class InvoiceHistoryScreen extends ConsumerWidget {
                 children: [
                   // Invoice Number
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 6.h,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8.r),
@@ -183,7 +188,10 @@ class InvoiceHistoryScreen extends ConsumerWidget {
                   ),
                   // Status Badge
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10.w,
+                      vertical: 6.h,
+                    ),
                     decoration: BoxDecoration(
                       color: invoice.status.backgroundColor,
                       borderRadius: BorderRadius.circular(8.r),
@@ -315,10 +323,7 @@ class InvoiceHistoryScreen extends ConsumerWidget {
               // Divider
               Padding(
                 padding: EdgeInsets.symmetric(vertical: 12.h),
-                child: Divider(
-                  color: Colors.grey.shade200,
-                  height: 1,
-                ),
+                child: Divider(color: Colors.grey.shade200, height: 1),
               ),
 
               // Footer - Items count, Delivery date, and Download button
@@ -336,7 +341,7 @@ class InvoiceHistoryScreen extends ConsumerWidget {
                         SizedBox(width: 6.w),
                         Flexible(
                           child: Text(
-                            deliveryDate != null 
+                            deliveryDate != null
                                 ? 'Delivery: ${dateFormat.format(deliveryDate)}'
                                 : 'Delivery: Not set',
                             style: TextStyle(
@@ -352,9 +357,17 @@ class InvoiceHistoryScreen extends ConsumerWidget {
                   ),
                   // PDF Download Button
                   GestureDetector(
-                    onTap: () => _downloadInvoicePdf(context, ref, invoice.id, invoice.invoiceNumber ?? 'Invoice'),
+                    onTap: () => _downloadInvoicePdf(
+                      context,
+                      ref,
+                      invoice.id,
+                      invoice.invoiceNumber ?? 'Invoice',
+                    ),
                     child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10.w,
+                        vertical: 6.h,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.secondary,
                         borderRadius: BorderRadius.circular(6.r),
@@ -436,7 +449,9 @@ class InvoiceHistoryScreen extends ConsumerWidget {
       AppLogger.d('Fetching invoice details for: $invoiceId');
 
       // Fetch invoice details
-      final detailsAsync = await ref.read(fetchInvoiceDetailsProvider(invoiceId).future);
+      final detailsAsync = await ref.read(
+        fetchInvoiceDetailsProvider(invoiceId).future,
+      );
 
       if (detailsAsync == null) {
         throw Exception('Invoice details not found');
@@ -543,12 +558,20 @@ class InvoiceHistoryScreen extends ConsumerWidget {
     }
   }
 
-  void _showInvoicePreview(BuildContext context, WidgetRef ref, InvoiceHistoryItem invoice) {
+  void _showInvoicePreview(
+    BuildContext context,
+    WidgetRef ref,
+    InvoiceHistoryItem invoice,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => InvoicePreviewSheet(invoiceId: invoice.id, invoice: invoice, ref: ref),
+      builder: (context) => InvoicePreviewSheet(
+        invoiceId: invoice.id,
+        invoice: invoice,
+        ref: ref,
+      ),
     );
   }
 }
@@ -570,8 +593,10 @@ class InvoicePreviewSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final dateFormat = DateFormat('MMM dd, yyyy');
     final timeFormat = DateFormat('hh:mm a');
-    final invoiceDetailsAsync = ref.watch(fetchInvoiceDetailsProvider(invoiceId));
-    final deliveryDate = invoice.expectedDeliveryDate != null 
+    final invoiceDetailsAsync = ref.watch(
+      fetchInvoiceDetailsProvider(invoiceId),
+    );
+    final deliveryDate = invoice.expectedDeliveryDate != null
         ? DateTime.parse(invoice.expectedDeliveryDate!)
         : null;
     final createdDate = DateTime.parse(invoice.createdAt);
@@ -649,12 +674,17 @@ class InvoicePreviewSheet extends ConsumerWidget {
                                 SizedBox(height: 8.h),
                                 // Status Badge
                                 Container(
-                                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 16.w,
+                                    vertical: 8.h,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: invoice.status.backgroundColor,
                                     borderRadius: BorderRadius.circular(20.r),
                                     border: Border.all(
-                                      color: invoice.status.color.withValues(alpha: 0.3),
+                                      color: invoice.status.color.withValues(
+                                        alpha: 0.3,
+                                      ),
                                       width: 1.5,
                                     ),
                                   ),
@@ -768,7 +798,8 @@ class InvoicePreviewSheet extends ConsumerWidget {
                                 SizedBox(width: 12.w),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         'Expected Delivery',
@@ -781,7 +812,9 @@ class InvoicePreviewSheet extends ConsumerWidget {
                                       SizedBox(height: 2.h),
                                       Text(
                                         deliveryDate != null
-                                            ? DateFormat('EEEE, MMMM dd, yyyy').format(deliveryDate)
+                                            ? DateFormat(
+                                                'EEEE, MMMM dd, yyyy',
+                                              ).format(deliveryDate)
                                             : 'Not set',
                                         style: TextStyle(
                                           fontSize: 14.sp,
@@ -812,7 +845,11 @@ class InvoicePreviewSheet extends ConsumerWidget {
                                   padding: EdgeInsets.all(16.w),
                                   child: Row(
                                     children: [
-                                      Icon(Icons.inventory_2_rounded, size: 20.sp, color: AppColors.primary),
+                                      Icon(
+                                        Icons.inventory_2_rounded,
+                                        size: 20.sp,
+                                        color: AppColors.primary,
+                                      ),
                                       SizedBox(width: 8.w),
                                       Text(
                                         'Items (${details.items.length})',
@@ -830,7 +867,9 @@ class InvoicePreviewSheet extends ConsumerWidget {
                                 Padding(
                                   padding: EdgeInsets.all(12.w),
                                   child: Column(
-                                    children: details.items.map((item) => _buildItemRow(item)).toList(),
+                                    children: details.items
+                                        .map((item) => _buildItemRow(item))
+                                        .toList(),
                                   ),
                                 ),
                               ],
@@ -849,7 +888,11 @@ class InvoicePreviewSheet extends ConsumerWidget {
                             width: double.infinity,
                             child: ElevatedButton.icon(
                               onPressed: () async {
-                                await _downloadPdf(context, details, invoice.invoiceNumber ?? 'Invoice');
+                                await _downloadPdf(
+                                  context,
+                                  details,
+                                  invoice.invoiceNumber ?? 'Invoice',
+                                );
                               },
                               icon: Icon(Icons.download_rounded, size: 20.sp),
                               label: Text(
@@ -892,7 +935,9 @@ class InvoicePreviewSheet extends ConsumerWidget {
                       ),
                       SizedBox(height: 16.h),
                       ElevatedButton(
-                        onPressed: () => ref.invalidate(fetchInvoiceDetailsProvider(invoiceId)),
+                        onPressed: () => ref.invalidate(
+                          fetchInvoiceDetailsProvider(invoiceId),
+                        ),
                         child: const Text('Retry'),
                       ),
                     ],
@@ -1056,7 +1101,12 @@ class InvoicePreviewSheet extends ConsumerWidget {
     }
   }
 
-  Widget _buildInfoCard(String label, IconData icon, String name, String subtitle) {
+  Widget _buildInfoCard(
+    String label,
+    IconData icon,
+    String name,
+    String subtitle,
+  ) {
     return Container(
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
@@ -1140,7 +1190,11 @@ class InvoicePreviewSheet extends ConsumerWidget {
           SizedBox(height: 8.h),
           Row(
             children: [
-              Icon(Icons.location_on_outlined, size: 14.sp, color: Colors.grey.shade600),
+              Icon(
+                Icons.location_on_outlined,
+                size: 14.sp,
+                color: Colors.grey.shade600,
+              ),
               SizedBox(width: 6.w),
               Expanded(
                 child: Text(
@@ -1159,7 +1213,11 @@ class InvoicePreviewSheet extends ConsumerWidget {
           SizedBox(height: 6.h),
           Row(
             children: [
-              Icon(Icons.badge_outlined, size: 14.sp, color: Colors.grey.shade600),
+              Icon(
+                Icons.badge_outlined,
+                size: 14.sp,
+                color: Colors.grey.shade600,
+              ),
               SizedBox(width: 6.w),
               Text(
                 'PAN/VAT: $panVat',
@@ -1177,14 +1235,18 @@ class InvoicePreviewSheet extends ConsumerWidget {
   }
 
   Widget _buildPricingSection(InvoiceDetailsData details) {
-    final subtotal = details.items.fold<double>(0.0, (sum, item) => sum + item.total);
+    final subtotal = details.items.fold<double>(
+      0.0,
+      (sum, item) => sum + item.total,
+    );
 
     // Backend now sends discount as a percentage (0-100)
     final discountPercent = details.discount ?? 0.0;
 
     // Use discountAmount from backend if available, otherwise calculate it
     // Backend calculates: discountAmount = (subtotal * discount) / 100
-    final discountAmount = details.discountAmount ?? (subtotal * discountPercent / 100);
+    final discountAmount =
+        details.discountAmount ?? (subtotal * discountPercent / 100);
 
     final total = details.totalAmount ?? (subtotal - discountAmount);
 
@@ -1206,7 +1268,11 @@ class InvoicePreviewSheet extends ConsumerWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.payments_rounded, size: 20.sp, color: AppColors.primary),
+              Icon(
+                Icons.payments_rounded,
+                size: 20.sp,
+                color: AppColors.primary,
+              ),
               SizedBox(width: 8.w),
               Text(
                 'Pricing Summary',
@@ -1231,7 +1297,10 @@ class InvoicePreviewSheet extends ConsumerWidget {
           ],
           Padding(
             padding: EdgeInsets.symmetric(vertical: 14.h),
-            child: Divider(color: AppColors.primary.withValues(alpha: 0.2), thickness: 1.5),
+            child: Divider(
+              color: AppColors.primary.withValues(alpha: 0.2),
+              thickness: 1.5,
+            ),
           ),
           _buildPriceRow('Total Amount', total, isTotal: true),
         ],
@@ -1290,7 +1359,13 @@ class InvoicePreviewSheet extends ConsumerWidget {
     );
   }
 
-  Widget _buildPriceRow(String label, double amount, {bool isSubtotal = false, bool isDiscount = false, bool isTotal = false}) {
+  Widget _buildPriceRow(
+    String label,
+    double amount, {
+    bool isSubtotal = false,
+    bool isDiscount = false,
+    bool isTotal = false,
+  }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -1311,8 +1386,8 @@ class InvoicePreviewSheet extends ConsumerWidget {
             color: isTotal
                 ? AppColors.primary
                 : isDiscount
-                    ? Colors.green.shade700
-                    : const Color(0xFF202020),
+                ? Colors.green.shade700
+                : const Color(0xFF202020),
             fontFamily: 'Poppins',
           ),
         ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import '../core/constants/app_colors.dart';
 
 /// Primary Text Field Component
@@ -106,16 +107,25 @@ class _PrimaryTextFieldState extends State<PrimaryTextField> {
             widget.onChanged?.call(value);
           },
           buildCounter: widget.showCounter
-              ? null  // Show default counter
-              : (context, {required currentLength, required isFocused, maxLength}) {
-            return const SizedBox.shrink();  // Hide counter
-          },
+              ? null // Show default counter
+              : (
+                  context, {
+                  required currentLength,
+                  required isFocused,
+                  maxLength,
+                }) {
+                  return const SizedBox.shrink(); // Hide counter
+                },
 
           decoration: InputDecoration(
-            contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 16.w,
+              vertical: 14.h,
+            ),
             hintText: widget.hintText,
             label: widget.label,
-            labelStyle: widget.labelStyle ??
+            labelStyle:
+                widget.labelStyle ??
                 TextStyle(
                   color: shouldShowGreyStyle
                       ? AppColors.textSecondary.withValues(alpha: 0.5)
@@ -134,15 +144,15 @@ class _PrimaryTextFieldState extends State<PrimaryTextField> {
             ),
             prefixIcon: widget.prefixIcon != null
                 ? Icon(
-              widget.prefixIcon,
-              // ⭐ Grey icon when disabled or error
-              color: hasError
-                  ? AppColors.error
-                  : (shouldShowGreyStyle
-                  ? AppColors.textSecondary.withValues(alpha: 0.4)
-                  : AppColors.textSecondary),
-              size: 20.sp,
-            )
+                    widget.prefixIcon,
+                    // ⭐ Grey icon when disabled or error
+                    color: hasError
+                        ? AppColors.error
+                        : (shouldShowGreyStyle
+                              ? AppColors.textSecondary.withValues(alpha: 0.4)
+                              : AppColors.textSecondary),
+                    size: 20.sp,
+                  )
                 : null,
             suffixIcon: widget.suffixWidget,
             filled: true,
@@ -150,8 +160,8 @@ class _PrimaryTextFieldState extends State<PrimaryTextField> {
             fillColor: hasError
                 ? AppColors.error.withValues(alpha: 0.05)
                 : (shouldShowGreyStyle
-                ? Colors.grey.shade100
-                : AppColors.surface),
+                      ? Colors.grey.shade100
+                      : AppColors.surface),
 
             // Border Styles
             border: OutlineInputBorder(
@@ -167,8 +177,8 @@ class _PrimaryTextFieldState extends State<PrimaryTextField> {
                 color: hasError
                     ? AppColors.error
                     : (shouldShowGreyStyle
-                    ? AppColors.border.withValues(alpha: 0.2)
-                    : AppColors.border),
+                          ? AppColors.border.withValues(alpha: 0.2)
+                          : AppColors.border),
                 width: 1.5,
               ),
             ),
@@ -181,17 +191,11 @@ class _PrimaryTextFieldState extends State<PrimaryTextField> {
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12.r),
-              borderSide: BorderSide(
-                color: AppColors.error,
-                width: 1.5,
-              ),
+              borderSide: BorderSide(color: AppColors.error, width: 1.5),
             ),
             focusedErrorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12.r),
-              borderSide: BorderSide(
-                color: AppColors.error,
-                width: 2,
-              ),
+              borderSide: BorderSide(color: AppColors.error, width: 2),
             ),
             // ⭐ Very light border when disabled
             disabledBorder: OutlineInputBorder(
@@ -230,11 +234,7 @@ class _PrimaryTextFieldState extends State<PrimaryTextField> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  Icons.error_outline,
-                  size: 14.sp,
-                  color: AppColors.error,
-                ),
+                Icon(Icons.error_outline, size: 14.sp, color: AppColors.error),
                 SizedBox(width: 6.w),
                 Expanded(
                   child: Text(

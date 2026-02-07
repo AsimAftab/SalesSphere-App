@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import '../constants/app_colors.dart';
 
 /// Modern Snackbar Utility
@@ -87,11 +88,7 @@ class SnackbarUtils {
               color: Colors.white.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              icon,
-              color: Colors.white,
-              size: 20.sp,
-            ),
+            child: Icon(icon, color: Colors.white, size: 20.sp),
           ),
           SizedBox(width: 12.w),
           Expanded(

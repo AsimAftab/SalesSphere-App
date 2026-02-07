@@ -1,6 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
+import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:sales_sphere/features/parties/models/parties.model.dart';
 
@@ -32,7 +32,9 @@ class PartyTypesViewModel extends _$PartyTypesViewModel {
         AppLogger.i('✅ Fetched ${apiResponse.count} party types');
         return apiResponse.data;
       } else {
-        throw Exception('Failed to fetch party types: ${response.statusMessage}');
+        throw Exception(
+          'Failed to fetch party types: ${response.statusMessage}',
+        );
       }
     } catch (e) {
       AppLogger.e('❌ Error fetching party types: $e');

@@ -42,19 +42,37 @@ class ModuleConfig {
     'parties': AppModule(
       id: 'parties',
       displayName: 'Parties',
-      routePaths: ['/parties', '/directory/party-list', '/add-party', '/edit_party_details_screen'],
+      routePaths: [
+        '/parties',
+        '/directory/party-list',
+        '/add-party',
+        '/edit_party_details_screen',
+      ],
       directoryIndex: 0,
     ),
     'prospects': AppModule(
       id: 'prospects',
       displayName: 'Prospects',
-      routePaths: ['/prospects', '/directory/prospects-list', '/add-prospect', '/edit-prospect', '/edit_prospect_details_screen'],
+      routePaths: [
+        '/prospects',
+        '/directory/prospects-list',
+        '/add-prospect',
+        '/edit-prospect',
+        '/edit_prospect_details_screen',
+      ],
       directoryIndex: 1,
     ),
     'sites': AppModule(
       id: 'sites',
       displayName: 'Sites',
-      routePaths: ['/sites', '/directory/sites-list', '/add-site', '/edit-site', '/edit_site_details_screen', '/sites/images'],
+      routePaths: [
+        '/sites',
+        '/directory/sites-list',
+        '/add-site',
+        '/edit-site',
+        '/edit_site_details_screen',
+        '/sites/images',
+      ],
       directoryIndex: 2,
     ),
 
@@ -104,7 +122,11 @@ class ModuleConfig {
     'miscellaneousWork': AppModule(
       id: 'miscellaneousWork',
       displayName: 'Miscellaneous Work',
-      routePaths: ['/miscellaneous-work', '/add-miscellaneous-work', '/edit-miscellaneous-work'],
+      routePaths: [
+        '/miscellaneous-work',
+        '/add-miscellaneous-work',
+        '/edit-miscellaneous-work',
+      ],
       utilityIndex: 7,
     ),
 
@@ -221,7 +243,8 @@ class ModuleConfig {
 
   /// Check if route requires module access check
   static bool requiresModuleCheck(String path) {
-    return !_matchesAlwaysAccessibleRoute(path) && getModuleForRoute(path) != null;
+    return !_matchesAlwaysAccessibleRoute(path) &&
+        getModuleForRoute(path) != null;
   }
 
   /// Get display name for a module
@@ -301,7 +324,8 @@ class ModuleConfig {
     bool Function(String) isEnabledFn,
   ) {
     int currentIndex = 0;
-    final invoiceOrEstimatesEnabled = isEnabledFn('invoices') || isEnabledFn('estimates');
+    final invoiceOrEstimatesEnabled =
+        isEnabledFn('invoices') || isEnabledFn('estimates');
 
     for (final navModuleId in navTabModules) {
       if (!isEnabledFn(navModuleId)) continue;
@@ -330,7 +354,8 @@ class ModuleConfig {
         logicalIndex++;
       }
       // Add spacer position after catalog if invoice/estimates enabled
-      if (navModuleId == 'products' && (isEnabledFn('invoices') || isEnabledFn('estimates'))) {
+      if (navModuleId == 'products' &&
+          (isEnabledFn('invoices') || isEnabledFn('estimates'))) {
         logicalIndex++;
       }
     }

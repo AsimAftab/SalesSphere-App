@@ -1,23 +1,17 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:intl/intl.dart';
-import 'package:dio/dio.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/exceptions/offline_exception.dart';
 import 'package:sales_sphere/widget/no_internet_screen.dart';
+
 import '../models/attendance.models.dart';
 import '../vm/attendance.vm.dart';
-import 'attendance_detail_screen.dart';
 
-enum AttendanceFilter {
-  all,
-  present,
-  absent,
-  leave,
-  halfDay,
-}
+enum AttendanceFilter { all, present, absent, leave, halfDay }
 
 class AttendanceMonthlyDetailsScreen extends ConsumerStatefulWidget {
   final DateTime? initialMonth;
@@ -140,7 +134,8 @@ class _AttendanceMonthlyDetailsScreenState
   /// Get the appropriate search provider based on filters
   AttendanceSearchViewModelProvider _getSearchProvider() {
     return attendanceSearchViewModelProvider(
-      status: _getStatusCodes(), // const lists maintain identity
+      status: _getStatusCodes(),
+      // const lists maintain identity
       month: _selectedMonth.month,
       year: _selectedMonth.year,
       page: 1,
@@ -209,7 +204,8 @@ class _AttendanceMonthlyDetailsScreenState
                               ? _scrollController
                               : null,
                           padding: EdgeInsets.symmetric(horizontal: 16.w),
-                          itemCount: response.data.length +
+                          itemCount:
+                              response.data.length +
                               (response.pagination.hasNextPage ? 1 : 0),
                           itemBuilder: (context, index) {
                             if (index == response.data.length) {
@@ -350,153 +346,52 @@ class _AttendanceMonthlyDetailsScreenState
           ],
         ),
         child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Date and Status
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    record.dayOfWeek,
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  SizedBox(height: 2.h),
-                  Text(
-                    dateStr,
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(20.r),
-                ),
-                child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Date and Status
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(statusIcon, size: 14.sp, color: statusColor),
-                    SizedBox(width: 4.w),
                     Text(
-                      statusText,
+                      record.dayOfWeek,
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: 2.h),
+                    Text(
+                      dateStr,
                       style: TextStyle(
                         fontSize: 12.sp,
-                        fontWeight: FontWeight.w600,
-                        color: statusColor,
+                        color: AppColors.textSecondary,
                       ),
                     ),
                   ],
                 ),
-              ),
-            ],
-          ),
-
-          // Time and Location Details (if present/half-day)
-          if (record.status == AttendanceStatus.present ||
-              record.status == AttendanceStatus.halfDay) ...[
-            SizedBox(height: 12.h),
-            Divider(color: AppColors.border, height: 1),
-            SizedBox(height: 12.h),
-
-            // Check-in and Check-out times
-            Row(
-              children: [
-                Expanded(
-                  child: _buildDetailItem(
-                    Icons.login,
-                    'Check-in',
-                    record.checkInTime != null
-                        ? DateFormat('hh:mm a')
-                            .format(DateTime.parse(record.checkInTime!).toLocal())
-                        : '--:--',
-                    AppColors.success,
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 12.w,
+                    vertical: 6.h,
                   ),
-                ),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: _buildDetailItem(
-                    Icons.logout,
-                    'Check-out',
-                    record.checkOutTime != null
-                        ? DateFormat('hh:mm a')
-                            .format(DateTime.parse(record.checkOutTime!).toLocal())
-                        : '--:--',
-                    AppColors.error,
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(20.r),
                   ),
-                ),
-              ],
-            ),
-
-            SizedBox(height: 12.h),
-
-            // Hours worked and Location
-            Row(
-              children: [
-                Expanded(
-                  child: _buildDetailItem(
-                    Icons.access_time,
-                    'Hours Worked',
-                    record.hoursWorked != null
-                        ? '${record.hoursWorked!.toStringAsFixed(1)}h'
-                        : '--',
-                    AppColors.secondary,
-                  ),
-                ),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: _buildDetailItem(
-                    Icons.location_on,
-                    'Location',
-                    record.checkInAddress ?? 'Not available',
-                    AppColors.info,
-                  ),
-                ),
-              ],
-            ),
-          ],
-
-          // Notes (if any)
-          if (record.notes != null && record.notes!.isNotEmpty) ...[
-            SizedBox(height: 12.h),
-            Divider(color: AppColors.border, height: 1),
-            SizedBox(height: 12.h),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  Icons.note,
-                  size: 16.sp,
-                  color: AppColors.textSecondary,
-                ),
-                SizedBox(width: 8.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
                     children: [
+                      Icon(statusIcon, size: 14.sp, color: statusColor),
+                      SizedBox(width: 4.w),
                       Text(
-                        'Notes',
+                        statusText,
                         style: TextStyle(
-                          fontSize: 11.sp,
-                          color: AppColors.textSecondary,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      SizedBox(height: 2.h),
-                      Text(
-                        record.notes!,
-                        style: TextStyle(
-                          fontSize: 13.sp,
-                          color: AppColors.textPrimary,
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w600,
+                          color: statusColor,
                         ),
                       ),
                     ],
@@ -504,15 +399,121 @@ class _AttendanceMonthlyDetailsScreenState
                 ),
               ],
             ),
+
+            // Time and Location Details (if present/half-day)
+            if (record.status == AttendanceStatus.present ||
+                record.status == AttendanceStatus.halfDay) ...[
+              SizedBox(height: 12.h),
+              Divider(color: AppColors.border, height: 1),
+              SizedBox(height: 12.h),
+
+              // Check-in and Check-out times
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildDetailItem(
+                      Icons.login,
+                      'Check-in',
+                      record.checkInTime != null
+                          ? DateFormat('hh:mm a').format(
+                              DateTime.parse(record.checkInTime!).toLocal(),
+                            )
+                          : '--:--',
+                      AppColors.success,
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: _buildDetailItem(
+                      Icons.logout,
+                      'Check-out',
+                      record.checkOutTime != null
+                          ? DateFormat('hh:mm a').format(
+                              DateTime.parse(record.checkOutTime!).toLocal(),
+                            )
+                          : '--:--',
+                      AppColors.error,
+                    ),
+                  ),
+                ],
+              ),
+
+              SizedBox(height: 12.h),
+
+              // Hours worked and Location
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildDetailItem(
+                      Icons.access_time,
+                      'Hours Worked',
+                      record.hoursWorked != null
+                          ? '${record.hoursWorked!.toStringAsFixed(1)}h'
+                          : '--',
+                      AppColors.secondary,
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: _buildDetailItem(
+                      Icons.location_on,
+                      'Location',
+                      record.checkInAddress ?? 'Not available',
+                      AppColors.info,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+
+            // Notes (if any)
+            if (record.notes != null && record.notes!.isNotEmpty) ...[
+              SizedBox(height: 12.h),
+              Divider(color: AppColors.border, height: 1),
+              SizedBox(height: 12.h),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.note, size: 16.sp, color: AppColors.textSecondary),
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Notes',
+                          style: TextStyle(
+                            fontSize: 11.sp,
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        SizedBox(height: 2.h),
+                        Text(
+                          record.notes!,
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
-        ],
         ),
       ),
     );
   }
 
   Widget _buildDetailItem(
-      IconData icon, String label, String value, Color color) {
+    IconData icon,
+    String label,
+    String value,
+    Color color,
+  ) {
     return Row(
       children: [
         Icon(icon, size: 16.sp, color: color),
@@ -598,8 +599,11 @@ class _AttendanceMonthlyDetailsScreenState
                     value: AttendanceFilter.all,
                     child: Row(
                       children: [
-                        Icon(Icons.list,
-                            size: 18.sp, color: AppColors.textPrimary),
+                        Icon(
+                          Icons.list,
+                          size: 18.sp,
+                          color: AppColors.textPrimary,
+                        ),
                         SizedBox(width: 8.w),
                         const Text('All Days'),
                       ],
@@ -609,8 +613,11 @@ class _AttendanceMonthlyDetailsScreenState
                     value: AttendanceFilter.present,
                     child: Row(
                       children: [
-                        Icon(Icons.check_circle,
-                            size: 18.sp, color: AppColors.success),
+                        Icon(
+                          Icons.check_circle,
+                          size: 18.sp,
+                          color: AppColors.success,
+                        ),
                         SizedBox(width: 8.w),
                         const Text('Present'),
                       ],
@@ -620,8 +627,7 @@ class _AttendanceMonthlyDetailsScreenState
                     value: AttendanceFilter.absent,
                     child: Row(
                       children: [
-                        Icon(Icons.cancel,
-                            size: 18.sp, color: AppColors.error),
+                        Icon(Icons.cancel, size: 18.sp, color: AppColors.error),
                         SizedBox(width: 8.w),
                         const Text('Absent'),
                       ],
@@ -631,8 +637,11 @@ class _AttendanceMonthlyDetailsScreenState
                     value: AttendanceFilter.leave,
                     child: Row(
                       children: [
-                        Icon(Icons.event_busy,
-                            size: 18.sp, color: const Color(0xFFFF9800)),
+                        Icon(
+                          Icons.event_busy,
+                          size: 18.sp,
+                          color: const Color(0xFFFF9800),
+                        ),
                         SizedBox(width: 8.w),
                         const Text('Leave'),
                       ],
@@ -642,8 +651,11 @@ class _AttendanceMonthlyDetailsScreenState
                     value: AttendanceFilter.halfDay,
                     child: Row(
                       children: [
-                        Icon(Icons.schedule,
-                            size: 18.sp, color: const Color(0xFFFFEB3B)),
+                        Icon(
+                          Icons.schedule,
+                          size: 18.sp,
+                          color: const Color(0xFFFFEB3B),
+                        ),
                         SizedBox(width: 8.w),
                         const Text('Half-Day'),
                       ],
@@ -687,10 +699,7 @@ class _AttendanceMonthlyDetailsScreenState
           SizedBox(height: 8.h),
           Text(
             'for ${DateFormat('MMMM yyyy').format(_selectedMonth)}',
-            style: TextStyle(
-              fontSize: 14.sp,
-              color: AppColors.textSecondary,
-            ),
+            style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
           ),
         ],
       ),
@@ -699,7 +708,8 @@ class _AttendanceMonthlyDetailsScreenState
 
   Widget _buildErrorState(Object error) {
     // Check if error is OfflineException (typed exception)
-    final isOffline = error is OfflineException ||
+    final isOffline =
+        error is OfflineException ||
         (error is DioException && error.error is OfflineException);
 
     if (isOffline) {
@@ -733,10 +743,7 @@ class _AttendanceMonthlyDetailsScreenState
             child: Text(
               error.toString(),
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 12.sp,
-                color: AppColors.textSecondary,
-              ),
+              style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
             ),
           ),
           SizedBox(height: 16.h),

@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
-import 'package:skeletonizer/skeletonizer.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/features/prospects/vm/prospects.vm.dart';
 import 'package:sales_sphere/widget/universal_list_card.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class ProspectsScreen extends ConsumerStatefulWidget {
   const ProspectsScreen({super.key});
@@ -72,10 +72,7 @@ class _ProspectsScreenState extends ConsumerState<ProspectsScreen> {
           ),
           Column(
             children: [
-              Container(
-                height: 120.h,
-                color: Colors.transparent,
-              ),
+              Container(height: 120.h, color: Colors.transparent),
               // Search Bar Section
               Container(
                 color: Colors.transparent,
@@ -97,16 +94,16 @@ class _ProspectsScreenState extends ConsumerState<ProspectsScreen> {
                     ),
                     suffixIcon: searchQuery.isNotEmpty
                         ? IconButton(
-                      icon: Icon(
-                        Icons.clear,
-                        color: Colors.grey.shade400,
-                        size: 20.sp,
-                      ),
-                      onPressed: () {
-                        _searchController.clear();
-                        _onSearchChanged('');
-                      },
-                    )
+                            icon: Icon(
+                              Icons.clear,
+                              color: Colors.grey.shade400,
+                              size: 20.sp,
+                            ),
+                            onPressed: () {
+                              _searchController.clear();
+                              _onSearchChanged('');
+                            },
+                          )
                         : null,
                     filled: true,
                     fillColor: Colors.white,
@@ -120,7 +117,10 @@ class _ProspectsScreenState extends ConsumerState<ProspectsScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.r),
-                      borderSide: BorderSide(color: AppColors.primary, width: 2),
+                      borderSide: BorderSide(
+                        color: AppColors.primary,
+                        width: 2,
+                      ),
                     ),
                     contentPadding: EdgeInsets.symmetric(
                       horizontal: 16.w,
@@ -179,7 +179,9 @@ class _ProspectsScreenState extends ConsumerState<ProspectsScreen> {
                     }
                     return RefreshIndicator(
                       onRefresh: () async {
-                        await ref.read(prospectViewModelProvider.notifier).refresh();
+                        await ref
+                            .read(prospectViewModelProvider.notifier)
+                            .refresh();
                       },
                       color: AppColors.primary,
                       child: ListView.separated(
@@ -200,7 +202,8 @@ class _ProspectsScreenState extends ConsumerState<ProspectsScreen> {
                             leadingSize: 48.w,
                             title: prospect.name,
                             subtitle: prospect.location.address,
-                            onTap: () => _navigateToProspectDetails(prospect.id),
+                            onTap: () =>
+                                _navigateToProspectDetails(prospect.id),
                             showArrow: true,
                             arrowColor: AppColors.primary,
                           );
@@ -267,7 +270,9 @@ class _ProspectsScreenState extends ConsumerState<ProspectsScreen> {
                         SizedBox(height: 16.h),
                         ElevatedButton(
                           onPressed: () {
-                            ref.read(prospectViewModelProvider.notifier).refresh();
+                            ref
+                                .read(prospectViewModelProvider.notifier)
+                                .refresh();
                           },
                           child: const Text('Retry'),
                         ),
@@ -284,11 +289,7 @@ class _ProspectsScreenState extends ConsumerState<ProspectsScreen> {
         onPressed: _navigateToAddProspect,
         backgroundColor: AppColors.primary,
         elevation: 4,
-        icon: Icon(
-          Icons.add,
-          color: Colors.white,
-          size: 20.sp,
-        ),
+        icon: Icon(Icons.add, color: Colors.white, size: 20.sp),
         label: Text(
           'Add Prospect',
           style: TextStyle(

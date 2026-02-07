@@ -56,17 +56,34 @@ class TermsAndConditionsScreen extends StatelessWidget {
             // 2. Definitions
             _buildSectionTitle('2. Definitions'),
             SizedBox(height: 12.h),
-            _buildDefinition('"Service"', 'refers to the SalesSphere platform, including all features, applications, and tools.'),
-            _buildDefinition('"User," "You," "Your"', 'refers to the individual or organization using the Service.'),
-            _buildDefinition('"We," "Us," "Our"', 'refers to SalesSphere and its affiliates.'),
-            _buildDefinition('"Account"', 'refers to your registered SalesSphere account.'),
-            _buildDefinition('"Content"', 'refers to all data, information, and materials uploaded to the Service.'),
+            _buildDefinition(
+              '"Service"',
+              'refers to the SalesSphere platform, including all features, applications, and tools.',
+            ),
+            _buildDefinition(
+              '"User," "You," "Your"',
+              'refers to the individual or organization using the Service.',
+            ),
+            _buildDefinition(
+              '"We," "Us," "Our"',
+              'refers to SalesSphere and its affiliates.',
+            ),
+            _buildDefinition(
+              '"Account"',
+              'refers to your registered SalesSphere account.',
+            ),
+            _buildDefinition(
+              '"Content"',
+              'refers to all data, information, and materials uploaded to the Service.',
+            ),
             SizedBox(height: 24.h),
 
             // 3. Service Description
             _buildSectionTitle('3. Service Description'),
             SizedBox(height: 12.h),
-            _buildParagraph('SalesSphere provides a field sales management platform that includes:'),
+            _buildParagraph(
+              'SalesSphere provides a field sales management platform that includes:',
+            ),
             SizedBox(height: 8.h),
             _buildBulletPoint('GPS tracking and route optimization'),
             _buildBulletPoint('Order management systems'),
@@ -75,7 +92,9 @@ class TermsAndConditionsScreen extends StatelessWidget {
             _buildBulletPoint('Stock management features'),
             _buildBulletPoint('Role-based access control'),
             SizedBox(height: 8.h),
-            _buildParagraph('We reserve the right to modify, suspend, or discontinue any part of the Service at any time with reasonable notice.'),
+            _buildParagraph(
+              'We reserve the right to modify, suspend, or discontinue any part of the Service at any time with reasonable notice.',
+            ),
             SizedBox(height: 24.h),
 
             // 4. Account Registration and Eligibility
@@ -83,22 +102,40 @@ class TermsAndConditionsScreen extends StatelessWidget {
             SizedBox(height: 12.h),
             _buildSubsectionTitle('4.1 Eligibility'),
             SizedBox(height: 8.h),
-            _buildBulletPoint('You must be at least 18 years old to use the Service'),
-            _buildBulletPoint('You must have the legal authority to enter into these Terms'),
-            _buildBulletPoint('You must provide accurate and complete registration information'),
+            _buildBulletPoint(
+              'You must be at least 18 years old to use the Service',
+            ),
+            _buildBulletPoint(
+              'You must have the legal authority to enter into these Terms',
+            ),
+            _buildBulletPoint(
+              'You must provide accurate and complete registration information',
+            ),
             SizedBox(height: 12.h),
             _buildSubsectionTitle('4.2 Account Security'),
             SizedBox(height: 8.h),
-            _buildBulletPoint('You are responsible for maintaining the confidentiality of your account credentials'),
-            _buildBulletPoint('You must notify us immediately of any unauthorized access'),
-            _buildBulletPoint('You are responsible for all activities that occur under your account'),
+            _buildBulletPoint(
+              'You are responsible for maintaining the confidentiality of your account credentials',
+            ),
+            _buildBulletPoint(
+              'You must notify us immediately of any unauthorized access',
+            ),
+            _buildBulletPoint(
+              'You are responsible for all activities that occur under your account',
+            ),
             _buildBulletPoint('Sharing account credentials is prohibited'),
             SizedBox(height: 12.h),
             _buildSubsectionTitle('4.3 Account Information'),
             SizedBox(height: 8.h),
-            _buildBulletPoint('You must provide accurate, current, and complete information'),
-            _buildBulletPoint('You must update your information promptly when it changes'),
-            _buildBulletPoint('We reserve the right to suspend or terminate accounts with false information'),
+            _buildBulletPoint(
+              'You must provide accurate, current, and complete information',
+            ),
+            _buildBulletPoint(
+              'You must update your information promptly when it changes',
+            ),
+            _buildBulletPoint(
+              'We reserve the right to suspend or terminate accounts with false information',
+            ),
             SizedBox(height: 24.h),
 
             // 5. User Responsibilities and Acceptable Use
@@ -107,7 +144,9 @@ class TermsAndConditionsScreen extends StatelessWidget {
             _buildSubsectionTitle('5.1 You Agree To:'),
             SizedBox(height: 8.h),
             _buildBulletPoint('Use the Service only for lawful purposes'),
-            _buildBulletPoint('Comply with all applicable laws and regulations'),
+            _buildBulletPoint(
+              'Comply with all applicable laws and regulations',
+            ),
             _buildBulletPoint('Respect intellectual property rights'),
             _buildBulletPoint('Maintain the security of your account'),
             _buildBulletPoint('Provide accurate data and information'),
@@ -116,14 +155,30 @@ class TermsAndConditionsScreen extends StatelessWidget {
             SizedBox(height: 8.h),
             _buildBulletPoint('Violate any laws or regulations'),
             _buildBulletPoint('Infringe on intellectual property rights'),
-            _buildBulletPoint('Upload malicious code, viruses, or harmful software'),
-            _buildBulletPoint('Attempt to gain unauthorized access to the Service'),
-            _buildBulletPoint('Reverse engineer, decompile, or disassemble the software'),
-            _buildBulletPoint('Use the Service to spam, harass, or harm others'),
-            _buildBulletPoint('Scrape, mine, or extract data without permission'),
-            _buildBulletPoint('Resell or redistribute the Service without authorization'),
-            _buildBulletPoint('Interfere with or disrupt the Service or servers'),
-            _buildBulletPoint('Impersonate others or misrepresent your affiliation'),
+            _buildBulletPoint(
+              'Upload malicious code, viruses, or harmful software',
+            ),
+            _buildBulletPoint(
+              'Attempt to gain unauthorized access to the Service',
+            ),
+            _buildBulletPoint(
+              'Reverse engineer, decompile, or disassemble the software',
+            ),
+            _buildBulletPoint(
+              'Use the Service to spam, harass, or harm others',
+            ),
+            _buildBulletPoint(
+              'Scrape, mine, or extract data without permission',
+            ),
+            _buildBulletPoint(
+              'Resell or redistribute the Service without authorization',
+            ),
+            _buildBulletPoint(
+              'Interfere with or disrupt the Service or servers',
+            ),
+            _buildBulletPoint(
+              'Impersonate others or misrepresent your affiliation',
+            ),
             SizedBox(height: 24.h),
 
             // 6. Subscription and Payment Terms
@@ -131,29 +186,53 @@ class TermsAndConditionsScreen extends StatelessWidget {
             SizedBox(height: 12.h),
             _buildSubsectionTitle('6.1 Subscription Plans'),
             SizedBox(height: 8.h),
-            _buildBulletPoint('Various subscription tiers are available with different features'),
-            _buildBulletPoint('Pricing is available on our website and may change with notice'),
-            _buildBulletPoint('Subscriptions are billed in advance on a recurring basis'),
+            _buildBulletPoint(
+              'Various subscription tiers are available with different features',
+            ),
+            _buildBulletPoint(
+              'Pricing is available on our website and may change with notice',
+            ),
+            _buildBulletPoint(
+              'Subscriptions are billed in advance on a recurring basis',
+            ),
             SizedBox(height: 12.h),
             _buildSubsectionTitle('6.2 Payment'),
             SizedBox(height: 8.h),
-            _buildBulletPoint('You authorize us to charge your payment method for all fees'),
-            _buildBulletPoint('All fees are non-refundable except as required by law'),
-            _buildBulletPoint('You are responsible for all taxes associated with your use'),
-            _buildBulletPoint('Failure to pay may result in service suspension or termination'),
+            _buildBulletPoint(
+              'You authorize us to charge your payment method for all fees',
+            ),
+            _buildBulletPoint(
+              'All fees are non-refundable except as required by law',
+            ),
+            _buildBulletPoint(
+              'You are responsible for all taxes associated with your use',
+            ),
+            _buildBulletPoint(
+              'Failure to pay may result in service suspension or termination',
+            ),
             SizedBox(height: 12.h),
             _buildSubsectionTitle('6.3 Free Trials'),
             SizedBox(height: 8.h),
             _buildBulletPoint('Free trials may be offered at our discretion'),
-            _buildBulletPoint('We may require payment information before starting a trial'),
-            _buildBulletPoint('Trials automatically convert to paid subscriptions unless cancelled'),
+            _buildBulletPoint(
+              'We may require payment information before starting a trial',
+            ),
+            _buildBulletPoint(
+              'Trials automatically convert to paid subscriptions unless cancelled',
+            ),
             _buildBulletPoint('One free trial per customer'),
             SizedBox(height: 12.h),
             _buildSubsectionTitle('6.4 Refund Policy'),
             SizedBox(height: 8.h),
-            _buildBulletPoint('Refunds are generally not provided except as required by law'),
-            _buildBulletPoint('Requests must be submitted within 30 days of payment'),
-            _buildBulletPoint('We reserve the right to approve or deny refund requests'),
+            _buildBulletPoint(
+              'Refunds are generally not provided except as required by law',
+            ),
+            _buildBulletPoint(
+              'Requests must be submitted within 30 days of payment',
+            ),
+            _buildBulletPoint(
+              'We reserve the right to approve or deny refund requests',
+            ),
             SizedBox(height: 24.h),
 
             // 7. Intellectual Property Rights
@@ -161,20 +240,36 @@ class TermsAndConditionsScreen extends StatelessWidget {
             SizedBox(height: 12.h),
             _buildSubsectionTitle('7.1 Our Rights'),
             SizedBox(height: 8.h),
-            _buildBulletPoint('SalesSphere and all related trademarks, logos, and content are our property'),
-            _buildBulletPoint('The Service, including its software, design, and features, is protected by copyright, trademark, and other laws'),
-            _buildBulletPoint('You may not use our intellectual property without written permission'),
+            _buildBulletPoint(
+              'SalesSphere and all related trademarks, logos, and content are our property',
+            ),
+            _buildBulletPoint(
+              'The Service, including its software, design, and features, is protected by copyright, trademark, and other laws',
+            ),
+            _buildBulletPoint(
+              'You may not use our intellectual property without written permission',
+            ),
             SizedBox(height: 12.h),
             _buildSubsectionTitle('7.2 Your Rights'),
             SizedBox(height: 8.h),
-            _buildBulletPoint('You retain ownership of all content you upload to the Service'),
-            _buildBulletPoint('You grant us a license to use, store, and process your content to provide the Service'),
-            _buildBulletPoint('This license terminates when you delete content or close your account'),
+            _buildBulletPoint(
+              'You retain ownership of all content you upload to the Service',
+            ),
+            _buildBulletPoint(
+              'You grant us a license to use, store, and process your content to provide the Service',
+            ),
+            _buildBulletPoint(
+              'This license terminates when you delete content or close your account',
+            ),
             SizedBox(height: 12.h),
             _buildSubsectionTitle('7.3 Feedback'),
             SizedBox(height: 8.h),
-            _buildBulletPoint('Any feedback, suggestions, or ideas you provide become our property'),
-            _buildBulletPoint('We may use feedback without compensation or attribution'),
+            _buildBulletPoint(
+              'Any feedback, suggestions, or ideas you provide become our property',
+            ),
+            _buildBulletPoint(
+              'We may use feedback without compensation or attribution',
+            ),
             SizedBox(height: 24.h),
 
             // 8. License and Restrictions
@@ -182,15 +277,27 @@ class TermsAndConditionsScreen extends StatelessWidget {
             SizedBox(height: 12.h),
             _buildSubsectionTitle('8.1 License Grant'),
             SizedBox(height: 8.h),
-            _buildBulletPoint('We grant you a limited, non-exclusive, non-transferable license to use the Service'),
-            _buildBulletPoint('This license is subject to these Terms and your subscription status'),
+            _buildBulletPoint(
+              'We grant you a limited, non-exclusive, non-transferable license to use the Service',
+            ),
+            _buildBulletPoint(
+              'This license is subject to these Terms and your subscription status',
+            ),
             SizedBox(height: 12.h),
             _buildSubsectionTitle('8.2 Restrictions'),
             SizedBox(height: 8.h),
-            _buildBulletPoint('You may not copy, modify, or create derivative works'),
-            _buildBulletPoint('You may not rent, lease, or sublicense the Service'),
-            _buildBulletPoint('You may not use the Service for competitive purposes'),
-            _buildBulletPoint('You may not access the Service through automated means without permission'),
+            _buildBulletPoint(
+              'You may not copy, modify, or create derivative works',
+            ),
+            _buildBulletPoint(
+              'You may not rent, lease, or sublicense the Service',
+            ),
+            _buildBulletPoint(
+              'You may not use the Service for competitive purposes',
+            ),
+            _buildBulletPoint(
+              'You may not access the Service through automated means without permission',
+            ),
             SizedBox(height: 24.h),
 
             // 9. Data Privacy and Security
@@ -198,29 +305,49 @@ class TermsAndConditionsScreen extends StatelessWidget {
             SizedBox(height: 12.h),
             _buildSubsectionTitle('9.1 Data Collection'),
             SizedBox(height: 8.h),
-            _buildBulletPoint('We collect and process data as described in our Privacy Policy'),
-            _buildBulletPoint('You are responsible for obtaining consent from your users/employees for data collection'),
+            _buildBulletPoint(
+              'We collect and process data as described in our Privacy Policy',
+            ),
+            _buildBulletPoint(
+              'You are responsible for obtaining consent from your users/employees for data collection',
+            ),
             SizedBox(height: 12.h),
             _buildSubsectionTitle('9.2 Data Security'),
             SizedBox(height: 8.h),
-            _buildBulletPoint('We implement reasonable security measures to protect your data'),
-            _buildBulletPoint('However, no system is completely secure, and we cannot guarantee absolute security'),
-            _buildBulletPoint('You are responsible for backing up your critical data'),
+            _buildBulletPoint(
+              'We implement reasonable security measures to protect your data',
+            ),
+            _buildBulletPoint(
+              'However, no system is completely secure, and we cannot guarantee absolute security',
+            ),
+            _buildBulletPoint(
+              'You are responsible for backing up your critical data',
+            ),
             SizedBox(height: 12.h),
             _buildSubsectionTitle('9.3 Data Ownership'),
             SizedBox(height: 8.h),
             _buildBulletPoint('You own all data you input into the Service'),
             _buildBulletPoint('We do not sell your data to third parties'),
-            _buildBulletPoint('Upon termination, you may export your data within 30 days'),
+            _buildBulletPoint(
+              'Upon termination, you may export your data within 30 days',
+            ),
             SizedBox(height: 24.h),
 
             // 10. Third-Party Services and Integrations
             _buildSectionTitle('10. Third-Party Services and Integrations'),
             SizedBox(height: 8.h),
-            _buildBulletPoint('The Service may integrate with third-party services'),
-            _buildBulletPoint('We are not responsible for third-party services or their terms'),
-            _buildBulletPoint('Your use of third-party services is subject to their terms and policies'),
-            _buildBulletPoint('We do not endorse or guarantee third-party services'),
+            _buildBulletPoint(
+              'The Service may integrate with third-party services',
+            ),
+            _buildBulletPoint(
+              'We are not responsible for third-party services or their terms',
+            ),
+            _buildBulletPoint(
+              'Your use of third-party services is subject to their terms and policies',
+            ),
+            _buildBulletPoint(
+              'We do not endorse or guarantee third-party services',
+            ),
             SizedBox(height: 24.h),
 
             // 11. Warranties and Disclaimers
@@ -228,12 +355,18 @@ class TermsAndConditionsScreen extends StatelessWidget {
             SizedBox(height: 12.h),
             _buildSubsectionTitle('11.1 Service Availability'),
             SizedBox(height: 8.h),
-            _buildBulletPoint('We strive for 99.9% uptime but do not guarantee uninterrupted service'),
-            _buildBulletPoint('Scheduled maintenance will be announced in advance when possible'),
+            _buildBulletPoint(
+              'We strive for 99.9% uptime but do not guarantee uninterrupted service',
+            ),
+            _buildBulletPoint(
+              'Scheduled maintenance will be announced in advance when possible',
+            ),
             SizedBox(height: 12.h),
             _buildSubsectionTitle('11.2 Disclaimer of Warranties'),
             SizedBox(height: 8.h),
-            _buildHighlightedText('THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO:'),
+            _buildHighlightedText(
+              'THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO:',
+            ),
             SizedBox(height: 8.h),
             _buildBulletPoint('Warranties of merchantability'),
             _buildBulletPoint('Fitness for a particular purpose'),
@@ -242,9 +375,13 @@ class TermsAndConditionsScreen extends StatelessWidget {
             SizedBox(height: 8.h),
             _buildParagraph('We do not warrant that:'),
             SizedBox(height: 8.h),
-            _buildBulletPoint('The Service will be error-free or uninterrupted'),
+            _buildBulletPoint(
+              'The Service will be error-free or uninterrupted',
+            ),
             _buildBulletPoint('Defects will be corrected'),
-            _buildBulletPoint('The Service is free from viruses or harmful components'),
+            _buildBulletPoint(
+              'The Service is free from viruses or harmful components',
+            ),
             SizedBox(height: 24.h),
 
             // 12. Limitation of Liability
@@ -252,7 +389,9 @@ class TermsAndConditionsScreen extends StatelessWidget {
             SizedBox(height: 8.h),
             _buildHighlightedText('TO THE MAXIMUM EXTENT PERMITTED BY LAW:'),
             SizedBox(height: 12.h),
-            _buildSubsectionTitle('12.1 We shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including but not limited to:'),
+            _buildSubsectionTitle(
+              '12.1 We shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including but not limited to:',
+            ),
             SizedBox(height: 8.h),
             _buildBulletPoint('Loss of profits or revenue'),
             _buildBulletPoint('Loss of data'),
@@ -260,16 +399,22 @@ class TermsAndConditionsScreen extends StatelessWidget {
             _buildBulletPoint('Business interruption'),
             SizedBox(height: 12.h),
             _buildSubsectionTitle('12.2'),
-            _buildParagraph('Our total liability shall not exceed the amount you paid us in the 12 months preceding the claim.'),
+            _buildParagraph(
+              'Our total liability shall not exceed the amount you paid us in the 12 months preceding the claim.',
+            ),
             SizedBox(height: 12.h),
             _buildSubsectionTitle('12.3'),
-            _buildParagraph('Some jurisdictions do not allow limitations on liability, so these limitations may not apply to you.'),
+            _buildParagraph(
+              'Some jurisdictions do not allow limitations on liability, so these limitations may not apply to you.',
+            ),
             SizedBox(height: 24.h),
 
             // 13. Indemnification
             _buildSectionTitle('13. Indemnification'),
             SizedBox(height: 8.h),
-            _buildParagraph('You agree to indemnify, defend, and hold harmless SalesSphere, its officers, directors, employees, and agents from any claims, liabilities, damages, losses, and expenses (including legal fees) arising from:'),
+            _buildParagraph(
+              'You agree to indemnify, defend, and hold harmless SalesSphere, its officers, directors, employees, and agents from any claims, liabilities, damages, losses, and expenses (including legal fees) arising from:',
+            ),
             SizedBox(height: 8.h),
             _buildBulletPoint('Your use of the Service'),
             _buildBulletPoint('Your violation of these Terms'),
@@ -282,8 +427,12 @@ class TermsAndConditionsScreen extends StatelessWidget {
             SizedBox(height: 12.h),
             _buildSubsectionTitle('14.1 By You'),
             SizedBox(height: 8.h),
-            _buildBulletPoint('You may cancel your subscription at any time through your account settings'),
-            _buildBulletPoint('Cancellation takes effect at the end of the current billing period'),
+            _buildBulletPoint(
+              'You may cancel your subscription at any time through your account settings',
+            ),
+            _buildBulletPoint(
+              'Cancellation takes effect at the end of the current billing period',
+            ),
             _buildBulletPoint('No refunds for partial periods'),
             SizedBox(height: 12.h),
             _buildSubsectionTitle('14.2 By Us'),
@@ -297,19 +446,29 @@ class TermsAndConditionsScreen extends StatelessWidget {
             SizedBox(height: 12.h),
             _buildSubsectionTitle('14.3 Effect of Termination'),
             SizedBox(height: 8.h),
-            _buildBulletPoint('Your right to use the Service immediately ceases'),
+            _buildBulletPoint(
+              'Your right to use the Service immediately ceases',
+            ),
             _buildBulletPoint('You remain liable for any unpaid fees'),
             _buildBulletPoint('We may delete your data after 30 days'),
-            _buildBulletPoint('Provisions that should survive termination will continue'),
+            _buildBulletPoint(
+              'Provisions that should survive termination will continue',
+            ),
             SizedBox(height: 24.h),
 
             // 15. Modifications to Terms
             _buildSectionTitle('15. Modifications to Terms'),
             SizedBox(height: 8.h),
             _buildBulletPoint('We may modify these Terms at any time'),
-            _buildBulletPoint('We will notify you of material changes via email or Service notification'),
-            _buildBulletPoint('Continued use after changes constitutes acceptance'),
-            _buildBulletPoint('If you disagree with changes, you must stop using the Service'),
+            _buildBulletPoint(
+              'We will notify you of material changes via email or Service notification',
+            ),
+            _buildBulletPoint(
+              'Continued use after changes constitutes acceptance',
+            ),
+            _buildBulletPoint(
+              'If you disagree with changes, you must stop using the Service',
+            ),
             SizedBox(height: 24.h),
 
             // 16. Governing Law and Dispute Resolution
@@ -317,30 +476,52 @@ class TermsAndConditionsScreen extends StatelessWidget {
             SizedBox(height: 12.h),
             _buildSubsectionTitle('16.1 Governing Law'),
             SizedBox(height: 8.h),
-            _buildParagraph('These Terms shall be governed by and construed in accordance with the laws of Nepal, without regard to its conflict of law principles.'),
+            _buildParagraph(
+              'These Terms shall be governed by and construed in accordance with the laws of Nepal, without regard to its conflict of law principles.',
+            ),
             SizedBox(height: 12.h),
             _buildSubsectionTitle('16.2 Jurisdiction'),
             SizedBox(height: 8.h),
-            _buildBulletPoint('Primary Jurisdiction: The courts of Morang District, Biratnagar, Nepal shall have primary jurisdiction over any disputes arising from these Terms.'),
-            _buildBulletPoint('Appellate Jurisdiction: Appeals may be heard by the Biratnagar High Court, Province No. 1, Nepal.'),
-            _buildBulletPoint('Final Jurisdiction: The Supreme Court of Nepal in Kathmandu shall have final appellate jurisdiction.'),
+            _buildBulletPoint(
+              'Primary Jurisdiction: The courts of Morang District, Biratnagar, Nepal shall have primary jurisdiction over any disputes arising from these Terms.',
+            ),
+            _buildBulletPoint(
+              'Appellate Jurisdiction: Appeals may be heard by the Biratnagar High Court, Province No. 1, Nepal.',
+            ),
+            _buildBulletPoint(
+              'Final Jurisdiction: The Supreme Court of Nepal in Kathmandu shall have final appellate jurisdiction.',
+            ),
             SizedBox(height: 12.h),
             _buildSubsectionTitle('16.3 Dispute Resolution Process'),
             SizedBox(height: 8.h),
-            _buildParagraph('Parties agree to follow this dispute resolution process:'),
+            _buildParagraph(
+              'Parties agree to follow this dispute resolution process:',
+            ),
             SizedBox(height: 8.h),
-            _buildBulletPoint('Good Faith Negotiations: The parties agree to first attempt to resolve any disputes through good faith negotiations within 30 days of a written notice of dispute.'),
-            _buildBulletPoint('Mediation: If negotiations fail, the parties agree to attempt mediation through a mutually agreed mediator in Nepal before pursuing litigation.'),
-            _buildBulletPoint('Arbitration (Optional): Parties may mutually agree to binding arbitration under the Nepal Arbitration Act, 2055 (1999), to be conducted in Biratnagar, Nepal.'),
-            _buildBulletPoint('Litigation: If mediation or arbitration is unsuccessful or not pursued, either party may file a lawsuit in the appropriate court as specified in Section 16.2.'),
+            _buildBulletPoint(
+              'Good Faith Negotiations: The parties agree to first attempt to resolve any disputes through good faith negotiations within 30 days of a written notice of dispute.',
+            ),
+            _buildBulletPoint(
+              'Mediation: If negotiations fail, the parties agree to attempt mediation through a mutually agreed mediator in Nepal before pursuing litigation.',
+            ),
+            _buildBulletPoint(
+              'Arbitration (Optional): Parties may mutually agree to binding arbitration under the Nepal Arbitration Act, 2055 (1999), to be conducted in Biratnagar, Nepal.',
+            ),
+            _buildBulletPoint(
+              'Litigation: If mediation or arbitration is unsuccessful or not pursued, either party may file a lawsuit in the appropriate court as specified in Section 16.2.',
+            ),
             SizedBox(height: 12.h),
             _buildSubsectionTitle('16.4 Class Action Waiver'),
             SizedBox(height: 8.h),
-            _buildParagraph('You agree to resolve disputes individually and not as part of a class action or collective proceeding.'),
+            _buildParagraph(
+              'You agree to resolve disputes individually and not as part of a class action or collective proceeding.',
+            ),
             SizedBox(height: 12.h),
             _buildSubsectionTitle('16.5 Language'),
             SizedBox(height: 8.h),
-            _buildParagraph('English shall be the governing language of these Terms. In case of any translation, the English version shall prevail.'),
+            _buildParagraph(
+              'English shall be the governing language of these Terms. In case of any translation, the English version shall prevail.',
+            ),
             SizedBox(height: 24.h),
 
             // 17. General Provisions
@@ -348,40 +529,61 @@ class TermsAndConditionsScreen extends StatelessWidget {
             SizedBox(height: 12.h),
             _buildSubsectionTitle('17.1 Entire Agreement'),
             SizedBox(height: 8.h),
-            _buildParagraph('These Terms constitute the entire agreement between you and SalesSphere'),
+            _buildParagraph(
+              'These Terms constitute the entire agreement between you and SalesSphere',
+            ),
             SizedBox(height: 12.h),
             _buildSubsectionTitle('17.2 Severability'),
             SizedBox(height: 8.h),
-            _buildParagraph('If any provision is found unenforceable, the remaining provisions remain in effect'),
+            _buildParagraph(
+              'If any provision is found unenforceable, the remaining provisions remain in effect',
+            ),
             SizedBox(height: 12.h),
             _buildSubsectionTitle('17.3 Waiver'),
             SizedBox(height: 8.h),
-            _buildParagraph('Failure to enforce any provision does not constitute a waiver'),
+            _buildParagraph(
+              'Failure to enforce any provision does not constitute a waiver',
+            ),
             SizedBox(height: 12.h),
             _buildSubsectionTitle('17.4 Assignment'),
             SizedBox(height: 8.h),
-            _buildBulletPoint('You may not assign these Terms without our written consent'),
+            _buildBulletPoint(
+              'You may not assign these Terms without our written consent',
+            ),
             _buildBulletPoint('We may assign these Terms without restriction'),
             SizedBox(height: 12.h),
             _buildSubsectionTitle('17.5 Force Majeure'),
             SizedBox(height: 8.h),
-            _buildParagraph('We are not liable for delays or failures due to circumstances beyond our reasonable control, including but not limited to natural disasters, acts of God, government actions, civil unrest, telecommunications failures, or power outages'),
+            _buildParagraph(
+              'We are not liable for delays or failures due to circumstances beyond our reasonable control, including but not limited to natural disasters, acts of God, government actions, civil unrest, telecommunications failures, or power outages',
+            ),
             SizedBox(height: 12.h),
             _buildSubsectionTitle('17.6 Notices'),
             SizedBox(height: 8.h),
-            _buildBulletPoint('All notices under these Terms must be in writing'),
-            _buildBulletPoint('Notices to SalesSphere should be sent to: info@salessphere360.com'),
-            _buildBulletPoint('Notices to you will be sent to the email address associated with your account'),
+            _buildBulletPoint(
+              'All notices under these Terms must be in writing',
+            ),
+            _buildBulletPoint(
+              'Notices to SalesSphere should be sent to: info@salessphere360.com',
+            ),
+            _buildBulletPoint(
+              'Notices to you will be sent to the email address associated with your account',
+            ),
             SizedBox(height: 24.h),
 
             // 18. Contact Information
             _buildSectionTitle('18. Contact Information'),
             SizedBox(height: 8.h),
-            _buildParagraph('For questions about these Terms, please contact us:'),
+            _buildParagraph(
+              'For questions about these Terms, please contact us:',
+            ),
             SizedBox(height: 8.h),
             _buildContactItem('Email:', 'info@salessphere360.com'),
             _buildContactItem('Website:', 'www.salessphere360.com'),
-            _buildContactItem('Registered Address:', 'Biratnagar, Morang District, Province No. 1, Nepal'),
+            _buildContactItem(
+              'Registered Address:',
+              'Biratnagar, Morang District, Province No. 1, Nepal',
+            ),
             SizedBox(height: 24.h),
 
             // 19. Specific Features and Services
@@ -389,28 +591,54 @@ class TermsAndConditionsScreen extends StatelessWidget {
             SizedBox(height: 12.h),
             _buildSubsectionTitle('19.1 GPS Tracking'),
             SizedBox(height: 8.h),
-            _buildBulletPoint('GPS tracking features require device location permissions'),
-            _buildBulletPoint('Users must comply with local privacy laws regarding employee tracking'),
-            _buildBulletPoint('You are responsible for obtaining necessary consents from employees or field personnel'),
-            _buildBulletPoint('GPS data is processed in accordance with Nepal\'s privacy regulations'),
+            _buildBulletPoint(
+              'GPS tracking features require device location permissions',
+            ),
+            _buildBulletPoint(
+              'Users must comply with local privacy laws regarding employee tracking',
+            ),
+            _buildBulletPoint(
+              'You are responsible for obtaining necessary consents from employees or field personnel',
+            ),
+            _buildBulletPoint(
+              'GPS data is processed in accordance with Nepal\'s privacy regulations',
+            ),
             SizedBox(height: 12.h),
             _buildSubsectionTitle('19.2 Data Analytics'),
             SizedBox(height: 8.h),
-            _buildBulletPoint('Analytics are provided for informational purposes only'),
-            _buildBulletPoint('We do not guarantee accuracy of analytics or reports'),
-            _buildBulletPoint('Business decisions based on analytics are your sole responsibility'),
+            _buildBulletPoint(
+              'Analytics are provided for informational purposes only',
+            ),
+            _buildBulletPoint(
+              'We do not guarantee accuracy of analytics or reports',
+            ),
+            _buildBulletPoint(
+              'Business decisions based on analytics are your sole responsibility',
+            ),
             SizedBox(height: 12.h),
             _buildSubsectionTitle('19.3 Mobile Applications'),
             SizedBox(height: 8.h),
-            _buildBulletPoint('Mobile app use is subject to applicable app store terms (Google Play Store, Apple App Store)'),
-            _buildBulletPoint('Updates may be required for continued functionality'),
-            _buildBulletPoint('Mobile data charges may apply based on your telecommunications provider'),
+            _buildBulletPoint(
+              'Mobile app use is subject to applicable app store terms (Google Play Store, Apple App Store)',
+            ),
+            _buildBulletPoint(
+              'Updates may be required for continued functionality',
+            ),
+            _buildBulletPoint(
+              'Mobile data charges may apply based on your telecommunications provider',
+            ),
             SizedBox(height: 12.h),
             _buildSubsectionTitle('19.4 Stock Management'),
             SizedBox(height: 8.h),
-            _buildBulletPoint('Stock data accuracy depends on timely updates by users'),
-            _buildBulletPoint('We are not liable for business losses due to stock discrepancies'),
-            _buildBulletPoint('Users are responsible for reconciling physical inventory with system records'),
+            _buildBulletPoint(
+              'Stock data accuracy depends on timely updates by users',
+            ),
+            _buildBulletPoint(
+              'We are not liable for business losses due to stock discrepancies',
+            ),
+            _buildBulletPoint(
+              'Users are responsible for reconciling physical inventory with system records',
+            ),
             SizedBox(height: 24.h),
 
             // 20. Compliance with Nepal Laws
@@ -418,22 +646,36 @@ class TermsAndConditionsScreen extends StatelessWidget {
             SizedBox(height: 12.h),
             _buildSubsectionTitle('20.1 Data Protection'),
             SizedBox(height: 8.h),
-            _buildBulletPoint('We comply with applicable Nepal data protection regulations'),
-            _buildBulletPoint('Personal data of Nepali citizens is handled in accordance with Nepal\'s privacy laws'),
+            _buildBulletPoint(
+              'We comply with applicable Nepal data protection regulations',
+            ),
+            _buildBulletPoint(
+              'Personal data of Nepali citizens is handled in accordance with Nepal\'s privacy laws',
+            ),
             SizedBox(height: 12.h),
             _buildSubsectionTitle('20.2 Business Registration'),
             SizedBox(height: 8.h),
-            _buildBulletPoint('Users operating businesses must comply with Nepal\'s business registration and tax requirements'),
-            _buildBulletPoint('SalesSphere does not provide tax or legal compliance advice'),
+            _buildBulletPoint(
+              'Users operating businesses must comply with Nepal\'s business registration and tax requirements',
+            ),
+            _buildBulletPoint(
+              'SalesSphere does not provide tax or legal compliance advice',
+            ),
             SizedBox(height: 12.h),
             _buildSubsectionTitle('20.3 Employment Laws'),
             SizedBox(height: 8.h),
-            _buildBulletPoint('Users employing field personnel must comply with Nepal Labour Act and related employment regulations'),
-            _buildBulletPoint('GPS tracking and attendance monitoring must comply with employee privacy rights under Nepal law'),
+            _buildBulletPoint(
+              'Users employing field personnel must comply with Nepal Labour Act and related employment regulations',
+            ),
+            _buildBulletPoint(
+              'GPS tracking and attendance monitoring must comply with employee privacy rights under Nepal law',
+            ),
             SizedBox(height: 24.h),
 
             // Final Statement
-            _buildHighlightedText('By using SalesSphere, you acknowledge that you have read, understood, and agree to be bound by these Terms and Conditions.'),
+            _buildHighlightedText(
+              'By using SalesSphere, you acknowledge that you have read, understood, and agree to be bound by these Terms and Conditions.',
+            ),
             SizedBox(height: 24.h),
 
             // Footer

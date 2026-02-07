@@ -1,10 +1,9 @@
-
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
 import 'package:sales_sphere/core/network_layer/dio_client.dart';
-import 'package:sales_sphere/features/sites/models/sites.model.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
+import 'package:sales_sphere/features/sites/models/sites.model.dart';
 
 part 'add_sites.vm.g.dart';
 

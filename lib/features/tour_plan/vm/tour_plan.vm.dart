@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
 import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
+
 import '../models/tour_plan.model.dart';
 
 part 'tour_plan.vm.g.dart';
@@ -17,22 +18,23 @@ class TourPlanViewModel extends _$TourPlanViewModel {
     try {
       AppLogger.i('📝 Fetching Tour Plans from API');
       final dio = ref.read(dioClientProvider);
-      
+
       final response = await dio.get(ApiEndpoints.myTourPlans);
-      
+
       // Parse response
       final apiResponse = TourPlanApiResponse.fromJson(response.data);
-      
+
       if (!apiResponse.success) {
-         throw Exception('Failed to fetch tour plans: Success flag is false');
+        throw Exception('Failed to fetch tour plans: Success flag is false');
       }
 
       // Map to list items
-      return apiResponse.data.map((e) => TourPlanListItem.fromApiData(e)).toList();
-
+      return apiResponse.data
+          .map((e) => TourPlanListItem.fromApiData(e))
+          .toList();
     } catch (e, st) {
       AppLogger.e('Error fetching tour plans', e, st);
-      rethrow; 
+      rethrow;
     }
   }
 
@@ -46,6 +48,7 @@ class TourPlanViewModel extends _$TourPlanViewModel {
 class TourSearchQuery extends _$TourSearchQuery {
   @override
   String build() => '';
+
   void update(String query) => state = query;
 }
 

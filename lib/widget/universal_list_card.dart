@@ -9,7 +9,8 @@ class UniversalListCard extends StatelessWidget {
   final Widget? leadingIcon;
   final String? leadingImageUrl;
   final String? leadingImageAsset;
-  final bool isLeadingCircle; // true for circle (parties), false for rounded rectangle (catalog/items)
+  final bool
+  isLeadingCircle; // true for circle (parties), false for rounded rectangle (catalog/items)
   final Color? leadingBackgroundColor;
   final double? leadingSize;
 
@@ -19,7 +20,8 @@ class UniversalListCard extends StatelessWidget {
   final String? secondarySubtitle; // For additional info like SKU
 
   // Trailing
-  final Widget? trailingWidget; // Custom trailing widget (overrides arrow if provided)
+  final Widget?
+  trailingWidget; // Custom trailing widget (overrides arrow if provided)
 
   // Styling
   final Color? backgroundColor;
@@ -118,7 +120,8 @@ class UniversalListCard extends StatelessWidget {
                       ],
 
                       // Secondary Subtitle (for SKU, additional info)
-                      if (secondarySubtitle != null && secondarySubtitle!.isNotEmpty) ...[
+                      if (secondarySubtitle != null &&
+                          secondarySubtitle!.isNotEmpty) ...[
                         SizedBox(height: 2.h),
                         Text(
                           secondarySubtitle!,
@@ -217,7 +220,7 @@ class UniversalListCard extends StatelessWidget {
                   child: CircularProgressIndicator(
                     value: loadingProgress.expectedTotalBytes != null
                         ? loadingProgress.cumulativeBytesLoaded /
-                        loadingProgress.expectedTotalBytes!
+                              loadingProgress.expectedTotalBytes!
                         : null,
                     strokeWidth: 2,
                     color: AppColors.primary,
@@ -268,11 +271,7 @@ class UniversalListCard extends StatelessWidget {
         shape: isLeadingCircle ? BoxShape.circle : BoxShape.rectangle,
         borderRadius: isLeadingCircle ? null : BorderRadius.circular(12.r),
       ),
-      child: Icon(
-        Icons.help_outline,
-        color: Colors.grey.shade400,
-        size: 24.sp,
-      ),
+      child: Icon(Icons.help_outline, color: Colors.grey.shade400, size: 24.sp),
     );
   }
 }

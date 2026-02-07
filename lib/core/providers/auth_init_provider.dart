@@ -1,12 +1,14 @@
 import 'dart:convert';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sales_sphere/features/auth/models/login.models.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../constants/storage_keys.dart';
 import '../network_layer/token_storage_service.dart';
 import '../utils/logger.dart';
-import '../constants/storage_keys.dart';
-import 'user_controller.dart';
 import 'permission_controller.dart';
+import 'user_controller.dart';
 
 part 'auth_init_provider.g.dart';
 
@@ -48,7 +50,9 @@ Future<bool> authInit(Ref ref) async {
           try {
             subscription = Subscription.fromJson(subscriptionJson);
           } catch (e) {
-            AppLogger.w('⚠️ Failed to parse stored subscription, will try to create from organization');
+            AppLogger.w(
+              '⚠️ Failed to parse stored subscription, will try to create from organization',
+            );
           }
         }
 
@@ -63,16 +67,17 @@ Future<bool> authInit(Ref ref) async {
             );
             // Save the newly created subscription for future use
             await tokenStorage.saveSubscription(subscription.toJson());
-            AppLogger.i('✅ Subscription created from organization data: ${orgEnabledModules.length} modules');
+            AppLogger.i(
+              '✅ Subscription created from organization data: ${orgEnabledModules.length} modules',
+            );
           }
         }
 
         // Update permission controller with loaded data
         if (permissions != null || subscription != null) {
-          ref.read(permissionControllerProvider.notifier).updateData(
-            permissions: permissions,
-            subscription: subscription,
-          );
+          ref
+              .read(permissionControllerProvider.notifier)
+              .updateData(permissions: permissions, subscription: subscription);
           AppLogger.i('✅ Permission data loaded from storage');
         }
 

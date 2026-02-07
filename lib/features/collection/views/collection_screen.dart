@@ -4,10 +4,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:skeletonizer/skeletonizer.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/features/collection/models/collection.model.dart';
 import 'package:sales_sphere/features/collection/vm/collection.vm.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class CollectionScreen extends ConsumerStatefulWidget {
   const CollectionScreen({super.key});
@@ -58,7 +58,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
           style: TextStyle(
             color: AppColors.textdark,
             fontSize: 20.sp,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
             fontFamily: 'Poppins',
           ),
         ),
@@ -85,7 +85,9 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                 padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 16.h),
                 child: TextField(
                   controller: _searchController,
-                  onChanged: (val) => ref.read(collectionSearchQueryProvider.notifier).updateQuery(val),
+                  onChanged: (val) => ref
+                      .read(collectionSearchQueryProvider.notifier)
+                      .updateQuery(val),
                   decoration: InputDecoration(
                     hintText: 'Search collection',
                     hintStyle: TextStyle(
@@ -110,7 +112,10 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.r),
-                      borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                      borderSide: const BorderSide(
+                        color: AppColors.primary,
+                        width: 2,
+                      ),
                     ),
                     contentPadding: EdgeInsets.symmetric(
                       horizontal: 16.w,
@@ -130,26 +135,34 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                   data: (items) {
                     final displayList = _applyFilter(items);
                     return RefreshIndicator(
-                      onRefresh: () => ref.read(collectionViewModelProvider.notifier).refresh(),
+                      onRefresh: () => ref
+                          .read(collectionViewModelProvider.notifier)
+                          .refresh(),
                       color: AppColors.primary,
                       child: displayList.isEmpty
                           ? _buildEmptyState(searchQuery)
                           : ListView.separated(
-                        padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 80.h),
-                        itemCount: displayList.length,
-                        separatorBuilder: (_, __) => SizedBox(height: 8.h),
-                        itemBuilder: (context, index) {
-                          final item = displayList[index];
+                              padding: EdgeInsets.fromLTRB(
+                                16.w,
+                                8.h,
+                                16.w,
+                                80.h,
+                              ),
+                              itemCount: displayList.length,
+                              separatorBuilder: (_, __) =>
+                                  SizedBox(height: 8.h),
+                              itemBuilder: (context, index) {
+                                final item = displayList[index];
 
-                          return GestureDetector(
-                            onTap: () {
-                              // Navigates to the edit screen
-                              context.push('/edit-collection/${item.id}');
-                            },
-                            child: _buildCollectionCard(item),
-                          );
-                        },
-                      ),
+                                return GestureDetector(
+                                  onTap: () {
+                                    // Navigates to the edit screen
+                                    context.push('/edit-collection/${item.id}');
+                                  },
+                                  child: _buildCollectionCard(item),
+                                );
+                              },
+                            ),
                     );
                   },
                   loading: () => Skeletonizer(
@@ -181,10 +194,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
         },
         backgroundColor: AppColors.primary,
         elevation: 4,
-        icon: const Icon(
-          Icons.add,
-          color: Colors.white,
-        ),
+        icon: const Icon(Icons.add, color: Colors.white),
         label: Text(
           'Add Collection',
           style: TextStyle(
@@ -234,7 +244,11 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
               child: DropdownButton<String>(
                 value: _activeFilter,
                 isExpanded: true,
-                icon: Icon(Icons.keyboard_arrow_down, color: AppColors.primary, size: 24.sp),
+                icon: Icon(
+                  Icons.keyboard_arrow_down,
+                  color: AppColors.primary,
+                  size: 24.sp,
+                ),
                 style: TextStyle(
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w600,
@@ -246,9 +260,21 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                 items: [
                   _buildFilterItem('All', Icons.list, AppColors.textdark),
                   _buildFilterItem('Cash', Icons.money, Colors.green),
-                  _buildFilterItem('QR Pay', Icons.qr_code_scanner, Colors.blue),
-                  _buildFilterItem('Bank Transfer', Icons.account_balance, Colors.orange),
-                  _buildFilterItem('Cheque', Icons.article_outlined, Colors.purple),
+                  _buildFilterItem(
+                    'QR Pay',
+                    Icons.qr_code_scanner,
+                    Colors.blue,
+                  ),
+                  _buildFilterItem(
+                    'Bank Transfer',
+                    Icons.account_balance,
+                    Colors.orange,
+                  ),
+                  _buildFilterItem(
+                    'Cheque',
+                    Icons.article_outlined,
+                    Colors.purple,
+                  ),
                 ],
                 onChanged: (val) {
                   if (val != null) setState(() => _activeFilter = val);
@@ -262,7 +288,11 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
   }
 
   // Helper to keep dropdown items consistent
-  DropdownMenuItem<String> _buildFilterItem(String value, IconData icon, Color iconColor) {
+  DropdownMenuItem<String> _buildFilterItem(
+    String value,
+    IconData icon,
+    Color iconColor,
+  ) {
     return DropdownMenuItem(
       value: value,
       child: Row(
@@ -289,7 +319,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
             color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
-          )
+          ),
         ],
       ),
       child: Column(
@@ -300,9 +330,20 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
             children: [
               Row(
                 children: [
-                  Icon(Icons.people_outline, size: 18.sp, color: AppColors.primary),
+                  Icon(
+                    Icons.people_outline,
+                    size: 18.sp,
+                    color: AppColors.primary,
+                  ),
                   SizedBox(width: 8.w),
-                  Text(item.partyName, style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w600, fontFamily: 'Poppins')),
+                  Text(
+                    item.partyName,
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
                 ],
               ),
               Text(
@@ -330,7 +371,14 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       children: [
         Icon(icon, size: 16.sp, color: Colors.grey.shade400),
         SizedBox(width: 8.w),
-        Text(text, style: TextStyle(fontSize: 13.sp, color: Colors.grey.shade600, fontFamily: 'Poppins')),
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 13.sp,
+            color: Colors.grey.shade600,
+            fontFamily: 'Poppins',
+          ),
+        ),
       ],
     );
   }
@@ -340,11 +388,19 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.search_off_rounded, size: 64.sp, color: Colors.grey.shade300),
+          Icon(
+            Icons.search_off_rounded,
+            size: 64.sp,
+            color: Colors.grey.shade300,
+          ),
           SizedBox(height: 16.h),
           Text(
             query.isEmpty ? 'No collections found' : 'No results for "$query"',
-            style: TextStyle(fontSize: 16.sp, color: Colors.grey.shade600, fontFamily: 'Poppins'),
+            style: TextStyle(
+              fontSize: 16.sp,
+              color: Colors.grey.shade600,
+              fontFamily: 'Poppins',
+            ),
           ),
         ],
       ),
@@ -353,6 +409,8 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
 
   List<CollectionListItem> _applyFilter(List<CollectionListItem> items) {
     if (_activeFilter == 'All') return items;
-    return items.where((element) => element.paymentMode == _activeFilter).toList();
+    return items
+        .where((element) => element.paymentMode == _activeFilter)
+        .toList();
   }
 }

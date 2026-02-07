@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -7,25 +8,22 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/utils/snackbar_utils.dart';
-import 'package:sales_sphere/widget/custom_text_field.dart';
-import 'package:sales_sphere/widget/custom_button.dart';
-import 'package:sales_sphere/widget/primary_image_picker.dart';
-import 'package:sales_sphere/features/notes/vm/notes.vm.dart';
-import 'package:sales_sphere/features/notes/vm/edit_notes.vm.dart';
 import 'package:sales_sphere/features/notes/models/notes.model.dart';
+import 'package:sales_sphere/features/notes/vm/edit_notes.vm.dart';
+import 'package:sales_sphere/features/notes/vm/notes.vm.dart';
 import 'package:sales_sphere/features/parties/vm/parties.vm.dart';
 import 'package:sales_sphere/features/prospects/vm/prospects.vm.dart';
 import 'package:sales_sphere/features/sites/vm/sites.vm.dart';
+import 'package:sales_sphere/widget/custom_button.dart';
+import 'package:sales_sphere/widget/custom_text_field.dart';
+import 'package:sales_sphere/widget/primary_image_picker.dart';
 
 enum EntityType { party, prospect, site }
 
 class EditNoteScreen extends ConsumerStatefulWidget {
   final String noteId;
 
-  const EditNoteScreen({
-    super.key,
-    required this.noteId,
-  });
+  const EditNoteScreen({super.key, required this.noteId});
 
   @override
   ConsumerState<EditNoteScreen> createState() => _EditNoteScreenState();
@@ -129,8 +127,10 @@ class _EditNoteScreenState extends ConsumerState<EditNoteScreen> {
 
   String? get _partyId =>
       _selectedEntityType == EntityType.party ? _selectedEntityId : null;
+
   String? get _prospectId =>
       _selectedEntityType == EntityType.prospect ? _selectedEntityId : null;
+
   String? get _siteId =>
       _selectedEntityType == EntityType.site ? _selectedEntityId : null;
 
@@ -249,9 +249,7 @@ class _EditNoteScreenState extends ConsumerState<EditNoteScreen> {
                   ),
                 ),
                 const Divider(height: 1),
-                Expanded(
-                  child: _buildEntityList(type, scrollController),
-                ),
+                Expanded(child: _buildEntityList(type, scrollController)),
               ],
             );
           },
@@ -311,7 +309,8 @@ class _EditNoteScreenState extends ConsumerState<EditNoteScreen> {
                   separatorBuilder: (_, __) => const Divider(height: 1),
                   itemBuilder: (context, index) {
                     final party = parties[index];
-                    final isSelected = _selectedEntityId == party.id &&
+                    final isSelected =
+                        _selectedEntityId == party.id &&
                         _selectedEntityType == EntityType.party;
                     return _buildListTile(
                       name: party.name,
@@ -349,7 +348,8 @@ class _EditNoteScreenState extends ConsumerState<EditNoteScreen> {
                   separatorBuilder: (_, __) => const Divider(height: 1),
                   itemBuilder: (context, index) {
                     final prospect = prospects[index];
-                    final isSelected = _selectedEntityId == prospect.id &&
+                    final isSelected =
+                        _selectedEntityId == prospect.id &&
                         _selectedEntityType == EntityType.prospect;
                     return _buildListTile(
                       name: prospect.name,
@@ -359,7 +359,10 @@ class _EditNoteScreenState extends ConsumerState<EditNoteScreen> {
                       isSelected: isSelected,
                       onTap: () {
                         _selectEntity(
-                            EntityType.prospect, prospect.id, prospect.name);
+                          EntityType.prospect,
+                          prospect.id,
+                          prospect.name,
+                        );
                         context.pop();
                       },
                     );
@@ -388,7 +391,8 @@ class _EditNoteScreenState extends ConsumerState<EditNoteScreen> {
                   separatorBuilder: (_, __) => const Divider(height: 1),
                   itemBuilder: (context, index) {
                     final site = sites[index];
-                    final isSelected = _selectedEntityId == site.id &&
+                    final isSelected =
+                        _selectedEntityId == site.id &&
                         _selectedEntityType == EntityType.site;
                     return _buildListTile(
                       name: site.name,
@@ -460,8 +464,9 @@ class _EditNoteScreenState extends ConsumerState<EditNoteScreen> {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
-      trailing:
-          isSelected ? Icon(Icons.check_circle, color: selectedColor) : null,
+      trailing: isSelected
+          ? Icon(Icons.check_circle, color: selectedColor)
+          : null,
       onTap: onTap,
     );
   }
@@ -628,8 +633,9 @@ class _EditNoteScreenState extends ConsumerState<EditNoteScreen> {
                                 IgnorePointer(
                                   ignoring: !_isEditMode || _isSubmitting,
                                   child: Opacity(
-                                    opacity:
-                                        (!_isEditMode || _isSubmitting) ? 0.7 : 1.0,
+                                    opacity: (!_isEditMode || _isSubmitting)
+                                        ? 0.7
+                                        : 1.0,
                                     child: _buildEntityTypeSelector(),
                                   ),
                                 ),
@@ -650,8 +656,9 @@ class _EditNoteScreenState extends ConsumerState<EditNoteScreen> {
                                 IgnorePointer(
                                   ignoring: !_isEditMode || _isSubmitting,
                                   child: Opacity(
-                                    opacity:
-                                        (!_isEditMode || _isSubmitting) ? 0.7 : 1.0,
+                                    opacity: (!_isEditMode || _isSubmitting)
+                                        ? 0.7
+                                        : 1.0,
                                     child: _buildImageSection(),
                                   ),
                                 ),
@@ -688,8 +695,9 @@ class _EditNoteScreenState extends ConsumerState<EditNoteScreen> {
                   onPressed: _isSubmitting
                       ? null
                       : (_isEditMode ? _handleSubmit : _toggleEditMode),
-                  leadingIcon:
-                      _isEditMode ? Icons.check_rounded : Icons.edit_outlined,
+                  leadingIcon: _isEditMode
+                      ? Icons.check_rounded
+                      : Icons.edit_outlined,
                   size: ButtonSize.medium,
                   isLoading: _isSubmitting,
                 ),
@@ -744,11 +752,16 @@ class _EditNoteScreenState extends ConsumerState<EditNoteScreen> {
               builder: (context) {
                 final selectedColor = _getEntityColor(_selectedEntityType!);
                 return Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 12.h,
+                  ),
                   decoration: BoxDecoration(
                     color: selectedColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(color: selectedColor.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: selectedColor.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: Row(
                     children: [

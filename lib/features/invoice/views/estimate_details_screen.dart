@@ -6,21 +6,21 @@ import 'package:intl/intl.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:sales_sphere/core/utils/snackbar_utils.dart';
+
 import '../models/invoice.models.dart';
-import '../vm/invoice.vm.dart';
 import '../services/invoice_pdf_service.dart';
+import '../vm/invoice.vm.dart';
 
 class EstimateDetailsScreen extends ConsumerWidget {
   final String estimateId;
 
-  const EstimateDetailsScreen({
-    super.key,
-    required this.estimateId,
-  });
+  const EstimateDetailsScreen({super.key, required this.estimateId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final estimateDetailsAsync = ref.watch(fetchEstimateDetailsProvider(estimateId));
+    final estimateDetailsAsync = ref.watch(
+      fetchEstimateDetailsProvider(estimateId),
+    );
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -44,7 +44,8 @@ class EstimateDetailsScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: Icon(Icons.refresh, color: Colors.white, size: 24.sp),
-            onPressed: () => ref.invalidate(fetchEstimateDetailsProvider(estimateId)),
+            onPressed: () =>
+                ref.invalidate(fetchEstimateDetailsProvider(estimateId)),
           ),
         ],
       ),
@@ -63,7 +64,11 @@ class EstimateDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildEstimateDetails(BuildContext context, WidgetRef ref, InvoiceDetailsData estimate) {
+  Widget _buildEstimateDetails(
+    BuildContext context,
+    WidgetRef ref,
+    InvoiceDetailsData estimate,
+  ) {
     final dateFormat = DateFormat('dd MMM yyyy');
     final createdDate = DateTime.parse(estimate.createdAt);
 
@@ -95,7 +100,11 @@ class EstimateDetailsScreen extends ConsumerWidget {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.receipt_long_outlined, color: Colors.white70, size: 16.sp),
+                    Icon(
+                      Icons.receipt_long_outlined,
+                      color: Colors.white70,
+                      size: 16.sp,
+                    ),
                     SizedBox(width: 8.w),
                     Text(
                       'ESTIMATE',
@@ -182,9 +191,7 @@ class EstimateDetailsScreen extends ConsumerWidget {
           _buildSectionCard(
             title: 'Items (${estimate.items.length})',
             icon: Icons.inventory_2_outlined,
-            children: [
-              ...estimate.items.map((item) => _buildItemCard(item)),
-            ],
+            children: [...estimate.items.map((item) => _buildItemCard(item))],
           ),
 
           SizedBox(height: 16.h),
@@ -210,8 +217,12 @@ class EstimateDetailsScreen extends ConsumerWidget {
                   SizedBox(height: 8.h),
                 ],
                 if (estimate.discount != null && estimate.discount! > 0) ...[
-                  _buildTotalRow('Discount (${estimate.discount!.toStringAsFixed(1)}%)', 
-                      (estimate.subtotal ?? 0) * estimate.discount! / 100, false, isDiscount: true),
+                  _buildTotalRow(
+                    'Discount (${estimate.discount!.toStringAsFixed(1)}%)',
+                    (estimate.subtotal ?? 0) * estimate.discount! / 100,
+                    false,
+                    isDiscount: true,
+                  ),
                   SizedBox(height: 8.h),
                 ],
                 Divider(color: Colors.grey.shade300),
@@ -256,7 +267,11 @@ class EstimateDetailsScreen extends ConsumerWidget {
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: () => _downloadPdf(context, ref, estimate),
-              icon: Icon(Icons.download_rounded, size: 20.sp, color: Colors.orange.shade700),
+              icon: Icon(
+                Icons.download_rounded,
+                size: 20.sp,
+                color: Colors.orange.shade700,
+              ),
               label: Text(
                 'Download PDF',
                 style: TextStyle(
@@ -282,7 +297,11 @@ class EstimateDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSectionCard({required String title, required IconData icon, required List<Widget> children}) {
+  Widget _buildSectionCard({
+    required String title,
+    required IconData icon,
+    required List<Widget> children,
+  }) {
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
@@ -399,7 +418,10 @@ class EstimateDetailsScreen extends ConsumerWidget {
               _buildItemDetail('Price', '₹${item.price.toStringAsFixed(2)}'),
               if (item.discount > 0) ...[
                 SizedBox(width: 16.w),
-                _buildItemDetail('Discount', '${item.discount.toStringAsFixed(1)}%'),
+                _buildItemDetail(
+                  'Discount',
+                  '${item.discount.toStringAsFixed(1)}%',
+                ),
               ],
             ],
           ),
@@ -432,7 +454,12 @@ class EstimateDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildTotalRow(String label, double amount, bool isFinal, {bool isDiscount = false}) {
+  Widget _buildTotalRow(
+    String label,
+    double amount,
+    bool isFinal, {
+    bool isDiscount = false,
+  }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -450,7 +477,9 @@ class EstimateDetailsScreen extends ConsumerWidget {
           style: TextStyle(
             fontSize: isFinal ? 18.sp : 14.sp,
             fontWeight: isFinal ? FontWeight.w700 : FontWeight.w600,
-            color: isFinal ? Colors.orange.shade700 : (isDiscount ? Colors.red : Colors.grey.shade900),
+            color: isFinal
+                ? Colors.orange.shade700
+                : (isDiscount ? Colors.red : Colors.grey.shade900),
             fontFamily: 'Poppins',
           ),
         ),
@@ -465,7 +494,11 @@ class EstimateDetailsScreen extends ConsumerWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.receipt_long_outlined, size: 80.sp, color: Colors.grey.shade300),
+            Icon(
+              Icons.receipt_long_outlined,
+              size: 80.sp,
+              color: Colors.grey.shade300,
+            ),
             SizedBox(height: 24.h),
             Text(
               'Estimate Not Found',
@@ -536,7 +569,11 @@ class EstimateDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _downloadPdf(BuildContext context, WidgetRef ref, InvoiceDetailsData estimate) async {
+  Future<void> _downloadPdf(
+    BuildContext context,
+    WidgetRef ref,
+    InvoiceDetailsData estimate,
+  ) async {
     try {
       SnackbarUtils.showInfo(context, 'Generating PDF...');
 
@@ -608,21 +645,34 @@ class EstimateDetailsScreen extends ConsumerWidget {
     } catch (e) {
       AppLogger.e('Error generating PDF: $e');
       if (!context.mounted) return;
-      SnackbarUtils.showError(context, 'Failed to generate PDF: ${e.toString()}');
+      SnackbarUtils.showError(
+        context,
+        'Failed to generate PDF: ${e.toString()}',
+      );
     }
   }
 
-  void _showConvertDialog(BuildContext parentContext, WidgetRef ref, InvoiceDetailsData estimate) {
+  void _showConvertDialog(
+    BuildContext parentContext,
+    WidgetRef ref,
+    InvoiceDetailsData estimate,
+  ) {
     DateTime? selectedDate;
 
     showDialog(
       context: parentContext,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.r),
+          ),
           title: Row(
             children: [
-              Icon(Icons.transform_rounded, color: Colors.green.shade600, size: 24.sp),
+              Icon(
+                Icons.transform_rounded,
+                color: Colors.green.shade600,
+                size: 24.sp,
+              ),
               SizedBox(width: 12.w),
               Text(
                 'Convert to Invoice',
@@ -673,14 +723,21 @@ class EstimateDetailsScreen extends ConsumerWidget {
                   }
                 },
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 14.h,
+                  ),
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey.shade300),
                     borderRadius: BorderRadius.circular(8.r),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.calendar_today, size: 20.sp, color: Colors.grey.shade600),
+                      Icon(
+                        Icons.calendar_today,
+                        size: 20.sp,
+                        color: Colors.grey.shade600,
+                      ),
                       SizedBox(width: 12.w),
                       Text(
                         selectedDate != null
@@ -689,7 +746,9 @@ class EstimateDetailsScreen extends ConsumerWidget {
                         style: TextStyle(
                           fontSize: 14.sp,
                           fontFamily: 'Poppins',
-                          color: selectedDate != null ? Colors.black87 : Colors.grey.shade500,
+                          color: selectedDate != null
+                              ? Colors.black87
+                              : Colors.grey.shade500,
                         ),
                       ),
                     ],
@@ -761,10 +820,9 @@ class EstimateDetailsScreen extends ConsumerWidget {
       // Format date as ISO 8601 string (YYYY-MM-DD)
       final formattedDate = DateFormat('yyyy-MM-dd').format(expectedDate);
 
-      final response = await ref.read(convertEstimateProvider.notifier).convertToInvoice(
-            estimateId,
-            formattedDate,
-          );
+      final response = await ref
+          .read(convertEstimateProvider.notifier)
+          .convertToInvoice(estimateId, formattedDate);
 
       // Capture the message before navigation (provider might get disposed)
       final successMessage = response.message;
@@ -782,7 +840,7 @@ class EstimateDetailsScreen extends ConsumerWidget {
 
       // Navigate back to history screen
       context.go('/invoice/history');
-      
+
       // Show success message after navigation
       Future.delayed(const Duration(milliseconds: 300), () {
         if (context.mounted) {
@@ -798,7 +856,7 @@ class EstimateDetailsScreen extends ConsumerWidget {
     } catch (e) {
       AppLogger.e('Error converting estimate: $e');
       if (!context.mounted) return;
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to convert: ${e.toString()}'),

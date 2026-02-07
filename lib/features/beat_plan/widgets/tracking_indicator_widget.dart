@@ -19,7 +19,8 @@ class TrackingIndicatorWidget extends StatefulWidget {
   });
 
   @override
-  State<TrackingIndicatorWidget> createState() => _TrackingIndicatorWidgetState();
+  State<TrackingIndicatorWidget> createState() =>
+      _TrackingIndicatorWidgetState();
 }
 
 class _TrackingIndicatorWidgetState extends State<TrackingIndicatorWidget>

@@ -107,7 +107,8 @@ class AddressSuggestion {
       displayName: json['display_name'] ?? '',
       latitude: double.parse(json['lat'].toString()),
       longitude: double.parse(json['lon'].toString()),
-      city: json['address']?['city'] ??
+      city:
+          json['address']?['city'] ??
           json['address']?['town'] ??
           json['address']?['village'],
       state: json['address']?['state'],

@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import '../models/invoice.models.dart';
-import '../../../core/network_layer/dio_client.dart';
+
 import '../../../core/network_layer/api_endpoints.dart';
+import '../../../core/network_layer/dio_client.dart';
 import '../../../core/utils/logger.dart';
+import '../models/invoice.models.dart';
 
 part 'invoice.vm.g.dart';
 
@@ -48,11 +50,14 @@ class InvoiceHistory extends _$InvoiceHistory {
       // Parse response data - handle both String and Map
       final Map<String, dynamic> responseData;
       if (response.data is String) {
-        responseData = jsonDecode(response.data as String) as Map<String, dynamic>;
+        responseData =
+            jsonDecode(response.data as String) as Map<String, dynamic>;
       } else if (response.data is Map<String, dynamic>) {
         responseData = response.data as Map<String, dynamic>;
       } else {
-        throw Exception('Unexpected response type: ${response.data.runtimeType}');
+        throw Exception(
+          'Unexpected response type: ${response.data.runtimeType}',
+        );
       }
 
       final historyResponse = InvoiceHistoryResponse.fromJson(responseData);
@@ -108,14 +113,19 @@ class FetchInvoiceDetails extends _$FetchInvoiceDetails {
       // Parse response data - handle both String and Map
       final Map<String, dynamic> responseData;
       if (response.data is String) {
-        responseData = jsonDecode(response.data as String) as Map<String, dynamic>;
+        responseData =
+            jsonDecode(response.data as String) as Map<String, dynamic>;
       } else if (response.data is Map<String, dynamic>) {
         responseData = response.data as Map<String, dynamic>;
       } else {
-        throw Exception('Unexpected response type: ${response.data.runtimeType}');
+        throw Exception(
+          'Unexpected response type: ${response.data.runtimeType}',
+        );
       }
 
-      final detailsResponse = FetchInvoiceDetailsResponse.fromJson(responseData);
+      final detailsResponse = FetchInvoiceDetailsResponse.fromJson(
+        responseData,
+      );
 
       AppLogger.d('Fetched invoice: ${detailsResponse.data.invoiceNumber}');
 
@@ -168,7 +178,9 @@ class CreateInvoice extends _$CreateInvoice {
       final dio = ref.read(dioClientProvider);
 
       // Format date as YYYY-MM-DD
-      final formattedDate = expectedDeliveryDate.toIso8601String().split('T')[0];
+      final formattedDate = expectedDeliveryDate.toIso8601String().split(
+        'T',
+      )[0];
 
       final request = CreateInvoiceRequest(
         partyId: partyId,
@@ -190,18 +202,23 @@ class CreateInvoice extends _$CreateInvoice {
       // Parse response data - handle both String and Map
       final Map<String, dynamic> responseData;
       if (response.data is String) {
-        responseData = jsonDecode(response.data as String) as Map<String, dynamic>;
+        responseData =
+            jsonDecode(response.data as String) as Map<String, dynamic>;
       } else if (response.data is Map<String, dynamic>) {
         responseData = response.data as Map<String, dynamic>;
       } else {
-        throw Exception('Unexpected response type: ${response.data.runtimeType}');
+        throw Exception(
+          'Unexpected response type: ${response.data.runtimeType}',
+        );
       }
 
       final invoiceResponse = CreateInvoiceResponse.fromJson(responseData);
 
       // Check if response indicates an error
-      if (invoiceResponse.status == 'error' || invoiceResponse.success == false) {
-        final errorMessage = invoiceResponse.message ?? 'Failed to create invoice';
+      if (invoiceResponse.status == 'error' ||
+          invoiceResponse.success == false) {
+        final errorMessage =
+            invoiceResponse.message ?? 'Failed to create invoice';
         AppLogger.e('Invoice creation failed: $errorMessage');
         throw Exception(errorMessage);
       }
@@ -219,12 +236,20 @@ class CreateInvoice extends _$CreateInvoice {
           partyName: invoiceResponse.data!.partyName,
           invoiceNumber: invoiceResponse.data!.invoiceNumber,
           expectedDeliveryDate: invoiceResponse.data!.expectedDeliveryDate,
-          totalAmount: invoiceResponse.data!.total ??
-              invoiceResponse.data!.items.fold<double>(0.0, (sum, item) => sum + item.total),
+          totalAmount:
+              invoiceResponse.data!.total ??
+              invoiceResponse.data!.items.fold<double>(
+                0.0,
+                (sum, item) => sum + item.total,
+              ),
           status: invoiceResponse.data!.status ?? OrderStatus.pending,
-          createdAt: invoiceResponse.data!.createdAt ?? DateTime.now().toIso8601String(),
+          createdAt:
+              invoiceResponse.data!.createdAt ??
+              DateTime.now().toIso8601String(),
         );
-        ref.read(invoiceHistoryProvider.notifier).addInvoiceOptimistic(historyItem);
+        ref
+            .read(invoiceHistoryProvider.notifier)
+            .addInvoiceOptimistic(historyItem);
       }
 
       return invoiceResponse;
@@ -279,18 +304,23 @@ class CreateEstimate extends _$CreateEstimate {
       // Parse response data - handle both String and Map
       final Map<String, dynamic> responseData;
       if (response.data is String) {
-        responseData = jsonDecode(response.data as String) as Map<String, dynamic>;
+        responseData =
+            jsonDecode(response.data as String) as Map<String, dynamic>;
       } else if (response.data is Map<String, dynamic>) {
         responseData = response.data as Map<String, dynamic>;
       } else {
-        throw Exception('Unexpected response type: ${response.data.runtimeType}');
+        throw Exception(
+          'Unexpected response type: ${response.data.runtimeType}',
+        );
       }
 
       final estimateResponse = CreateEstimateResponse.fromJson(responseData);
 
       // Check if response indicates an error
-      if (estimateResponse.status == 'error' || estimateResponse.success == false) {
-        final errorMessage = estimateResponse.message ?? 'Failed to create estimate';
+      if (estimateResponse.status == 'error' ||
+          estimateResponse.success == false) {
+        final errorMessage =
+            estimateResponse.message ?? 'Failed to create estimate';
         AppLogger.e('Estimate creation failed: $errorMessage');
         throw Exception(errorMessage);
       }
@@ -353,11 +383,14 @@ class EstimateHistory extends _$EstimateHistory {
       // Parse response data - handle both String and Map
       final Map<String, dynamic> responseData;
       if (response.data is String) {
-        responseData = jsonDecode(response.data as String) as Map<String, dynamic>;
+        responseData =
+            jsonDecode(response.data as String) as Map<String, dynamic>;
       } else if (response.data is Map<String, dynamic>) {
         responseData = response.data as Map<String, dynamic>;
       } else {
-        throw Exception('Unexpected response type: ${response.data.runtimeType}');
+        throw Exception(
+          'Unexpected response type: ${response.data.runtimeType}',
+        );
       }
 
       final historyResponse = EstimateHistoryResponse.fromJson(responseData);
@@ -386,13 +419,17 @@ class EstimateHistory extends _$EstimateHistory {
 
       AppLogger.d('Deleting estimate with ID: $estimateId');
 
-      final response = await dio.delete(ApiEndpoints.deleteEstimate(estimateId));
+      final response = await dio.delete(
+        ApiEndpoints.deleteEstimate(estimateId),
+      );
 
       AppLogger.d('Delete estimate response: ${response.data}');
 
       // Optimistically remove from state
       state.whenData((estimates) {
-        final updatedEstimates = estimates.where((e) => e.id != estimateId).toList();
+        final updatedEstimates = estimates
+            .where((e) => e.id != estimateId)
+            .toList();
         state = AsyncValue.data(updatedEstimates);
       });
 
@@ -431,7 +468,8 @@ Future<InvoiceDetailsData?> fetchEstimateDetails(
     // Parse response data - handle both String and Map
     final Map<String, dynamic> responseData;
     if (response.data is String) {
-      responseData = jsonDecode(response.data as String) as Map<String, dynamic>;
+      responseData =
+          jsonDecode(response.data as String) as Map<String, dynamic>;
     } else if (response.data is Map<String, dynamic>) {
       responseData = response.data as Map<String, dynamic>;
     } else {
@@ -482,11 +520,14 @@ class ConvertEstimate extends _$ConvertEstimate {
       // Parse response data
       final Map<String, dynamic> responseData;
       if (response.data is String) {
-        responseData = jsonDecode(response.data as String) as Map<String, dynamic>;
+        responseData =
+            jsonDecode(response.data as String) as Map<String, dynamic>;
       } else if (response.data is Map<String, dynamic>) {
         responseData = response.data as Map<String, dynamic>;
       } else {
-        throw Exception('Unexpected response type: ${response.data.runtimeType}');
+        throw Exception(
+          'Unexpected response type: ${response.data.runtimeType}',
+        );
       }
 
       final convertResponse = ConvertEstimateResponse.fromJson(responseData);
@@ -506,14 +547,13 @@ class ConvertEstimate extends _$ConvertEstimate {
       return convertResponse;
     } catch (e, stackTrace) {
       AppLogger.e('❌ Error converting estimate: $e');
-      
+
       // Only update state if still mounted
       if (ref.mounted) {
         state = AsyncValue.error(e, stackTrace);
       }
-      
+
       rethrow;
     }
   }
 }
-

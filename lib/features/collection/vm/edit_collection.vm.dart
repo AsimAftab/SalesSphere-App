@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
@@ -16,7 +17,9 @@ class EditCollectionViewModel extends _$EditCollectionViewModel {
   FutureOr<void> build() => null;
 
   /// Fetch collection details by ID
-  Future<CollectionDetailApiData> fetchCollectionDetails(String collectionId) async {
+  Future<CollectionDetailApiData> fetchCollectionDetails(
+    String collectionId,
+  ) async {
     try {
       final dio = ref.read(dioClientProvider);
       final response = await dio.get(ApiEndpoints.collectionById(collectionId));
@@ -116,7 +119,7 @@ class EditCollectionViewModel extends _$EditCollectionViewModel {
   void _updateMainList(CollectionDetailApiData data) {
     // Check if provider is still mounted before updating
     if (!ref.mounted) return;
-    
+
     // Convert CollectionDetailApiData to CollectionListItem
     final listItem = CollectionListItem(
       id: data.id,
@@ -134,7 +137,9 @@ class EditCollectionViewModel extends _$EditCollectionViewModel {
       chequeStatus: data.chequeStatus,
     );
 
-    ref.read(collectionViewModelProvider.notifier).updateCollectionLocally(listItem);
+    ref
+        .read(collectionViewModelProvider.notifier)
+        .updateCollectionLocally(listItem);
   }
 
   /// Maps API payment method values to UI display labels
@@ -154,7 +159,10 @@ class EditCollectionViewModel extends _$EditCollectionViewModel {
   }
 
   /// MOCK: Upload images to collection (separate endpoint, not implemented yet)
-  Future<void> uploadCollectionImages(String collectionId, List<File> images) async {
+  Future<void> uploadCollectionImages(
+    String collectionId,
+    List<File> images,
+  ) async {
     try {
       AppLogger.i('Uploading images for collection: $collectionId');
       await Future.delayed(const Duration(milliseconds: 500));

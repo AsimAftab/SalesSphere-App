@@ -1,23 +1,24 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:intl/intl.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/services/google_places_service.dart';
-import 'package:sales_sphere/core/utils/snackbar_utils.dart';
 import 'package:sales_sphere/core/services/location_service.dart';
-import 'package:sales_sphere/widget/custom_text_field.dart';
-import 'package:sales_sphere/widget/custom_button.dart';
-import 'package:sales_sphere/widget/custom_date_picker.dart';
-import 'package:sales_sphere/widget/location_picker_widget.dart';
+import 'package:sales_sphere/core/utils/snackbar_utils.dart';
 import 'package:sales_sphere/features/miscellaneous/models/miscellaneous.model.dart';
 import 'package:sales_sphere/features/miscellaneous/vm/miscellaneous_add.vm.dart';
 import 'package:sales_sphere/features/miscellaneous/vm/miscellaneous_list.vm.dart';
+import 'package:sales_sphere/widget/custom_button.dart';
+import 'package:sales_sphere/widget/custom_date_picker.dart';
+import 'package:sales_sphere/widget/custom_text_field.dart';
+import 'package:sales_sphere/widget/location_picker_widget.dart';
 
 final googlePlacesServiceProvider = Provider<GooglePlacesService>((ref) {
   final apiKey = dotenv.env['GOOGLE_MAPS_API_KEY'] ?? '';
@@ -112,7 +113,9 @@ class _AddMiscellaneousWorkScreenState
                   onTap: () async {
                     Navigator.pop(context);
                     final XFile? image = await _picker.pickImage(
-                        source: ImageSource.gallery, imageQuality: 70);
+                      source: ImageSource.gallery,
+                      imageQuality: 70,
+                    );
                     if (image != null) _addImage(image);
                   },
                 ),
@@ -122,7 +125,9 @@ class _AddMiscellaneousWorkScreenState
                   onTap: () async {
                     Navigator.pop(context);
                     final XFile? image = await _picker.pickImage(
-                        source: ImageSource.camera, imageQuality: 70);
+                      source: ImageSource.camera,
+                      imageQuality: 70,
+                    );
                     if (image != null) _addImage(image);
                   },
                 ),
@@ -153,9 +158,7 @@ class _AddMiscellaneousWorkScreenState
   // ---------------------------------------------------------------------------
   Future<void> _handleSubmit() async {
     if (_formKey.currentState?.validate() ?? false) {
-      if (_addressController.text
-          .trim()
-          .isEmpty) {
+      if (_addressController.text.trim().isEmpty) {
         SnackbarUtils.showError(context, 'Please enter an address');
         return;
       }
@@ -182,14 +185,15 @@ class _AddMiscellaneousWorkScreenState
         DateTime dateToSubmit = _selectedDate;
         if (_workDateController.text.isNotEmpty) {
           try {
-            dateToSubmit = DateFormat('dd MMM yyyy').parse(_workDateController.text);
+            dateToSubmit = DateFormat(
+              'dd MMM yyyy',
+            ).parse(_workDateController.text);
           } catch (e) {
             dateToSubmit = _selectedDate;
           }
         }
-        final formattedDate = '${dateToSubmit.year}-${dateToSubmit.month
-            .toString().padLeft(2, '0')}-${dateToSubmit.day.toString().padLeft(
-            2, '0')}';
+        final formattedDate =
+            '${dateToSubmit.year}-${dateToSubmit.month.toString().padLeft(2, '0')}-${dateToSubmit.day.toString().padLeft(2, '0')}';
 
         final request = CreateMiscellaneousWorkRequest(
           natureOfWork: _natureOfWorkController.text.trim(),
@@ -249,8 +253,6 @@ class _AddMiscellaneousWorkScreenState
     }
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -305,9 +307,7 @@ class _AddMiscellaneousWorkScreenState
                         hasFocusBorder: true,
                         enabled: !_isSubmitting,
                         validator: (value) =>
-                        (value == null || value
-                            .trim()
-                            .isEmpty)
+                            (value == null || value.trim().isEmpty)
                             ? 'Required'
                             : null,
                       ),
@@ -322,9 +322,7 @@ class _AddMiscellaneousWorkScreenState
                         hasFocusBorder: true,
                         enabled: !_isSubmitting,
                         validator: (value) =>
-                        (value == null || value
-                            .trim()
-                            .isEmpty)
+                            (value == null || value.trim().isEmpty)
                             ? 'Required'
                             : null,
                       ),
@@ -339,7 +337,7 @@ class _AddMiscellaneousWorkScreenState
                         lastDate: DateTime(2030),
                         enabled: !_isSubmitting,
                         validator: (value) =>
-                        (value == null || value.trim().isEmpty)
+                            (value == null || value.trim().isEmpty)
                             ? 'Work date required'
                             : null,
                       ),
@@ -355,19 +353,17 @@ class _AddMiscellaneousWorkScreenState
                         locationService: ref.read(locationServiceProvider),
                         enabled: !_isSubmitting,
                         addressValidator: (value) =>
-                        (value == null || value
-                            .trim()
-                            .isEmpty)
+                            (value == null || value.trim().isEmpty)
                             ? 'Address required'
                             : null,
                         onLocationSelected: (location, address) {
                           if (mounted) {
                             setState(() {
                               _addressController.text = address;
-                              _latitudeController.text =
-                                  location.latitude.toStringAsFixed(6);
-                              _longitudeController.text =
-                                  location.longitude.toStringAsFixed(6);
+                              _latitudeController.text = location.latitude
+                                  .toStringAsFixed(6);
+                              _longitudeController.text = location.longitude
+                                  .toStringAsFixed(6);
                             });
                           }
                         },
@@ -441,10 +437,7 @@ class _AddMiscellaneousWorkScreenState
               16.w,
               16.h,
               16.w,
-              MediaQuery
-                  .of(context)
-                  .padding
-                  .bottom + 16.h,
+              MediaQuery.of(context).padding.bottom + 16.h,
             ),
             color: Colors.white,
             child: PrimaryButton(
@@ -483,7 +476,9 @@ class _AddMiscellaneousWorkScreenState
                           child: InteractiveViewer(
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(12.r),
-                              child: Image.file(File(_selectedImages[index].path)),
+                              child: Image.file(
+                                File(_selectedImages[index].path),
+                              ),
                             ),
                           ),
                         );
@@ -505,7 +500,10 @@ class _AddMiscellaneousWorkScreenState
                         bottom: 8.h,
                         right: 8.w,
                         child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12.w,
+                            vertical: 6.h,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.black.withValues(alpha: 0.6),
                             borderRadius: BorderRadius.circular(20.r),
@@ -513,7 +511,11 @@ class _AddMiscellaneousWorkScreenState
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.zoom_in, color: Colors.white, size: 16.sp),
+                              Icon(
+                                Icons.zoom_in,
+                                color: Colors.white,
+                                size: 16.sp,
+                              ),
                               SizedBox(width: 4.w),
                               Text(
                                 'Tap to preview',
@@ -568,8 +570,11 @@ class _AddMiscellaneousWorkScreenState
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.add_photo_alternate_outlined,
-                      color: Colors.grey.shade400, size: 40.sp),
+                  Icon(
+                    Icons.add_photo_alternate_outlined,
+                    color: Colors.grey.shade400,
+                    size: 40.sp,
+                  ),
                   SizedBox(height: 8.h),
                   Text(
                     "Tap to add image",

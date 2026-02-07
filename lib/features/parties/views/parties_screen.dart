@@ -3,11 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
-import 'package:skeletonizer/skeletonizer.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/features/parties/vm/parties.vm.dart';
-import 'package:sales_sphere/widget/universal_list_card.dart';
 import 'package:sales_sphere/widget/error_handler_widget.dart';
+import 'package:sales_sphere/widget/universal_list_card.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class PartiesScreen extends ConsumerStatefulWidget {
   const PartiesScreen({super.key});
@@ -84,10 +84,7 @@ class _PartiesScreenState extends ConsumerState<PartiesScreen> {
           ),
           Column(
             children: [
-              Container(
-                height: 120.h,
-                color: Colors.transparent,
-              ),
+              Container(height: 120.h, color: Colors.transparent),
               // Search Bar Section
               Container(
                 color: Colors.transparent,
@@ -109,16 +106,16 @@ class _PartiesScreenState extends ConsumerState<PartiesScreen> {
                     ),
                     suffixIcon: searchQuery.isNotEmpty
                         ? IconButton(
-                      icon: Icon(
-                        Icons.clear,
-                        color: Colors.grey.shade400,
-                        size: 20.sp,
-                      ),
-                      onPressed: () {
-                        _searchController.clear();
-                        _onSearchChanged('');
-                      },
-                    )
+                            icon: Icon(
+                              Icons.clear,
+                              color: Colors.grey.shade400,
+                              size: 20.sp,
+                            ),
+                            onPressed: () {
+                              _searchController.clear();
+                              _onSearchChanged('');
+                            },
+                          )
                         : null,
                     filled: true,
                     fillColor: Colors.white,
@@ -132,7 +129,10 @@ class _PartiesScreenState extends ConsumerState<PartiesScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.r),
-                      borderSide: BorderSide(color: AppColors.primary, width: 2),
+                      borderSide: BorderSide(
+                        color: AppColors.primary,
+                        width: 2,
+                      ),
                     ),
                     contentPadding: EdgeInsets.symmetric(
                       horizontal: 16.w,
@@ -191,7 +191,9 @@ class _PartiesScreenState extends ConsumerState<PartiesScreen> {
                     }
                     return RefreshIndicator(
                       onRefresh: () async {
-                        await ref.read(partiesViewModelProvider.notifier).refresh();
+                        await ref
+                            .read(partiesViewModelProvider.notifier)
+                            .refresh();
                       },
                       color: AppColors.primary,
                       child: ListView.separated(
@@ -252,7 +254,8 @@ class _PartiesScreenState extends ConsumerState<PartiesScreen> {
                   ),
                   error: (error, stack) => ErrorHandlerConsumer(
                     error: error,
-                    onRefresh: (ref) => ref.invalidate(partiesViewModelProvider),
+                    onRefresh: (ref) =>
+                        ref.invalidate(partiesViewModelProvider),
                     title: 'Failed to load parties',
                   ),
                 ),
@@ -265,11 +268,7 @@ class _PartiesScreenState extends ConsumerState<PartiesScreen> {
         onPressed: _navigateToAddParty,
         backgroundColor: AppColors.primary,
         elevation: 4,
-        icon: Icon(
-          Icons.add,
-          color: Colors.white,
-          size: 20.sp,
-        ),
+        icon: Icon(Icons.add, color: Colors.white, size: 20.sp),
         label: Text(
           'Add Party',
           style: TextStyle(

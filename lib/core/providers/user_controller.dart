@@ -9,5 +9,6 @@ class UserController extends _$UserController {
   User? build() => null;
 
   void setUser(User user) => state = user;
+
   void clearUser() => state = null;
 }

@@ -1,10 +1,12 @@
 import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
-import 'package:sales_sphere/core/utils/logger.dart';
+import 'package:sales_sphere/core/network_layer/dio_client.dart';
 import 'package:sales_sphere/core/providers/user_controller.dart';
+import 'package:sales_sphere/core/utils/logger.dart';
+
 import '../models/profile.model.dart';
 
 part 'profile.vm.g.dart';
@@ -50,8 +52,12 @@ class ProfileViewModel extends _$ProfileViewModel {
         // Parse the API response
         final profileResponse = ProfileApiResponse.fromJson(response.data);
 
-        AppLogger.i('✅ Profile loaded successfully: ${profileResponse.data.name}');
-        AppLogger.d('Email: ${profileResponse.data.email}, Role: ${profileResponse.data.role}');
+        AppLogger.i(
+          '✅ Profile loaded successfully: ${profileResponse.data.name}',
+        );
+        AppLogger.d(
+          'Email: ${profileResponse.data.email}, Role: ${profileResponse.data.role}',
+        );
 
         return profileResponse.data;
       } else {
@@ -114,7 +120,9 @@ class ProfileViewModel extends _$ProfileViewModel {
         AppLogger.i('✅ Profile image uploaded successfully');
 
         // Parse the response to get the new avatar URL
-        final uploadResponse = UploadProfileImageResponse.fromJson(response.data);
+        final uploadResponse = UploadProfileImageResponse.fromJson(
+          response.data,
+        );
         AppLogger.d('New avatar URL: ${uploadResponse.data.avatarUrl}');
 
         // Refresh profile to get updated data from server
@@ -126,9 +134,13 @@ class ProfileViewModel extends _$ProfileViewModel {
             // Also update the user controller so avatar updates in home and settings
             final currentUser = ref.read(userControllerProvider);
             if (currentUser != null) {
-              ref.read(userControllerProvider.notifier).setUser(
-                currentUser.copyWith(avatarUrl: uploadResponse.data.avatarUrl),
-              );
+              ref
+                  .read(userControllerProvider.notifier)
+                  .setUser(
+                    currentUser.copyWith(
+                      avatarUrl: uploadResponse.data.avatarUrl,
+                    ),
+                  );
               AppLogger.i('✅ Updated user avatar in userController');
             }
           } catch (e) {
@@ -138,7 +150,9 @@ class ProfileViewModel extends _$ProfileViewModel {
         }
         return true;
       } else {
-        throw Exception('Failed to upload profile image: ${response.statusMessage}');
+        throw Exception(
+          'Failed to upload profile image: ${response.statusMessage}',
+        );
       }
     } on DioException catch (e) {
       AppLogger.e('❌ Dio error uploading profile image: ${e.message}');

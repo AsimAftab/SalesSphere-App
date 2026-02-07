@@ -6,21 +6,21 @@ import 'package:intl/intl.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:sales_sphere/core/utils/snackbar_utils.dart';
+
 import '../models/invoice.models.dart';
-import '../vm/invoice.vm.dart';
 import '../services/invoice_pdf_service.dart';
+import '../vm/invoice.vm.dart';
 
 class InvoiceDetailsScreen extends ConsumerWidget {
   final String invoiceId;
 
-  const InvoiceDetailsScreen({
-    super.key,
-    required this.invoiceId,
-  });
+  const InvoiceDetailsScreen({super.key, required this.invoiceId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final invoiceDetailsAsync = ref.watch(fetchInvoiceDetailsProvider(invoiceId));
+    final invoiceDetailsAsync = ref.watch(
+      fetchInvoiceDetailsProvider(invoiceId),
+    );
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -44,7 +44,8 @@ class InvoiceDetailsScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: Icon(Icons.refresh, color: Colors.white, size: 24.sp),
-            onPressed: () => ref.invalidate(fetchInvoiceDetailsProvider(invoiceId)),
+            onPressed: () =>
+                ref.invalidate(fetchInvoiceDetailsProvider(invoiceId)),
           ),
         ],
       ),
@@ -63,7 +64,11 @@ class InvoiceDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildInvoiceDetails(BuildContext context, WidgetRef ref, InvoiceDetailsData invoice) {
+  Widget _buildInvoiceDetails(
+    BuildContext context,
+    WidgetRef ref,
+    InvoiceDetailsData invoice,
+  ) {
     final dateFormat = DateFormat('dd MMM yyyy');
     final createdDate = DateTime.parse(invoice.createdAt);
     final deliveryDate = invoice.expectedDeliveryDate != null
@@ -80,7 +85,10 @@ class InvoiceDetailsScreen extends ConsumerWidget {
             padding: EdgeInsets.all(20.w),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.8)],
+                colors: [
+                  AppColors.primary,
+                  AppColors.primary.withValues(alpha: 0.8),
+                ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -181,12 +189,18 @@ class InvoiceDetailsScreen extends ConsumerWidget {
             decoration: BoxDecoration(
               color: invoice.status.backgroundColor,
               borderRadius: BorderRadius.circular(8.r),
-              border: Border.all(color: invoice.status.color.withValues(alpha: 0.3)),
+              border: Border.all(
+                color: invoice.status.color.withValues(alpha: 0.3),
+              ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(invoice.status.icon, size: 18.sp, color: invoice.status.color),
+                Icon(
+                  invoice.status.icon,
+                  size: 18.sp,
+                  color: invoice.status.color,
+                ),
                 SizedBox(width: 8.w),
                 Text(
                   'Status: ${invoice.status.displayName}',
@@ -233,9 +247,7 @@ class InvoiceDetailsScreen extends ConsumerWidget {
           // Items Section
           _buildSectionCard(
             title: 'Items (${invoice.items.length})',
-            children: [
-              ...invoice.items.map((item) => _buildItemCard(item)),
-            ],
+            children: [...invoice.items.map((item) => _buildItemCard(item))],
           ),
 
           SizedBox(height: 16.h),
@@ -261,8 +273,12 @@ class InvoiceDetailsScreen extends ConsumerWidget {
                   SizedBox(height: 8.h),
                 ],
                 if (invoice.discount != null && invoice.discount! > 0) ...[
-                  _buildTotalRow('Discount (${invoice.discount!.toStringAsFixed(1)}%)', 
-                      (invoice.subtotal ?? 0) * invoice.discount! / 100, false, isDiscount: true),
+                  _buildTotalRow(
+                    'Discount (${invoice.discount!.toStringAsFixed(1)}%)',
+                    (invoice.subtotal ?? 0) * invoice.discount! / 100,
+                    false,
+                    isDiscount: true,
+                  ),
                   SizedBox(height: 8.h),
                 ],
                 Divider(color: Colors.grey.shade300),
@@ -306,7 +322,10 @@ class InvoiceDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSectionCard({required String title, required List<Widget> children}) {
+  Widget _buildSectionCard({
+    required String title,
+    required List<Widget> children,
+  }) {
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
@@ -417,7 +436,10 @@ class InvoiceDetailsScreen extends ConsumerWidget {
               _buildItemDetail('Price', '₹${item.price.toStringAsFixed(2)}'),
               if (item.discount > 0) ...[
                 SizedBox(width: 16.w),
-                _buildItemDetail('Discount', '${item.discount.toStringAsFixed(1)}%'),
+                _buildItemDetail(
+                  'Discount',
+                  '${item.discount.toStringAsFixed(1)}%',
+                ),
               ],
             ],
           ),
@@ -450,7 +472,12 @@ class InvoiceDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildTotalRow(String label, double amount, bool isFinal, {bool isDiscount = false}) {
+  Widget _buildTotalRow(
+    String label,
+    double amount,
+    bool isFinal, {
+    bool isDiscount = false,
+  }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -468,7 +495,9 @@ class InvoiceDetailsScreen extends ConsumerWidget {
           style: TextStyle(
             fontSize: isFinal ? 18.sp : 14.sp,
             fontWeight: isFinal ? FontWeight.w700 : FontWeight.w600,
-            color: isFinal ? AppColors.primary : (isDiscount ? Colors.red : Colors.grey.shade900),
+            color: isFinal
+                ? AppColors.primary
+                : (isDiscount ? Colors.red : Colors.grey.shade900),
             fontFamily: 'Poppins',
           ),
         ),
@@ -483,7 +512,11 @@ class InvoiceDetailsScreen extends ConsumerWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.receipt_long_outlined, size: 80.sp, color: Colors.grey.shade300),
+            Icon(
+              Icons.receipt_long_outlined,
+              size: 80.sp,
+              color: Colors.grey.shade300,
+            ),
             SizedBox(height: 24.h),
             Text(
               'Invoice Not Found',
@@ -554,7 +587,11 @@ class InvoiceDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _downloadPdf(BuildContext context, WidgetRef ref, InvoiceDetailsData invoice) async {
+  Future<void> _downloadPdf(
+    BuildContext context,
+    WidgetRef ref,
+    InvoiceDetailsData invoice,
+  ) async {
     try {
       SnackbarUtils.showInfo(context, 'Generating PDF...');
 
@@ -626,7 +663,10 @@ class InvoiceDetailsScreen extends ConsumerWidget {
     } catch (e) {
       AppLogger.e('Error generating PDF: $e');
       if (!context.mounted) return;
-      SnackbarUtils.showError(context, 'Failed to generate PDF: ${e.toString()}');
+      SnackbarUtils.showError(
+        context,
+        'Failed to generate PDF: ${e.toString()}',
+      );
     }
   }
 }

@@ -1,18 +1,19 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
-import 'package:sales_sphere/widget/custom_text_field.dart';
+import 'package:sales_sphere/features/collection/models/collection.model.dart';
+import 'package:sales_sphere/features/collection/vm/add_collection.vm.dart';
+import 'package:sales_sphere/features/collection/vm/bank_names.vm.dart';
+import 'package:sales_sphere/features/parties/vm/parties.vm.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
 import 'package:sales_sphere/widget/custom_date_picker.dart';
 import 'package:sales_sphere/widget/custom_dropdown_textfield.dart';
-import 'package:sales_sphere/features/collection/vm/add_collection.vm.dart';
-import 'package:sales_sphere/features/collection/vm/bank_names.vm.dart';
-import 'package:sales_sphere/features/collection/models/collection.model.dart';
-import 'package:sales_sphere/features/parties/vm/parties.vm.dart';
+import 'package:sales_sphere/widget/custom_text_field.dart';
 
 class AddCollectionScreen extends ConsumerStatefulWidget {
   const AddCollectionScreen({super.key});
@@ -178,7 +179,7 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
         }
 
         final vm = ref.read(addCollectionViewModelProvider.notifier);
-        
+
         // Convert date to ISO format (yyyy-MM-dd)
         final parsedDate = _parseDateFromController(_dateController.text);
         final formattedDate = parsedDate.toIso8601String().split('T')[0];
@@ -187,13 +188,16 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
           'party': _selectedPartyId,
           'amount': double.parse(_amountController.text.trim()),
           'date': formattedDate,
-          'paymentMode': _selectedPaymentMode?.apiValue, // Use apiValue (e.g., 'bank_transfer', 'cash')
+          'paymentMode': _selectedPaymentMode?.apiValue,
+          // Use apiValue (e.g., 'bank_transfer', 'cash')
           if (_selectedPaymentMode == PaymentMode.cheque ||
               _selectedPaymentMode == PaymentMode.bankTransfer)
             'bankName': _selectedBank,
           if (_selectedPaymentMode == PaymentMode.cheque) ...{
             'chequeNumber': _chequeNoController.text.trim(),
-            'chequeDate': _parseDateFromController(_chequeDateController.text).toIso8601String().split('T')[0],
+            'chequeDate': _parseDateFromController(
+              _chequeDateController.text,
+            ).toIso8601String().split('T')[0],
             'chequeStatus': _selectedChequeStatus?.label.toLowerCase(),
           },
           'description': _descriptionController.text.trim(),
@@ -300,7 +304,8 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
               children: [
                 Expanded(
                   child: SingleChildScrollView(
-                    keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
                     padding: EdgeInsets.only(
                       left: 24.w,
                       right: 24.w,
@@ -337,14 +342,18 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
                           loading: () => Column(
                             children: [
                               PrimaryTextField(
-                                controller: TextEditingController(text: 'Loading...'),
+                                controller: TextEditingController(
+                                  text: 'Loading...',
+                                ),
                                 hintText: "Party Name",
                                 prefixIcon: Icons.people_outline,
                                 enabled: false,
                                 suffixWidget: const SizedBox(
                                   width: 20,
                                   height: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
                                 ),
                               ),
                               SizedBox(height: 16.h),
@@ -407,44 +416,53 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
                                 PaymentMode.bankTransfer) ...[
                           SizedBox(height: 16.h),
                           // Bank Selector Dropdown from API
-                          ref.watch(bankNamesViewModelProvider).when(
-                            data: (banks) => CustomDropdownTextField<String>(
-                              hintText: "Select Bank",
-                              searchHint: "Search your bank...",
-                              value: _selectedBank,
-                              prefixIcon: Icons.account_balance_outlined,
-                              items: banks
-                                  .map(
-                                    (bank) => DropdownItem<String>(
-                                      value: bank.name,
-                                      label: bank.name,
-                                      icon: Icons.account_balance,
+                          ref
+                              .watch(bankNamesViewModelProvider)
+                              .when(
+                                data: (banks) =>
+                                    CustomDropdownTextField<String>(
+                                      hintText: "Select Bank",
+                                      searchHint: "Search your bank...",
+                                      value: _selectedBank,
+                                      prefixIcon:
+                                          Icons.account_balance_outlined,
+                                      items: banks
+                                          .map(
+                                            (bank) => DropdownItem<String>(
+                                              value: bank.name,
+                                              label: bank.name,
+                                              icon: Icons.account_balance,
+                                            ),
+                                          )
+                                          .toList(),
+                                      onChanged: (val) =>
+                                          setState(() => _selectedBank = val),
+                                      validator: (v) =>
+                                          v == null ? 'Required' : null,
                                     ),
-                                  )
-                                  .toList(),
-                              onChanged: (val) =>
-                                  setState(() => _selectedBank = val),
-                              validator: (v) => v == null ? 'Required' : null,
-                            ),
-                            loading: () => PrimaryTextField(
-                              controller: TextEditingController(text: 'Loading banks...'),
-                              hintText: "Select Bank",
-                              prefixIcon: Icons.account_balance_outlined,
-                              enabled: false,
-                              suffixWidget: const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                loading: () => PrimaryTextField(
+                                  controller: TextEditingController(
+                                    text: 'Loading banks...',
+                                  ),
+                                  hintText: "Select Bank",
+                                  prefixIcon: Icons.account_balance_outlined,
+                                  enabled: false,
+                                  suffixWidget: const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  ),
+                                ),
+                                error: (e, _) => PrimaryTextField(
+                                  controller: TextEditingController(text: ''),
+                                  hintText: "Select Bank",
+                                  prefixIcon: Icons.account_balance_outlined,
+                                  enabled: false,
+                                  errorText: "Failed to load banks",
+                                ),
                               ),
-                            ),
-                            error: (e, _) => PrimaryTextField(
-                              controller: TextEditingController(text: ''),
-                              hintText: "Select Bank",
-                              prefixIcon: Icons.account_balance_outlined,
-                              enabled: false,
-                              errorText: "Failed to load banks",
-                            ),
-                          ),
                         ],
 
                         if (_selectedPaymentMode == PaymentMode.cheque) ...[

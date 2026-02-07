@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:sales_sphere/core/models/queued_location.dart';
 import 'package:sales_sphere/core/services/tracking_socket_service.dart';
@@ -9,6 +10,7 @@ import 'package:sales_sphere/core/utils/logger.dart';
 /// Automatically syncs queued locations when connection is available
 class OfflineQueueService {
   OfflineQueueService._();
+
   static final OfflineQueueService instance = OfflineQueueService._();
 
   // Hive box for queued locations
@@ -34,7 +36,8 @@ class OfflineQueueService {
   bool get isInitialized => _isInitialized;
 
   /// Get current queue count
-  int get queueCount => _locationBox?.values.where((loc) => !loc.isSynced).length ?? 0;
+  int get queueCount =>
+      _locationBox?.values.where((loc) => !loc.isSynced).length ?? 0;
 
   /// Get total count (including synced)
   int get totalCount => _locationBox?.length ?? 0;
@@ -116,9 +119,7 @@ class OfflineQueueService {
   ///
   /// Uploads pending locations in batches via socket connection
   /// Returns number of successfully synced locations
-  Future<int> syncQueue({
-    required TrackingSocketService socketService,
-  }) async {
+  Future<int> syncQueue({required TrackingSocketService socketService}) async {
     if (!_isInitialized) {
       throw Exception('OfflineQueueService not initialized');
     }
@@ -153,7 +154,9 @@ class OfflineQueueService {
       for (int i = 0; i < unsyncedLocations.length; i += _batchSize) {
         final batch = unsyncedLocations.skip(i).take(_batchSize).toList();
 
-        AppLogger.d('Processing batch ${i ~/ _batchSize + 1} (${batch.length} locations)');
+        AppLogger.d(
+          'Processing batch ${i ~/ _batchSize + 1} (${batch.length} locations)',
+        );
 
         for (final location in batch) {
           try {
@@ -174,7 +177,9 @@ class OfflineQueueService {
             await _locationBox!.put(location.key, updated);
 
             syncedCount++;
-            AppLogger.d('✅ Synced: ${location.toString()} ${location.address != null ? "(with address)" : ""}');
+            AppLogger.d(
+              '✅ Synced: ${location.toString()} ${location.address != null ? "(with address)" : ""}',
+            );
           } catch (e) {
             AppLogger.e('❌ Error syncing location: $e');
 
@@ -195,7 +200,9 @@ class OfflineQueueService {
         }
       }
 
-      AppLogger.i('✅ Queue sync completed: $syncedCount/${ unsyncedLocations.length} synced');
+      AppLogger.i(
+        '✅ Queue sync completed: $syncedCount/${unsyncedLocations.length} synced',
+      );
 
       // Emit updated count
       _queueCountController.add(queueCount);
@@ -338,7 +345,9 @@ class OfflineQueueService {
     final all = _locationBox!.values.toList();
     final pending = all.where((loc) => !loc.isSynced).length;
     final synced = all.where((loc) => loc.isSynced).length;
-    final failed = all.where((loc) => !loc.isSynced && loc.retryCount >= _maxRetryCount).length;
+    final failed = all
+        .where((loc) => !loc.isSynced && loc.retryCount >= _maxRetryCount)
+        .length;
 
     return {
       'initialized': true,
