@@ -190,14 +190,14 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
           children: [
             // Header with enhanced design
             Container(
-              padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 24.h),
+              padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 20.h),
               decoration: BoxDecoration(
                 color: Colors.white,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 8,
+                    offset: const Offset(0, 1),
                   ),
                 ],
               ),
@@ -265,7 +265,7 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(height: 20.h),
+                    SizedBox(height: 16.h),
 
                     // Party Details Card
                     _buildSectionCard(
@@ -283,7 +283,7 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                                 _buildInlinePartySearchField([]),
                           ),
 
-                          SizedBox(height: 16.h),
+                          SizedBox(height: 12.h),
 
                           // Owner Name (Auto-populated, read-only)
                           PrimaryTextField(
@@ -293,7 +293,7 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                             enabled: false,
                           ),
 
-                          SizedBox(height: 16.h),
+                          SizedBox(height: 12.h),
 
                           // Expected Delivery Date
                           CustomDatePicker(
@@ -310,12 +310,12 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                       ),
                     ),
 
-                    SizedBox(height: 20.h),
+                    SizedBox(height: 16.h),
 
                     // Order Items Section
                     _buildSectionHeader('Order Items', orderItems.length),
 
-                    SizedBox(height: 12.h),
+                    SizedBox(height: 8.h),
 
                     // Order Items or Enhanced Empty State
                     if (orderItems.isEmpty)
@@ -835,12 +835,12 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(14.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -936,14 +936,14 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
   // Enhanced Empty State with Illustration
   Widget _buildEnhancedEmptyState() {
     return Container(
-      padding: EdgeInsets.all(40.w),
+      padding: EdgeInsets.all(32.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20.r),
+        borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
+            blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
@@ -956,8 +956,8 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
             children: [
               // Background circle
               Container(
-                width: 120.w,
-                height: 120.w,
+                width: 100.w,
+                height: 100.w,
                 decoration: BoxDecoration(
                   color: AppColors.primary.withValues(alpha: 0.08),
                   shape: BoxShape.circle,
@@ -965,21 +965,21 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
               ),
               // Cart icon with items
               Container(
-                width: 100.w,
-                height: 100.w,
+                width: 84.w,
+                height: 84.w,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.15),
+                  color: AppColors.primary.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.shopping_cart_outlined,
-                  size: 50.sp,
+                  size: 42.sp,
                   color: AppColors.primary.withValues(alpha: 0.7),
                 ),
               ),
             ],
           ),
-          SizedBox(height: 24.h),
+          SizedBox(height: 20.h),
           Text(
             'No Items Added Yet',
             style: TextStyle(
@@ -1043,15 +1043,15 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
     final isPriceModified = orderItemData.isPriceModified;
 
     return Container(
-      margin: EdgeInsets.only(bottom: 12.h),
+      margin: EdgeInsets.only(bottom: 10.h),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(14.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 1),
           ),
         ],
       ),
@@ -1067,12 +1067,12 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                   width: 60.w,
                   height: 60.w,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(color: Colors.grey.shade200, width: 1),
+                    color: Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(10.r),
+                    border: Border.all(color: Colors.grey.shade200, width: 0.5),
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12.r),
+                    borderRadius: BorderRadius.circular(10.r),
                     child: product.imageAssetPath != null
                         ? Image.asset(
                             product.imageAssetPath!,
@@ -1081,14 +1081,14 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                               return Icon(
                                 Icons.inventory_2_rounded,
                                 color: Colors.grey.shade400,
-                                size: 30.sp,
+                                size: 28.sp,
                               );
                             },
                           )
                         : Icon(
                             Icons.inventory_2_rounded,
                             color: Colors.grey.shade400,
-                            size: 30.sp,
+                            size: 28.sp,
                           ),
                   ),
                 ),
@@ -1243,12 +1243,12 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                             'Quantity',
                             style: TextStyle(
                               fontSize: 11.sp,
-                              color: Colors.grey.shade600,
+                              color: Colors.grey.shade500,
                               fontFamily: 'Poppins',
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                          SizedBox(height: 6.h),
+                          SizedBox(height: 4.h),
                           SizedBox(
                             height: 40.h,
                             child: TextFormField(
@@ -1356,12 +1356,12 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                             'Sale Price (per unit)',
                             style: TextStyle(
                               fontSize: 11.sp,
-                              color: Colors.grey.shade600,
+                              color: Colors.grey.shade500,
                               fontFamily: 'Poppins',
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                          SizedBox(height: 6.h),
+                          SizedBox(height: 4.h),
                           SizedBox(
                             height: 40.h,
                             child: TextFormField(
@@ -1464,7 +1464,7 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                   ],
                 ),
 
-                SizedBox(height: 12.h),
+                SizedBox(height: 8.h),
 
                 // Item Discount Row
                 Row(
@@ -1479,12 +1479,12 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                             'Item Discount (%)',
                             style: TextStyle(
                               fontSize: 11.sp,
-                              color: Colors.grey.shade600,
+                              color: Colors.grey.shade500,
                               fontFamily: 'Poppins',
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                          SizedBox(height: 6.h),
+                          SizedBox(height: 4.h),
                           SizedBox(
                             height: 40.h,
                             child: TextFormField(
@@ -1597,22 +1597,22 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                   ],
                 ),
 
-                SizedBox(height: 12.h),
+                SizedBox(height: 8.h),
 
                 // Subtotal
                 Container(
                   padding: EdgeInsets.symmetric(
                     horizontal: 12.w,
-                    vertical: 10.h,
+                    vertical: 8.h,
                   ),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        AppColors.primary.withValues(alpha: 0.08),
-                        AppColors.primary.withValues(alpha: 0.04),
+                        AppColors.primary.withValues(alpha: 0.06),
+                        AppColors.primary.withValues(alpha: 0.02),
                       ],
                     ),
-                    borderRadius: BorderRadius.circular(10.r),
+                    borderRadius: BorderRadius.circular(8.r),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
