@@ -129,59 +129,68 @@ class _BeatPlanSectionState extends ConsumerState<BeatPlanSection> {
 
             SizedBox(height: 16.h),
 
-            // Tab Bar - using custom widget instead of TabBar
+            // Tab Bar - Modern Secondary Color Style
             Container(
+              height: 52.h,
               decoration: BoxDecoration(
-                color: AppColors.greyLight.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(12.r),
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(16.r),
               ),
-              padding: EdgeInsets.all(4.r),
-              child: Row(
-                children: List.generate(_tabTitles.length, (index) {
-                  final isSelected = _selectedTabIndex == index;
-                  return Expanded(
-                    child: GestureDetector(
-                      onTap: () => setState(() => _selectedTabIndex = index),
-                      behavior: HitTestBehavior.opaque,
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        margin: EdgeInsets.all(4.r),
-                        padding: EdgeInsets.symmetric(vertical: 10.h),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? AppColors.cardBackground
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(10.r),
-                          boxShadow: isSelected
-                              ? [
-                                  BoxShadow(
-                                    color: AppColors.shadow.withValues(
-                                      alpha: 0.08,
-                                    ),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ]
-                              : null,
-                        ),
-                        child: Center(
-                          child: Text(
-                            _tabTitles[index],
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              fontWeight: isSelected
-                                  ? FontWeight.w600
-                                  : FontWeight.w500,
-                              color: isSelected
-                                  ? AppColors.textPrimary
-                                  : AppColors.textSecondary,
+              padding: EdgeInsets.all(5.r),
+              child: Stack(
+                children: [
+                  // Animated sliding background indicator
+                  AnimatedAlign(
+                    alignment: _selectedTabIndex == 0
+                        ? Alignment.centerLeft
+                        : Alignment.centerRight,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeOutCubic,
+                    child: Container(
+                      width: MediaQuery.of(context).size.width * 0.5 - 30.w,
+                      height: 42.h,
+                      decoration: BoxDecoration(
+                        color: AppColors.secondary,
+                        borderRadius: BorderRadius.circular(12.r),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.secondary.withValues(alpha: 0.35),
+                            blurRadius: 14,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  // Tab labels
+                  Row(
+                    children: List.generate(_tabTitles.length, (index) {
+                      final isSelected = _selectedTabIndex == index;
+                      return Expanded(
+                        child: GestureDetector(
+                          onTap: () => setState(() => _selectedTabIndex = index),
+                          behavior: HitTestBehavior.opaque,
+                          child: Container(
+                            height: 42.h,
+                            alignment: Alignment.center,
+                            child: Text(
+                              _tabTitles[index],
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                fontWeight:
+                                    isSelected ? FontWeight.w700 : FontWeight.w500,
+                                color: isSelected
+                                    ? Colors.white
+                                    : AppColors.textSecondary,
+                                fontFamily: 'Poppins',
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ),
-                  );
-                }),
+                      );
+                    }),
+                  ),
+                ],
               ),
             ),
 
