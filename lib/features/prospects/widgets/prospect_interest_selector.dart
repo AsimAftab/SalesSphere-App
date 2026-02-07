@@ -334,13 +334,14 @@ class _ProspectInterestBottomSheetState
   }
 
   void _showAddCategoryDialog() {
-    final controller = TextEditingController();
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (context) => _AddCategoryDialog(
-        controller: controller,
-        onSave: () {
-          final categoryName = controller.text.trim();
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      isDismissible: true,
+      enableDrag: true,
+      builder: (context) => _AddCategoryBottomSheet(
+        onSave: (categoryName) {
           if (categoryName.isNotEmpty) {
             setState(() {
               _customCategories.putIfAbsent(categoryName, () => {});
@@ -353,12 +354,14 @@ class _ProspectInterestBottomSheetState
   }
 
   void _showAddBrandDialog(String categoryName) {
-    final controller = TextEditingController();
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (context) => _AddBrandDialog(
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      isDismissible: true,
+      enableDrag: true,
+      builder: (context) => _AddBrandBottomSheet(
         categoryName: categoryName,
-        controller: controller,
         onSave: (brandName) {
           final brand = brandName.trim();
           if (brand.isNotEmpty) {
@@ -649,37 +652,48 @@ class _ProspectInterestBottomSheetState
   }
 
   Widget _buildAddNewCategoryCard() {
-    return InkWell(
-      onTap: _showAddCategoryDialog,
-      borderRadius: BorderRadius.circular(12.r),
-      child: Container(
-        padding: EdgeInsets.all(16.w),
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: AppColors.primary.withOpacity(0.5),
-            style: BorderStyle.solid,
+    return Container(
+      height: 56.h,
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(16.r),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.35),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
           ),
-          borderRadius: BorderRadius.circular(12.r),
-          color: AppColors.primary.withOpacity(0.03),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.add_circle_outline,
-              color: AppColors.primary,
-              size: 20.sp,
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _showAddCategoryDialog,
+          borderRadius: BorderRadius.circular(16.r),
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 20.w),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.add_circle_rounded,
+                  color: Colors.white,
+                  size: 22.sp,
+                ),
+                SizedBox(width: 10.w),
+                Text(
+                  'Add New Category',
+                  style: TextStyle(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                    fontFamily: 'Poppins',
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ],
             ),
-            SizedBox(width: 8.w),
-            Text(
-              'Add New Category',
-              style: TextStyle(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w500,
-                color: AppColors.primary,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -860,168 +874,564 @@ class _ProspectInterestBottomSheetState
 }
 
 // ============================================================================
-// ADD CATEGORY DIALOG
+// ADD CATEGORY BOTTOM SHEET
 // ============================================================================
 
-class _AddCategoryDialog extends StatefulWidget {
-  final TextEditingController controller;
-  final VoidCallback onSave;
+class _AddCategoryBottomSheet extends StatefulWidget {
+  final Function(String) onSave;
 
-  const _AddCategoryDialog({required this.controller, required this.onSave});
+  const _AddCategoryBottomSheet({required this.onSave});
 
   @override
-  State<_AddCategoryDialog> createState() => _AddCategoryDialogState();
+  State<_AddCategoryBottomSheet> createState() =>
+      _AddCategoryBottomSheetState();
 }
 
-class _AddCategoryDialogState extends State<_AddCategoryDialog> {
+class _AddCategoryBottomSheetState extends State<_AddCategoryBottomSheet> {
+  final TextEditingController _controller = TextEditingController();
+  final ValueNotifier<bool> _isValidNotifier = ValueNotifier<bool>(false);
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(_validateInput);
+  }
+
   @override
   void dispose() {
-    widget.controller.dispose();
+    _controller.removeListener(_validateInput);
+    _controller.dispose();
+    _isValidNotifier.dispose();
     super.dispose();
   }
 
+  void _validateInput() {
+    _isValidNotifier.value = _controller.text.trim().isNotEmpty;
+  }
+
   void _handleSave() {
-    if (widget.controller.text.trim().isNotEmpty) {
-      widget.onSave();
+    if (_isValidNotifier.value) {
+      widget.onSave(_controller.text.trim());
       context.pop();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        'Add New Category',
-        style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600),
-      ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: widget.controller,
-            autofocus: true,
-            textCapitalization: TextCapitalization.words,
-            decoration: InputDecoration(
-              labelText: 'Category Name',
-              hintText: 'e.g., Electronics',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8.r),
-              ),
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 12.w,
-                vertical: 12.h,
-              ),
+    final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
+
+    return RepaintBoundary(
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(24.r),
+            topRight: Radius.circular(24.r),
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(bottom: bottomPadding),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Handle bar
+                RepaintBoundary(
+                  child: Container(
+                    margin: EdgeInsets.only(top: 12.h, bottom: 8.h),
+                    width: 40.w,
+                    height: 4.h,
+                    decoration: BoxDecoration(
+                      color: AppColors.greyMedium,
+                      borderRadius: BorderRadius.circular(2.r),
+                    ),
+                  ),
+                ),
+
+                // Header
+                RepaintBoundary(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 40.w,
+                          height: 40.h,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                          child: Icon(
+                            Icons.category_rounded,
+                            color: Colors.white,
+                            size: 22.sp,
+                          ),
+                        ),
+                        SizedBox(width: 14.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Add New Category',
+                                style: TextStyle(
+                                  fontSize: 18.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
+                                  fontFamily: 'Poppins',
+                                ),
+                              ),
+                              Text(
+                                'Enter category name below',
+                                style: TextStyle(
+                                  fontSize: 13.sp,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => context.pop(),
+                          icon: Icon(
+                            Icons.close_rounded,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: 8.h),
+
+                // Input field
+                RepaintBoundary(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20.w),
+                    child: TextField(
+                      controller: _controller,
+                      autofocus: true,
+                      textCapitalization: TextCapitalization.words,
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontFamily: 'Poppins',
+                      ),
+                      decoration: InputDecoration(
+                        labelText: 'Category Name',
+                        hintText: 'e.g., Electronics',
+                        labelStyle: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 14.sp,
+                        ),
+                        hintStyle: TextStyle(
+                          color: Colors.grey.shade400,
+                          fontSize: 15.sp,
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey.shade50,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14.r),
+                          borderSide: BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14.r),
+                          borderSide: BorderSide(
+                            color: AppColors.greyLight.withValues(alpha: 0.5),
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14.r),
+                          borderSide: const BorderSide(
+                            color: AppColors.primary,
+                            width: 2,
+                          ),
+                        ),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16.w,
+                          vertical: 14.h,
+                        ),
+                        prefixIcon: Icon(
+                          Icons.label_outline_rounded,
+                          color: AppColors.primary,
+                          size: 22.sp,
+                        ),
+                      ),
+                      onSubmitted: (_) => _handleSave(),
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: 20.h),
+
+                // Action buttons
+                RepaintBoundary(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20.w),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => context.pop(),
+                            style: OutlinedButton.styleFrom(
+                              padding: EdgeInsets.symmetric(vertical: 14.h),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                              ),
+                              side: BorderSide(
+                                color: AppColors.greyLight.withValues(alpha: 0.8),
+                              ),
+                            ),
+                            child: Text(
+                              'Cancel',
+                              style: TextStyle(
+                                fontSize: 15.sp,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.textSecondary,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          flex: 2,
+                          child: ValueListenableBuilder<bool>(
+                            valueListenable: _isValidNotifier,
+                            builder: (context, isValid, child) {
+                              return AnimatedContainer(
+                                duration: const Duration(milliseconds: 150),
+                                height: 52.h,
+                                decoration: BoxDecoration(
+                                  color: isValid ? AppColors.primary : Colors.grey.shade300,
+                                  borderRadius: BorderRadius.circular(14.r),
+                                  boxShadow: isValid
+                                      ? [
+                                          BoxShadow(
+                                            color: AppColors.primary
+                                                .withValues(alpha: 0.3),
+                                            blurRadius: 12,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ]
+                                      : null,
+                                ),
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: isValid ? _handleSave : null,
+                                    borderRadius: BorderRadius.circular(14.r),
+                                    child: Center(
+                                      child: Text(
+                                        'Add Category',
+                                        style: TextStyle(
+                                          fontSize: 15.sp,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                          fontFamily: 'Poppins',
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: 16.h),
+              ],
             ),
-            onSubmitted: (_) => _handleSave(),
           ),
-        ],
+        ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => context.pop(),
-          child: Text(
-            'Cancel',
-            style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
-          ),
-        ),
-        ElevatedButton(
-          onPressed: _handleSave,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
-          ),
-          child: Text(
-            'Add',
-            style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500),
-          ),
-        ),
-      ],
     );
   }
 }
 
 // ============================================================================
-// ADD BRAND DIALOG
+// ADD BRAND BOTTOM SHEET
 // ============================================================================
 
-class _AddBrandDialog extends StatefulWidget {
+class _AddBrandBottomSheet extends StatefulWidget {
   final String categoryName;
-  final TextEditingController controller;
   final Function(String) onSave;
 
-  const _AddBrandDialog({
+  const _AddBrandBottomSheet({
     required this.categoryName,
-    required this.controller,
     required this.onSave,
   });
 
   @override
-  State<_AddBrandDialog> createState() => _AddBrandDialogState();
+  State<_AddBrandBottomSheet> createState() => _AddBrandBottomSheetState();
 }
 
-class _AddBrandDialogState extends State<_AddBrandDialog> {
+class _AddBrandBottomSheetState extends State<_AddBrandBottomSheet> {
+  final TextEditingController _controller = TextEditingController();
+  final ValueNotifier<bool> _isValidNotifier = ValueNotifier<bool>(false);
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(_validateInput);
+  }
+
   @override
   void dispose() {
-    widget.controller.dispose();
+    _controller.removeListener(_validateInput);
+    _controller.dispose();
+    _isValidNotifier.dispose();
     super.dispose();
   }
 
+  void _validateInput() {
+    _isValidNotifier.value = _controller.text.trim().isNotEmpty;
+  }
+
   void _handleSave() {
-    if (widget.controller.text.trim().isNotEmpty) {
-      widget.onSave(widget.controller.text.trim());
+    if (_isValidNotifier.value) {
+      widget.onSave(_controller.text.trim());
       context.pop();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        'Add Brand to ${widget.categoryName}',
-        style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600),
-      ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: widget.controller,
-            autofocus: true,
-            textCapitalization: TextCapitalization.words,
-            decoration: InputDecoration(
-              labelText: 'Brand Name',
-              hintText: 'e.g., Samsung',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8.r),
-              ),
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 12.w,
-                vertical: 12.h,
-              ),
+    final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
+
+    return RepaintBoundary(
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(24.r),
+            topRight: Radius.circular(24.r),
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(bottom: bottomPadding),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Handle bar
+                RepaintBoundary(
+                  child: Container(
+                    margin: EdgeInsets.only(top: 12.h, bottom: 8.h),
+                    width: 40.w,
+                    height: 4.h,
+                    decoration: BoxDecoration(
+                      color: AppColors.greyMedium,
+                      borderRadius: BorderRadius.circular(2.r),
+                    ),
+                  ),
+                ),
+
+                // Header
+                RepaintBoundary(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 40.w,
+                          height: 40.h,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                          child: Icon(
+                            Icons.branding_watermark_rounded,
+                            color: Colors.white,
+                            size: 22.sp,
+                          ),
+                        ),
+                        SizedBox(width: 14.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Add Brand',
+                                style: TextStyle(
+                                  fontSize: 18.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
+                                  fontFamily: 'Poppins',
+                                ),
+                              ),
+                              Text(
+                                'To: ${widget.categoryName}',
+                                style: TextStyle(
+                                  fontSize: 13.sp,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => context.pop(),
+                          icon: Icon(
+                            Icons.close_rounded,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: 8.h),
+
+                // Input field
+                RepaintBoundary(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20.w),
+                    child: TextField(
+                      controller: _controller,
+                      autofocus: true,
+                      textCapitalization: TextCapitalization.words,
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontFamily: 'Poppins',
+                      ),
+                      decoration: InputDecoration(
+                        labelText: 'Brand Name',
+                        hintText: 'e.g., Samsung',
+                        labelStyle: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 14.sp,
+                        ),
+                        hintStyle: TextStyle(
+                          color: Colors.grey.shade400,
+                          fontSize: 15.sp,
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey.shade50,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14.r),
+                          borderSide: BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14.r),
+                          borderSide: BorderSide(
+                            color: AppColors.greyLight.withValues(alpha: 0.5),
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14.r),
+                          borderSide: const BorderSide(
+                            color: AppColors.primary,
+                            width: 2,
+                          ),
+                        ),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16.w,
+                          vertical: 14.h,
+                        ),
+                        prefixIcon: Icon(
+                          Icons.label_outline_rounded,
+                          color: AppColors.primary,
+                          size: 22.sp,
+                        ),
+                      ),
+                      onSubmitted: (_) => _handleSave(),
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: 20.h),
+
+                // Action buttons
+                RepaintBoundary(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20.w),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => context.pop(),
+                            style: OutlinedButton.styleFrom(
+                              padding: EdgeInsets.symmetric(vertical: 14.h),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                              ),
+                              side: BorderSide(
+                                color: AppColors.greyLight.withValues(alpha: 0.8),
+                              ),
+                            ),
+                            child: Text(
+                              'Cancel',
+                              style: TextStyle(
+                                fontSize: 15.sp,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.textSecondary,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          flex: 2,
+                          child: ValueListenableBuilder<bool>(
+                            valueListenable: _isValidNotifier,
+                            builder: (context, isValid, child) {
+                              return AnimatedContainer(
+                                duration: const Duration(milliseconds: 150),
+                                height: 52.h,
+                                decoration: BoxDecoration(
+                                  color: isValid ? AppColors.primary : Colors.grey.shade300,
+                                  borderRadius: BorderRadius.circular(14.r),
+                                  boxShadow: isValid
+                                      ? [
+                                          BoxShadow(
+                                            color: AppColors.primary
+                                                .withValues(alpha: 0.3),
+                                            blurRadius: 12,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ]
+                                      : null,
+                                ),
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: isValid ? _handleSave : null,
+                                    borderRadius: BorderRadius.circular(14.r),
+                                    child: Center(
+                                      child: Text(
+                                        'Add Brand',
+                                        style: TextStyle(
+                                          fontSize: 15.sp,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                          fontFamily: 'Poppins',
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: 16.h),
+              ],
             ),
-            onSubmitted: (_) => _handleSave(),
           ),
-        ],
+        ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => context.pop(),
-          child: Text(
-            'Cancel',
-            style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
-          ),
-        ),
-        ElevatedButton(
-          onPressed: _handleSave,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
-          ),
-          child: Text(
-            'Add',
-            style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500),
-          ),
-        ),
-      ],
     );
   }
 }

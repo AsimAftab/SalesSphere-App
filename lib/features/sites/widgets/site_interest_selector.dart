@@ -10,35 +10,35 @@ import 'package:uuid/uuid.dart';
 
 part 'site_interest_selector.g.dart';
 
-/// Data class to hold selected brands and technicians for a category
+/// Data class to hold selected brands and siteContacts for a category
 @immutable
 class SiteSelectionData {
   final Set<String> brands;
-  final Set<SiteTechnician> technicians;
+  final Set<SiteTechnician> siteContacts;
 
   const SiteSelectionData({
     this.brands = const {},
-    this.technicians = const {},
+    this.siteContacts = const {},
   });
 
   SiteSelectionData copyWith({
     Set<String>? brands,
-    Set<SiteTechnician>? technicians,
+    Set<SiteTechnician>? siteContacts,
   }) {
     return SiteSelectionData(
       brands: brands ?? this.brands,
-      technicians: technicians ?? this.technicians,
+      siteContacts: siteContacts ?? this.siteContacts,
     );
   }
 
-  bool get isEmpty => brands.isEmpty && technicians.isEmpty;
+  bool get isEmpty => brands.isEmpty && siteContacts.isEmpty;
 
   bool get isNotEmpty => !isEmpty;
 }
 
 /// Site Interest Selector Widget
 /// Compact view with chips + bottom sheet for selection
-/// Supports category/brand/technician selection with "Add New" functionality
+/// Supports category/brand/siteContact selection with "Add New" functionality
 class SiteInterestSelector extends ConsumerStatefulWidget {
   /// Initially selected interests (for edit mode)
   final List<SiteInterest> initiallySelected;
@@ -84,7 +84,7 @@ class _SiteInterestSelectorState extends ConsumerState<SiteInterestSelector> {
     for (final interest in widget.initiallySelected) {
       _selectedData[interest.category] = SiteSelectionData(
         brands: interest.brands.toSet(),
-        technicians: interest.technicians.toSet(),
+        siteContacts: interest.technicians.toSet(),
       );
     }
   }
@@ -94,7 +94,7 @@ class _SiteInterestSelectorState extends ConsumerState<SiteInterestSelector> {
       final current = _selectedData[categoryName];
       if (current != null) {
         final newBrands = Set<String>.from(current.brands)..remove(brand);
-        if (newBrands.isEmpty && current.technicians.isEmpty) {
+        if (newBrands.isEmpty && current.siteContacts.isEmpty) {
           _selectedData.remove(categoryName);
         } else {
           _selectedData[categoryName] = current.copyWith(brands: newBrands);
@@ -109,7 +109,7 @@ class _SiteInterestSelectorState extends ConsumerState<SiteInterestSelector> {
       return SiteInterest(
         category: entry.key,
         brands: entry.value.brands.toList(),
-        technicians: entry.value.technicians.toList(),
+        technicians: entry.value.siteContacts.toList(),
       );
     }).toList();
 
@@ -257,7 +257,7 @@ class _SiteInterestSelectorState extends ConsumerState<SiteInterestSelector> {
         final data = entry.value;
         final chips = <Widget>[];
 
-        // Add only brand chips (technicians shown inside modify selection only)
+        // Add only brand chips (siteContacts shown inside modify selection only)
         for (final brand in data.brands) {
           chips.add(
             _BrandChip(
@@ -362,8 +362,8 @@ class _SiteInterestBottomSheetState
   // Custom brands added to ANY category ( categoryName => Set<brands> )
   final Map<String, Set<String>> _customBrands = {};
 
-  // Custom technicians added to ANY category ( categoryName => Set<technicians> )
-  final Map<String, Set<SiteTechnician>> _customTechnicians = {};
+  // Custom siteContacts added to ANY category ( categoryName => Set<siteContacts> )
+  final Map<String, Set<SiteTechnician>> _customSiteContacts = {};
 
   @override
   void initState() {
@@ -374,13 +374,14 @@ class _SiteInterestBottomSheetState
   }
 
   void _showAddCategoryDialog() {
-    final controller = TextEditingController();
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (context) => _AddCategoryDialog(
-        controller: controller,
-        onSave: () {
-          final categoryName = controller.text.trim();
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      isDismissible: true,
+      enableDrag: true,
+      builder: (context) => _AddCategoryBottomSheet(
+        onSave: (categoryName) {
           if (categoryName.isNotEmpty) {
             setState(() {
               _customCategories.putIfAbsent(categoryName, () => {});
@@ -393,12 +394,14 @@ class _SiteInterestBottomSheetState
   }
 
   void _showAddBrandDialog(String categoryName) {
-    final controller = TextEditingController();
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (context) => _AddBrandDialog(
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      isDismissible: true,
+      enableDrag: true,
+      builder: (context) => _AddBrandBottomSheet(
         categoryName: categoryName,
-        controller: controller,
         onSave: (brandName) {
           final brand = brandName.trim();
           if (brand.isNotEmpty) {
@@ -422,28 +425,28 @@ class _SiteInterestBottomSheetState
     );
   }
 
-  void _showAddTechnicianDialog(String categoryName) {
-    final nameController = TextEditingController();
-    final phoneController = TextEditingController();
-    showDialog(
+  void _showAddSiteContactDialog(String categoryName) {
+    showModalBottomSheet(
       context: context,
-      builder: (context) => _AddTechnicianDialog(
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      isDismissible: true,
+      enableDrag: true,
+      builder: (context) => _AddSiteContactBottomSheet(
         categoryName: categoryName,
-        nameController: nameController,
-        phoneController: phoneController,
-        onSave: (technician) {
+        onSave: (siteContact) {
           setState(() {
-            // Add to custom technicians for this category
-            _customTechnicians.putIfAbsent(categoryName, () => {});
-            _customTechnicians[categoryName]!.add(technician);
+            // Add to custom siteContacts for this category
+            _customSiteContacts.putIfAbsent(categoryName, () => {});
+            _customSiteContacts[categoryName]!.add(siteContact);
 
             // Also add to selected data so it's checked by default
             final current = _selectedData[categoryName];
-            final newTechnicians = Set<SiteTechnician>.from(
-              current?.technicians ?? {},
-            )..add(technician);
+            final newSiteContacts = Set<SiteTechnician>.from(
+              current?.siteContacts ?? {},
+            )..add(siteContact);
             _selectedData[categoryName] = (current ?? const SiteSelectionData())
-                .copyWith(technicians: newTechnicians);
+                .copyWith(siteContacts: newSiteContacts);
           });
         },
       ),
@@ -457,7 +460,7 @@ class _SiteInterestBottomSheetState
 
       if (newBrands.contains(brand)) {
         newBrands.remove(brand);
-        if (newBrands.isEmpty && current.technicians.isEmpty) {
+        if (newBrands.isEmpty && current.siteContacts.isEmpty) {
           _selectedData.remove(categoryName);
           _expandedCategories.remove(categoryName);
           return;
@@ -470,30 +473,30 @@ class _SiteInterestBottomSheetState
     });
   }
 
-  void _toggleTechnician(String categoryName, SiteTechnician technician) {
+  void _toggleSiteContact(String categoryName, SiteTechnician siteContact) {
     setState(() {
       final current = _selectedData[categoryName] ?? const SiteSelectionData();
-      final newTechnicians = Set<SiteTechnician>.from(current.technicians);
+      final newSiteContacts = Set<SiteTechnician>.from(current.siteContacts);
 
-      // Find existing technician by name and phone (ignoring _id)
-      final existingTech = newTechnicians.firstWhere(
-        (t) => t.name == technician.name && t.phone == technician.phone,
-        orElse: () => technician,
+      // Find existing siteContact by name and phone (ignoring _id)
+      final existingTech = newSiteContacts.firstWhere(
+        (t) => t.name == siteContact.name && t.phone == siteContact.phone,
+        orElse: () => siteContact,
       );
 
-      if (newTechnicians.contains(existingTech)) {
-        newTechnicians.remove(existingTech);
-        if (current.brands.isEmpty && newTechnicians.isEmpty) {
+      if (newSiteContacts.contains(existingTech)) {
+        newSiteContacts.remove(existingTech);
+        if (current.brands.isEmpty && newSiteContacts.isEmpty) {
           _selectedData.remove(categoryName);
           _expandedCategories.remove(categoryName);
           return;
         }
       } else {
-        newTechnicians.add(technician);
+        newSiteContacts.add(siteContact);
       }
 
       _selectedData[categoryName] = current.copyWith(
-        technicians: newTechnicians,
+        siteContacts: newSiteContacts,
       );
     });
   }
@@ -511,19 +514,19 @@ class _SiteInterestBottomSheetState
   int _getSelectedCountForCategory(String categoryName) {
     final data = _selectedData[categoryName];
     if (data == null) return 0;
-    return data.brands.length + data.technicians.length;
+    return data.brands.length + data.siteContacts.length;
   }
 
   bool _isBrandSelected(String categoryName, String brand) {
     return _selectedData[categoryName]?.brands.contains(brand) ?? false;
   }
 
-  bool _isTechnicianSelected(String categoryName, SiteTechnician technician) {
-    final selectedTechs = _selectedData[categoryName]?.technicians;
+  bool _isSiteContactSelected(String categoryName, SiteTechnician siteContact) {
+    final selectedTechs = _selectedData[categoryName]?.siteContacts;
     if (selectedTechs == null) return false;
     // Compare by name and phone only, ignoring _id field which may differ
     return selectedTechs.any(
-      (t) => t.name == technician.name && t.phone == technician.phone,
+      (t) => t.name == siteContact.name && t.phone == siteContact.phone,
     );
   }
 
@@ -745,37 +748,48 @@ class _SiteInterestBottomSheetState
   }
 
   Widget _buildAddNewCategoryCard() {
-    return InkWell(
-      onTap: _showAddCategoryDialog,
-      borderRadius: BorderRadius.circular(12.r),
-      child: Container(
-        padding: EdgeInsets.all(16.w),
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: AppColors.primary.withValues(alpha: 0.5),
-            style: BorderStyle.solid,
+    return Container(
+      height: 56.h,
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(16.r),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.35),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
           ),
-          borderRadius: BorderRadius.circular(12.r),
-          color: AppColors.primary.withValues(alpha: 0.03),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.add_circle_outline,
-              color: AppColors.primary,
-              size: 20.sp,
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _showAddCategoryDialog,
+          borderRadius: BorderRadius.circular(16.r),
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 20.w),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.add_circle_rounded,
+                  color: Colors.white,
+                  size: 22.sp,
+                ),
+                SizedBox(width: 10.w),
+                Text(
+                  'Add New Category',
+                  style: TextStyle(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                    fontFamily: 'Poppins',
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ],
             ),
-            SizedBox(width: 8.w),
-            Text(
-              'Add New Category',
-              style: TextStyle(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w500,
-                color: AppColors.primary,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -796,15 +810,15 @@ class _SiteInterestBottomSheetState
         ..._customBrands[category.name]!,
     }.toList();
 
-    // Get all technicians: original category technicians + custom added technicians
-    final allTechnicians = {
+    // Get all siteContacts: original category siteContacts + custom added siteContacts
+    final allSiteContacts = {
       ...category.technicians,
-      if (_customTechnicians.containsKey(category.name))
-        ..._customTechnicians[category.name]!,
+      if (_customSiteContacts.containsKey(category.name))
+        ..._customSiteContacts[category.name]!,
     }.toList();
 
     // Total count for display
-    final totalItemsCount = allBrands.length + allTechnicians.length;
+    final totalItemsCount = allBrands.length + allSiteContacts.length;
 
     return Container(
       decoration: BoxDecoration(
@@ -976,21 +990,21 @@ class _SiteInterestBottomSheetState
               ),
             ],
 
-            // Technicians section
-            if (allTechnicians.isNotEmpty || true) ...[
+            // Site Contacts section
+            if (allSiteContacts.isNotEmpty || true) ...[
               SizedBox(height: 12.h),
               Padding(
                 padding: EdgeInsets.only(bottom: 8.h),
                 child: Row(
                   children: [
                     Icon(
-                      Icons.engineering,
+                      Icons.contact_page,
                       size: 16.sp,
                       color: AppColors.textSecondary,
                     ),
                     SizedBox(width: 4.w),
                     Text(
-                      'Technicians',
+                      'Site Contacts',
                       style: TextStyle(
                         fontSize: 13.sp,
                         fontWeight: FontWeight.w600,
@@ -1000,11 +1014,11 @@ class _SiteInterestBottomSheetState
                   ],
                 ),
               ),
-              if (allTechnicians.isEmpty)
+              if (allSiteContacts.isEmpty)
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 8.h),
                   child: Text(
-                    'No technicians available',
+                    'No site contacts available',
                     style: TextStyle(
                       fontSize: 12.sp,
                       color: AppColors.greyMedium,
@@ -1012,8 +1026,8 @@ class _SiteInterestBottomSheetState
                   ),
                 )
               else
-                ...allTechnicians.map((tech) {
-                  final isSelected = _isTechnicianSelected(category.name, tech);
+                ...allSiteContacts.map((tech) {
+                  final isSelected = _isSiteContactSelected(category.name, tech);
                   return CheckboxListTile(
                     contentPadding: EdgeInsets.zero,
                     title: Text(
@@ -1034,16 +1048,16 @@ class _SiteInterestBottomSheetState
                       ),
                     ),
                     value: isSelected,
-                    onChanged: (_) => _toggleTechnician(category.name, tech),
+                    onChanged: (_) => _toggleSiteContact(category.name, tech),
                     controlAffinity: ListTileControlAffinity.leading,
                     activeColor: AppColors.secondary,
                     checkColor: Colors.white,
                     dense: true,
                   );
                 }),
-              // Add Technician button
+              // Add Site Contact button
               InkWell(
-                onTap: () => _showAddTechnicianDialog(category.name),
+                onTap: () => _showAddSiteContactDialog(category.name),
                 borderRadius: BorderRadius.circular(8.r),
                 child: Container(
                   margin: EdgeInsets.only(top: 4.h),
@@ -1068,7 +1082,7 @@ class _SiteInterestBottomSheetState
                       ),
                       SizedBox(width: 6.w),
                       Text(
-                        'Add Technician',
+                        'Add Site Contact',
                         style: TextStyle(
                           fontSize: 13.sp,
                           fontWeight: FontWeight.w500,
@@ -1088,303 +1102,929 @@ class _SiteInterestBottomSheetState
 }
 
 // ============================================================================
-// ADD CATEGORY DIALOG
+// ADD CATEGORY BOTTOM SHEET
 // ============================================================================
 
-class _AddCategoryDialog extends StatefulWidget {
-  final TextEditingController controller;
-  final VoidCallback onSave;
-
-  const _AddCategoryDialog({required this.controller, required this.onSave});
-
-  @override
-  State<_AddCategoryDialog> createState() => _AddCategoryDialogState();
-}
-
-class _AddCategoryDialogState extends State<_AddCategoryDialog> {
-  @override
-  void dispose() {
-    widget.controller.dispose();
-    super.dispose();
-  }
-
-  void _handleSave() {
-    if (widget.controller.text.trim().isNotEmpty) {
-      widget.onSave();
-      context.pop();
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        'Add New Category',
-        style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600),
-      ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: widget.controller,
-            autofocus: true,
-            textCapitalization: TextCapitalization.words,
-            decoration: InputDecoration(
-              labelText: 'Category Name',
-              hintText: 'e.g., Security Systems',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8.r),
-              ),
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 12.w,
-                vertical: 12.h,
-              ),
-            ),
-            onSubmitted: (_) => _handleSave(),
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => context.pop(),
-          child: Text(
-            'Cancel',
-            style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
-          ),
-        ),
-        ElevatedButton(
-          onPressed: _handleSave,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
-          ),
-          child: Text(
-            'Add',
-            style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ============================================================================
-// ADD BRAND DIALOG
-// ============================================================================
-
-class _AddBrandDialog extends StatefulWidget {
-  final String categoryName;
-  final TextEditingController controller;
+class _AddCategoryBottomSheet extends StatefulWidget {
   final Function(String) onSave;
 
-  const _AddBrandDialog({
-    required this.categoryName,
-    required this.controller,
-    required this.onSave,
-  });
+  const _AddCategoryBottomSheet({required this.onSave});
 
   @override
-  State<_AddBrandDialog> createState() => _AddBrandDialogState();
+  State<_AddCategoryBottomSheet> createState() =>
+      _AddCategoryBottomSheetState();
 }
 
-class _AddBrandDialogState extends State<_AddBrandDialog> {
+class _AddCategoryBottomSheetState extends State<_AddCategoryBottomSheet> {
+  final TextEditingController _controller = TextEditingController();
+  final ValueNotifier<bool> _isValidNotifier = ValueNotifier<bool>(false);
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(_validateInput);
+  }
+
   @override
   void dispose() {
-    widget.controller.dispose();
+    _controller.removeListener(_validateInput);
+    _controller.dispose();
+    _isValidNotifier.dispose();
     super.dispose();
   }
 
+  void _validateInput() {
+    _isValidNotifier.value = _controller.text.trim().isNotEmpty;
+  }
+
   void _handleSave() {
-    if (widget.controller.text.trim().isNotEmpty) {
-      widget.onSave(widget.controller.text.trim());
+    if (_isValidNotifier.value) {
+      widget.onSave(_controller.text.trim());
       context.pop();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        'Add Brand to ${widget.categoryName}',
-        style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600),
-      ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: widget.controller,
-            autofocus: true,
-            textCapitalization: TextCapitalization.words,
-            decoration: InputDecoration(
-              labelText: 'Brand Name',
-              hintText: 'e.g., Hikvision',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8.r),
-              ),
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 12.w,
-                vertical: 12.h,
-              ),
+    final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
+
+    return RepaintBoundary(
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(24.r),
+            topRight: Radius.circular(24.r),
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(bottom: bottomPadding),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Handle bar
+                RepaintBoundary(
+                  child: Container(
+                    margin: EdgeInsets.only(top: 12.h, bottom: 8.h),
+                    width: 40.w,
+                    height: 4.h,
+                    decoration: BoxDecoration(
+                      color: AppColors.greyMedium,
+                      borderRadius: BorderRadius.circular(2.r),
+                    ),
+                  ),
+                ),
+
+                // Header
+                RepaintBoundary(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 40.w,
+                          height: 40.h,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                          child: Icon(
+                            Icons.category_rounded,
+                            color: Colors.white,
+                            size: 22.sp,
+                          ),
+                        ),
+                        SizedBox(width: 14.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Add New Category',
+                                style: TextStyle(
+                                  fontSize: 18.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
+                                  fontFamily: 'Poppins',
+                                ),
+                              ),
+                              Text(
+                                'Enter category name below',
+                                style: TextStyle(
+                                  fontSize: 13.sp,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => context.pop(),
+                          icon: Icon(
+                            Icons.close_rounded,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: 8.h),
+
+                // Input field
+                RepaintBoundary(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20.w),
+                    child: TextField(
+                      controller: _controller,
+                      autofocus: true,
+                      textCapitalization: TextCapitalization.words,
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontFamily: 'Poppins',
+                      ),
+                      decoration: InputDecoration(
+                        labelText: 'Category Name',
+                        hintText: 'e.g., Security Systems',
+                        labelStyle: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 14.sp,
+                        ),
+                        hintStyle: TextStyle(
+                          color: Colors.grey.shade400,
+                          fontSize: 15.sp,
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey.shade50,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14.r),
+                          borderSide: BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14.r),
+                          borderSide: BorderSide(
+                            color: AppColors.greyLight.withValues(alpha: 0.5),
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14.r),
+                          borderSide: const BorderSide(
+                            color: AppColors.primary,
+                            width: 2,
+                          ),
+                        ),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16.w,
+                          vertical: 14.h,
+                        ),
+                        prefixIcon: Icon(
+                          Icons.label_outline_rounded,
+                          color: AppColors.primary,
+                          size: 22.sp,
+                        ),
+                      ),
+                      onSubmitted: (_) => _handleSave(),
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: 20.h),
+
+                // Action buttons
+                RepaintBoundary(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20.w),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => context.pop(),
+                            style: OutlinedButton.styleFrom(
+                              padding: EdgeInsets.symmetric(vertical: 14.h),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                              ),
+                              side: BorderSide(
+                                color: AppColors.greyLight.withValues(alpha: 0.8),
+                              ),
+                            ),
+                            child: Text(
+                              'Cancel',
+                              style: TextStyle(
+                                fontSize: 15.sp,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.textSecondary,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          flex: 2,
+                          child: ValueListenableBuilder<bool>(
+                            valueListenable: _isValidNotifier,
+                            builder: (context, isValid, child) {
+                              return AnimatedContainer(
+                                duration: const Duration(milliseconds: 150),
+                                height: 52.h,
+                                decoration: BoxDecoration(
+                                  color: isValid ? AppColors.primary : Colors.grey.shade300,
+                                  borderRadius: BorderRadius.circular(14.r),
+                                  boxShadow: isValid
+                                      ? [
+                                          BoxShadow(
+                                            color: AppColors.primary
+                                                .withValues(alpha: 0.3),
+                                            blurRadius: 12,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ]
+                                      : null,
+                                ),
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: isValid ? _handleSave : null,
+                                    borderRadius: BorderRadius.circular(14.r),
+                                    child: Center(
+                                      child: Text(
+                                        'Add Category',
+                                        style: TextStyle(
+                                          fontSize: 15.sp,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                          fontFamily: 'Poppins',
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: 16.h),
+              ],
             ),
-            onSubmitted: (_) => _handleSave(),
           ),
-        ],
+        ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => context.pop(),
-          child: Text(
-            'Cancel',
-            style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
-          ),
-        ),
-        ElevatedButton(
-          onPressed: _handleSave,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
-          ),
-          child: Text(
-            'Add',
-            style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500),
-          ),
-        ),
-      ],
     );
   }
 }
 
 // ============================================================================
-// ADD TECHNICIAN DIALOG
+// ADD BRAND BOTTOM SHEET
 // ============================================================================
 
-class _AddTechnicianDialog extends StatefulWidget {
+class _AddBrandBottomSheet extends StatefulWidget {
   final String categoryName;
-  final TextEditingController nameController;
-  final TextEditingController phoneController;
-  final Function(SiteTechnician) onSave;
+  final Function(String) onSave;
 
-  const _AddTechnicianDialog({
+  const _AddBrandBottomSheet({
     required this.categoryName,
-    required this.nameController,
-    required this.phoneController,
     required this.onSave,
   });
 
   @override
-  State<_AddTechnicianDialog> createState() => _AddTechnicianDialogState();
+  State<_AddBrandBottomSheet> createState() => _AddBrandBottomSheetState();
 }
 
-class _AddTechnicianDialogState extends State<_AddTechnicianDialog> {
-  final _formKey = GlobalKey<FormState>();
+class _AddBrandBottomSheetState extends State<_AddBrandBottomSheet> {
+  final TextEditingController _controller = TextEditingController();
+  final ValueNotifier<bool> _isValidNotifier = ValueNotifier<bool>(false);
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(_validateInput);
+  }
 
   @override
   void dispose() {
-    widget.nameController.dispose();
-    widget.phoneController.dispose();
+    _controller.removeListener(_validateInput);
+    _controller.dispose();
+    _isValidNotifier.dispose();
     super.dispose();
   }
 
+  void _validateInput() {
+    _isValidNotifier.value = _controller.text.trim().isNotEmpty;
+  }
+
   void _handleSave() {
-    if (_formKey.currentState?.validate() ?? false) {
-      final technician = SiteTechnician(
-        name: widget.nameController.text.trim(),
-        phone: widget.phoneController.text.trim(),
-      );
-      widget.onSave(technician);
+    if (_isValidNotifier.value) {
+      widget.onSave(_controller.text.trim());
       context.pop();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        'Add Technician to ${widget.categoryName}',
-        style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600),
-      ),
-      content: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextFormField(
-              controller: widget.nameController,
-              autofocus: true,
-              textCapitalization: TextCapitalization.words,
-              decoration: InputDecoration(
-                labelText: 'Technician Name',
-                hintText: 'e.g., Ramesh Tech',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.r),
+    final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
+
+    return RepaintBoundary(
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(24.r),
+            topRight: Radius.circular(24.r),
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(bottom: bottomPadding),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Handle bar
+                RepaintBoundary(
+                  child: Container(
+                    margin: EdgeInsets.only(top: 12.h, bottom: 8.h),
+                    width: 40.w,
+                    height: 4.h,
+                    decoration: BoxDecoration(
+                      color: AppColors.greyMedium,
+                      borderRadius: BorderRadius.circular(2.r),
+                    ),
+                  ),
                 ),
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 12.w,
-                  vertical: 12.h,
+
+                // Header
+                RepaintBoundary(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 40.w,
+                          height: 40.h,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                          child: Icon(
+                            Icons.branding_watermark_rounded,
+                            color: Colors.white,
+                            size: 22.sp,
+                          ),
+                        ),
+                        SizedBox(width: 14.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Add Brand',
+                                style: TextStyle(
+                                  fontSize: 18.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
+                                  fontFamily: 'Poppins',
+                                ),
+                              ),
+                              Text(
+                                'To: ${widget.categoryName}',
+                                style: TextStyle(
+                                  fontSize: 13.sp,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => context.pop(),
+                          icon: Icon(
+                            Icons.close_rounded,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-              textInputAction: TextInputAction.next,
-              onFieldSubmitted: (_) {
-                FocusScope.of(context).nextFocus();
-              },
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Please enter technician name';
-                }
-                return null;
-              },
+
+                SizedBox(height: 8.h),
+
+                // Input field
+                RepaintBoundary(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20.w),
+                    child: TextField(
+                      controller: _controller,
+                      autofocus: true,
+                      textCapitalization: TextCapitalization.words,
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontFamily: 'Poppins',
+                      ),
+                      decoration: InputDecoration(
+                        labelText: 'Brand Name',
+                        hintText: 'e.g., Hikvision',
+                        labelStyle: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 14.sp,
+                        ),
+                        hintStyle: TextStyle(
+                          color: Colors.grey.shade400,
+                          fontSize: 15.sp,
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey.shade50,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14.r),
+                          borderSide: BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14.r),
+                          borderSide: BorderSide(
+                            color: AppColors.greyLight.withValues(alpha: 0.5),
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14.r),
+                          borderSide: const BorderSide(
+                            color: AppColors.primary,
+                            width: 2,
+                          ),
+                        ),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16.w,
+                          vertical: 14.h,
+                        ),
+                        prefixIcon: Icon(
+                          Icons.label_outline_rounded,
+                          color: AppColors.primary,
+                          size: 22.sp,
+                        ),
+                      ),
+                      onSubmitted: (_) => _handleSave(),
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: 20.h),
+
+                // Action buttons
+                RepaintBoundary(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20.w),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => context.pop(),
+                            style: OutlinedButton.styleFrom(
+                              padding: EdgeInsets.symmetric(vertical: 14.h),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                              ),
+                              side: BorderSide(
+                                color: AppColors.greyLight.withValues(alpha: 0.8),
+                              ),
+                            ),
+                            child: Text(
+                              'Cancel',
+                              style: TextStyle(
+                                fontSize: 15.sp,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.textSecondary,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          flex: 2,
+                          child: ValueListenableBuilder<bool>(
+                            valueListenable: _isValidNotifier,
+                            builder: (context, isValid, child) {
+                              return AnimatedContainer(
+                                duration: const Duration(milliseconds: 150),
+                                height: 52.h,
+                                decoration: BoxDecoration(
+                                  color: isValid ? AppColors.primary : Colors.grey.shade300,
+                                  borderRadius: BorderRadius.circular(14.r),
+                                  boxShadow: isValid
+                                      ? [
+                                          BoxShadow(
+                                            color: AppColors.primary
+                                                .withValues(alpha: 0.3),
+                                            blurRadius: 12,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ]
+                                      : null,
+                                ),
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: isValid ? _handleSave : null,
+                                    borderRadius: BorderRadius.circular(14.r),
+                                    child: Center(
+                                      child: Text(
+                                        'Add Brand',
+                                        style: TextStyle(
+                                          fontSize: 15.sp,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                          fontFamily: 'Poppins',
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: 16.h),
+              ],
             ),
-            SizedBox(height: 12.h),
-            TextFormField(
-              controller: widget.phoneController,
-              keyboardType: TextInputType.phone,
-              decoration: InputDecoration(
-                labelText: 'Phone Number',
-                hintText: 'e.g., 98765123456',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 12.w,
-                  vertical: 12.h,
-                ),
-              ),
-              textInputAction: TextInputAction.done,
-              onFieldSubmitted: (_) => _handleSave(),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Please enter phone number';
-                }
-                final phoneValue = value.trim();
-                if (phoneValue.length != 10) {
-                  return 'Phone number must be exactly 10 digits';
-                }
-                return null;
-              },
-            ),
-          ],
+          ),
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => context.pop(),
-          child: Text(
-            'Cancel',
-            style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
+    );
+  }
+}
+
+// ============================================================================
+// ADD SITE CONTACT BOTTOM SHEET
+// ============================================================================
+
+class _AddSiteContactBottomSheet extends StatefulWidget {
+  final String categoryName;
+  final Function(SiteTechnician) onSave;
+
+  const _AddSiteContactBottomSheet({
+    required this.categoryName,
+    required this.onSave,
+  });
+
+  @override
+  State<_AddSiteContactBottomSheet> createState() =>
+      _AddSiteContactBottomSheetState();
+}
+
+class _AddSiteContactBottomSheetState extends State<_AddSiteContactBottomSheet> {
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  final ValueNotifier<bool> _isValidNotifier = ValueNotifier<bool>(false);
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController.addListener(_validateInput);
+    _phoneController.addListener(_validateInput);
+  }
+
+  @override
+  void dispose() {
+    _nameController.removeListener(_validateInput);
+    _phoneController.removeListener(_validateInput);
+    _nameController.dispose();
+    _phoneController.dispose();
+    _isValidNotifier.dispose();
+    super.dispose();
+  }
+
+  void _validateInput() {
+    final nameValid = _nameController.text.trim().isNotEmpty;
+    final phoneValid = _phoneController.text.trim().length == 10;
+    _isValidNotifier.value = nameValid && phoneValid;
+  }
+
+  void _handleSave() {
+    if (_isValidNotifier.value) {
+      final siteContact = SiteTechnician(
+        name: _nameController.text.trim(),
+        phone: _phoneController.text.trim(),
+      );
+      widget.onSave(siteContact);
+      context.pop();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
+
+    return RepaintBoundary(
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(24.r),
+            topRight: Radius.circular(24.r),
           ),
         ),
-        ElevatedButton(
-          onPressed: _handleSave,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.secondary,
-            foregroundColor: Colors.white,
-          ),
-          child: Text(
-            'Add',
-            style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500),
+        child: SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(bottom: bottomPadding),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Handle bar
+                  RepaintBoundary(
+                    child: Container(
+                      margin: EdgeInsets.only(top: 12.h, bottom: 8.h),
+                      width: 40.w,
+                      height: 4.h,
+                      decoration: BoxDecoration(
+                        color: AppColors.greyMedium,
+                        borderRadius: BorderRadius.circular(2.r),
+                      ),
+                    ),
+                  ),
+
+                  // Header
+                  RepaintBoundary(
+                    child: Padding(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 40.w,
+                            height: 40.h,
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                            child: Icon(
+                              Icons.contact_page_rounded,
+                              color: Colors.white,
+                              size: 22.sp,
+                            ),
+                          ),
+                          SizedBox(width: 14.w),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Add Site Contact',
+                                  style: TextStyle(
+                                    fontSize: 18.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textPrimary,
+                                    fontFamily: 'Poppins',
+                                  ),
+                                ),
+                                Text(
+                                  'To: ${widget.categoryName}',
+                                  style: TextStyle(
+                                    fontSize: 13.sp,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => context.pop(),
+                            icon: Icon(
+                              Icons.close_rounded,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(height: 8.h),
+
+                  // Name input field
+                  RepaintBoundary(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20.w),
+                      child: TextFormField(
+                        controller: _nameController,
+                        autofocus: true,
+                        textCapitalization: TextCapitalization.words,
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontFamily: 'Poppins',
+                        ),
+                        decoration: InputDecoration(
+                          labelText: 'Site Contact Name',
+                          hintText: 'e.g., Ramesh Tech',
+                          labelStyle: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 14.sp,
+                          ),
+                          hintStyle: TextStyle(
+                            color: Colors.grey.shade400,
+                            fontSize: 15.sp,
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey.shade50,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14.r),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14.r),
+                            borderSide: BorderSide(
+                              color: AppColors.greyLight.withValues(alpha: 0.5),
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14.r),
+                            borderSide: const BorderSide(
+                              color: AppColors.primary,
+                              width: 2,
+                            ),
+                          ),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 16.w,
+                            vertical: 14.h,
+                          ),
+                          prefixIcon: Icon(
+                            Icons.person_outline_rounded,
+                            color: AppColors.primary,
+                            size: 22.sp,
+                          ),
+                        ),
+                        textInputAction: TextInputAction.next,
+                        onFieldSubmitted: (_) {
+                          FocusScope.of(context).nextFocus();
+                        },
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(height: 12.h),
+
+                  // Phone input field
+                  RepaintBoundary(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20.w),
+                      child: TextFormField(
+                        controller: _phoneController,
+                        keyboardType: TextInputType.phone,
+                        maxLength: 10,
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontFamily: 'Poppins',
+                        ),
+                        decoration: InputDecoration(
+                          labelText: 'Phone Number',
+                          hintText: 'e.g., 9876512345',
+                          counterText: '',
+                          labelStyle: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 14.sp,
+                          ),
+                          hintStyle: TextStyle(
+                            color: Colors.grey.shade400,
+                            fontSize: 15.sp,
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey.shade50,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14.r),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14.r),
+                            borderSide: BorderSide(
+                              color: AppColors.greyLight.withValues(alpha: 0.5),
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14.r),
+                            borderSide: const BorderSide(
+                              color: AppColors.primary,
+                              width: 2,
+                            ),
+                          ),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 16.w,
+                            vertical: 14.h,
+                          ),
+                          prefixIcon: Icon(
+                            Icons.phone_outlined,
+                            color: AppColors.primary,
+                            size: 22.sp,
+                          ),
+                        ),
+                        textInputAction: TextInputAction.done,
+                        onFieldSubmitted: (_) => _handleSave(),
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(height: 20.h),
+
+                  // Action buttons
+                  RepaintBoundary(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20.w),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => context.pop(),
+                              style: OutlinedButton.styleFrom(
+                                padding: EdgeInsets.symmetric(vertical: 14.h),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14.r),
+                                ),
+                                side: BorderSide(
+                                  color: AppColors.greyLight.withValues(alpha: 0.8),
+                                ),
+                              ),
+                              child: Text(
+                                'Cancel',
+                                style: TextStyle(
+                                  fontSize: 15.sp,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.textSecondary,
+                                  fontFamily: 'Poppins',
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 12.w),
+                          Expanded(
+                            flex: 2,
+                            child: ValueListenableBuilder<bool>(
+                              valueListenable: _isValidNotifier,
+                              builder: (context, isValid, child) {
+                                return AnimatedContainer(
+                                  duration: const Duration(milliseconds: 150),
+                                  height: 52.h,
+                                  decoration: BoxDecoration(
+                                    color: isValid
+                                        ? AppColors.primary
+                                        : Colors.grey.shade300,
+                                    borderRadius: BorderRadius.circular(14.r),
+                                    boxShadow: isValid
+                                        ? [
+                                            BoxShadow(
+                                              color: AppColors.primary
+                                                  .withValues(alpha: 0.3),
+                                              blurRadius: 12,
+                                              offset: const Offset(0, 4),
+                                            ),
+                                          ]
+                                        : null,
+                                  ),
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: isValid ? _handleSave : null,
+                                      borderRadius: BorderRadius.circular(14.r),
+                                      child: Center(
+                                        child: Text(
+                                          'Add Site Contact',
+                                          style: TextStyle(
+                                            fontSize: 15.sp,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.white,
+                                            fontFamily: 'Poppins',
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(height: 16.h),
+                ],
+              ),
+            ),
           ),
         ),
-      ],
+      ),
     );
   }
 }

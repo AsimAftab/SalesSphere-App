@@ -36,10 +36,10 @@ class AppBottomNav extends ConsumerWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 24,
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 20,
             spreadRadius: 0,
-            offset: const Offset(0, -4),
+            offset: const Offset(0, -3),
           ),
         ],
       ),
@@ -57,10 +57,12 @@ class AppBottomNav extends ConsumerWidget {
             // Floating Invoice Button (only show if invoice or estimates enabled)
             if (permissionState.isModuleEnabled('invoices') ||
                 permissionState.isModuleEnabled('estimates'))
-              Positioned(
-                top: -28.h,
-                left: MediaQuery.of(context).size.width / 2 - 35.w,
-                child: _buildFloatingInvoiceButton(permissionState),
+              Align(
+                alignment: Alignment.topCenter,
+                child: Transform.translate(
+                  offset: Offset(0, -28.h),
+                  child: _buildFloatingInvoiceButton(permissionState),
+                ),
               ),
           ],
         ),
@@ -291,51 +293,8 @@ class AppBottomNav extends ConsumerWidget {
       child: Semantics(
         label: 'Invoice',
         button: true,
-        child: GestureDetector(
+        child: _InvoiceFloatingButton(
           onTap: () => onTap(invoiceIndex),
-          child: Container(
-            width: 70.w,
-            height: 70.h,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: const LinearGradient(
-                colors: [AppColors.secondary, AppColors.primary],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.secondary.withValues(alpha: 0.35),
-                  blurRadius: 24,
-                  spreadRadius: 0,
-                  offset: const Offset(0, 8),
-                ),
-                BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.25),
-                  blurRadius: 16,
-                  spreadRadius: -4,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.description, color: Colors.white, size: 30.sp),
-                SizedBox(height: 2.h),
-                Text(
-                  'Invoice',
-                  style: TextStyle(
-                    fontSize: 8.sp,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                    fontFamily: 'Poppins',
-                    letterSpacing: 0.3,
-                  ),
-                ),
-              ],
-            ),
-          ),
         ),
       ),
     );
@@ -347,5 +306,133 @@ class AppBottomNav extends ConsumerWidget {
     // between Catalog (index 1) and Directory (index 3)
     // This is a fixed index regardless of which other modules are enabled
     return 2;
+  }
+}
+
+/// Modern animated floating invoice button with smooth press feedback
+class _InvoiceFloatingButton extends StatefulWidget {
+  final VoidCallback onTap;
+
+  const _InvoiceFloatingButton({required this.onTap});
+
+  @override
+  State<_InvoiceFloatingButton> createState() => _InvoiceFloatingButtonState();
+}
+
+class _InvoiceFloatingButtonState extends State<_InvoiceFloatingButton>
+    with SingleTickerProviderStateMixin {
+  bool _isPressed = false;
+  late AnimationController _scaleController;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _scaleController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 120),
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.92).animate(
+      CurvedAnimation(
+        parent: _scaleController,
+        curve: Curves.easeOutCubic,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _scaleController.dispose();
+    super.dispose();
+  }
+
+  void _handleTapDown(TapDownDetails details) {
+    if (mounted) {
+      setState(() => _isPressed = true);
+      _scaleController.forward();
+    }
+  }
+
+  void _handleTapUp(TapUpDetails details) {
+    if (mounted) {
+      setState(() => _isPressed = false);
+      _scaleController.reverse();
+    }
+    widget.onTap();
+  }
+
+  void _handleTapCancel() {
+    if (mounted) {
+      setState(() => _isPressed = false);
+      _scaleController.reverse();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ScaleTransition(
+      scale: _scaleAnimation,
+      child: GestureDetector(
+        onTapDown: _handleTapDown,
+        onTapUp: _handleTapUp,
+        onTapCancel: _handleTapCancel,
+        behavior: HitTestBehavior.translucent,
+        child: Container(
+          width: 68.w,
+          height: 68.h,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: const LinearGradient(
+              colors: [AppColors.secondary, AppColors.primary],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.secondary.withValues(alpha: 0.35),
+                blurRadius: 18,
+                spreadRadius: 0,
+                offset: const Offset(0, 6),
+              ),
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.25),
+                blurRadius: 10,
+                spreadRadius: -2,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withValues(alpha: 0.15),
+              backgroundBlendMode: BlendMode.overlay,
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.description_rounded,
+                  color: Colors.white,
+                  size: 26.sp,
+                ),
+                SizedBox(height: 2.h),
+                Text(
+                  'Invoice',
+                  style: TextStyle(
+                    fontSize: 9.sp,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    fontFamily: 'Poppins',
+                    letterSpacing: 0.3,
+                    height: 1.0,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
