@@ -21,8 +21,6 @@
     <uses-permission android:name="android.permission.CAMERA" />
 
     <!-- Android 13+ (API 33+) media permissions for gallery access -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
 
     <application
         android:label="SalesSphere"
@@ -105,3 +103,5 @@
         </intent>
     </queries>
 </manifest>
+
+
