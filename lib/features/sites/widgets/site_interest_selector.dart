@@ -116,7 +116,7 @@ class _SiteInterestSelectorState extends ConsumerState<SiteInterestSelector> {
     widget.onChanged(interests);
   }
 
-  void _openSelectionBottomSheet() async {
+  void _openSelectionBottomSheet() async {gi
     final result = await showModalBottomSheet<Map<String, SiteSelectionData>>(
       context: context,
       isScrollControlled: true,
