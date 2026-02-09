@@ -10,12 +10,12 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/network_layer/api_endpoints.dart';
 import 'package:sales_sphere/core/network_layer/dio_client.dart';
+import 'package:sales_sphere/core/services/system_photo_picker_service.dart';
 import 'package:sales_sphere/core/utils/logger.dart';
 import 'package:sales_sphere/features/prospects/models/prospect_images.model.dart';
 import 'package:sales_sphere/features/prospects/views/prospect_images_viewer_screen.dart';
 import 'package:sales_sphere/features/prospects/vm/prospect_images.vm.dart';
 import 'package:skeletonizer/skeletonizer.dart';
-import 'package:wechat_assets_picker/wechat_assets_picker.dart';
 
 class ProspectImagesScreen extends ConsumerStatefulWidget {
   final String prospectId;
@@ -37,54 +37,6 @@ class _ProspectImagesScreenState extends ConsumerState<ProspectImagesScreen> {
   bool _isUploading = false;
   String? _uploadProgress;
 
-  /// Request gallery/photos permission for Android 13+
-  Future<bool> _requestGalleryPermission() async {
-    if (Platform.isAndroid) {
-      // Android 13+ (API 33+) uses photos permission
-      final androidInfo = await _getAndroidVersion();
-      if (androidInfo >= 33) {
-        final status = await Permission.photos.status;
-        if (status.isGranted) {
-          return true;
-        }
-        final result = await Permission.photos.request();
-        if (result.isGranted) {
-          return true;
-        }
-        // If permanently denied, show settings dialog
-        if (result.isPermanentlyDenied) {
-          _showPermissionSettingsDialog('Photos');
-          return false;
-        }
-        return false;
-      } else {
-        // Android < 13 uses storage permission
-        final status = await Permission.storage.status;
-        if (status.isGranted) {
-          return true;
-        }
-        final result = await Permission.storage.request();
-        if (result.isGranted) {
-          return true;
-        }
-        if (result.isPermanentlyDenied) {
-          _showPermissionSettingsDialog('Storage');
-          return false;
-        }
-        return false;
-      }
-    } else if (Platform.isIOS) {
-      // iOS uses photos permission
-      final status = await Permission.photos.status;
-      if (status.isGranted) {
-        return true;
-      }
-      final result = await Permission.photos.request();
-      return result.isGranted;
-    }
-    return true; // Other platforms might not need explicit permission
-  }
-
   /// Request camera permission
   Future<bool> _requestCameraPermission() async {
     final status = await Permission.camera.status;
@@ -100,21 +52,6 @@ class _ProspectImagesScreenState extends ConsumerState<ProspectImagesScreen> {
       return false;
     }
     return false;
-  }
-
-  /// Get Android SDK version (approximate)
-  Future<int> _getAndroidVersion() async {
-    if (Platform.isAndroid) {
-      // Try to get Android version from device info
-      // Default to 33 (Android 13) if we can't determine
-      try {
-        // This is a simplified check - in production you'd use device_info_plus
-        return 33;
-      } catch (e) {
-        return 33;
-      }
-    }
-    return 0;
   }
 
   /// Show dialog to open app settings
@@ -172,38 +109,6 @@ class _ProspectImagesScreenState extends ConsumerState<ProspectImagesScreen> {
   /// Pick and upload multiple images (up to 5)
   Future<void> _pickMultipleImages() async {
     try {
-      // Request gallery permission first
-      final hasPermission = await _requestGalleryPermission();
-      if (!hasPermission) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  Icon(
-                    Icons.warning_amber_rounded,
-                    color: Colors.white,
-                    size: 20.sp,
-                  ),
-                  SizedBox(width: 12.w),
-                  Expanded(
-                    child: const Text(
-                      'Gallery permission is required to select photos',
-                    ),
-                  ),
-                ],
-              ),
-              backgroundColor: AppColors.error,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-              margin: EdgeInsets.all(16.w),
-            ),
-          );
-        }
-        return;
-      }
 
       // Get current images to check available slots
       final currentImages = await ref.read(
@@ -240,30 +145,45 @@ class _ProspectImagesScreenState extends ConsumerState<ProspectImagesScreen> {
 
       // Check if widget is still mounted before proceeding
       if (!mounted) return;
+      // Pick multiple images using Android photo picker-compatible API
+      final List<XFile> pickedFiles = Platform.isAndroid
+          ? await SystemPhotoPickerService.pickMultipleImages(
+              maxItems: availableSlots,
+            )
+          : await _imagePicker.pickMultiImage(
+              limit: availableSlots,
+              maxWidth: 1920,
+              maxHeight: 1920,
+              imageQuality: 85,
+            );
 
-      // Pick multiple images using wechat_assets_picker with visual limit
-      // Shows "X/availableSlots" counter in the picker UI
-      final List<AssetEntity>? pickedAssets = await AssetPicker.pickAssets(
-        context,
-        pickerConfig: AssetPickerConfig(
-          maxAssets: availableSlots,
-          requestType: RequestType.image,
-          textDelegate: const EnglishAssetPickerTextDelegate(),
-          specialPickerType: SpecialPickerType.noPreview,
-          selectedAssets: [],
-        ),
-      );
+      if (pickedFiles.isEmpty) return;
 
-      if (pickedAssets == null || pickedAssets.isEmpty) return;
+      // Defensive cap: some picker implementations may return more than limit.
+      final List<XFile> cappedFiles = pickedFiles.length > availableSlots
+          ? pickedFiles.take(availableSlots).toList()
+          : pickedFiles;
 
-      // Convert AssetEntity to File for upload
-      final List<File> imageFiles = <File>[];
-      for (final asset in pickedAssets) {
-        final file = await asset.file;
-        if (file != null) {
-          imageFiles.add(file);
-        }
+      if (pickedFiles.length > availableSlots && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'You selected ${pickedFiles.length} photos. Only $availableSlots will be uploaded.',
+            ),
+            backgroundColor: Colors.orange,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+            margin: EdgeInsets.all(16.w),
+          ),
+        );
       }
+
+      // Convert selected XFiles to File for upload
+      final List<File> imageFiles = cappedFiles
+          .map((xFile) => File(xFile.path))
+          .toList();
 
       if (imageFiles.isEmpty) {
         if (mounted) {
@@ -1162,3 +1082,7 @@ class _ProspectImagesScreenState extends ConsumerState<ProspectImagesScreen> {
     );
   }
 }
+
+
+
+
