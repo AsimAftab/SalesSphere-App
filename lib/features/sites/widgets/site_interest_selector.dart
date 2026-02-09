@@ -93,7 +93,8 @@ class _SiteInterestSelectorState extends ConsumerState<SiteInterestSelector> {
     setState(() {
       final current = _selectedData[categoryName];
       if (current != null) {
-        final newBrands = Set<String>.from(current.brands)..remove(brand);
+        final newBrands = Set<String>.from(current.brands)
+          ..remove(brand);
         if (newBrands.isEmpty && current.siteContacts.isEmpty) {
           _selectedData.remove(categoryName);
         } else {
@@ -136,7 +137,9 @@ class _SiteInterestSelectorState extends ConsumerState<SiteInterestSelector> {
 
   int _getTotalSelectionCount() {
     // Count only categories that have any selections
-    return _selectedData.values.where((data) => data.isNotEmpty).length;
+    return _selectedData.values
+        .where((data) => data.isNotEmpty)
+        .length;
   }
 
   @override
@@ -380,16 +383,17 @@ class _SiteInterestBottomSheetState
       backgroundColor: Colors.transparent,
       isDismissible: true,
       enableDrag: true,
-      builder: (context) => _AddCategoryBottomSheet(
-        onSave: (categoryName) {
-          if (categoryName.isNotEmpty) {
-            setState(() {
-              _customCategories.putIfAbsent(categoryName, () => {});
-              _expandedCategories.add(categoryName);
-            });
-          }
-        },
-      ),
+      builder: (context) =>
+          _AddCategoryBottomSheet(
+            onSave: (categoryName) {
+              if (categoryName.isNotEmpty) {
+                setState(() {
+                  _customCategories.putIfAbsent(categoryName, () => {});
+                  _expandedCategories.add(categoryName);
+                });
+              }
+            },
+          ),
     );
   }
 
@@ -400,28 +404,29 @@ class _SiteInterestBottomSheetState
       backgroundColor: Colors.transparent,
       isDismissible: true,
       enableDrag: true,
-      builder: (context) => _AddBrandBottomSheet(
-        categoryName: categoryName,
-        onSave: (brandName) {
-          final brand = brandName.trim();
-          if (brand.isNotEmpty) {
-            setState(() {
-              // Add to custom brands for this category
-              _customBrands.putIfAbsent(categoryName, () => {});
-              _customBrands[categoryName]!.add(brand);
+      builder: (context) =>
+          _AddBrandBottomSheet(
+            categoryName: categoryName,
+            onSave: (brandName) {
+              final brand = brandName.trim();
+              if (brand.isNotEmpty) {
+                setState(() {
+                  // Add to custom brands for this category
+                  _customBrands.putIfAbsent(categoryName, () => {});
+                  _customBrands[categoryName]!.add(brand);
 
-              // Also add to selected data so it's checked by default
-              final current = _selectedData[categoryName];
-              final newBrands = Set<String>.from(current?.brands ?? {})
-                ..add(brand);
-              _selectedData[categoryName] =
-                  (current ?? const SiteSelectionData()).copyWith(
-                    brands: newBrands,
-                  );
-            });
-          }
-        },
-      ),
+                  // Also add to selected data so it's checked by default
+                  final current = _selectedData[categoryName];
+                  final newBrands = Set<String>.from(current?.brands ?? {})
+                    ..add(brand);
+                  _selectedData[categoryName] =
+                      (current ?? const SiteSelectionData()).copyWith(
+                        brands: newBrands,
+                      );
+                });
+              }
+            },
+          ),
     );
   }
 
@@ -432,24 +437,27 @@ class _SiteInterestBottomSheetState
       backgroundColor: Colors.transparent,
       isDismissible: true,
       enableDrag: true,
-      builder: (context) => _AddSiteContactBottomSheet(
-        categoryName: categoryName,
-        onSave: (siteContact) {
-          setState(() {
-            // Add to custom siteContacts for this category
-            _customSiteContacts.putIfAbsent(categoryName, () => {});
-            _customSiteContacts[categoryName]!.add(siteContact);
+      builder: (context) =>
+          _AddSiteContactBottomSheet(
+            categoryName: categoryName,
+            onSave: (siteContact) {
+              setState(() {
+                // Add to custom siteContacts for this category
+                _customSiteContacts.putIfAbsent(categoryName, () => {});
+                _customSiteContacts[categoryName]!.add(siteContact);
 
-            // Also add to selected data so it's checked by default
-            final current = _selectedData[categoryName];
-            final newSiteContacts = Set<SiteTechnician>.from(
-              current?.siteContacts ?? {},
-            )..add(siteContact);
-            _selectedData[categoryName] = (current ?? const SiteSelectionData())
-                .copyWith(siteContacts: newSiteContacts);
-          });
-        },
-      ),
+                // Also add to selected data so it's checked by default
+                final current = _selectedData[categoryName];
+                final newSiteContacts = Set<SiteTechnician>.from(
+                  current?.siteContacts ?? {},
+                )
+                  ..add(siteContact);
+                _selectedData[categoryName] =
+                    (current ?? const SiteSelectionData())
+                        .copyWith(siteContacts: newSiteContacts);
+              });
+            },
+          ),
     );
   }
 
@@ -480,7 +488,7 @@ class _SiteInterestBottomSheetState
 
       // Find existing siteContact by name and phone (ignoring _id)
       final existingTech = newSiteContacts.firstWhere(
-        (t) => t.name == siteContact.name && t.phone == siteContact.phone,
+            (t) => t.name == siteContact.name && t.phone == siteContact.phone,
         orElse: () => siteContact,
       );
 
@@ -526,7 +534,7 @@ class _SiteInterestBottomSheetState
     if (selectedTechs == null) return false;
     // Compare by name and phone only, ignoring _id field which may differ
     return selectedTechs.any(
-      (t) => t.name == siteContact.name && t.phone == siteContact.phone,
+          (t) => t.name == siteContact.name && t.phone == siteContact.phone,
     );
   }
 
@@ -536,7 +544,9 @@ class _SiteInterestBottomSheetState
 
   int _getTotalSelectionCount() {
     // Count only categories that have any selections
-    return _selectedData.values.where((data) => data.isNotEmpty).length;
+    return _selectedData.values
+        .where((data) => data.isNotEmpty)
+        .length;
   }
 
   @override
@@ -544,7 +554,10 @@ class _SiteInterestBottomSheetState
     final categoriesAsync = ref.watch(siteCategoriesProvider);
 
     return Container(
-      height: MediaQuery.of(context).size.height * 0.75,
+      height: MediaQuery
+          .of(context)
+          .size
+          .height * 0.75,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.only(
@@ -613,10 +626,11 @@ class _SiteInterestBottomSheetState
                   ..._customCategories.keys
                       .where(
                         (customName) =>
-                            categories.every((c) => c.name != customName),
-                      )
+                        categories.every((c) => c.name != customName),
+                  )
                       .map(
-                        (customName) => SiteCategory(
+                        (customName) =>
+                        SiteCategory(
                           id: const Uuid().v4(),
                           name: customName,
                           brands: _customCategories[customName]?.toList() ?? [],
@@ -625,7 +639,7 @@ class _SiteInterestBottomSheetState
                           createdAt: DateTime.now(),
                           updatedAt: DateTime.now(),
                         ),
-                      ),
+                  ),
                 ];
 
                 if (allCategories.isEmpty) {
@@ -680,26 +694,29 @@ class _SiteInterestBottomSheetState
                   },
                 );
               },
-              loading: () => Center(
-                child: CircularProgressIndicator(color: AppColors.primary),
-              ),
-              error: (_, error) => Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.error_outline,
-                      color: AppColors.error,
-                      size: 48.sp,
+              loading: () =>
+                  Center(
+                    child: CircularProgressIndicator(color: AppColors.primary),
+                  ),
+              error: (_, error) =>
+                  Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          color: AppColors.error,
+                          size: 48.sp,
+                        ),
+                        SizedBox(height: 16.h),
+                        Text(
+                          'Failed to load categories',
+                          style: TextStyle(
+                              fontSize: 16.sp, color: AppColors.error),
+                        ),
+                      ],
                     ),
-                    SizedBox(height: 16.h),
-                    Text(
-                      'Failed to load categories',
-                      style: TextStyle(fontSize: 16.sp, color: AppColors.error),
-                    ),
-                  ],
-                ),
-              ),
+                  ),
             ),
           ),
 
@@ -1027,7 +1044,8 @@ class _SiteInterestBottomSheetState
                 )
               else
                 ...allSiteContacts.map((tech) {
-                  final isSelected = _isSiteContactSelected(category.name, tech);
+                  final isSelected = _isSiteContactSelected(
+                      category.name, tech);
                   return CheckboxListTile(
                     contentPadding: EdgeInsets.zero,
                     title: Text(
@@ -1134,7 +1152,9 @@ class _AddCategoryBottomSheetState extends State<_AddCategoryBottomSheet> {
   }
 
   void _validateInput() {
-    _isValidNotifier.value = _controller.text.trim().isNotEmpty;
+    _isValidNotifier.value = _controller.text
+        .trim()
+        .isNotEmpty;
   }
 
   void _handleSave() {
@@ -1146,7 +1166,10 @@ class _AddCategoryBottomSheetState extends State<_AddCategoryBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
+    final bottomPadding = MediaQuery
+        .of(context)
+        .viewInsets
+        .bottom;
 
     return RepaintBoundary(
       child: Container(
@@ -1179,7 +1202,8 @@ class _AddCategoryBottomSheetState extends State<_AddCategoryBottomSheet> {
                 // Header
                 RepaintBoundary(
                   child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
+                    padding: EdgeInsets.symmetric(
+                        horizontal: 20.w, vertical: 12.h),
                     child: Row(
                       children: [
                         Container(
@@ -1307,7 +1331,8 @@ class _AddCategoryBottomSheetState extends State<_AddCategoryBottomSheet> {
                                 borderRadius: BorderRadius.circular(14.r),
                               ),
                               side: BorderSide(
-                                color: AppColors.greyLight.withValues(alpha: 0.8),
+                                color: AppColors.greyLight.withValues(
+                                    alpha: 0.8),
                               ),
                             ),
                             child: Text(
@@ -1331,17 +1356,18 @@ class _AddCategoryBottomSheetState extends State<_AddCategoryBottomSheet> {
                                 duration: const Duration(milliseconds: 150),
                                 height: 52.h,
                                 decoration: BoxDecoration(
-                                  color: isValid ? AppColors.primary : Colors.grey.shade300,
+                                  color: isValid ? AppColors.primary : Colors
+                                      .grey.shade300,
                                   borderRadius: BorderRadius.circular(14.r),
                                   boxShadow: isValid
                                       ? [
-                                          BoxShadow(
-                                            color: AppColors.primary
-                                                .withValues(alpha: 0.3),
-                                            blurRadius: 12,
-                                            offset: const Offset(0, 4),
-                                          ),
-                                        ]
+                                    BoxShadow(
+                                      color: AppColors.primary
+                                          .withValues(alpha: 0.3),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ]
                                       : null,
                                 ),
                                 child: Material(
@@ -1417,7 +1443,9 @@ class _AddBrandBottomSheetState extends State<_AddBrandBottomSheet> {
   }
 
   void _validateInput() {
-    _isValidNotifier.value = _controller.text.trim().isNotEmpty;
+    _isValidNotifier.value = _controller.text
+        .trim()
+        .isNotEmpty;
   }
 
   void _handleSave() {
@@ -1429,7 +1457,10 @@ class _AddBrandBottomSheetState extends State<_AddBrandBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
+    final bottomPadding = MediaQuery
+        .of(context)
+        .viewInsets
+        .bottom;
 
     return RepaintBoundary(
       child: Container(
@@ -1462,7 +1493,8 @@ class _AddBrandBottomSheetState extends State<_AddBrandBottomSheet> {
                 // Header
                 RepaintBoundary(
                   child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
+                    padding: EdgeInsets.symmetric(
+                        horizontal: 20.w, vertical: 12.h),
                     child: Row(
                       children: [
                         Container(
@@ -1590,7 +1622,8 @@ class _AddBrandBottomSheetState extends State<_AddBrandBottomSheet> {
                                 borderRadius: BorderRadius.circular(14.r),
                               ),
                               side: BorderSide(
-                                color: AppColors.greyLight.withValues(alpha: 0.8),
+                                color: AppColors.greyLight.withValues(
+                                    alpha: 0.8),
                               ),
                             ),
                             child: Text(
@@ -1614,17 +1647,18 @@ class _AddBrandBottomSheetState extends State<_AddBrandBottomSheet> {
                                 duration: const Duration(milliseconds: 150),
                                 height: 52.h,
                                 decoration: BoxDecoration(
-                                  color: isValid ? AppColors.primary : Colors.grey.shade300,
+                                  color: isValid ? AppColors.primary : Colors
+                                      .grey.shade300,
                                   borderRadius: BorderRadius.circular(14.r),
                                   boxShadow: isValid
                                       ? [
-                                          BoxShadow(
-                                            color: AppColors.primary
-                                                .withValues(alpha: 0.3),
-                                            blurRadius: 12,
-                                            offset: const Offset(0, 4),
-                                          ),
-                                        ]
+                                    BoxShadow(
+                                      color: AppColors.primary
+                                          .withValues(alpha: 0.3),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ]
                                       : null,
                                 ),
                                 child: Material(
@@ -1682,7 +1716,8 @@ class _AddSiteContactBottomSheet extends StatefulWidget {
       _AddSiteContactBottomSheetState();
 }
 
-class _AddSiteContactBottomSheetState extends State<_AddSiteContactBottomSheet> {
+class _AddSiteContactBottomSheetState
+    extends State<_AddSiteContactBottomSheet> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -1706,8 +1741,12 @@ class _AddSiteContactBottomSheetState extends State<_AddSiteContactBottomSheet> 
   }
 
   void _validateInput() {
-    final nameValid = _nameController.text.trim().isNotEmpty;
-    final phoneValid = _phoneController.text.trim().length == 10;
+    final nameValid = _nameController.text
+        .trim()
+        .isNotEmpty;
+    final phoneValid = _phoneController.text
+        .trim()
+        .length == 10;
     _isValidNotifier.value = nameValid && phoneValid;
   }
 
@@ -1724,7 +1763,10 @@ class _AddSiteContactBottomSheetState extends State<_AddSiteContactBottomSheet> 
 
   @override
   Widget build(BuildContext context) {
-    final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
+    final bottomPadding = MediaQuery
+        .of(context)
+        .viewInsets
+        .bottom;
 
     return RepaintBoundary(
       child: Container(
@@ -1760,7 +1802,7 @@ class _AddSiteContactBottomSheetState extends State<_AddSiteContactBottomSheet> 
                   RepaintBoundary(
                     child: Padding(
                       padding:
-                          EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
+                      EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
                       child: Row(
                         children: [
                           Container(
@@ -1952,7 +1994,8 @@ class _AddSiteContactBottomSheetState extends State<_AddSiteContactBottomSheet> 
                                   borderRadius: BorderRadius.circular(14.r),
                                 ),
                                 side: BorderSide(
-                                  color: AppColors.greyLight.withValues(alpha: 0.8),
+                                  color: AppColors.greyLight.withValues(
+                                      alpha: 0.8),
                                 ),
                               ),
                               child: Text(
@@ -1982,13 +2025,13 @@ class _AddSiteContactBottomSheetState extends State<_AddSiteContactBottomSheet> 
                                     borderRadius: BorderRadius.circular(14.r),
                                     boxShadow: isValid
                                         ? [
-                                            BoxShadow(
-                                              color: AppColors.primary
-                                                  .withValues(alpha: 0.3),
-                                              blurRadius: 12,
-                                              offset: const Offset(0, 4),
-                                            ),
-                                          ]
+                                      BoxShadow(
+                                        color: AppColors.primary
+                                            .withValues(alpha: 0.3),
+                                        blurRadius: 12,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ]
                                         : null,
                                   ),
                                   child: Material(
