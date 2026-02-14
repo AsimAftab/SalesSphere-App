@@ -352,8 +352,8 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
             ),
           );
 
-          // Navigate back to parties list
-          context.pop();
+          // Navigate back to parties list with success result
+          context.pop(true);
         }
       } catch (e) {
         if (mounted) {

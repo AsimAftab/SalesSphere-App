@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -8,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
+import 'package:sales_sphere/core/utils/snackbar_utils.dart';
 import 'package:sales_sphere/features/collection/models/collection.model.dart';
 import 'package:sales_sphere/features/collection/vm/bank_names.vm.dart';
 import 'package:sales_sphere/features/collection/vm/collection.vm.dart';
@@ -17,6 +16,7 @@ import 'package:sales_sphere/widget/custom_button.dart';
 import 'package:sales_sphere/widget/custom_date_picker.dart';
 import 'package:sales_sphere/widget/custom_dropdown_textfield.dart';
 import 'package:sales_sphere/widget/custom_text_field.dart';
+import 'package:sales_sphere/widget/primary_image_picker.dart';
 
 class EditCollectionScreen extends ConsumerStatefulWidget {
   final String collectionId;
@@ -50,7 +50,6 @@ class _EditCollectionScreenState extends ConsumerState<EditCollectionScreen> {
 
   final List<XFile> _selectedImages = [];
   final List<String> _existingImages = []; // URLs from API
-  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -138,153 +137,16 @@ class _EditCollectionScreenState extends ConsumerState<EditCollectionScreen> {
     super.dispose();
   }
 
-  void _showImagePreview(XFile imageFile) {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: EdgeInsets.all(16.w),
-        child: Stack(
-          children: [
-            InteractiveViewer(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12.r),
-                child: Image.file(File(imageFile.path)),
-              ),
-            ),
-            Positioned(
-              top: 0,
-              right: 0,
-              child: GestureDetector(
-                onTap: () => context.pop(),
-                child: Container(
-                  padding: EdgeInsets.all(8.w),
-                  decoration: const BoxDecoration(
-                    color: Colors.black54,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.close, color: Colors.white, size: 24.sp),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showNetworkImagePreview(String imageUrl) {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: EdgeInsets.all(16.w),
-        child: Stack(
-          children: [
-            InteractiveViewer(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12.r),
-                child: Image.network(
-                  imageUrl,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Center(
-                      child: CircularProgressIndicator(
-                        value: loadingProgress.expectedTotalBytes != null
-                            ? loadingProgress.cumulativeBytesLoaded /
-                                  loadingProgress.expectedTotalBytes!
-                            : null,
-                        color: Colors.white,
-                      ),
-                    );
-                  },
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      width: 300.w,
-                      height: 300.h,
-                      color: Colors.grey.shade800,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.broken_image,
-                            size: 64.sp,
-                            color: Colors.white,
-                          ),
-                          SizedBox(height: 16.h),
-                          Text(
-                            'Failed to load image',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14.sp,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-            Positioned(
-              top: 0,
-              right: 0,
-              child: GestureDetector(
-                onTap: () => context.pop(),
-                child: Container(
-                  padding: EdgeInsets.all(8.w),
-                  decoration: const BoxDecoration(
-                    color: Colors.black54,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.close, color: Colors.white, size: 24.sp),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Future<void> _pickImage() async {
-    if (_selectedImages.length >= 2) return;
+    final totalImages = _selectedImages.length + _existingImages.length;
+    if (totalImages >= 2) return;
     try {
-      showModalBottomSheet(
-        context: context,
-        builder: (context) => SafeArea(
-          child: Wrap(
-            children: [
-              ListTile(
-                leading: const Icon(Icons.photo_library),
-                title: const Text('Gallery'),
-                onTap: () async {
-                  context.pop();
-                  final XFile? img = await _picker.pickImage(
-                    source: ImageSource.gallery,
-                    imageQuality: 70,
-                  );
-                  if (img != null) setState(() => _selectedImages.add(img));
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.photo_camera),
-                title: const Text('Camera'),
-                onTap: () async {
-                  context.pop();
-                  final XFile? img = await _picker.pickImage(
-                    source: ImageSource.camera,
-                    imageQuality: 70,
-                  );
-                  if (img != null) setState(() => _selectedImages.add(img));
-                },
-              ),
-            ],
-          ),
-        ),
-      );
+      final image = await showImagePickerSheet(context);
+      if (image != null) {
+        setState(() => _selectedImages.add(image));
+      }
     } catch (e) {
-      debugPrint("Error: $e");
+      debugPrint("Error picking image: $e");
     }
   }
 
@@ -308,12 +170,10 @@ class _EditCollectionScreenState extends ConsumerState<EditCollectionScreen> {
       try {
         // Show loading
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Updating collection...'),
-              backgroundColor: AppColors.primary,
-              duration: Duration(seconds: 30),
-            ),
+          SnackbarUtils.showInfo(
+            context,
+            'Updating collection...',
+            duration: const Duration(seconds: 30),
           );
         }
 
@@ -361,23 +221,14 @@ class _EditCollectionScreenState extends ConsumerState<EditCollectionScreen> {
 
         if (!mounted) return;
 
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Collection Updated Successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        SnackbarUtils.showSuccess(context, 'Collection Updated Successfully');
         ref.invalidate(collectionViewModelProvider);
         context.pop();
       } catch (e) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString().replaceAll('Exception: ', '')),
-            backgroundColor: Colors.red,
-          ),
+        SnackbarUtils.showError(
+          context,
+          e.toString().replaceAll('Exception: ', ''),
         );
       }
     }
@@ -721,19 +572,31 @@ class _EditCollectionScreenState extends ConsumerState<EditCollectionScreen> {
                                     minLines: 1,
                                   ),
                                   if (requiresImage ||
+                                      _existingImages.isNotEmpty ||
                                       _selectedImages.isNotEmpty) ...[
                                     SizedBox(height: 20.h),
-                                    Text(
-                                      "Collection Images",
-                                      style: TextStyle(
-                                        fontSize: 12.sp,
-                                        fontWeight: FontWeight.w500,
-                                        color: Colors.grey.shade600,
-                                        fontFamily: 'Poppins',
-                                      ),
+                                    PrimaryImagePicker(
+                                      images: _selectedImages,
+                                      networkImageUrls: _existingImages,
+                                      maxImages: 2,
+                                      label: 'Collection Images',
+                                      enabled: _isEditMode,
+                                      hintText:
+                                          'Tap to add image (${_selectedImages.length + _existingImages.length}/2)',
+                                      onPick: _pickImage,
+                                      onRemove: (index) {
+                                        if (!_isEditMode) return;
+                                        setState(
+                                          () => _selectedImages.removeAt(index),
+                                        );
+                                      },
+                                      onRemoveNetwork: (index) {
+                                        if (!_isEditMode) return;
+                                        setState(
+                                          () => _existingImages.removeAt(index),
+                                        );
+                                      },
                                     ),
-                                    SizedBox(height: 8.h),
-                                    _buildImageSection(),
                                   ],
                                 ],
                               ),
@@ -788,176 +651,4 @@ class _EditCollectionScreenState extends ConsumerState<EditCollectionScreen> {
     );
   }
 
-  Widget _buildImageSection() {
-    final totalImages = _selectedImages.length + _existingImages.length;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Show existing images from API (URLs)
-        if (_existingImages.isNotEmpty)
-          ..._existingImages.asMap().entries.map((entry) {
-            int index = entry.key;
-            String imageUrl = entry.value;
-            return Padding(
-              padding: EdgeInsets.only(bottom: 12.h),
-              child: _buildNetworkImageThumbnail(imageUrl, index),
-            );
-          }),
-        // Show newly selected local images
-        if (_selectedImages.isNotEmpty)
-          ..._selectedImages.asMap().entries.map((entry) {
-            int index = entry.key;
-            XFile imageFile = entry.value;
-            return Padding(
-              padding: EdgeInsets.only(bottom: 12.h),
-              child: _buildImageThumbnail(imageFile, index),
-            );
-          }),
-        if (_isEditMode && totalImages < 2)
-          GestureDetector(
-            onTap: _pickImage,
-            child: Container(
-              height: 100.h,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF5F6FA),
-                borderRadius: BorderRadius.circular(12.r),
-                border: Border.all(color: const Color(0xFFE0E0E0)),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.add_photo_alternate_outlined,
-                    size: 32.sp,
-                    color: Colors.grey.shade400,
-                  ),
-                  SizedBox(height: 8.h),
-                  Text(
-                    "Tap to add collection image ($totalImages/2)",
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: Colors.grey.shade600,
-                      fontFamily: 'Poppins',
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
-  /// Build thumbnail for network image (from API)
-  Widget _buildNetworkImageThumbnail(String imageUrl, int index) {
-    return GestureDetector(
-      onTap: () => _showNetworkImagePreview(imageUrl),
-      child: Stack(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12.r),
-            child: Image.network(
-              imageUrl,
-              width: double.infinity,
-              height: 160.h,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  width: double.infinity,
-                  height: 160.h,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF5F6FA),
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  child: const Icon(
-                    Icons.broken_image,
-                    size: 48,
-                    color: Colors.grey,
-                  ),
-                );
-              },
-            ),
-          ),
-          Positioned(
-            bottom: 8.h,
-            right: 8.w,
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.6),
-                borderRadius: BorderRadius.circular(20.r),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.zoom_in, color: Colors.white, size: 14.sp),
-                  SizedBox(width: 4.w),
-                  Text(
-                    'Preview',
-                    style: TextStyle(color: Colors.white, fontSize: 10.sp),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildImageThumbnail(XFile imageFile, int index) {
-    return GestureDetector(
-      onTap: () => _showImagePreview(imageFile),
-      child: Stack(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12.r),
-            child: Image.file(
-              File(imageFile.path),
-              width: double.infinity,
-              height: 160.h,
-              fit: BoxFit.cover,
-            ),
-          ),
-          Positioned(
-            bottom: 8.h,
-            right: 8.w,
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.6),
-                borderRadius: BorderRadius.circular(20.r),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.zoom_in, color: Colors.white, size: 14.sp),
-                  SizedBox(width: 4.w),
-                  Text(
-                    'Preview',
-                    style: TextStyle(color: Colors.white, fontSize: 10.sp),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          if (_isEditMode)
-            Positioned(
-              top: 8.h,
-              right: 8.w,
-              child: GestureDetector(
-                onTap: () => setState(() => _selectedImages.removeAt(index)),
-                child: Container(
-                  padding: EdgeInsets.all(4.w),
-                  decoration: const BoxDecoration(
-                    color: Colors.black54,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.close, color: Colors.white, size: 16.sp),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
 }
