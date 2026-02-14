@@ -35,8 +35,11 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
     }
   }
 
-  void _navigateToAddCollection() {
-    context.push('/add-collection');
+  Future<void> _navigateToAddCollection() async {
+    final result = await context.push('/add-collection');
+    if (result == true) {
+      ref.invalidate(collectionViewModelProvider);
+    }
   }
 
   @override

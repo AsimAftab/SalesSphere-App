@@ -1,11 +1,10 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
+import 'package:sales_sphere/core/utils/snackbar_utils.dart';
 import 'package:sales_sphere/features/collection/models/collection.model.dart';
 import 'package:sales_sphere/features/collection/vm/add_collection.vm.dart';
 import 'package:sales_sphere/features/collection/vm/bank_names.vm.dart';
@@ -14,6 +13,7 @@ import 'package:sales_sphere/widget/custom_button.dart';
 import 'package:sales_sphere/widget/custom_date_picker.dart';
 import 'package:sales_sphere/widget/custom_dropdown_textfield.dart';
 import 'package:sales_sphere/widget/custom_text_field.dart';
+import 'package:sales_sphere/widget/primary_image_picker.dart';
 
 class AddCollectionScreen extends ConsumerStatefulWidget {
   const AddCollectionScreen({super.key});
@@ -39,7 +39,6 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
   String? _selectedBank;
 
   final List<XFile> _selectedImages = [];
-  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -63,88 +62,22 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
     super.dispose();
   }
 
-  void _showImagePreview(XFile imageFile) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: EdgeInsets.all(16.w),
-        child: Stack(
-          children: [
-            InteractiveViewer(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12.r),
-                child: Image.file(File(imageFile.path)),
-              ),
-            ),
-            Positioned(
-              top: 0,
-              right: 0,
-              child: GestureDetector(
-                onTap: () => context.pop(),
-                child: Container(
-                  padding: EdgeInsets.all(8.w),
-                  decoration: const BoxDecoration(
-                    color: Colors.black54,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.close, color: Colors.white, size: 24.sp),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Future<void> _pickImage() async {
     if (_selectedImages.length >= 2) return;
     try {
-      showModalBottomSheet(
-        context: context,
-        builder: (context) => SafeArea(
-          child: Wrap(
-            children: [
-              ListTile(
-                leading: const Icon(Icons.photo_library),
-                title: const Text('Gallery'),
-                onTap: () async {
-                  context.pop();
-                  final XFile? img = await _picker.pickImage(
-                    source: ImageSource.gallery,
-                    imageQuality: 70,
-                  );
-                  if (img != null) setState(() => _selectedImages.add(img));
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.photo_camera),
-                title: const Text('Camera'),
-                onTap: () async {
-                  context.pop();
-                  final XFile? img = await _picker.pickImage(
-                    source: ImageSource.camera,
-                    imageQuality: 70,
-                  );
-                  if (img != null) setState(() => _selectedImages.add(img));
-                },
-              ),
-            ],
-          ),
-        ),
-      );
+      final image = await showImagePickerSheet(context);
+      if (image != null) {
+        setState(() => _selectedImages.add(image));
+      }
     } catch (e) {
-      debugPrint("Error: $e");
+      debugPrint("Error picking image: $e");
     }
   }
 
   Future<void> _handleSubmit() async {
     if (_formKey.currentState?.validate() ?? false) {
       if (_selectedPaymentMode == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select Payment Mode')),
-        );
+        SnackbarUtils.showError(context, 'Please select Payment Mode');
         return;
       }
 
@@ -155,13 +88,9 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
       ].contains(_selectedPaymentMode);
 
       if (imageRequired && _selectedImages.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Please upload an image for ${_selectedPaymentMode?.label} payment',
-            ),
-            backgroundColor: AppColors.primary,
-          ),
+        SnackbarUtils.showWarning(
+          context,
+          'Please upload an image for ${_selectedPaymentMode?.label} payment',
         );
         return;
       }
@@ -169,12 +98,10 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
       try {
         // Show loading
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Creating collection...'),
-              backgroundColor: AppColors.primary,
-              duration: Duration(seconds: 30),
-            ),
+          SnackbarUtils.showInfo(
+            context,
+            'Creating collection...',
+            duration: const Duration(seconds: 30),
           );
         }
 
@@ -210,23 +137,14 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
 
         if (!mounted) return;
 
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Collection Added Successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        SnackbarUtils.showSuccess(context, 'Collection Added Successfully');
 
-        context.pop();
+        context.pop(true);
       } catch (e) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString().replaceAll('Exception: ', '')),
-            backgroundColor: Colors.red,
-          ),
+        SnackbarUtils.showError(
+          context,
+          e.toString().replaceAll('Exception: ', ''),
         );
       }
     }
@@ -515,17 +433,17 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
 
                         if (requiresImage) ...[
                           SizedBox(height: 20.h),
-                          Text(
-                            "Upload Images",
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.grey.shade600,
-                              fontFamily: 'Poppins',
+                          PrimaryImagePicker(
+                            images: _selectedImages,
+                            maxImages: 2,
+                            label: 'Upload Images',
+                            hintText:
+                                'Tap to add image (${_selectedImages.length}/2)',
+                            onPick: _pickImage,
+                            onRemove: (index) => setState(
+                              () => _selectedImages.removeAt(index),
                             ),
                           ),
-                          SizedBox(height: 8.h),
-                          _buildImageSection(),
                         ],
 
                         SizedBox(height: 100.h),
@@ -550,109 +468,4 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
     );
   }
 
-  Widget _buildImageSection() {
-    return Column(
-      children: [
-        if (_selectedImages.isNotEmpty)
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _selectedImages.length,
-            separatorBuilder: (context, index) => SizedBox(height: 12.h),
-            itemBuilder: (context, index) =>
-                _buildImageThumbnail(_selectedImages[index], index),
-          ),
-
-        if (_selectedImages.length < 2) ...[
-          if (_selectedImages.isNotEmpty) SizedBox(height: 16.h),
-          GestureDetector(
-            onTap: _pickImage,
-            child: Container(
-              height: 100.h,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF5F6FA),
-                borderRadius: BorderRadius.circular(12.r),
-                border: Border.all(color: const Color(0xFFE0E0E0)),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.add_photo_alternate_outlined,
-                    size: 32.sp,
-                    color: Colors.grey.shade400,
-                  ),
-                  SizedBox(height: 8.h),
-                  Text(
-                    "Tap to add image (${_selectedImages.length}/2)",
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: Colors.grey.shade600,
-                      fontFamily: 'Poppins',
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildImageThumbnail(XFile imageFile, int index) {
-    return GestureDetector(
-      onTap: () => _showImagePreview(imageFile),
-      child: Stack(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12.r),
-            child: Image.file(
-              File(imageFile.path),
-              width: double.infinity,
-              height: 160.h,
-              fit: BoxFit.cover,
-            ),
-          ),
-          Positioned(
-            bottom: 8.h,
-            right: 8.w,
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.6),
-                borderRadius: BorderRadius.circular(20.r),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.zoom_in, color: Colors.white, size: 14.sp),
-                  SizedBox(width: 4.w),
-                  Text(
-                    'Preview',
-                    style: TextStyle(color: Colors.white, fontSize: 10.sp),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Positioned(
-            top: 8.h,
-            right: 8.w,
-            child: GestureDetector(
-              onTap: () => setState(() => _selectedImages.removeAt(index)),
-              child: Container(
-                padding: EdgeInsets.all(4.w),
-                decoration: const BoxDecoration(
-                  color: Colors.black54,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.close, color: Colors.white, size: 16.sp),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

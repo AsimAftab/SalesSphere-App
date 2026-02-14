@@ -36,8 +36,11 @@ class _PartiesScreenState extends ConsumerState<PartiesScreen> {
     );
   }
 
-  void _navigateToAddParty() {
-    context.push('/add-party');
+  Future<void> _navigateToAddParty() async {
+    final result = await context.push('/add-party');
+    if (result == true) {
+      ref.invalidate(partiesViewModelProvider);
+    }
   }
 
   String _extractLocation(String fullAddress) {

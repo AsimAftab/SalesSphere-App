@@ -19,6 +19,7 @@ import 'package:sales_sphere/widget/custom_button.dart';
 import 'package:sales_sphere/widget/custom_date_picker.dart';
 import 'package:sales_sphere/widget/custom_text_field.dart';
 import 'package:sales_sphere/widget/location_picker_widget.dart';
+import 'package:sales_sphere/widget/primary_image_picker.dart';
 
 final googlePlacesServiceProvider = Provider<GooglePlacesService>((ref) {
   final apiKey = dotenv.env['GOOGLE_MAPS_API_KEY'] ?? '';
@@ -53,7 +54,6 @@ class _AddMiscellaneousWorkScreenState
   DateTime _selectedDate = DateTime.now();
 
   // Image Picking
-  final ImagePicker _picker = ImagePicker();
   final List<XFile> _selectedImages = [];
 
   // Local loading state to cover work creation + image upload
@@ -95,62 +95,16 @@ class _AddMiscellaneousWorkScreenState
   // ---------------------------------------------------------------------------
   Future<void> _pickImage() async {
     if (_isSubmitting) return;
-    if (_selectedImages.length >= 2) {
-      SnackbarUtils.showError(context, "Maximum 2 images allowed");
-      return;
-    }
+    if (_selectedImages.length >= 2) return;
 
     try {
-      showModalBottomSheet(
-        context: context,
-        builder: (BuildContext context) {
-          return SafeArea(
-            child: Wrap(
-              children: <Widget>[
-                ListTile(
-                  leading: const Icon(Icons.photo_library),
-                  title: const Text('Gallery'),
-                  onTap: () async {
-                    Navigator.pop(context);
-                    final XFile? image = await _picker.pickImage(
-                      source: ImageSource.gallery,
-                      imageQuality: 70,
-                    );
-                    if (image != null) _addImage(image);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.photo_camera),
-                  title: const Text('Camera'),
-                  onTap: () async {
-                    Navigator.pop(context);
-                    final XFile? image = await _picker.pickImage(
-                      source: ImageSource.camera,
-                      imageQuality: 70,
-                    );
-                    if (image != null) _addImage(image);
-                  },
-                ),
-              ],
-            ),
-          );
-        },
-      );
+      final image = await showImagePickerSheet(context);
+      if (image != null) {
+        setState(() => _selectedImages.add(image));
+      }
     } catch (e) {
       debugPrint("Error picking image: $e");
     }
-  }
-
-  void _addImage(XFile image) {
-    setState(() {
-      _selectedImages.add(image);
-    });
-  }
-
-  void _removeImage(int index) {
-    setState(() {
-      _selectedImages.removeAt(index);
-    });
   }
 
   // ---------------------------------------------------------------------------
@@ -405,22 +359,16 @@ class _AddMiscellaneousWorkScreenState
                       SizedBox(height: 16.h),
 
                       // Image Picker Section
-                      Text(
-                        "Images (Max 2 images allowed)",
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.grey.shade600,
-                          fontFamily: 'Poppins',
-                        ),
-                      ),
-                      SizedBox(height: 8.h),
-                      IgnorePointer(
-                        ignoring: _isSubmitting,
-                        child: Opacity(
-                          opacity: _isSubmitting ? 0.6 : 1.0,
-                          child: _buildImageUploadArea(),
-                        ),
+                      PrimaryImagePicker(
+                        images: _selectedImages,
+                        maxImages: 2,
+                        label: 'Images (Max 2)',
+                        enabled: !_isSubmitting,
+                        hintText:
+                            'Tap to add image (${_selectedImages.length}/2)',
+                        onPick: _pickImage,
+                        onRemove: (index) =>
+                            setState(() => _selectedImages.removeAt(index)),
                       ),
 
                       SizedBox(height: 80.h), // Space for bottom button
@@ -452,143 +400,4 @@ class _AddMiscellaneousWorkScreenState
     );
   }
 
-  // Helper Widget for Image Area
-  Widget _buildImageUploadArea() {
-    return Column(
-      children: [
-        // Show selected images first
-        if (_selectedImages.isNotEmpty)
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _selectedImages.length,
-            itemBuilder: (context, index) {
-              return Padding(
-                padding: EdgeInsets.only(bottom: 12.h),
-                child: GestureDetector(
-                  onTap: () {
-                    // Show preview dialog
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return Dialog(
-                          backgroundColor: Colors.transparent,
-                          child: InteractiveViewer(
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(12.r),
-                              child: Image.file(
-                                File(_selectedImages[index].path),
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                  child: Stack(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12.r),
-                        child: Image.file(
-                          File(_selectedImages[index].path),
-                          width: double.infinity,
-                          height: 200.h,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      Positioned(
-                        bottom: 8.h,
-                        right: 8.w,
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 12.w,
-                            vertical: 6.h,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.6),
-                            borderRadius: BorderRadius.circular(20.r),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.zoom_in,
-                                color: Colors.white,
-                                size: 16.sp,
-                              ),
-                              SizedBox(width: 4.w),
-                              Text(
-                                'Tap to preview',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10.sp,
-                                  fontFamily: 'Poppins',
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        top: 8.h,
-                        right: 8.w,
-                        child: GestureDetector(
-                          onTap: () => _removeImage(index),
-                          child: Container(
-                            padding: EdgeInsets.all(6.w),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.6),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.close,
-                              color: Colors.white,
-                              size: 20.sp,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-
-        // Upload button
-        if (_selectedImages.length < 2)
-          GestureDetector(
-            onTap: _pickImage,
-            child: Container(
-              width: double.infinity,
-              height: 120.h,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF5F6FA),
-                borderRadius: BorderRadius.circular(12.r),
-                border: Border.all(color: const Color(0xFFE0E0E0)),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.add_photo_alternate_outlined,
-                    color: Colors.grey.shade400,
-                    size: 40.sp,
-                  ),
-                  SizedBox(height: 8.h),
-                  Text(
-                    "Tap to add image",
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 12.sp,
-                      fontFamily: 'Poppins',
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-      ],
-    );
-  }
 }
