@@ -5,6 +5,52 @@ part 'invoice.models.freezed.dart';
 part 'invoice.models.g.dart';
 
 // ========================================
+// TAX CONFIG MODEL
+// ========================================
+@freezed
+abstract class TaxConfig with _$TaxConfig {
+  const factory TaxConfig({
+    @JsonKey(name: '_id') required String id,
+    required String name,
+    required double percentage,
+    String? description,
+    String? organizationId,
+    String? createdAt,
+    String? updatedAt,
+  }) = _TaxConfig;
+
+  factory TaxConfig.fromJson(Map<String, dynamic> json) =>
+      _$TaxConfigFromJson(json);
+}
+
+@freezed
+abstract class TaxConfigResponse with _$TaxConfigResponse {
+  const factory TaxConfigResponse({
+    required bool success,
+    required int count,
+    required List<TaxConfig> data,
+  }) = _TaxConfigResponse;
+
+  factory TaxConfigResponse.fromJson(Map<String, dynamic> json) =>
+      _$TaxConfigResponseFromJson(json);
+}
+
+// ========================================
+// TAX SNAPSHOT MODEL
+// ========================================
+@freezed
+abstract class TaxSnapshot with _$TaxSnapshot {
+  const factory TaxSnapshot({
+    String? taxConfigId,
+    String? taxName,
+    double? taxPercentage,
+  }) = _TaxSnapshot;
+
+  factory TaxSnapshot.fromJson(Map<String, dynamic> json) =>
+      _$TaxSnapshotFromJson(json);
+}
+
+// ========================================
 // ORDER STATUS ENUM
 // ========================================
 enum OrderStatus {
@@ -136,6 +182,7 @@ abstract class CreateInvoiceRequest with _$CreateInvoiceRequest {
     required String expectedDeliveryDate,
     required double discount,
     required List<CreateInvoiceItemRequest> items,
+    @JsonKey(includeIfNull: false) String? taxConfigId,
   }) = _CreateInvoiceRequest;
 
   factory CreateInvoiceRequest.fromJson(Map<String, dynamic> json) =>
@@ -190,6 +237,10 @@ abstract class InvoiceData with _$InvoiceData {
     double? discount,
     double? discountAmount,
     double? total,
+    double? totalAmount,
+    TaxSnapshot? taxSnapshot,
+    double? taxAmount,
+    bool? isEstimate,
     String? id,
     String? createdAt,
     String? updatedAt,
@@ -313,6 +364,8 @@ abstract class InvoiceDetailsData with _$InvoiceDetailsData {
     double? totalAmount,
     double? discount,
     double? discountAmount,
+    TaxSnapshot? taxSnapshot,
+    double? taxAmount,
     String? updatedAt,
   }) = _InvoiceDetailsData;
 
@@ -353,6 +406,7 @@ abstract class CreateEstimateRequest with _$CreateEstimateRequest {
     required String partyId,
     required double discount,
     required List<CreateEstimateItemRequest> items,
+    @JsonKey(includeIfNull: false) String? taxConfigId,
   }) = _CreateEstimateRequest;
 
   factory CreateEstimateRequest.fromJson(Map<String, dynamic> json) =>
@@ -406,6 +460,8 @@ abstract class EstimateData with _$EstimateData {
     double? subtotal,
     double? discount,
     double? totalAmount,
+    TaxSnapshot? taxSnapshot,
+    double? taxAmount,
     OrderStatus? status,
     String? organizationId,
     String? createdBy,

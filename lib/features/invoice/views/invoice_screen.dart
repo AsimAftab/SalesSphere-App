@@ -10,11 +10,13 @@ import 'package:sales_sphere/core/utils/snackbar_utils.dart';
 import 'package:sales_sphere/features/invoice/models/invoice.models.dart';
 import 'package:sales_sphere/features/invoice/vm/invoice.vm.dart';
 import 'package:sales_sphere/features/invoice/vm/invoice_draft_vm.dart';
+import 'package:sales_sphere/features/invoice/vm/tax_config.vm.dart';
 import 'package:sales_sphere/features/parties/models/parties.model.dart';
 import 'package:sales_sphere/features/parties/vm/parties.vm.dart';
 import 'package:sales_sphere/widget/custom_button.dart';
 import 'package:sales_sphere/widget/custom_date_picker.dart';
 import 'package:sales_sphere/widget/custom_text_field.dart';
+import 'package:sales_sphere/widget/primary_async_dropdown.dart';
 
 class InvoiceScreen extends ConsumerStatefulWidget {
   const InvoiceScreen({super.key});
@@ -34,6 +36,7 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
   bool _showPartyDropdown = false;
   String _searchQuery = '';
   double _discountPercentage = 0.0;
+  String? _selectedTaxConfigName;
 
   // Map to store TextEditingControllers for each product's set price
   final Map<String, TextEditingController> _priceControllers = {};
@@ -66,6 +69,10 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
     _discountPercentage = draftState.discountPercentage;
     if (_discountPercentage > 0) {
       _discountController.text = _discountPercentage.toString();
+    }
+
+    if (draftState.selectedTaxConfig != null) {
+      _selectedTaxConfigName = draftState.selectedTaxConfig!.name;
     }
 
     _partySearchFocusNode.addListener(() {
@@ -173,6 +180,8 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
   @override
   Widget build(BuildContext context) {
     final partiesAsync = ref.watch(partiesViewModelProvider);
+    final taxConfigsAsync = ref.watch(taxConfigViewModelProvider);
+    final draftState = ref.watch(invoiceDraftControllerProvider);
     final orderController = ref.watch(orderControllerProvider);
     final orderItems = orderController.values.toList();
     final subtotalCost = ref
@@ -181,7 +190,13 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
 
     // Calculate discount amount and final total
     final discountAmount = subtotalCost * (_discountPercentage / 100);
-    final totalCost = subtotalCost - discountAmount;
+    final afterDiscount = subtotalCost - discountAmount;
+
+    // Calculate tax
+    final selectedTax = draftState.selectedTaxConfig;
+    final taxPercentage = selectedTax?.percentage ?? 0.0;
+    final taxAmount = afterDiscount * (taxPercentage / 100);
+    final totalCost = afterDiscount + taxAmount;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
@@ -335,6 +350,51 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                         icon: Icons.payments_rounded,
                         child: Column(
                           children: [
+                            // Tax Config Dropdown
+                            PrimaryAsyncDropdown<TaxConfig>(
+                              itemsAsync: taxConfigsAsync,
+                              initialValue: _selectedTaxConfigName,
+                              hintText: 'Select Tax',
+                              prefixIcon: Icons.account_balance_rounded,
+                              title: 'Select Tax Configuration',
+                              subtitle:
+                                  'Choose a tax to apply on this invoice',
+                              itemLabel: (config) =>
+                                  '${config.name} (${config.percentage}%)',
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedTaxConfigName = value;
+                                });
+                                if (value == null) {
+                                  ref
+                                      .read(
+                                        invoiceDraftControllerProvider
+                                            .notifier,
+                                      )
+                                      .updateTaxConfig(null);
+                                } else {
+                                  final configs = taxConfigsAsync.value;
+                                  if (configs != null) {
+                                    final match = configs.where(
+                                      (c) =>
+                                          '${c.name} (${c.percentage}%)' ==
+                                          value,
+                                    );
+                                    if (match.isNotEmpty) {
+                                      ref
+                                          .read(
+                                            invoiceDraftControllerProvider
+                                                .notifier,
+                                          )
+                                          .updateTaxConfig(match.first);
+                                    }
+                                  }
+                                }
+                              },
+                            ),
+
+                            SizedBox(height: 12.h),
+
                             // Discount Field
                             Container(
                               padding: EdgeInsets.all(14.w),
@@ -498,6 +558,33 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                                       ],
                                     ),
                                   ],
+                                  if (selectedTax != null) ...[
+                                    SizedBox(height: 12.h),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          '${selectedTax.name} (${selectedTax.percentage}%)',
+                                          style: TextStyle(
+                                            fontSize: 15.sp,
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.orange.shade700,
+                                            fontFamily: 'Poppins',
+                                          ),
+                                        ),
+                                        Text(
+                                          '+₹${taxAmount.toStringAsFixed(2)}',
+                                          style: TextStyle(
+                                            fontSize: 15.sp,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.orange.shade700,
+                                            fontFamily: 'Poppins',
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                   SizedBox(height: 12.h),
                                   Divider(
                                     color: AppColors.primary.withValues(
@@ -604,8 +691,10 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                                           partyId: selectedParty!.id,
                                           expectedDeliveryDate: deliveryDate,
                                           discount: _discountPercentage,
-                                          // Send the percentage value directly
                                           items: requestItems,
+                                          taxConfigId: draftState
+                                              .selectedTaxConfig
+                                              ?.id,
                                         );
 
                                     if (!context.mounted) return;
@@ -636,6 +725,7 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                                       _deliveryDateController.clear();
                                       _discountController.clear();
                                       _discountPercentage = 0.0;
+                                      _selectedTaxConfigName = null;
                                       _searchQuery = '';
                                       // Clear price controllers
                                       for (var controller
@@ -731,6 +821,9 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                                           partyId: selectedParty!.id,
                                           discount: _discountPercentage,
                                           items: requestItems,
+                                          taxConfigId: draftState
+                                              .selectedTaxConfig
+                                              ?.id,
                                         );
 
                                     if (!context.mounted) return;
@@ -761,6 +854,7 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                                       _deliveryDateController.clear();
                                       _discountController.clear();
                                       _discountPercentage = 0.0;
+                                      _selectedTaxConfigName = null;
                                       _searchQuery = '';
                                       // Clear price controllers
                                       for (var controller

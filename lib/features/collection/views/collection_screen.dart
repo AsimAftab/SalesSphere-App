@@ -316,10 +316,11 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: Colors.grey.shade100),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -387,26 +388,41 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
   }
 
   Widget _buildEmptyState(String query) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.search_off_rounded,
-            size: 64.sp,
-            color: Colors.grey.shade300,
+    return ListView(
+      padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 80.h),
+      children: [
+        SizedBox(height: 100.h),
+        Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.search_off_rounded,
+                size: 64.sp,
+                color: Colors.grey.shade400,
+              ),
+              SizedBox(height: 16.h),
+              Text(
+                query.isEmpty ? 'No collections found' : 'No results for "$query"',
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  color: Colors.grey.shade600,
+                  fontFamily: 'Poppins',
+                ),
+              ),
+              SizedBox(height: 8.h),
+              Text(
+                'Pull down to refresh',
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  color: Colors.grey.shade400,
+                  fontFamily: 'Poppins',
+                ),
+              ),
+            ],
           ),
-          SizedBox(height: 16.h),
-          Text(
-            query.isEmpty ? 'No collections found' : 'No results for "$query"',
-            style: TextStyle(
-              fontSize: 16.sp,
-              color: Colors.grey.shade600,
-              fontFamily: 'Poppins',
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

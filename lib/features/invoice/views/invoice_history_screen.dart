@@ -1295,6 +1295,16 @@ class InvoicePreviewSheet extends ConsumerWidget {
               isDiscount: true,
             ),
           ],
+          if (details.taxSnapshot != null &&
+              details.taxAmount != null &&
+              details.taxAmount! > 0) ...[
+            SizedBox(height: 12.h),
+            _buildPriceRow(
+              '${details.taxSnapshot!.taxName ?? 'Tax'} (${details.taxSnapshot!.taxPercentage?.toStringAsFixed(1) ?? '0'}%)',
+              details.taxAmount!,
+              isTax: true,
+            ),
+          ],
           Padding(
             padding: EdgeInsets.symmetric(vertical: 14.h),
             child: Divider(
@@ -1364,6 +1374,7 @@ class InvoicePreviewSheet extends ConsumerWidget {
     double amount, {
     bool isSubtotal = false,
     bool isDiscount = false,
+    bool isTax = false,
     bool isTotal = false,
   }) {
     return Row(
@@ -1374,20 +1385,26 @@ class InvoicePreviewSheet extends ConsumerWidget {
           style: TextStyle(
             fontSize: isTotal ? 16.sp : 14.sp,
             fontWeight: isTotal ? FontWeight.w700 : FontWeight.w500,
-            color: isDiscount ? Colors.green.shade700 : const Color(0xFF202020),
+            color: isTax
+                ? Colors.orange.shade700
+                : isDiscount
+                    ? Colors.green.shade700
+                    : const Color(0xFF202020),
             fontFamily: 'Poppins',
           ),
         ),
         Text(
-          '₹${amount.abs().toStringAsFixed(2)}',
+          '${isTax ? '+' : ''}₹${amount.abs().toStringAsFixed(2)}',
           style: TextStyle(
             fontSize: isTotal ? 18.sp : 14.sp,
             fontWeight: isTotal ? FontWeight.w700 : FontWeight.w600,
             color: isTotal
                 ? AppColors.primary
-                : isDiscount
-                ? Colors.green.shade700
-                : const Color(0xFF202020),
+                : isTax
+                    ? Colors.orange.shade700
+                    : isDiscount
+                        ? Colors.green.shade700
+                        : const Color(0xFF202020),
             fontFamily: 'Poppins',
           ),
         ),

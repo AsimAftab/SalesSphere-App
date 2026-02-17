@@ -281,6 +281,17 @@ class InvoiceDetailsScreen extends ConsumerWidget {
                   ),
                   SizedBox(height: 8.h),
                 ],
+                if (invoice.taxSnapshot != null &&
+                    invoice.taxAmount != null &&
+                    invoice.taxAmount! > 0) ...[
+                  _buildTotalRow(
+                    '${invoice.taxSnapshot!.taxName ?? 'Tax'} (${invoice.taxSnapshot!.taxPercentage?.toStringAsFixed(1) ?? '0'}%)',
+                    invoice.taxAmount!,
+                    false,
+                    isTax: true,
+                  ),
+                  SizedBox(height: 8.h),
+                ],
                 Divider(color: Colors.grey.shade300),
                 SizedBox(height: 8.h),
                 _buildTotalRow('Total Amount', invoice.totalAmount ?? 0, true),
@@ -477,6 +488,7 @@ class InvoiceDetailsScreen extends ConsumerWidget {
     double amount,
     bool isFinal, {
     bool isDiscount = false,
+    bool isTax = false,
   }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -486,18 +498,22 @@ class InvoiceDetailsScreen extends ConsumerWidget {
           style: TextStyle(
             fontSize: isFinal ? 16.sp : 14.sp,
             fontWeight: isFinal ? FontWeight.w700 : FontWeight.w500,
-            color: isFinal ? Colors.grey.shade900 : Colors.grey.shade700,
+            color: isTax
+                ? Colors.orange.shade700
+                : (isFinal ? Colors.grey.shade900 : Colors.grey.shade700),
             fontFamily: 'Poppins',
           ),
         ),
         Text(
-          '${isDiscount ? '-' : ''}₹${amount.toStringAsFixed(2)}',
+          '${isDiscount ? '-' : isTax ? '+' : ''}₹${amount.toStringAsFixed(2)}',
           style: TextStyle(
             fontSize: isFinal ? 18.sp : 14.sp,
             fontWeight: isFinal ? FontWeight.w700 : FontWeight.w600,
             color: isFinal
                 ? AppColors.primary
-                : (isDiscount ? Colors.red : Colors.grey.shade900),
+                : isTax
+                    ? Colors.orange.shade700
+                    : (isDiscount ? Colors.red : Colors.grey.shade900),
             fontFamily: 'Poppins',
           ),
         ),

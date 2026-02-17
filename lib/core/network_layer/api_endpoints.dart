@@ -106,6 +106,9 @@ class ApiEndpoints {
 
   static String deleteInvoice(String id) => '/api/v1/invoices/$id';
 
+  // Tax Config Endpoints
+  static const String taxConfigs = '/api/v1/tax-configs';
+
   // Estimate Endpoints
   static const String createEstimate = '/api/v1/invoices/estimates';
   static const String estimatesHistory = '/api/v1/invoices/estimates';

@@ -449,6 +449,15 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                   fontFamily: 'Poppins',
                 ),
               ),
+              SizedBox(height: 8.h),
+              Text(
+                'Pull down to refresh',
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  color: Colors.grey.shade400,
+                  fontFamily: 'Poppins',
+                ),
+              ),
             ],
           ),
         ),
