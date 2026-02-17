@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sales_sphere/core/providers/order_controller.dart';
+import 'package:sales_sphere/features/invoice/models/invoice.models.dart';
 import 'package:sales_sphere/features/parties/models/parties.model.dart';
 
 part 'invoice_draft_vm.freezed.dart';
@@ -14,6 +15,7 @@ abstract class InvoiceDraftState with _$InvoiceDraftState {
     PartyDetails? selectedParty,
     DateTime? expectedDeliveryDate,
     @Default(0.0) double discountPercentage,
+    TaxConfig? selectedTaxConfig,
   }) = _InvoiceDraftState;
 }
 
@@ -47,6 +49,11 @@ class InvoiceDraftController extends _$InvoiceDraftController {
 
   void updateDiscount(double discount) {
     state = state.copyWith(discountPercentage: discount);
+    _resetTimer();
+  }
+
+  void updateTaxConfig(TaxConfig? taxConfig) {
+    state = state.copyWith(selectedTaxConfig: taxConfig);
     _resetTimer();
   }
 

@@ -4,6 +4,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pretty_dio_logger/src/pretty_dio_logger.dart';
 
+import '../providers/permission_controller.dart';
+import '../providers/user_controller.dart';
 import '../utils/logger.dart';
 import 'interceptors/auth_interceptor.dart';
 import 'interceptors/connectivity_interceptor.dart';
@@ -15,7 +17,13 @@ import 'token_storage_service.dart';
 /// Provides a configured Dio instance with all interceptors
 final dioClientProvider = Provider<Dio>((ref) {
   final tokenStorage = ref.watch(tokenStorageServiceProvider);
-  final dioClient = DioClient(tokenStorage);
+
+  void onForceLogout() {
+    ref.read(userControllerProvider.notifier).clearUser();
+    ref.read(permissionControllerProvider.notifier).clearData();
+  }
+
+  final dioClient = DioClient(tokenStorage, onForceLogout: onForceLogout);
 
   // Dispose dio when provider is disposed
   ref.onDispose(() {
@@ -30,8 +38,9 @@ final dioClientProvider = Provider<Dio>((ref) {
 class DioClient {
   late final Dio dio;
   final TokenStorageService tokenStorage;
+  final VoidCallback? onForceLogout;
 
-  DioClient(this.tokenStorage) {
+  DioClient(this.tokenStorage, {this.onForceLogout}) {
     dio = Dio(_baseOptions);
     _setupInterceptors();
     AppLogger.i('✅ Dio Client initialized with base URL: $_baseUrl');
@@ -59,8 +68,9 @@ class DioClient {
       'X-Client-Type': 'mobile',
     },
     validateStatus: (status) {
-      // Accept all status codes and handle them in interceptors
-      return status != null && status < 500;
+      // Accept all status codes except 401 and 5xx
+      // 401 must flow through onError so AuthInterceptor can refresh the token
+      return status != null && status < 500 && status != 401;
     },
   );
 
@@ -72,8 +82,8 @@ class DioClient {
     // MUST be first to prevent wasting resources on offline requests
     dio.interceptors.add(ConnectivityInterceptor());
 
-    // 1. Auth Interceptor (JWT Token)
-    dio.interceptors.add(AuthInterceptor(tokenStorage));
+    // 1. Auth Interceptor (JWT Token + auto refresh + force logout)
+    dio.interceptors.add(AuthInterceptor(tokenStorage, onForceLogout: onForceLogout));
 
     // 2. Logging Interceptor (Only in debug mode)
     if (kDebugMode) {

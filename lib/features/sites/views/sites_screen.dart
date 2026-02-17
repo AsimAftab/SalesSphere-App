@@ -153,24 +153,47 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
                 child: searchedSitesAsync.when(
                   data: (sites) {
                     if (sites.isEmpty) {
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                      return RefreshIndicator(
+                        onRefresh: () async {
+                          await ref
+                              .read(siteViewModelProvider.notifier)
+                              .refresh();
+                        },
+                        color: AppColors.primary,
+                        child: ListView(
+                          padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 80.h),
                           children: [
-                            Icon(
-                              Icons.location_city_outlined,
-                              size: 64.sp,
-                              color: Colors.grey.shade400,
-                            ),
-                            SizedBox(height: 16.h),
-                            Text(
-                              searchQuery.isEmpty
-                                  ? 'No sites found'
-                                  : 'No results for "$searchQuery"',
-                              style: TextStyle(
-                                fontSize: 16.sp,
-                                color: Colors.grey.shade600,
-                                fontFamily: 'Poppins',
+                            SizedBox(height: 100.h),
+                            Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.location_city_outlined,
+                                    size: 64.sp,
+                                    color: Colors.grey.shade400,
+                                  ),
+                                  SizedBox(height: 16.h),
+                                  Text(
+                                    searchQuery.isEmpty
+                                        ? 'No sites found'
+                                        : 'No results for "$searchQuery"',
+                                    style: TextStyle(
+                                      fontSize: 16.sp,
+                                      color: Colors.grey.shade600,
+                                      fontFamily: 'Poppins',
+                                    ),
+                                  ),
+                                  SizedBox(height: 8.h),
+                                  Text(
+                                    'Pull down to refresh',
+                                    style: TextStyle(
+                                      fontSize: 12.sp,
+                                      color: Colors.grey.shade400,
+                                      fontFamily: 'Poppins',
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],

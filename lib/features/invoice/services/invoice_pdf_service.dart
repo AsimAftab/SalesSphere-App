@@ -33,7 +33,10 @@ class InvoicePdfService {
     final discountPercent = invoice.discount ?? 0.0;
     final discountAmount =
         invoice.discountAmount ?? (subtotal * discountPercent / 100);
-    final total = invoice.totalAmount ?? (subtotal - discountAmount);
+    final taxName = invoice.taxSnapshot?.taxName;
+    final taxPercentage = invoice.taxSnapshot?.taxPercentage ?? 0.0;
+    final taxAmount = invoice.taxAmount ?? 0.0;
+    final total = invoice.totalAmount ?? (subtotal - discountAmount + taxAmount);
 
     // Define colors based on type
     final primaryColor = isEstimate
@@ -94,6 +97,9 @@ class InvoicePdfService {
             discountAmount,
             total,
             primaryColor,
+            taxName: taxName,
+            taxPercentage: taxPercentage,
+            taxAmount: taxAmount,
           ),
           pw.SizedBox(height: 40),
 
@@ -518,8 +524,11 @@ class InvoicePdfService {
     double discountPercent,
     double discountAmount,
     double total,
-    PdfColor primaryColor,
-  ) {
+    PdfColor primaryColor, {
+    String? taxName,
+    double taxPercentage = 0.0,
+    double taxAmount = 0.0,
+  }) {
     final lightColor = primaryColor == PdfColor.fromHex('#F57C00')
         ? PdfColor.fromHex('#FFF3E0')
         : PdfColor.fromHex('#E3F2FD');
@@ -543,6 +552,14 @@ class InvoicePdfService {
                 'Discount ($discountPercent%)',
                 '- Rs. ${discountAmount.toStringAsFixed(2)}',
                 isDiscount: true,
+              ),
+            ],
+            if (taxAmount > 0) ...[
+              pw.SizedBox(height: 8),
+              _buildSummaryRow(
+                '${taxName ?? 'Tax'} ($taxPercentage%)',
+                '+ Rs. ${taxAmount.toStringAsFixed(2)}',
+                isTax: true,
               ),
             ],
             pw.SizedBox(height: 12),
@@ -579,23 +596,24 @@ class InvoicePdfService {
     String label,
     String value, {
     bool isDiscount = false,
+    bool isTax = false,
   }) {
+    final color = isTax
+        ? PdfColor.fromHex('#F57C00')
+        : isDiscount
+            ? PdfColors.green700
+            : PdfColors.black;
+
     return pw.Row(
       mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
       children: [
-        pw.Text(
-          label,
-          style: pw.TextStyle(
-            fontSize: 12,
-            color: isDiscount ? PdfColors.green700 : PdfColors.black,
-          ),
-        ),
+        pw.Text(label, style: pw.TextStyle(fontSize: 12, color: color)),
         pw.Text(
           value,
           style: pw.TextStyle(
             fontSize: 12,
             fontWeight: pw.FontWeight.bold,
-            color: isDiscount ? PdfColors.green700 : PdfColors.black,
+            color: color,
           ),
         ),
       ],

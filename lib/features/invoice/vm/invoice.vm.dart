@@ -171,6 +171,7 @@ class CreateInvoice extends _$CreateInvoice {
     required DateTime expectedDeliveryDate,
     required double discount,
     required List<CreateInvoiceItemRequest> items,
+    String? taxConfigId,
   }) async {
     state = const AsyncValue.loading();
 
@@ -187,6 +188,7 @@ class CreateInvoice extends _$CreateInvoice {
         expectedDeliveryDate: formattedDate,
         discount: discount,
         items: items,
+        taxConfigId: taxConfigId,
       );
 
       AppLogger.d('Creating invoice with request: ${request.toJson()}');
@@ -237,6 +239,7 @@ class CreateInvoice extends _$CreateInvoice {
           invoiceNumber: invoiceResponse.data!.invoiceNumber,
           expectedDeliveryDate: invoiceResponse.data!.expectedDeliveryDate,
           totalAmount:
+              invoiceResponse.data!.totalAmount ??
               invoiceResponse.data!.total ??
               invoiceResponse.data!.items.fold<double>(
                 0.0,
@@ -279,6 +282,7 @@ class CreateEstimate extends _$CreateEstimate {
     required String partyId,
     required double discount,
     required List<CreateEstimateItemRequest> items,
+    String? taxConfigId,
   }) async {
     state = const AsyncValue.loading();
 
@@ -289,6 +293,7 @@ class CreateEstimate extends _$CreateEstimate {
         partyId: partyId,
         discount: discount,
         items: items,
+        taxConfigId: taxConfigId,
       );
 
       AppLogger.d('Creating estimate with request: ${request.toJson()}');

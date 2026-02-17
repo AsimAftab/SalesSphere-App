@@ -77,7 +77,6 @@ class _ExpenseClaimsScreenState extends ConsumerState<ExpenseClaimsScreen> {
     final searchedClaimsAsync = ref.watch(searchedExpenseClaimsProvider);
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,

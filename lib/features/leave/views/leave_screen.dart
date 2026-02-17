@@ -56,7 +56,6 @@ class _LeaveScreenState extends ConsumerState<LeaveScreen> {
 
     return Scaffold(
       extendBodyBehindAppBar: true,
-      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -441,34 +440,40 @@ class _LeaveScreenState extends ConsumerState<LeaveScreen> {
     ),
   );
 
-  Widget _buildEmptyState(String query) => Center(
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(
-          Icons.event_busy_outlined,
-          size: 64.sp,
-          color: Colors.grey.shade300,
+  Widget _buildEmptyState(String query) => ListView(
+    padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 80.h),
+    children: [
+      SizedBox(height: 100.h),
+      Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.event_busy_outlined,
+              size: 64.sp,
+              color: Colors.grey.shade400,
+            ),
+            SizedBox(height: 16.h),
+            Text(
+              query.isEmpty ? 'No leave requests found' : 'No results for "$query"',
+              style: TextStyle(
+                fontSize: 16.sp,
+                color: Colors.grey.shade600,
+                fontFamily: 'Poppins',
+              ),
+            ),
+            SizedBox(height: 8.h),
+            Text(
+              'Pull down to refresh',
+              style: TextStyle(
+                fontSize: 12.sp,
+                color: Colors.grey.shade400,
+                fontFamily: 'Poppins',
+              ),
+            ),
+          ],
         ),
-        SizedBox(height: 16.h),
-        Text(
-          query.isEmpty ? 'No leave requests found' : 'No results for "$query"',
-          style: TextStyle(
-            fontSize: 16.sp,
-            color: Colors.grey.shade600,
-            fontFamily: 'Poppins',
-          ),
-        ),
-        SizedBox(height: 8.h),
-        Text(
-          'Pull down to refresh',
-          style: TextStyle(
-            fontSize: 12.sp,
-            color: Colors.grey.shade400,
-            fontFamily: 'Poppins',
-          ),
-        ),
-      ],
-    ),
+      ),
+    ],
   );
 }

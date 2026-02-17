@@ -59,7 +59,6 @@ class _PartiesScreenState extends ConsumerState<PartiesScreen> {
     final searchedPartiesAsync = ref.watch(searchedPartiesProvider);
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -168,24 +167,47 @@ class _PartiesScreenState extends ConsumerState<PartiesScreen> {
                 child: searchedPartiesAsync.when(
                   data: (parties) {
                     if (parties.isEmpty) {
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                      return RefreshIndicator(
+                        onRefresh: () async {
+                          await ref
+                              .read(partiesViewModelProvider.notifier)
+                              .refresh();
+                        },
+                        color: AppColors.primary,
+                        child: ListView(
+                          padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 80.h),
                           children: [
-                            Icon(
-                              Icons.people_outline,
-                              size: 64.sp,
-                              color: Colors.grey.shade400,
-                            ),
-                            SizedBox(height: 16.h),
-                            Text(
-                              searchQuery.isEmpty
-                                  ? 'No parties found'
-                                  : 'No results for "$searchQuery"',
-                              style: TextStyle(
-                                fontSize: 16.sp,
-                                color: Colors.grey.shade600,
-                                fontFamily: 'Poppins',
+                            SizedBox(height: 100.h),
+                            Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.people_outline,
+                                    size: 64.sp,
+                                    color: Colors.grey.shade400,
+                                  ),
+                                  SizedBox(height: 16.h),
+                                  Text(
+                                    searchQuery.isEmpty
+                                        ? 'No parties found'
+                                        : 'No results for "$searchQuery"',
+                                    style: TextStyle(
+                                      fontSize: 16.sp,
+                                      color: Colors.grey.shade600,
+                                      fontFamily: 'Poppins',
+                                    ),
+                                  ),
+                                  SizedBox(height: 8.h),
+                                  Text(
+                                    'Pull down to refresh',
+                                    style: TextStyle(
+                                      fontSize: 12.sp,
+                                      color: Colors.grey.shade400,
+                                      fontFamily: 'Poppins',
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],

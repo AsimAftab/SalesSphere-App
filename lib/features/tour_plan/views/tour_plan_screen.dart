@@ -58,7 +58,6 @@ class _TourPlanScreenState extends ConsumerState<TourPlanScreen> {
     final searchQuery = ref.watch(tourSearchQueryProvider);
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -179,38 +178,47 @@ class _TourPlanScreenState extends ConsumerState<TourPlanScreen> {
                     final filtered = _applyStatusFilter(plans);
                     final searchQuery = ref.watch(tourSearchQueryProvider);
                     if (filtered.isEmpty) {
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                      return RefreshIndicator(
+                        onRefresh: () => ref
+                            .read(tourPlanViewModelProvider.notifier)
+                            .refresh(),
+                        color: AppColors.primary,
+                        child: ListView(
+                          padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 80.h),
                           children: [
-                            Icon(
-                              Icons.navigation_outlined,
-                              size: 64.sp,
-                              color: Colors.grey.shade400,
-                            ),
-                            SizedBox(height: 16.h),
-                            Text(
-                              searchQuery.isEmpty
-                                  ? 'No tour plans found'
-                                  : 'No results for "$searchQuery"',
-                              style: TextStyle(
-                                fontSize: 16.sp,
-                                color: Colors.grey.shade600,
-                                fontFamily: 'Poppins',
-                                fontWeight: FontWeight.w500,
+                            SizedBox(height: 100.h),
+                            Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.navigation_outlined,
+                                    size: 64.sp,
+                                    color: Colors.grey.shade400,
+                                  ),
+                                  SizedBox(height: 16.h),
+                                  Text(
+                                    searchQuery.isEmpty
+                                        ? 'No tour plans found'
+                                        : 'No results for "$searchQuery"',
+                                    style: TextStyle(
+                                      fontSize: 16.sp,
+                                      color: Colors.grey.shade600,
+                                      fontFamily: 'Poppins',
+                                    ),
+                                  ),
+                                  SizedBox(height: 8.h),
+                                  Text(
+                                    'Pull down to refresh',
+                                    style: TextStyle(
+                                      fontSize: 12.sp,
+                                      color: Colors.grey.shade400,
+                                      fontFamily: 'Poppins',
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
                               ),
-                            ),
-                            SizedBox(height: 8.h),
-                            Text(
-                              searchQuery.isEmpty
-                                  ? 'Tap the button below to add your first tour plan'
-                                  : 'Try a different search term',
-                              style: TextStyle(
-                                fontSize: 13.sp,
-                                color: Colors.grey.shade400,
-                                fontFamily: 'Poppins',
-                              ),
-                              textAlign: TextAlign.center,
                             ),
                           ],
                         ),
