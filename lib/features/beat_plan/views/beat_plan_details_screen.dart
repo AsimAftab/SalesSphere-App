@@ -30,7 +30,7 @@ class BeatPlanDetailsScreen extends ConsumerStatefulWidget {
 }
 
 class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
-  // Filter state: 'all', 'pending', 'visited'
+  // Filter state: 'all', 'pending', 'visited', 'skipped'
   String _selectedFilter = 'all';
   String? _loadingVisitId;
 
@@ -186,6 +186,9 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
     final visitedCount = beatPlan.directories
         .where((p) => p.visitStatus.status.toLowerCase() == 'visited')
         .length;
+    final skippedCount = beatPlan.directories
+        .where((p) => p.visitStatus.status.toLowerCase() == 'skipped')
+        .length;
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -235,7 +238,7 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
               totalParties: beatPlan.progress.totalDirectories,
               visitedParties: beatPlan.progress.visitedDirectories,
               pendingParties:
-                  beatPlan.progress.totalDirectories -
+              beatPlan.progress.totalDirectories -
                   beatPlan.progress.visitedDirectories,
               progressPercentage: beatPlan.progress.percentage,
             ),
@@ -273,6 +276,13 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
                   count: visitedCount,
                   isSelected: _selectedFilter == 'visited',
                   onTap: () => setState(() => _selectedFilter = 'visited'),
+                ),
+                SizedBox(width: 10.w),
+                _buildFilterTab(
+                  label: 'Skipped',
+                  count: skippedCount,
+                  isSelected: _selectedFilter == 'skipped',
+                  onTap: () => setState(() => _selectedFilter = 'skipped'),
                 ),
               ],
             ),
@@ -319,7 +329,8 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
     Color getColor() {
       if (label == 'All') return AppColors.primary;
       if (label == 'Pending') return AppColors.yellow500;
-      return AppColors.success;
+      if (label == 'Visited') return AppColors.success;
+      return AppColors.info;
     }
 
     final color = getColor();
@@ -335,10 +346,10 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
             // --- START: Gradient Logic (from your original code) ---
             gradient: isSelected
                 ? LinearGradient(
-                    colors: [color, color.withValues(alpha: 0.8)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  )
+              colors: [color, color.withValues(alpha: 0.8)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            )
                 : null,
             color: isSelected ? null : AppColors.cardBackground,
 
@@ -355,12 +366,12 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
             // Using your original shadow logic
             boxShadow: isSelected
                 ? [
-                    BoxShadow(
-                      color: color.withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ]
+              BoxShadow(
+                color: color.withValues(alpha: 0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ]
                 : null,
           ),
           child: Center(
@@ -388,17 +399,19 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
       return directories
           .where((p) => p.visitStatus.status.toLowerCase() == 'pending')
           .toList();
-    } else {
+    } else if (_selectedFilter == 'visited') {
       return directories
           .where((p) => p.visitStatus.status.toLowerCase() == 'visited')
           .toList();
     }
+
+    return directories
+        .where((p) => p.visitStatus.status.toLowerCase() == 'skipped')
+        .toList();
   }
 
-  Future<void> _handleMarkVisitComplete(
-    String beatPlanId,
-    BeatDirectory directory,
-  ) async {
+  Future<void> _handleMarkVisitComplete(String beatPlanId,
+      BeatDirectory directory,) async {
     // Validate geofence before allowing mark as complete
     if (_currentLocation == null) {
       if (mounted) {
@@ -432,10 +445,12 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'You are ${GeofencingService.instance.formatDistance(geofenceResult.distanceOutside)} '
-              'outside the allowed radius.\n\n'
-              'Please move within ${GeofencingService.instance.formatDistance(geofenceResult.radius)} '
-              'of ${directory.name} to mark as visited.',
+              'You are ${GeofencingService.instance.formatDistance(
+                  geofenceResult.distanceOutside)} '
+                  'outside the allowed radius.\n\n'
+                  'Please move within ${GeofencingService.instance
+                  .formatDistance(geofenceResult.radius)} '
+                  'of ${directory.name} to mark as visited.',
             ),
             backgroundColor: AppColors.error,
             duration: const Duration(seconds: 5),
@@ -457,19 +472,20 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
       final success = await ref
           .read(beatPlanDetailViewModelProvider(beatPlanId).notifier)
           .markVisitComplete(
-            beatPlanId,
-            directory.id,
-            directoryType: directory.type,
-            userLatitude: _currentLocation!.latitude,
-            userLongitude: _currentLocation!.longitude,
-          );
+        beatPlanId,
+        directory.id,
+        directoryType: directory.type,
+        userLatitude: _currentLocation!.latitude,
+        userLongitude: _currentLocation!.longitude,
+      );
 
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
               '✓ ${directory.name} marked as visited\n'
-              'Distance: ${GeofencingService.instance.formatDistance(geofenceResult.distance)}',
+                  'Distance: ${GeofencingService.instance.formatDistance(
+                  geofenceResult.distance)}',
             ),
             backgroundColor: AppColors.success,
             duration: const Duration(seconds: 3),
@@ -493,10 +509,8 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
     }
   }
 
-  Future<void> _handleMarkVisitPending(
-    String beatPlanId,
-    String visitId,
-  ) async {
+  Future<void> _handleMarkVisitPending(String beatPlanId,
+      String visitId,) async {
     setState(() => _loadingVisitId = visitId);
     try {
       final success = await ref

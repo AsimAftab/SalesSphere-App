@@ -211,24 +211,37 @@ class BeatPlanSummaryCard extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildStat(
-                      label: 'Total',
-                      value: beatPlan.totalDirectories.toString(),
+                    Expanded(
+                      child: _buildStat(
+                        label: 'Total',
+                        value: beatPlan.totalDirectories.toString(),
+                      ),
                     ),
-                    _buildStat(
-                      label: 'Visited',
-                      value: beatPlan.visitedDirectories.toString(),
-                      valueColor: AppColors.success,
+                    Expanded(
+                      child: _buildStat(
+                        label: 'Visited',
+                        value: beatPlan.visitedDirectories.toString(),
+                        valueColor: AppColors.success,
+                      ),
                     ),
-                    _buildStat(
-                      label: 'Pending',
-                      value: beatPlan.unvisitedDirectories.toString(),
-                      valueColor: AppColors.warning,
+                    Expanded(
+                      child: _buildStat(
+                        label: 'Pending',
+                        value: beatPlan.pendingDirectories.toString(),
+                        valueColor: AppColors.warning,
+                      ),
+                    ),
+                    Expanded(
+                      child: _buildStat(
+                        label: 'Skipped',
+                        value: beatPlan.skippedDirectories.toString(),
+                        valueColor: AppColors.info,
+                      ),
                     ),
                   ],
                 ),
               ),
-              SizedBox(width: 12.w),
+              SizedBox(width: 8.w),
               // Action Button (no icon, not full-width) - hide when tracking is active
               if (!isTrackingThisPlan) _buildActionButton(status, statusColor),
             ],
@@ -249,7 +262,9 @@ class BeatPlanSummaryCard extends StatelessWidget {
           backgroundColor: AppColors.secondary,
           foregroundColor: Colors.white,
           disabledBackgroundColor: AppColors.secondary.withValues(alpha: 0.6),
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+          minimumSize: Size(0, 36.h),
+          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10.r),
           ),
@@ -264,8 +279,8 @@ class BeatPlanSummaryCard extends StatelessWidget {
                 ),
               )
             : Text(
-                'Start Beat Plan',
-                style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600),
+                'Start',
+                style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600),
               ),
       );
     } else if (status == 'completed') {
@@ -278,14 +293,16 @@ class BeatPlanSummaryCard extends StatelessWidget {
             color: AppColors.greyLight.withValues(alpha: 0.9),
             width: 1.5,
           ),
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+          minimumSize: Size(0, 36.h),
+          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10.r),
           ),
         ),
         child: Text(
-          'View Details',
-          style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600),
+          'Details',
+          style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600),
         ),
       );
     } else {
@@ -295,7 +312,7 @@ class BeatPlanSummaryCard extends StatelessWidget {
     }
   }
 
-  /// Builds a single stat column (e.g., Total, Visited, Pending)
+  /// Builds a single stat column (e.g., Total, Visited, Pending, Skipped)
   Widget _buildStat({
     required String label,
     required String value,
