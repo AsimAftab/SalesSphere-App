@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-SalesSphere is a Flutter application for sales management with real-time tracking capabilities. Built with Riverpod 3.0 for state management, GoRouter for navigation, and code generation tools (Freezed, json_serializable, riverpod_generator). Key features include attendance tracking, beat plan tracking with WebSocket, invoicing, catalog management, and offline-first architecture.
+SalesSphere is a Flutter application (SDK ^3.9.2) for sales management with real-time tracking capabilities. Built with Riverpod 3.0 for state management, GoRouter for navigation, and code generation tools (Freezed, json_serializable, riverpod_generator). Key features include attendance tracking, beat plan tracking with WebSocket, invoicing, catalog management, and offline-first architecture. Uses Poppins font family throughout.
 
 ## Development Commands
 
@@ -65,10 +65,12 @@ flutter build web
 - Use `@Riverpod(keepAlive: true)` for providers that should persist across navigation
 
 ### App Initialization Flow
-1. `main.dart` initializes token storage and loads `.env`
-2. `authInitProvider` checks for stored token and loads user data
-3. On success: `UserController` gets user, `PermissionController` loads cached permissions/subscription
-4. Router redirects based on auth state
+1. `main.dart` loads `.env`, initializes SharedPreferences, Hive (offline storage), notification channel
+2. Sentry error tracking initialized (DSN from `.env`, 100% sampling in debug, 20% in production)
+3. App locked to portrait orientation, wrapped in ScreenUtilInit (360x800 design size)
+4. `authInitProvider` checks for stored token and loads user data
+5. On success: `UserController` gets user, `PermissionController` loads cached permissions/subscription
+6. Router redirects based on auth state
 
 ### Global State Providers (keepAlive=true)
 - `userControllerProvider` - Current logged-in user data (`User?`)
@@ -96,21 +98,33 @@ flutter build web
 ```
 lib/
 ├── core/
-│   ├── constants/      # App-wide constants
+│   ├── constants/      # App-wide constants (colors, sizes, strings, module_config, storage_keys)
+│   ├── exceptions/     # Custom exceptions (OfflineException, etc.)
+│   ├── models/         # Core models (LocationAddress, QueuedLocation)
 │   ├── network_layer/  # Dio client, interceptors, token storage
 │   ├── providers/      # Global providers (UserController, PermissionController)
 │   ├── router/         # GoRouter configuration
+│   ├── services/       # Location, tracking, geocoding, background services (13 files)
 │   ├── theme/          # FlexColorScheme-based theming
-│   └── utils/          # Logger, validators
+│   └── utils/          # Logger, validators, date formatter, snackbar utils
 ├── features/
 │   ├── auth/           # Login, forgot password
-│   ├── profile/        # User profile screen
 │   ├── home/           # Home/dashboard
 │   ├── attendance/     # Attendance tracking
+│   ├── beat_plan/      # Beat plan tracking with WebSocket
+│   ├── catalog/        # Product catalog
+│   ├── collection/     # Payment collection
+│   ├── expense-claim/  # Expense claims
+│   ├── invoice/        # Invoices & estimates
+│   ├── leave/          # Leave requests
+│   ├── notes/          # Notes management
+│   ├── odometer/       # Odometer tracking
 │   ├── parties/        # Party management
-│   ├── products/       # Product catalog
-│   ├── invoice/        # Invoice management
-│   └── ...
+│   ├── prospects/      # Prospect management
+│   ├── sites/          # Site management
+│   ├── tour_plan/      # Tour planning
+│   ├── profile/        # User profile
+│   ├── settings/       # App settings
 │   └── [feature]/
 │       ├── models/     # Freezed data models
 │       ├── views/      # UI screens
@@ -149,7 +163,6 @@ Available in `lib/core/utils/field_validators.dart`:
 - `combine(List<Validator>)` - Combine multiple validators
 
 ### Other Utilities
-- `AppLogger` in `lib/core/utils/logger.dart` - Centralized logging with colored output
 - `DateFormatter` in `lib/core/utils/date_formatter.dart` - Date formatting helpers
 - `SnackbarUtils` in `lib/core/utils/snackbar_utils.dart` - Snackbar helpers
 - `ConnectivityUtils` in `lib/core/utils/connectivity_utils.dart` - Network status helpers
@@ -170,7 +183,6 @@ Available in `lib/core/utils/field_validators.dart`:
 - **skeletonizer**: ^2.1.0+1 (loading skeletons)
 - **cached_network_image**: 3.4.1 (image caching)
 - **table_calendar**: ^3.1.2 (calendar widget)
-- **wechat_assets_picker**: ^9.5.0 (media selection - multiple images/files)
 - **photo_view**: ^0.15.0 (image zoom/pan viewer)
 
 ### Tracking & Location
@@ -190,8 +202,7 @@ Available in `lib/core/utils/field_validators.dart`:
 - **url_launcher**: ^6.3.2 (deep links)
 - **intl**: ^0.20.2 (date formatting)
 - **uuid**: ^4.5.1 (unique IDs)
-- **image_picker**: ^1.2.0 (photo selection - single images)
-- **wechat_assets_picker**: ^9.5.0 (media selection - multiple images/files)
+- **image_picker**: ^1.2.0 (photo selection)
 - **path_provider**: ^2.1.5 (file paths)
 - **pdf**: ^3.11.3 + open_file: ^3.5.9 (PDF generation)
 - **permission_handler**: ^11.3.1 (runtime permissions)
@@ -349,8 +360,11 @@ The app has a sophisticated real-time beat plan tracking system that works offli
 
 ### Environment Variables Required
 ```
-API_BASE_URL=https://api.yourdomain.com
-WEBSOCKET_PATH=/live/tracking
+API_BASE_URL=https://salessphere360.com
+WEBSOCKET_PATH=/api/tracking
+GOOGLE_MAPS_API_KEY=...
+SENTRY_DSN=...
+APP_NAME=Sales Sphere
 ```
 
 ## Conventions

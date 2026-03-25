@@ -7,6 +7,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:sales_sphere/core/constants/app_colors.dart';
 import 'package:sales_sphere/core/utils/snackbar_utils.dart';
 import 'package:sales_sphere/features/expense-claim/models/expense_claim.model.dart';
@@ -103,7 +104,7 @@ class _EditExpenseClaimScreenState
   }
 
   String _formatDateForDisplay(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
+    return DateFormat('d MMM y').format(date);
   }
 
   @override

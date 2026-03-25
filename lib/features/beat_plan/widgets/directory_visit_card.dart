@@ -39,17 +39,33 @@ class DirectoryVisitCard extends StatelessWidget {
     }
   }
 
-  // Get type badge color and circle color
-  Color _getTypeColor() {
+  // Get type gradient for the avatar and type badge
+  LinearGradient _getTypeGradient() {
     switch (directory.type.toLowerCase()) {
       case 'party':
-        return AppColors.primary; // Blue
+        return const LinearGradient(
+          colors: [Color(0xFF42A5F5), Color(0xFF1565C0)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
       case 'site':
-        return AppColors.secondary; // Secondary blue
+        return const LinearGradient(
+          colors: [Color(0xFF66BB6A), Color(0xFF2E7D32)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
       case 'prospect':
-        return AppColors.success; // Green
+        return const LinearGradient(
+          colors: [Color(0xFFFFA726), Color(0xFFEF6C00)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
       default:
-        return AppColors.greyMedium;
+        return const LinearGradient(
+          colors: [Color(0xFFBDBDBD), Color(0xFF757575)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
     }
   }
 
@@ -85,8 +101,21 @@ class DirectoryVisitCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isVisited = directory.visitStatus.status.toLowerCase() == 'visited';
+    final visitStatus = directory.visitStatus.status.toLowerCase();
+    final isVisited = visitStatus == 'visited';
+    final isSkipped = visitStatus == 'skipped';
     final geofenceResult = _getGeofenceResult();
+
+    final statusColor = isVisited
+        ? AppColors.success
+        : isSkipped
+        ? AppColors.info
+        : AppColors.warning;
+    final statusIcon = isVisited
+        ? Icons.check
+        : isSkipped
+        ? Icons.skip_next_rounded
+        : Icons.schedule_outlined;
 
     return Container(
       margin: EdgeInsets.only(bottom: 16.h),
@@ -119,7 +148,7 @@ class DirectoryVisitCard extends StatelessWidget {
                           width: 48.w,
                           height: 48.w,
                           decoration: BoxDecoration(
-                            color: _getTypeColor(),
+                            gradient: _getTypeGradient(),
                             shape: BoxShape.circle,
                           ),
                           child: Center(
@@ -143,7 +172,7 @@ class DirectoryVisitCard extends StatelessWidget {
                             vertical: 4.h,
                           ),
                           decoration: BoxDecoration(
-                            color: _getTypeColor(),
+                            gradient: _getTypeGradient(),
                             borderRadius: BorderRadius.circular(6.r),
                           ),
                           child: Text(
@@ -224,17 +253,13 @@ class DirectoryVisitCard extends StatelessWidget {
                     Container(
                       padding: EdgeInsets.all(8.w),
                       decoration: BoxDecoration(
-                        color: isVisited
-                            ? AppColors.success.withValues(alpha: 0.15)
-                            : AppColors.warning.withValues(alpha: 0.15),
+                        color: statusColor.withValues(alpha: 0.15),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
-                        isVisited ? Icons.check : Icons.schedule_outlined,
+                        statusIcon,
                         size: 20.sp,
-                        color: isVisited
-                            ? AppColors.success
-                            : AppColors.warning,
+                        color: statusColor,
                       ),
                     ),
                   ],
@@ -242,7 +267,7 @@ class DirectoryVisitCard extends StatelessWidget {
 
                 // Distance indicator (Geofencing) - Beautiful minimal design
                 // Only show for pending visits, not for already visited directories
-                if (geofenceResult != null && !isVisited) ...[
+                if (geofenceResult != null && !isVisited && !isSkipped) ...[
                   SizedBox(height: 12.h),
                   Container(
                     padding: EdgeInsets.symmetric(
@@ -368,7 +393,7 @@ class DirectoryVisitCard extends StatelessWidget {
           ),
 
           // Bottom section: "Mark as Completed" or "Visited at X"
-          if (!isVisited)
+          if (!isVisited && !isSkipped)
             // Mark as Completed section
             InkWell(
               onTap: isLoading ? null : onMarkComplete,
@@ -420,7 +445,7 @@ class DirectoryVisitCard extends StatelessWidget {
               ),
             )
           else
-            // Visited at section
+            // Final status section
             Container(
               width: double.infinity,
               padding: EdgeInsets.symmetric(vertical: 14.h),
@@ -433,7 +458,9 @@ class DirectoryVisitCard extends StatelessWidget {
                 ),
               ),
               child: Text(
-                'Visited at ${_formatVisitedTime(directory.visitStatus.visitedAt)}',
+                isVisited
+                    ? 'Visited at ${_formatVisitedTime(directory.visitStatus.visitedAt)}'
+                    : 'Visit skipped',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 13.sp,

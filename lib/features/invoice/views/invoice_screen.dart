@@ -350,51 +350,6 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                         icon: Icons.payments_rounded,
                         child: Column(
                           children: [
-                            // Tax Config Dropdown
-                            PrimaryAsyncDropdown<TaxConfig>(
-                              itemsAsync: taxConfigsAsync,
-                              initialValue: _selectedTaxConfigName,
-                              hintText: 'Select Tax',
-                              prefixIcon: Icons.account_balance_rounded,
-                              title: 'Select Tax Configuration',
-                              subtitle:
-                                  'Choose a tax to apply on this invoice',
-                              itemLabel: (config) =>
-                                  '${config.name} (${config.percentage}%)',
-                              onChanged: (value) {
-                                setState(() {
-                                  _selectedTaxConfigName = value;
-                                });
-                                if (value == null) {
-                                  ref
-                                      .read(
-                                        invoiceDraftControllerProvider
-                                            .notifier,
-                                      )
-                                      .updateTaxConfig(null);
-                                } else {
-                                  final configs = taxConfigsAsync.value;
-                                  if (configs != null) {
-                                    final match = configs.where(
-                                      (c) =>
-                                          '${c.name} (${c.percentage}%)' ==
-                                          value,
-                                    );
-                                    if (match.isNotEmpty) {
-                                      ref
-                                          .read(
-                                            invoiceDraftControllerProvider
-                                                .notifier,
-                                          )
-                                          .updateTaxConfig(match.first);
-                                    }
-                                  }
-                                }
-                              },
-                            ),
-
-                            SizedBox(height: 12.h),
-
                             // Discount Field
                             Container(
                               padding: EdgeInsets.all(14.w),
@@ -481,6 +436,51 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                                   ),
                                 ],
                               ),
+                            ),
+
+                            SizedBox(height: 12.h),
+
+                            // Tax Config Dropdown
+                            PrimaryAsyncDropdown<TaxConfig>(
+                              itemsAsync: taxConfigsAsync,
+                              initialValue: _selectedTaxConfigName,
+                              hintText: 'Select Tax',
+                              prefixIcon: Icons.account_balance_rounded,
+                              title: 'Select Tax Configuration',
+                              subtitle:
+                                  'Choose a tax to apply on this invoice',
+                              itemLabel: (config) =>
+                                  '${config.name} (${config.percentage}%)',
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedTaxConfigName = value;
+                                });
+                                if (value == null) {
+                                  ref
+                                      .read(
+                                        invoiceDraftControllerProvider
+                                            .notifier,
+                                      )
+                                      .updateTaxConfig(null);
+                                } else {
+                                  final configs = taxConfigsAsync.value;
+                                  if (configs != null) {
+                                    final match = configs.where(
+                                      (c) =>
+                                          '${c.name} (${c.percentage}%)' ==
+                                          value,
+                                    );
+                                    if (match.isNotEmpty) {
+                                      ref
+                                          .read(
+                                            invoiceDraftControllerProvider
+                                                .notifier,
+                                          )
+                                          .updateTaxConfig(match.first);
+                                    }
+                                  }
+                                }
+                              },
                             ),
 
                             SizedBox(height: 16.h),
