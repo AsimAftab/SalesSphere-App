@@ -102,7 +102,7 @@ class DirectoryVisitCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final visitStatus = directory.visitStatus.status.toLowerCase();
-    final isVisited = visitStatus == 'visited';
+    final isVisited = visitStatus == 'completed';
     final isSkipped = visitStatus == 'skipped';
     final geofenceResult = _getGeofenceResult();
 

@@ -184,7 +184,7 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
         .where((p) => p.visitStatus.status.toLowerCase() == 'pending')
         .length;
     final visitedCount = beatPlan.directories
-        .where((p) => p.visitStatus.status.toLowerCase() == 'visited')
+        .where((p) => p.visitStatus.status.toLowerCase() == 'completed')
         .length;
     final skippedCount = beatPlan.directories
         .where((p) => p.visitStatus.status.toLowerCase() == 'skipped')
@@ -401,7 +401,7 @@ class _BeatPlanDetailsScreenState extends ConsumerState<BeatPlanDetailsScreen> {
           .toList();
     } else if (_selectedFilter == 'visited') {
       return directories
-          .where((p) => p.visitStatus.status.toLowerCase() == 'visited')
+          .where((p) => p.visitStatus.status.toLowerCase() == 'completed')
           .toList();
     }
 
