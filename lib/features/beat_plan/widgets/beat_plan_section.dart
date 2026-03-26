@@ -32,6 +32,29 @@ class _BeatPlanSectionState extends ConsumerState<BeatPlanSection> {
   // Track tracking state locally to avoid all cards rebuilding
   TrackingState? _lastTrackingState;
 
+  String _buildStartBeatPlanErrorMessage(Object error) {
+    if (error is BeatPlanAttendanceRequiredException) {
+      return error.message;
+    }
+
+    final rawMessage = error.toString().trim();
+    var message = rawMessage;
+
+    if (message.startsWith('Exception: ')) {
+      message = message.substring('Exception: '.length).trim();
+    }
+
+    if (message.startsWith('Failed to start beat plan: ')) {
+      message = message.substring('Failed to start beat plan: '.length).trim();
+    }
+
+    if (message.isEmpty || message == 'Bad Request') {
+      return 'Unable to start this beat plan. Please open it on its scheduled date or ask your manager to reschedule it.';
+    }
+
+    return message;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -412,10 +435,12 @@ class _BeatPlanSectionState extends ConsumerState<BeatPlanSection> {
     } catch (e) {
       AppLogger.e('Error starting beat plan: $e');
       if (mounted) {
-        SnackbarUtils.showError(
-          context,
-          'Failed to start beat plan: ${e.toString()}',
-        );
+        final message = _buildStartBeatPlanErrorMessage(e);
+        if (e is BeatPlanAttendanceRequiredException) {
+          SnackbarUtils.showWarning(context, message);
+        } else {
+          SnackbarUtils.showError(context, message);
+        }
       }
     } finally {
       if (mounted) {

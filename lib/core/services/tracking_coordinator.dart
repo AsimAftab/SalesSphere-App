@@ -50,6 +50,7 @@ class TrackingCoordinator {
   DateTime? _trackingStartTime;
   int _totalDirectories = 0;
   int _visitedDirectories = 0;
+  int _skippedDirectories = 0; // Track skipped directories separately
 
   // Dio client for API calls
   Dio? _dio;
@@ -523,8 +524,15 @@ class TrackingCoordinator {
     int totalDirectories = 0,
     int visitedDirectories = 0,
   }) async {
+    // If tracking is already active for a DIFFERENT beat plan, stop it first
+    if (_isTracking && _currentBeatPlanId != null && _currentBeatPlanId != beatPlanId) {
+      AppLogger.w('⚠️ Tracking already active for beat plan: $_currentBeatPlanId');
+      AppLogger.i('🛑 Stopping previous tracking session before starting new one...');
+      await stopTracking();
+    }
+
     if (_isTracking) {
-      AppLogger.w('⚠️ Tracking already active');
+      AppLogger.w('⚠️ Tracking already active for this beat plan');
       return;
     }
 
@@ -806,8 +814,11 @@ class TrackingCoordinator {
 
   /// Update visit progress (call when user marks a directory as visited)
   /// This updates the notification to show real-time progress
-  /// and automatically stops tracking when all directories are visited
-  Future<void> updateVisitProgress(int visitedDirectories) async {
+  /// and automatically stops tracking when all directories are visited or skipped
+  Future<void> updateVisitProgress(
+    int visitedDirectories, {
+    int skippedDirectories = 0,
+  }) async {
     if (!_isTracking) {
       AppLogger.w('⚠️ Tracking not active');
       return;
@@ -815,7 +826,7 @@ class TrackingCoordinator {
 
     try {
       AppLogger.i(
-        '📊 Updating visit progress: $visitedDirectories/$_totalDirectories',
+        '📊 Updating visit progress: $visitedDirectories visited, $skippedDirectories skipped / $_totalDirectories total',
       );
 
       // Validate input
@@ -826,39 +837,39 @@ class TrackingCoordinator {
         return;
       }
 
-      // Check for stale data that would cause premature auto-stop
-      if (visitedDirectories > _totalDirectories && _totalDirectories > 0) {
+      if (skippedDirectories < 0) {
         AppLogger.e(
-          '❌ Invalid progress: visited($visitedDirectories) > total($_totalDirectories)',
+          '❌ Invalid skippedDirectories: $skippedDirectories (negative)',
         );
-        AppLogger.w('⚠️ Skipping auto-stop check due to invalid data');
-        // Still update the value and emit stats, but don't auto-stop
-        _visitedDirectories = visitedDirectories;
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setInt('visitedDirectories', visitedDirectories);
-        await _backgroundService.updateProgress(visitedDirectories);
-        _emitStats();
         return;
       }
 
-      // Update visited count
+      // Update visited and skipped counts
       _visitedDirectories = visitedDirectories;
+      _skippedDirectories = skippedDirectories;
 
       // Save to SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt('visitedDirectories', visitedDirectories);
+      await prefs.setInt('skippedDirectories', skippedDirectories);
 
-      // Update background service notification
-      await _backgroundService.updateProgress(visitedDirectories);
+      // Update background service notification with both counts
+      await _backgroundService.updateProgress(
+        visitedDirectories,
+        skippedDirectories: skippedDirectories,
+      );
 
       // Emit stats update
       _emitStats();
 
       AppLogger.i('✅ Progress updated successfully');
 
-      // Auto-stop when all directories are visited
-      if (_totalDirectories > 0 && _visitedDirectories >= _totalDirectories) {
-        AppLogger.i('🎉 All directories visited! Auto-stopping tracking...');
+      // Auto-stop when all directories are visited or skipped
+      final totalProcessed = visitedDirectories + skippedDirectories;
+      if (_totalDirectories > 0 && totalProcessed >= _totalDirectories) {
+        AppLogger.i(
+          '🎉 All directories processed! ($visitedDirectories visited, $skippedDirectories skipped) - Auto-stopping tracking...',
+        );
         await Future.delayed(
           const Duration(seconds: 2),
         ); // Brief delay for notification
