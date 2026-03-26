@@ -334,3 +334,13 @@ abstract class BeatVisit with _$BeatVisit {
   factory BeatVisit.fromJson(Map<String, dynamic> json) =>
       _$BeatVisitFromJson(json);
 }
+
+/// Thrown when a beat plan cannot start until attendance check-in is completed.
+class BeatPlanAttendanceRequiredException implements Exception {
+  final String message;
+
+  BeatPlanAttendanceRequiredException(this.message);
+
+  @override
+  String toString() => message;
+}

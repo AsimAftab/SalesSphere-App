@@ -20,6 +20,38 @@ part 'beat_plan.vm.g.dart';
 class BeatPlanListViewModel extends _$BeatPlanListViewModel {
   bool _isFetching = false;
 
+  bool _requiresAttendanceCheckIn(String message) {
+    final normalized = message.toLowerCase();
+    return normalized.contains('check-in for attendance') ||
+        normalized.contains('check in for attendance') ||
+        normalized.contains('attendance before starting a beat plan');
+  }
+
+  String _extractStartBeatPlanErrorMessage(DioException error) {
+    final responseData = error.response?.data;
+    return _extractStartBeatPlanMessageFromData(responseData) ??
+        error.message?.trim() ??
+        'Unable to start this beat plan right now. Please try again.';
+  }
+
+  String? _extractStartBeatPlanMessageFromData(dynamic responseData) {
+    if (responseData is Map<String, dynamic>) {
+      final message = responseData['message']?.toString().trim();
+      if (message != null && message.isNotEmpty) {
+        return message;
+      }
+    }
+
+    return null;
+  }
+
+  Never _throwStartBeatPlanException(String message) {
+    if (_requiresAttendanceCheckIn(message)) {
+      throw BeatPlanAttendanceRequiredException(message);
+    }
+    throw Exception(message);
+  }
+
   @override
   Future<List<BeatPlanSummary>> build() async {
     // Keep alive for 60 seconds (prevents disposal on tab switch)
@@ -154,17 +186,24 @@ class BeatPlanListViewModel extends _$BeatPlanListViewModel {
         await refresh();
         return true;
       } else {
-        throw Exception('Failed to start beat plan: ${response.statusMessage}');
+        final message =
+            _extractStartBeatPlanMessageFromData(response.data) ??
+            response.statusMessage?.trim() ??
+            'Unable to start this beat plan right now. Please try again.';
+        _throwStartBeatPlanException(message);
       }
     } on DioException catch (e) {
       AppLogger.e('❌ Dio error starting beat plan: ${e.message}');
       if (e.response != null) {
         AppLogger.e('Response data: ${e.response?.data}');
       }
-      throw Exception('Network error: ${e.message}');
+      _throwStartBeatPlanException(_extractStartBeatPlanErrorMessage(e));
     } catch (e, stack) {
       AppLogger.e('❌ Error starting beat plan: $e');
       AppLogger.e('Stack trace: $stack');
+      if (e is Exception) {
+        rethrow;
+      }
       throw Exception('Failed to start beat plan: $e');
     }
   }
@@ -309,11 +348,15 @@ class BeatPlanDetailViewModel extends _$BeatPlanDetailViewModel {
 
             // Update tracking notification with new progress
             final visitedCount = beatPlan.progress.visitedDirectories;
+            final skippedCount = beatPlan.directories
+                .where((dir) => dir.visitStatus.status.toLowerCase() == 'skipped')
+                .length;
             await TrackingCoordinator.instance.updateVisitProgress(
               visitedCount,
+              skippedDirectories: skippedCount,
             );
             AppLogger.i(
-              '📊 Tracking notification updated with progress: $visitedCount visited',
+              '📊 Tracking notification updated with progress: $visitedCount visited, $skippedCount skipped',
             );
           } catch (e) {
             AppLogger.w('⚠️ Could not refresh/update tracking progress: $e');
@@ -374,11 +417,15 @@ class BeatPlanDetailViewModel extends _$BeatPlanDetailViewModel {
 
             // Update tracking notification with new progress
             final visitedCount = beatPlan.progress.visitedDirectories;
+            final skippedCount = beatPlan.directories
+                .where((dir) => dir.visitStatus.status.toLowerCase() == 'skipped')
+                .length;
             await TrackingCoordinator.instance.updateVisitProgress(
               visitedCount,
+              skippedDirectories: skippedCount,
             );
             AppLogger.i(
-              '📊 Tracking notification updated with progress: $visitedCount visited',
+              '📊 Tracking notification updated with progress: $visitedCount visited, $skippedCount skipped',
             );
           } catch (e) {
             AppLogger.w('⚠️ Could not refresh/update tracking progress: $e');

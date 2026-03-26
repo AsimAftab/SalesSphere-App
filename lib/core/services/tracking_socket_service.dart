@@ -768,11 +768,29 @@ class TrackingForceStoppedEvent {
     required this.summary,
   });
 
-  double? get totalDistance => summary['totalDistance'];
+  double? get totalDistance {
+    final value = summary['totalDistance'];
+    if (value == null) return null;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    return null;
+  }
 
-  double? get totalDuration => summary['totalDuration'];
+  double? get totalDuration {
+    final value = summary['totalDuration'];
+    if (value == null) return null;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    return null;
+  }
 
-  double? get averageSpeed => summary['averageSpeed'];
+  double? get averageSpeed {
+    final value = summary['averageSpeed'];
+    if (value == null) return null;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    return null;
+  }
 
   int? get directoriesVisited => summary['directoriesVisited'];
 

@@ -105,15 +105,22 @@ class BackgroundTrackingService {
     }
   }
 
-  /// Update visit progress (when user marks a directory as visited)
-  Future<void> updateProgress(int visitedDirectories) async {
+  /// Update visit progress (when user marks a directory as visited or skipped)
+  Future<void> updateProgress(
+    int visitedDirectories, {
+    int skippedDirectories = 0,
+  }) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt(_keyVisitedDirectories, visitedDirectories);
 
+      // Store skipped directories count for notification display
+      await prefs.setInt('skippedDirectories', skippedDirectories);
+
       // Notify background service to update notification
       _service.invoke('updateProgress', {
         'visitedDirectories': visitedDirectories,
+        'skippedDirectories': skippedDirectories,
       });
     } catch (e) {
       AppLogger.e('❌ Error updating progress: $e');
@@ -236,6 +243,7 @@ class BackgroundTrackingService {
     String? currentAddress;
     int totalDirectories = 0;
     int visitedDirectories = 0;
+    int skippedDirectories = 0;
 
     // Initialize notification plugin
     final notificationPlugin = FlutterLocalNotificationsPlugin();
@@ -270,6 +278,7 @@ class BackgroundTrackingService {
     beatPlanId = prefs.getString(_keyBeatPlanId);
     totalDirectories = prefs.getInt(_keyTotalDirectories) ?? 0;
     visitedDirectories = prefs.getInt(_keyVisitedDirectories) ?? 0;
+    skippedDirectories = prefs.getInt('skippedDirectories') ?? 0;
 
     if (beatPlanId == null) {
       AppLogger.e('❌ No beat plan ID found, stopping service');
@@ -414,9 +423,16 @@ class BackgroundTrackingService {
 
       if (event != null && event is Map) {
         final newVisitedCount = event['visitedDirectories'] as int?;
+        final newSkippedCount = event['skippedDirectories'] as int? ?? 0;
 
         if (newVisitedCount != null) {
           visitedDirectories = newVisitedCount;
+
+          // Also update skipped count if provided
+          if (newSkippedCount > 0) {
+            skippedDirectories = newSkippedCount;
+            await prefs.setInt('skippedDirectories', skippedDirectories);
+          }
 
           // Update notification immediately to show new progress
           if (startTime != null) {
@@ -430,10 +446,12 @@ class BackgroundTrackingService {
               currentAddress: currentAddress,
               totalDirectories: totalDirectories,
               visitedDirectories: visitedDirectories,
+              skippedDirectories: skippedDirectories,
             );
 
+            final totalProcessed = visitedDirectories + skippedDirectories;
             AppLogger.i(
-              '✅ Notification updated with new progress: $visitedDirectories/$totalDirectories',
+              '✅ Notification updated: $visitedDirectories visited, $skippedDirectories skipped / $totalDirectories total ($totalProcessed processed)',
             );
           }
         }
@@ -514,20 +532,22 @@ class BackgroundTrackingService {
     String? currentAddress,
     int totalDirectories = 0,
     int visitedDirectories = 0,
+    int skippedDirectories = 0,
   }) async {
     final distanceKm = (distance / 1000).toStringAsFixed(2);
     final hours = duration.inHours;
     final minutes = duration.inMinutes.remainder(60);
     final durationStr = hours > 0 ? '${hours}h ${minutes}m' : '${minutes}m';
 
-    // Calculate progress percentage
+    // Calculate progress percentage (visited + skipped)
+    final totalProcessed = visitedDirectories + skippedDirectories;
     final progressPercent = totalDirectories > 0
-        ? ((visitedDirectories / totalDirectories) * 100).toInt()
+        ? ((totalProcessed / totalDirectories) * 100).toInt()
         : 0;
 
-    // Build notification title
+    // Build notification title with visited + skipped
     final title = totalDirectories > 0
-        ? 'Beat Plan Tracking ($visitedDirectories/$totalDirectories visits)'
+        ? 'Beat Plan Tracking ($visitedDirectories visited, $skippedDirectories skipped / $totalDirectories total)'
         : 'Beat Plan Tracking Active';
 
     // Build notification content
@@ -540,7 +560,7 @@ class BackgroundTrackingService {
         '''
 📍 Current Location: ${currentAddress ?? 'Getting location...'}
 
-📊 Progress: $visitedDirectories/$totalDirectories directories visited ($progressPercent%)
+📊 Progress: $visitedDirectories visited, $skippedDirectories skipped / $totalDirectories total ($progressPercent%)
 🚗 Distance Traveled: $distanceKm km
 ⏱️ Duration: $durationStr
 
@@ -579,7 +599,7 @@ Do not force close this app.
           // Show progress if available
           showProgress: totalDirectories > 0,
           maxProgress: totalDirectories,
-          progress: visitedDirectories,
+          progress: totalProcessed, // Show total processed (visited + skipped)
           indeterminate: false,
           // Make it sticky and high priority
           category: AndroidNotificationCategory.navigation,
